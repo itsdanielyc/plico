@@ -237,6 +237,7 @@
 | 2026-11-18 | L0, L1, L3, L4, L6 | The phone inbox passed the solution suite and native journey on all six release targets. | GitHub-hosted Windows x64 and ARM64, macOS Intel and Apple silicon, Ubuntu x64 and ARM64 | [Source matrix 44310234441](https://github.com/itsdanielyc/plico/actions/runs/44310234441/attempts/2) at `91ce367`. The first Apple silicon job was canceled while queued. The next attempt passed. |
 | 2026-11-18 | L0, L1, L3, L4, L6 | The capture slices have hosted source and native coverage on all six release targets. The corrected combined Intel run also completed the phone inbox, duplex, ASN labels, additional formats, migration report, OCR controls and Image Capture discovery. | GitHub-hosted Windows x64 and ARM64, macOS Intel and Apple silicon, Ubuntu x64 and ARM64 | Slice evidence below. [Focused Intel run 44319174129](https://github.com/itsdanielyc/plico/actions/runs/44319174129) at `a278ef5`. [Combined package matrix](https://github.com/itsdanielyc/plico/actions/runs/44319116111). |
 | 2026-11-18 | L0, L1, L3, L4, L6, L7 | The corrected combined candidate passed its solution suite and both portable and installed journeys on five release targets. | GitHub-hosted Windows x64 and ARM64, macOS Intel, Ubuntu x64 and ARM64 | [Combined archive matrix 44319116111](https://github.com/itsdanielyc/plico/actions/runs/44319116111) at `a278ef5`. The Apple silicon package job remains queued. |
+| 2026-11-18 | L3, L6, L7 | The corrected feeder fixture passed twenty repetitions of all three interrupted-scan cases. The Intel Mac portable and installed Image Capture journeys passed afterward. | GitHub-hosted macOS 26 Intel | [Feeder and package run 44316861644](https://github.com/itsdanielyc/plico/actions/runs/44316861644) at `4866af5`. |
 
 ## Unverified
 
@@ -271,3 +272,5 @@ The preceding integrated Windows ARM64 archive job passed the solution suite and
 The current combined candidate includes the PDF fixture path correction and the capture changes. [Integrated archive matrix 44315392704](https://github.com/itsdanielyc/plico/actions/runs/44315392704) at `214a416`.
 
 The next combined candidate includes the temporary JPEG orientation probes and the deterministic feeder fixture. [Six-target archive run 44319116111](https://github.com/itsdanielyc/plico/actions/runs/44319116111) · [Focused Intel Mac run 44319174129](https://github.com/itsdanielyc/plico/actions/runs/44319174129) at 278ef5.
+
+The archive run at 278ef5 recorded five successful platform jobs before the remaining Apple silicon job was canceled for a newer integration revision. The release coordinator is verifying that revision. [Current archive run 44321028400](https://github.com/itsdanielyc/plico/actions/runs/44321028400) at 34c6976.
