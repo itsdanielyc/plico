@@ -75,6 +75,8 @@ Run `dotnet test Plico.slnx -c Release` for the fast suite. Run the native harne
 
 The native harness checks the scan recovery dialog with a synthetic fault. Set `PLICO_VERIFY_INTERRUPTED_SCANNER` to a loopback eSCL fixture that delivers two pages, including the hardware receipt, before failing to run the full Scan action and search check.
 
+For an emulated Linux `--verify` run, `PLICO_VERIFY_UI_THREAD_RENDERING=1` keeps X11 composition and verification screenshots on the same thread. Record this setting in the evidence for the emulated platform. [Avalonia X11 rendering options](https://docs.avaloniaui.net/docs/platform-specific-guides/linux#rendering-options)
+
 Use **Verify release candidate** (`archives.yml`) on the exact release commit. Each runtime runs the solution tests before packaging, then verifies the portable and installed copies. The publisher requires a successful run and all package files for that commit. Its smoke matrix downloads the newly published assets and runs the distribution checks again.
 
 Budget three minutes for the local suite and 20 minutes for the normal matrix. Apply the Keel flaky-test policy and record evidence in VERIFICATION.md.
