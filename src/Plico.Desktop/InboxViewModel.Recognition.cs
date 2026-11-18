@@ -23,6 +23,7 @@ internal sealed partial class InboxViewModel
         {
             var library = RequireLibrary();
             var result = await Task.Run(() => library.CreateSearchableCopyAsync(scan.Id, token, language), token);
+            if (result.Added) RefreshInboxCount();
             Navigate(inboxOnly: !result.Document.Reviewed, preferredId: result.Document.Id);
             Status = result.Added ? "Searchable copy added to inbox." : "Searchable copy already in the library.";
         });

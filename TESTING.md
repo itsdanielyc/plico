@@ -48,6 +48,7 @@
 35. Save a query with a sidebar tag and title order. Change the view and open the shortcut to restore all three values. Exercise a duplicate name, an incomplete filter, and a version 7 upgrade. Reopen a backup after renaming and merging the chosen tag (L3, L4 and L6).
 36. Enter a leap-day document date and combine `dated:` with `added:`, tags, folders, and text. Check stable ties and undated PDFs at a page boundary. Upgrade a version 8 catalog and verify the date through filing and backup. Reject an invalid day in the editor and clear the date on a filtered result (L3, L4 and L6).
 37. Copy a dated scan with OCR, extract pages, and rotate a page. Find the new copies by date and text. Exercise a shared, conflicting, and missing date in a combined packet. Clear the date on an existing OCR copy and repeat the OCR request (L3 and L6).
+38. Watch for a new scan after loading beyond the first results page. Check that the Inbox count increases and the preview stays on the open PDF. Refresh the results explicitly. Repeat while a typed query is reading the prior catalog. Check the count after reviewing and removing a PDF (L3, L4 and L6).
 
 Run `dotnet test Plico.slnx -c Release` for the fast suite. Run the native harness from `keel.json` for installed-platform evidence. Visual review starts with per-OS captures and geometry checks. Add pixel baselines when repeatable runner captures justify the maintenance.
 

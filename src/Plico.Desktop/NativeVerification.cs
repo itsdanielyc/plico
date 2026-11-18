@@ -86,7 +86,7 @@ internal static partial class NativeVerification
             await VerifyDocumentDateAsync(window, model, dialogs, evidenceDirectory);
 
             File.WriteAllText(Path.Combine(evidenceDirectory, "passed.txt"),
-                $"Verified {runtime}. Native window completed multilingual OCR and correction, oriented JPEG and multi-page TIFF import, PDF combination, page extraction and rotation, phrase and tag search, saved search restoration, document-date editing, filtering, and inheritance, result sorting, fit-width preview, match navigation, tag merging and suggestions, duplicate drop, folder watch, title edit, single and batch PDF moves, external relocation, selected PDF export, library backup, text copy, searchable PDF copy, and import retry. {scanRecoveryEvidence}");
+                $"Verified {runtime}. Native window completed multilingual OCR and correction, oriented JPEG and multi-page TIFF import, PDF combination, page extraction and rotation, phrase and tag search, saved search restoration, document-date editing, filtering, and inheritance, result sorting, fit-width preview, match navigation, tag merging and suggestions, duplicate drop, folder watch and inbox counting, title edit, single and batch PDF moves, external relocation, selected PDF export, library backup, text copy, searchable PDF copy, and import retry. {scanRecoveryEvidence}");
             desktop.Shutdown(0);
         }
         catch (Exception error)
@@ -885,6 +885,9 @@ internal static partial class NativeVerification
         await ((IAsyncRelayCommand)start.Command!).ExecuteAsync(null);
         Require(model.IsWatchingFolder && stop.IsVisible, $"The folder watch did not start. {model.Status}");
 
+        var inboxCount = Control<TextBlock>(window, "InboxReviewCount");
+        long before = model.InboxCount;
+        long? openId = model.SelectedDocument?.Id;
         string letter = Path.Combine(Path.GetDirectoryName(fixture)!, "Lease Renewal.pdf");
         string incoming = Path.Combine(model.WatchedFolderPath, "Scanner output.pdf");
         string temporaryScan = Path.ChangeExtension(incoming, ".part");
@@ -893,6 +896,9 @@ internal static partial class NativeVerification
         await UntilAsync(() => !model.IsBusy && model.Status == "1 document added.", () => model.Status);
         Require(model.Query == ReceiptKeyword && model.SelectedDocument?.Reviewed == true && File.Exists(incoming),
             "A watched import changed the current view or consumed the source file.");
+        Require(model.InboxCount == before + 1 && model.SelectedDocument?.Id == openId && inboxCount.IsEffectivelyVisible,
+            "The watched document did not increment the inbox count while the earlier PDF was open.");
+        await CaptureAsync(window, directory, "watched-inbox-count.png");
 
         Control<TextBox>(window, "SearchBox").SetCurrentValue(TextBox.TextProperty, LetterKeyword);
         await UntilAsync(() => model.SelectedDocument?.Title == "Scanner output" && model.Preview is not null, () => model.Status);
@@ -909,7 +915,7 @@ internal static partial class NativeVerification
             "The resumed watch did not offer to import existing files.");
         await ((IAsyncRelayCommand)existing.Command!).ExecuteAsync(null);
         await UntilAsync(() => !model.IsBusy && model.Status == "1 document already in the library.", () => model.Status);
-        Require(model.Query == LetterKeyword && model.Documents.Count == 1 && File.Exists(incoming),
+        Require(model.Query == LetterKeyword && model.Documents.Count == 1 && model.InboxCount == before + 1 && File.Exists(incoming),
             "Importing the existing file changed the current search or consumed its source.");
         await CaptureAsync(window, directory, "watch-existing-files.png");
         await ((IAsyncRelayCommand)stop.Command!).ExecuteAsync(null);

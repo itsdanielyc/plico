@@ -27,7 +27,7 @@ internal sealed partial class InboxViewModel
                 if (IsBusy && !token.IsCancellationRequested) Status = $"Combined {count} of {request.DocumentIds.Count} PDFs…";
             });
             var combined = await Task.Run(() => library.CombinePdfsAsync(request.DocumentIds, request.Title, progress, token), token);
-            Navigate(inboxOnly: true, preferredId: combined.Id);
+            RevealNewInboxDocument(combined.Id);
             Status = $"Combined {DocumentCount(request.DocumentIds.Count)} into “{combined.Title}”.";
         });
     }

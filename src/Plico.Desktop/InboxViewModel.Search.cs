@@ -14,6 +14,7 @@ internal sealed partial class InboxViewModel
     private CancellationTokenSource? _searchCancellation;
     private CancellationTokenSource? _pageMatchCancellation;
     private string? _appliedQuery;
+    private bool _hasAppendedResults;
 
     [ObservableProperty]
     [NotifyPropertyChangedFor(nameof(PageMatchActionLabel))]
@@ -128,7 +129,7 @@ internal sealed partial class InboxViewModel
         _searchCancellation = null;
     }
 
-    private async Task LoadTypedSearchAsync()
+    private async Task LoadTypedSearchAsync(bool preserveView = false)
     {
         _searchTimer.Stop();
         if (_library is not { } library) return;
@@ -152,6 +153,12 @@ internal sealed partial class InboxViewModel
 
             // A cancelled provider can still finish its read. Only the current request can publish its page.
             if (token.IsCancellationRequested) return;
+            if (preserveView && (HasBatchSelection || _hasAppendedResults ||
+                (SelectedDocument is { } open && !page.Items.Any(document => document.Id == open.Id))))
+            {
+                HasDeferredWatchResults = true;
+                return;
+            }
             UpdateResultHeading(filter);
             ApplyResultPage(filter, page);
         }
@@ -187,7 +194,7 @@ internal sealed partial class InboxViewModel
 
     private void UpdateResultHeading(DocumentFilter filter)
     {
-        _watchResultsPending = false;
+        HasDeferredWatchResults = false;
         bool hasQuery = !string.IsNullOrWhiteSpace(filter.Query);
         Heading = ActiveSavedSearch?.Name ?? (hasQuery ? "Search results" : filter.Tag ?? (filter.InboxOnly ? "Inbox" : "All documents"));
         EmptyMessage = hasQuery || filter.Tag is not null ? "No documents match." :
@@ -200,6 +207,7 @@ internal sealed partial class InboxViewModel
     {
         long? selection = preferredId ?? SelectedDocument?.Id;
         _appliedQuery = filter.Query;
+        _hasAppendedResults = filter.Offset > 0;
         ReplaceResults(filter.Offset > 0 ? [.. Documents, .. page.Items] : page.Items, selection, reloadPreview);
         HasMore = page.HasMore;
         ResultCount = HasMore ? $"Showing {DocumentCount(Documents.Count)}" : DocumentCount(Documents.Count);

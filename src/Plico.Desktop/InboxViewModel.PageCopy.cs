@@ -38,7 +38,7 @@ internal sealed partial class InboxViewModel
                 ? library.RotatePdfPagesAsync(document.Id, request.Selection,
                     request.Rotation ?? throw new InvalidOperationException("Choose a rotation."), request.Title, token)
                 : library.ExtractPdfPagesAsync(document.Id, request.Selection, request.Title, token), token);
-            Navigate(inboxOnly: true, preferredId: copy.Id);
+            RevealNewInboxDocument(copy.Id);
             int pageCount = request.Selection.SelectedPageCount;
             string pages = pageCount == 1 ? "1 page" : $"{pageCount} pages";
             Status = rotate ? $"Rotated {pages} in a new copy." : $"Extracted {pages}.";

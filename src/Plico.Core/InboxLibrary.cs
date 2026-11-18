@@ -139,6 +139,9 @@ public sealed partial class InboxLibrary : IDisposable
     /// <summary>Lists the tags used by PDFs currently in the library.</summary>
     public IReadOnlyList<string> GetTags() => _catalog.Tags();
 
+    /// <summary>Counts present PDFs that are awaiting review in the library.</summary>
+    public long CountUnreviewedDocuments() => _catalog.CountUnreviewedDocuments();
+
     /// <summary>Lists tag names held by the catalog, including tags on missing documents.</summary>
     public IReadOnlyList<string> GetCatalogTagNames() => _catalog.Tags(includeUnused: true);
 

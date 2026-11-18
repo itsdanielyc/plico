@@ -8,10 +8,13 @@ namespace Plico.Desktop;
 internal sealed partial class InboxViewModel
 {
     private IReadOnlyList<DocumentSummary> _batchSelection = [];
-    private bool _watchResultsPending;
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(HasResultActions))]
+    private bool _hasDeferredWatchResults;
     [ObservableProperty] private string _batchTagInput = "";
 
     public bool HasBatchCandidates => Documents.Count > 1;
+    public bool HasResultActions => HasBatchCandidates || HasDeferredWatchResults;
     public bool HasBatchSelection => _batchSelection.Count > 1;
     public string BatchCountLabel => $"{_batchSelection.Count} selected";
     public string SelectShownAction => HasBatchSelection ? "Clear selection" : "Select shown";
@@ -25,23 +28,33 @@ internal sealed partial class InboxViewModel
         OnPropertyChanged(nameof(BatchCountLabel));
         OnPropertyChanged(nameof(SelectShownAction));
         OnPropertyChanged(nameof(BatchReviewAction));
-        if (_watchResultsPending && !HasBatchSelection)
+        if (HasDeferredWatchResults && !HasBatchSelection && !_hasAppendedResults)
         {
             Dispatcher.UIThread.Post(() =>
             {
-                if (_watchResultsPending) RefreshAfterWatch();
+                if (HasDeferredWatchResults) RefreshAfterWatch();
             }, DispatcherPriority.Background);
         }
     }
 
     private void RefreshAfterWatch()
     {
-        if (HasBatchSelection)
+        // A queued query will read the new catalog. An active query needs a fresh read.
+        if (_searchTimer.IsEnabled) return;
+        bool preserveView = _searchCancellation is null || _appliedQuery == Query;
+        if (preserveView && (HasBatchSelection || _hasAppendedResults))
         {
-            _watchResultsPending = true;
+            HasDeferredWatchResults = true;
             return;
         }
-        LoadResults();
+        CancelTypedSearch();
+        _ = LoadTypedSearchAsync(preserveView);
+    }
+
+    [RelayCommand]
+    private void RefreshWatchedResults()
+    {
+        if (HasDeferredWatchResults && CanWork) LoadResults();
     }
 
     [RelayCommand]
@@ -54,6 +67,7 @@ internal sealed partial class InboxViewModel
         {
             var library = RequireLibrary();
             await Task.Run(() => library.SetReviewedDocuments(selectedIds, reviewed), token);
+            RefreshInboxCount();
             LoadResults();
             var count = DocumentCount(selectedIds.Length);
             Status = reviewed ? $"{count} marked reviewed." : $"{count} returned to inbox.";

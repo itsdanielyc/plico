@@ -89,6 +89,8 @@ When a scanner fails after delivering pages, the capture pipeline keeps those pa
 
 Folder watch coalesces filesystem events by path and samples pending files until two consecutive observations agree. It stays idle without pending events. Ready files wait for the current desktop operation, then use the same snapshot and duplicate checks as manual import. Watching stops with the active window or when the library changes. [.NET FileSystemWatcher](https://learn.microsoft.com/en-us/dotnet/api/system.io.filesystemwatcher)
 
+The desktop reads the pending review count through the inbox index after publishing documents, changing review state, or refreshing the catalog. Watched arrivals refresh an active query through the background search reader. Extra result pages and batch selections defer automatic list replacement. A first page refresh also defers when it would displace the open PDF.
+
 The watcher records top-level scan sizes and modification times before it subscribes. It reconciles once after subscription to catch arrivals during startup, and again when the operating system reports lost notifications. Only new or changed paths join the readiness queue. A backend that needs to restart is rearmed before reconciliation. A failed restart or unreadable folder is reported to the desktop. [.NET notification buffer overflow](https://learn.microsoft.com/en-us/dotnet/api/system.io.internalbufferoverflowexception?view=net-10.0)
 
 The last watch folder is saved in local settings under the normalized library path. Reopening a library offers the saved folder as an explicit resume action.

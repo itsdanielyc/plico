@@ -107,6 +107,8 @@ If the scanner reports an error after delivering pages, choose **Save partial PD
 
 If your scanner software saves to a folder, choose **Watch a folder…** under **Library** and select its output folder. Plico imports new or updated PDFs and images after they settle. The watch covers files directly inside that folder and lasts while Plico is open. **Stop watching** ends intake. Your scanner's source files remain in the output folder.
 
+The number beside **Inbox** is the total awaiting review. Watched imports update it while you work in other views. Use **Refresh results** below the document list when an arrival has been held for your current selection or loaded pages.
+
 Plico remembers the chosen folder for the current library. **Resume folder watch** starts watching it again when you are ready.
 
 Choose **Import existing files** while a watch is active to pick up files already in that folder, including scans saved while Plico was closed.

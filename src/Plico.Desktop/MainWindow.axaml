@@ -90,7 +90,14 @@
                 </StackPanel>
                 <StackPanel Grid.Row="1" Spacing="3">
                     <Button x:Name="InboxButton" Classes="rail" Classes.current="{Binding InboxSelected}"
-                            Command="{Binding ShowInboxCommand}" Content="Inbox" />
+                            Command="{Binding ShowInboxCommand}" HorizontalContentAlignment="Stretch"
+                            AutomationProperties.Name="{Binding InboxAutomationName}">
+                        <Grid ColumnDefinitions="*,Auto" ColumnSpacing="8">
+                            <TextBlock Text="Inbox" />
+                            <TextBlock Grid.Column="1" x:Name="InboxReviewCount" Text="{Binding InboxCount}" IsVisible="{Binding HasInboxCount}"
+                                       Foreground="#B9CCBE" />
+                        </Grid>
+                    </Button>
                     <Button x:Name="AllDocumentsButton" Classes="rail" Classes.current="{Binding AllSelected}"
                             Command="{Binding ShowAllCommand}" Content="All documents" />
                 </StackPanel>
@@ -245,8 +252,11 @@
                                     </DataTemplate>
                                 </ListBox.ItemTemplate>
                             </ListBox>
-                            <StackPanel Grid.Row="1" Margin="8" Spacing="6" IsVisible="{Binding HasBatchCandidates}">
-                                <Grid ColumnDefinitions="*,Auto" ColumnSpacing="8">
+                            <StackPanel Grid.Row="1" Margin="8" Spacing="6" IsVisible="{Binding HasResultActions}">
+                                <Button x:Name="RefreshWatchedResultsButton" Classes="secondary" Content="Refresh results"
+                                        Command="{Binding RefreshWatchedResultsCommand}" IsVisible="{Binding HasDeferredWatchResults}"
+                                        IsEnabled="{Binding CanWork}" ToolTip.Tip="Refresh after watched imports" />
+                                <Grid ColumnDefinitions="*,Auto" ColumnSpacing="8" IsVisible="{Binding HasBatchCandidates}">
                                     <Button x:Name="SelectShownButton" Classes="secondary" Content="{Binding SelectShownAction}"
                                             Click="SelectShown_Click" AutomationProperties.Name="{Binding SelectShownAction}" />
                                     <Button Grid.Column="1" Content="Load more" IsVisible="{Binding HasMore}" Command="{Binding LoadMoreCommand}" />

@@ -151,6 +151,7 @@ internal sealed partial class InboxViewModel : ObservableObject, IDisposable
         var library = RequireLibrary();
         var result = await Task.Run(() => library.Refresh(token), token);
         Tags = library.GetTags();
+        RefreshInboxCount();
         LoadResults(reloadPreview: result.Indexed > 0 || result.Relocated > 0);
         Status = $"{DocumentCount(result.Indexed)} indexed.";
         if (result.Relocated > 0) Status += $" {DocumentCount(result.Relocated)} moved.";
@@ -226,7 +227,11 @@ internal sealed partial class InboxViewModel : ObservableObject, IDisposable
 
     [RelayCommand]
     private void ToggleReview() => UpdateDocument(
-        (library, document) => library.SetReviewed(document.Id, !document.Reviewed),
+        (library, document) =>
+        {
+            library.SetReviewed(document.Id, !document.Reviewed);
+            RefreshInboxCount();
+        },
         SelectedDocument?.Reviewed == true ? "Returned to inbox." : "Marked as reviewed.");
 
     [RelayCommand] private void PreviousPage() => NavigatePage(-1);
@@ -266,6 +271,7 @@ internal sealed partial class InboxViewModel : ObservableObject, IDisposable
         OnPropertyChanged(nameof(LibraryName));
         Tags = replacement.GetTags();
         SavedSearches = replacement.GetSavedSearches();
+        RefreshInboxCount();
         Navigate(inboxOnly: true);
         Status = watchNotice is null ? "Library ready." : $"Library ready. {watchNotice}";
         if (replacement.MoveRecoveryNotice is { } moveNotice) Status += $" {moveNotice}";
@@ -315,8 +321,12 @@ internal sealed partial class InboxViewModel : ObservableObject, IDisposable
             if (reportChanged) ImportFailures = _unresolvedImports.Values.ToArray();
             if (lastAdded is not null)
             {
-                if (revealAdded) Navigate(inboxOnly: true, preferredId: lastAdded.Id);
-                else RefreshAfterWatch();
+                if (revealAdded) RevealNewInboxDocument(lastAdded.Id);
+                else
+                {
+                    RefreshInboxCount();
+                    RefreshAfterWatch();
+                }
             }
         }
 
@@ -423,12 +433,13 @@ internal sealed partial class InboxViewModel : ObservableObject, IDisposable
     private InboxLibrary RequireLibrary() =>
         _library ?? throw new InvalidOperationException("Choose a library folder first.");
 
-    private static string DocumentCount(int count) => count == 1 ? "1 document" : $"{count} documents";
+    private static string DocumentCount(long count) => count == 1 ? "1 document" : $"{count} documents";
 
     partial void OnDocumentsChanged(IReadOnlyList<DocumentSummary> value)
     {
         OnPropertyChanged(nameof(HasDocuments));
         OnPropertyChanged(nameof(HasBatchCandidates));
+        OnPropertyChanged(nameof(HasResultActions));
     }
     partial void OnPreviewMessageChanged(string value) => OnPropertyChanged(nameof(HasPreviewMessage));
 

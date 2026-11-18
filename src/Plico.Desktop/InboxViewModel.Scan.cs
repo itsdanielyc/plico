@@ -28,7 +28,7 @@ internal sealed partial class InboxViewModel
             return;
         }
 
-        Navigate(inboxOnly: true, preferredId: document.Id);
+        RevealNewInboxDocument(document.Id);
         string scanName = scan.Interruption is null ? "Scan" : "Partial scan";
         Status = document.HasText ? $"{scanName} added to inbox." : $"{scanName} added. No searchable text was recognized.";
     });

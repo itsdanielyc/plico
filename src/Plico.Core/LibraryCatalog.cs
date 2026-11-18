@@ -270,6 +270,15 @@ internal sealed partial class LibraryCatalog
         return command.ExecuteScalar() as string ?? throw new InvalidOperationException(DocumentUnavailableMessage);
     }
 
+    // O(log n + p) for p pending documents among n catalog rows, with constant application space.
+    internal long CountUnreviewedDocuments()
+    {
+        using var connection = Connect();
+        using var command = connection.CreateCommand();
+        command.CommandText = "SELECT count(*) FROM documents WHERE is_present = 1 AND reviewed = 0;";
+        return (long)command.ExecuteScalar()!;
+    }
+
     private DocumentPage Query(DocumentFilter filter, long? documentId = null, CancellationToken cancellationToken = default)
     {
         cancellationToken.ThrowIfCancellationRequested();
