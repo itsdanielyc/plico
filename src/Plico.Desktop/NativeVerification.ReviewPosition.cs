@@ -19,6 +19,7 @@ internal static partial class NativeVerification
         var next = model.Documents[pageSize + 1];
         var first = model.Documents[pageSize];
         list.SetCurrentValue(ListBox.SelectedItemProperty, first);
+        await UntilAsync(() => model.Preview is not null, () => model.PreviewMessage);
         Control<Button>(window, "ReviewButton").Command!.Execute(null);
         Require(model.Query == query && model.Documents.Count == loaded - 1 && model.SelectedDocument?.Id == next.Id &&
                 model.Documents.All(document => document.Id != first.Id),
@@ -35,9 +36,11 @@ internal static partial class NativeVerification
         Require((focus == preceding.Id || focus == adjacent.Id) && model.HasBatchSelection &&
                 review.IsEnabled && review.Command is IAsyncRelayCommand,
             "The review queue did not offer its batch action.");
+        await UntilAsync(() => model.Preview is not null, () => model.PreviewMessage);
         await ((IAsyncRelayCommand)review.Command!).ExecuteAsync(review.CommandParameter);
         Require(model.Query == query && model.Documents.Count == loaded - 3 && model.SelectedDocument?.Id == next.Id &&
                 model.Documents.All(document => document.Id != preceding.Id && document.Id != adjacent.Id),
             "Batch review did not skip the removed PDFs and select the next result.");
+        await UntilAsync(() => model.Preview is not null, () => model.PreviewMessage);
     }
 }
