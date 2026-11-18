@@ -12,7 +12,7 @@
 | 7 | Windows installer | A per-user installer adds a Start menu entry, launches the native journey, and uninstalls while preserving the user's PDF library | L7 | Done |
 | 8 | Scanner address | A compatible scanner can be connected by address and produce a searchable PDF through the actual network capture path | L1, L3, L4 | Done |
 | 9 | Remember scanner addresses | Directly connected scanners reopen without discovery and can be removed from settings; unavailable settings leave capture usable | L1, L3, L4 | Done |
-| 10 | Document titles | Edited titles and original filenames remain searchable; tags and review state survive refresh and reopen | L1, L3, L4, L6 | In progress |
+| 10 | Document titles | Edited titles and original filenames remain searchable; tags and review state survive refresh and reopen | L1, L3, L4, L6 | Done |
 | 11 | macOS and Ubuntu packages | A macOS disk image mounts and copies its app, and Ubuntu installs from a Debian package. Both complete the native journey. Package removal preserves the library. | L7 | In progress |
 
 The initial release is followed by focused improvements and fresh evidence.
