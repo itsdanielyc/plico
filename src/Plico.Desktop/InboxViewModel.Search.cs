@@ -275,6 +275,7 @@ internal sealed partial class InboxViewModel
         SearchQueryIssue.Folder => "Use a folder such as folder:\"Filed/Tax\". Use one folder or nested folders.",
         SearchQueryIssue.ReviewStatus => "Use one review status. Try status:inbox or status:reviewed.",
         SearchQueryIssue.TextAvailability => "Use one text filter. Try text:missing or text:present.",
+        SearchQueryIssue.StructuredMetadata => "Try type:lease, correspondent:\"Northstar Properties\", field:deposit, or asn:123.",
         SearchQueryIssue.BooleanSyntax => "Complete the expression. Try (receipt OR invoice) -tag:archive.",
         _ => "Enter a word, number, or search filter."
     };

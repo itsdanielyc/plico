@@ -103,6 +103,9 @@ internal static partial class NativeVerification
             await VerifyTrashAsync(window, model, dialogs, evidenceDirectory);
             await VerifyFilingSuggestionsAsync(window, model, dialogs, evidenceDirectory);
             await VerifyPortabilityAsync(window, model, dialogs, evidenceDirectory);
+            await VerifyStructuredMetadataAsync(window, model, dialogs, evidenceDirectory);
+            await VerifyDeadlineRemindersAsync(window, model, dialogs, evidenceDirectory);
+            await VerifyLocalModelsAsync(window, model, dialogs, evidenceDirectory);
 
             File.WriteAllText(Path.Combine(evidenceDirectory, "passed.txt"),
                 $"Verified {runtime}. Native window completed multilingual OCR and correction, oriented JPEG and multi-page TIFF import, PDF combination, page extraction and rotation, phrase, tag, review-status, folder, and text-availability search, query correction, saved search restoration, single and batch document-date editing, date filtering and inheritance, result sorting, continued review across loaded results, fit-width and selectable page text previews, match navigation, tag merging, suggestions, and edits across loaded result pages, duplicate drop, folder watch with catch-up on open and intake routing, inbox counting, title edit, single and batch PDF moves, external relocation and PDF swaps, index reporting and PDF restoration from files and folders, single and batch PDF export, library backup, text copy, single and batch OCR copies, saved import error recovery and retry destinations, per-scanner capture option restoration, and filing through the chosen intake folder. {scanRecoveryEvidence}");
@@ -1055,7 +1058,7 @@ internal static partial class NativeVerification
 }
 
 /// <summary>A labelled fixture picker for verification with the same real library used by normal launches.</summary>
-internal sealed class FixtureDialogs(params string[] documents) : IWorkspaceDialogs
+internal sealed partial class FixtureDialogs(params string[] documents) : IWorkspaceDialogs
 {
     internal string? FolderPath { get; set; }
     internal string? LastFolderStart { get; private set; }

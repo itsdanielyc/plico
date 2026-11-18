@@ -48,6 +48,14 @@ Choose **Trash & next** to remove a PDF from the results and continue reviewing.
 
 Open **Filing suggestions…** for the previewed PDF or a selection. Choose a suggested document date and any suggested tags to apply. Payment details are selectable for copying. Dates are interpreted using the document’s OCR language when available and the current locale. Use **Library tools… → Tag rules…** to add rules that suggest tags from a phrase, any word, or all words. Suggestions also learn from reviewed PDFs in the library.
 
+Use **Library tools… → Metadata definitions…** to manage correspondents and aliases, document types, custom fields, and tag colours and parents. Open **Metadata…** on a document to assign them, enter notes, or link another document. Plico marks a known correspondent as suggested when its name or alias appears in the title or searchable text. Select a parent tag to include its descendants. Use filters such as `type:lease`, `correspondent:"Northstar Properties"`, `field:deposit`, and `asn:123`.
+
+Use **Deadlines…** to record due, renewal, expiry, and keep-until dates. Add a number of days before the deadline to turn on its reminder. Open **Library tools… → Reminders…** to review and dismiss due alarms. **Export calendar…** writes an iCalendar file with all the library's active document dates and configured alarms for your calendar app. [iCalendar standard](https://www.rfc-editor.org/rfc/rfc5545)
+
+Choose **Related…** on a PDF for matches based on indexed words. For semantic search or local chat, open **Library tools… → Local models…**, enable requests, and enter your loopback server address and the names of downloaded embedding and chat models. The **Semantic search…** action compares your query with local embeddings and reuses vectors for unchanged document text. **Clear semantic index** rebuilds the vectors on the next search after a model update. [Ollama local server setup](https://docs.ollama.com/api/openai-compatibility#local-server-usage)
+
+With a chat model enabled, choose **Local filing…** to review its proposed title, document date, tags, correspondents, and document type. Apply the fields you select. **Library tools… → Undo local filing** restores the previous values when the document still matches the applied change. **Ask local model…** answers from indexed excerpts of the selected PDF or matching library documents. Plico sends those excerpts to the configured loopback service only during these opt-in operations.
+
 Choose **Without text** to find PDFs with no searchable text. Use `text:missing` or `text:present` with other filters. A query such as `text:missing tag:tax folder:Filed` finds scans you can select together for OCR.
 
 Use `added:2026`, `added:2026-11`, or `added:2026-11-18` to filter by year, month, or day added. The date follows the local date shown beside each document. Combine filters and text with a query such as `receipt tag:tax added:2026-11`.

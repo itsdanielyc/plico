@@ -420,4 +420,23 @@ internal sealed partial class LibraryCatalog
     private static object DbValue<T>(T? value) => (object?)value ?? DBNull.Value;
     private static T ReadMetadataJson<T>(string json) => JsonSerializer.Deserialize<T>(json, MetadataJson) ??
         throw new InvalidDataException("The library contains an invalid metadata value.");
+
+    internal IReadOnlyList<MetadataLinkTarget> ReadMetadataLinkTargets(long exceptDocumentId, CancellationToken token)
+    {
+        using var connection = Connect();
+        using var command = connection.CreateCommand();
+        command.CommandText = """
+            SELECT id, COALESCE(display_title, title) FROM documents WHERE id <> $document
+            ORDER BY COALESCE(display_title, title) COLLATE NOCASE, id;
+            """;
+        command.Parameters.AddWithValue("$document", exceptDocumentId);
+        using var rows = command.ExecuteReader();
+        var targets = new List<MetadataLinkTarget>();
+        while (rows.Read())
+        {
+            token.ThrowIfCancellationRequested();
+            targets.Add(new(rows.GetInt64(0), rows.GetString(1)));
+        }
+        return targets;
+    }
 }

@@ -64,7 +64,7 @@ public sealed partial class MainWindow : Window
 
     private void FilterTag_Click(object? sender, RoutedEventArgs e)
     {
-        if (sender is Button { DataContext: string tag }) ViewModel?.FilterByTag(tag);
+        if (sender is Button { DataContext: TagNavigationItem tag }) ViewModel?.FilterByTag(tag.Label);
     }
 
     private async void OpenSavedSearch_Click(object? sender, RoutedEventArgs e)

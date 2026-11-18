@@ -56,6 +56,7 @@ internal sealed partial class InboxViewModel
 
     partial void OnTagsChanged(IReadOnlyList<string>? oldValue, IReadOnlyList<string> newValue)
     {
+        RefreshTagNavigation();
         if (_tagSuggestionIndex is not null && oldValue?.SequenceEqual(newValue, StringComparer.Ordinal) != true)
         {
             _tagSuggestionIndex = null;

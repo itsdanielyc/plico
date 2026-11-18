@@ -127,13 +127,13 @@
                                         Padding="7,3" IsVisible="{Binding HasActiveTag}" IsEnabled="{Binding CanWork}"
                                         Command="{Binding RenameActiveTagCommand}" AutomationProperties.Name="Rename selected tag" />
                             </Grid>
-                            <ItemsControl ItemsSource="{Binding Tags}">
+                            <ItemsControl ItemsSource="{Binding TagNavigation}">
                                 <ItemsControl.ItemTemplate>
-                                    <DataTemplate x:DataType="x:String">
+                                    <DataTemplate x:DataType="local:TagNavigationItem">
                                         <Button Classes="rail" Click="FilterTag_Click">
-                                            <StackPanel Orientation="Horizontal" Spacing="9">
-                                                <Ellipse Width="6" Height="6" Fill="#C5DDA6" VerticalAlignment="Center" />
-                                                <TextBlock Text="{Binding}" MaxWidth="130" TextTrimming="CharacterEllipsis" />
+                                            <StackPanel Orientation="Horizontal" Spacing="9" Margin="{Binding Indent}">
+                                                <Ellipse Width="6" Height="6" Fill="{Binding Color}" VerticalAlignment="Center" />
+                                                <TextBlock Text="{Binding Label}" MaxWidth="130" TextTrimming="CharacterEllipsis" />
                                             </StackPanel>
                                         </Button>
                                     </DataTemplate>
@@ -175,6 +175,13 @@
                                 <MenuItem Header="Export search results (CSV)…" Command="{Binding ExportSearchCsvCommand}" />
                                 <Separator />
                                 <MenuItem Header="Refresh index" Command="{Binding RefreshIndexCommand}" />
+                                <MenuItem Header="Metadata definitions…" Command="{Binding ManageMetadataCommand}" />
+                                <MenuItem Header="{Binding ReminderMenuTitle}" Command="{Binding RemindersCommand}" />
+                                <MenuItem Header="Local models…" Command="{Binding ConfigureLocalModelsCommand}" />
+                                <MenuItem Header="Semantic search…" Command="{Binding SearchSemanticallyCommand}" IsEnabled="{Binding HasSemanticSearch}" />
+                                <MenuItem Header="Clear semantic index" Command="{Binding RebuildSemanticIndexCommand}" IsEnabled="{Binding HasSemanticSearch}" />
+                                <MenuItem Header="Ask local model…" Command="{Binding AskLocalModelCommand}" IsEnabled="{Binding HasLocalChat}" />
+                                <MenuItem Header="Undo local filing" Command="{Binding UndoLocalFilingCommand}" IsEnabled="{Binding HasSelection}" />
                             </MenuFlyout>
                         </Button.Flyout>
                     </Button>
@@ -361,11 +368,30 @@
                                             <TextBlock Text="{Binding SelectedDocument.RelativePath}" Foreground="#386447" FontSize="12"
                                                        TextDecorations="Underline" TextTrimming="CharacterEllipsis" />
                                         </Button>
-                                        <Button x:Name="EditDocumentDateButton" Classes="document-location" Command="{Binding EditDocumentDateCommand}"
-                                                IsEnabled="{Binding CanWork}" ToolTip.Tip="Edit document date" AutomationProperties.Name="Edit document date">
-                                            <TextBlock Text="{Binding DocumentDateAction}" Foreground="#386447" FontSize="12"
-                                                       TextDecorations="Underline" TextTrimming="CharacterEllipsis" />
-                                        </Button>
+                                        <WrapPanel Orientation="Horizontal" ItemSpacing="10">
+                                            <Button x:Name="EditDocumentDateButton" Classes="document-location" Command="{Binding EditDocumentDateCommand}"
+                                                    IsEnabled="{Binding CanWork}" ToolTip.Tip="Edit document date" AutomationProperties.Name="Edit document date">
+                                                <TextBlock Text="{Binding DocumentDateAction}" Foreground="#386447" FontSize="12"
+                                                           TextDecorations="Underline" TextTrimming="CharacterEllipsis" />
+                                            </Button>
+                                            <Button x:Name="EditMetadataButton" Classes="document-location" Command="{Binding EditMetadataCommand}"
+                                                    IsEnabled="{Binding CanWork}" AutomationProperties.Name="Edit document metadata">
+                                                <TextBlock Text="Metadata…" Foreground="#386447" FontSize="12" TextDecorations="Underline" />
+                                            </Button>
+                                            <Button x:Name="EditDeadlinesButton" Classes="document-location" Command="{Binding EditDeadlinesCommand}"
+                                                    IsEnabled="{Binding CanWork}" AutomationProperties.Name="Edit document deadlines">
+                                                <TextBlock Text="Deadlines…" Foreground="#386447" FontSize="12" TextDecorations="Underline" />
+                                            </Button>
+                                            <Button x:Name="FindRelatedButton" Classes="document-location" Command="{Binding FindRelatedCommand}"
+                                                    IsEnabled="{Binding CanWork}" AutomationProperties.Name="Find related documents">
+                                                <TextBlock Text="Related…" Foreground="#386447" FontSize="12" TextDecorations="Underline" />
+                                            </Button>
+                                            <Button x:Name="SuggestLocalFilingButton" Classes="document-location" Command="{Binding SuggestLocalFilingCommand}"
+                                                    IsVisible="{Binding HasLocalChat}" IsEnabled="{Binding CanWork}"
+                                                    AutomationProperties.Name="Ask local model for filing suggestions">
+                                                <TextBlock Text="Local filing…" Foreground="#386447" FontSize="12" TextDecorations="Underline" />
+                                            </Button>
+                                        </WrapPanel>
                                     </StackPanel>
                                     <StackPanel Grid.Column="1" Spacing="4" VerticalAlignment="Top">
                                         <StackPanel Orientation="Horizontal" Spacing="5">

@@ -283,6 +283,7 @@ internal sealed partial class InboxViewModel : ObservableObject, IDisposable
         SavedSearches = replacement.GetSavedSearches();
         RefreshInboxCount();
         RefreshUnavailableCount();
+        PrepareReminderPolling();
         Navigate(inboxOnly: true);
         Status = watchNotice is null ? "Library ready." : $"Library ready. {watchNotice}";
         if (importNotice is not null) Status += $" {importNotice}";
@@ -595,6 +596,7 @@ internal sealed partial class InboxViewModel : ObservableObject, IDisposable
     {
         CancelTypedSearch();
         CancelPreview();
+        _reminderTimer?.Stop();
         var library = _library;
         _library = null;
         if (IsBusy || IsWatchingFolder) _ = FinishDisposalAsync(library);

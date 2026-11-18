@@ -64,3 +64,6 @@ public sealed record MetadataDefinitions(IReadOnlyList<Correspondent> Correspond
 
 /// <summary>A tag's label, optional parent label, and optional RGB colour.</summary>
 public sealed record TagAppearance(string Label, string? ParentLabel, string? ColorHex);
+
+/// <summary>A catalog identity and title offered as the target of a document link.</summary>
+public sealed record MetadataLinkTarget(long Id, string Title);

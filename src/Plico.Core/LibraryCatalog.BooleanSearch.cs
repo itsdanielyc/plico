@@ -52,6 +52,7 @@ internal sealed partial class LibraryCatalog
         }
         if (clause.DocumentPeriod is { } dated)
             return $"coalesce(d.document_day BETWEEN {Bind(dated.FirstDay.DayNumber)} AND {Bind(dated.LastDay.DayNumber)}, 0)";
+        if (clause.MetadataTerms.Count > 0) return MetadataSearchCondition(command, clause.MetadataTerms.Single());
         throw new InvalidOperationException("A Boolean clause has no search term.");
 
         string Bind(object value)

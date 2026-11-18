@@ -125,8 +125,9 @@ internal sealed partial class LibraryCatalog
                 long? id = FindMetadataDefinitionId(connection, transaction, "correspondent_names", "correspondent_id", MetadataNameKey(name));
                 if (id is { } existing)
                 {
-                    var known = ReadMetadataDefinitions(connection, transaction).Correspondents.Single(item => item.Id == existing);
-                    WriteCorrespondent(connection, transaction, known.Id, known.Name, [.. known.Aliases, .. correspondent.Aliases]);
+                    var known = ReadMigrationCorrespondent(connection, transaction, existing);
+                    var aliases = known.Aliases.Concat(correspondent.Aliases).Select(CleanMetadataName).DistinctBy(MetadataNameKey).ToArray();
+                    WriteCorrespondent(connection, transaction, known.Id, known.Name, aliases);
                     contacts.Add(existing);
                     return;
                 }
@@ -175,6 +176,21 @@ internal sealed partial class LibraryCatalog
         provenance.Parameters.AddWithValue("$id", documentId);
         provenance.ExecuteNonQuery();
         DeletePendingMigration(connection, transaction, write.Key);
+    }
+
+    private static Correspondent ReadMigrationCorrespondent(SqliteConnection connection, SqliteTransaction transaction, long id)
+    {
+        using var command = connection.CreateCommand();
+        command.Transaction = transaction;
+        command.CommandText = """
+            SELECT c.name, (SELECT json_group_array(label ORDER BY name_key)
+                FROM correspondent_names WHERE correspondent_id = c.id AND is_alias = 1)
+            FROM correspondents c WHERE c.id = $id;
+            """;
+        command.Parameters.AddWithValue("$id", id);
+        using var row = command.ExecuteReader();
+        return row.Read() ? new(id, row.GetString(0), ReadMetadataJson<string[]>(row.GetString(1)))
+            : throw new ArgumentException(CatalogRelationshipMissing);
     }
 
     private static void WriteMigratedBaseFields(SqliteConnection connection, SqliteTransaction transaction, long documentId,

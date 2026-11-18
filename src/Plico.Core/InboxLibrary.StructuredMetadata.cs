@@ -33,4 +33,8 @@ public sealed partial class InboxLibrary
     /// <summary>Changes a tag's parent and colour while checking for hierarchy cycles.</summary>
     public void SaveTagAppearance(string label, string? parentLabel, string? colorHex) =>
         _catalog.SaveTagAppearance(label, parentLabel, colorHex);
+
+    /// <summary>Lists link targets by title, keeping existing links to missing or trashed documents resolvable.</summary>
+    public IReadOnlyList<MetadataLinkTarget> GetMetadataLinkTargets(long exceptDocumentId, CancellationToken cancellationToken = default) =>
+        _catalog.ReadMetadataLinkTargets(exceptDocumentId, cancellationToken);
 }

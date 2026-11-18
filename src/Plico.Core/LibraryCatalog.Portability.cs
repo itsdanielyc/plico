@@ -7,7 +7,7 @@ internal enum PortableDocumentState { Present, Missing, Trashed }
 internal sealed record PortableDocumentMetadata(long Id, string Title, string RelativePath, PortableDocumentState State,
     DateTimeOffset AddedAt, DateOnly? DocumentDate, bool Reviewed, bool HasText, int PageCount, IReadOnlyList<string> Tags,
     long FileBytes, string? Sha256, DateTimeOffset? TrashedAt, string? OcrLanguage, long? ArchiveSerialNumber,
-    DocumentMetadata Metadata);
+    DocumentMetadata Metadata, IReadOnlyList<DocumentDeadline> Deadlines);
 
 internal sealed partial class LibraryCatalog
 {
@@ -19,7 +19,9 @@ internal sealed partial class LibraryCatalog
             SELECT d.id, COALESCE(d.display_title, d.title), COALESCE(trash.original_path, d.relative_path), d.is_present,
                    d.added_at, d.document_day, d.reviewed, d.has_text, d.page_count, {FilingTagsSql},
                    d.file_bytes, d.pdf_sha256, trash.trashed_at, COALESCE(language.language, d.ocr_copy_language),
-                   serial.asn, {StructuredMetadataProjection}
+                   serial.asn, {StructuredMetadataProjection},
+                   (SELECT json_group_array(json_object('kind', kind, 'day', day, 'leadDays', lead_days) ORDER BY kind)
+                       FROM document_deadlines WHERE document_id = d.id)
             FROM documents d
             LEFT JOIN document_trash trash ON trash.document_id = d.id
             LEFT JOIN document_ocr_languages language ON language.document_id = d.id
@@ -45,9 +47,14 @@ internal sealed partial class LibraryCatalog
                 rows.IsDBNull(11) ? null : Convert.ToHexString(rows.GetFieldValue<byte[]>(11)),
                 rows.IsDBNull(12) ? null : DateTimeOffset.FromUnixTimeSeconds(rows.GetInt64(12)),
                 rows.IsDBNull(13) ? null : rows.GetString(13),
-                rows.IsDBNull(14) ? null : rows.GetInt64(14), ReadStructuredMetadata(rows, 15));
+                rows.IsDBNull(14) ? null : rows.GetInt64(14), ReadStructuredMetadata(rows, 15), ReadPortableDeadlines(rows.GetString(19)));
         }
     }
+
+    private sealed record PortableDeadline(DeadlineKind Kind, int Day, int? LeadDays);
+
+    private static IReadOnlyList<DocumentDeadline> ReadPortableDeadlines(string json) => ReadMetadataJson<PortableDeadline[]>(json)
+        .Select(value => new DocumentDeadline(value.Kind, DateOnly.FromDayNumber(value.Day), value.LeadDays)).ToArray();
 
     internal void VisitSearchResults(DocumentFilter filter, Action<DocumentSummary> visit, CancellationToken token)
     {

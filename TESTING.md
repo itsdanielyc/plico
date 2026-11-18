@@ -75,6 +75,9 @@
 62. Interrupt a move to Trash, let a new file occupy the original path, and reopen the library. Check that restore preserves the replacement, the backup carries Trash, and purge retires the old catalog identity (L3). Trash and restore through the desktop review flow (L6).
 63. Combine text and metadata with Boolean search, check title weighting, and display an excerpt and page highlight (L1, L3, L6). Load a named scan profile and check the capture options (L1, L6).
 64. Confirm a tag suggestion, detect changed files, and export results and metadata. Check password enforcement and XMP with an independent reader. Export and sample-validate PDF/A-2b (L3, L6).
+65. Save structured metadata, find it through an alias and a parent tag, and reopen it with the PDF bytes intact. Interrupt a migration after publication and resume it by source key (L3, L6).
+66. Set a local-day reminder, dismiss it, and change the date. Confirm the same calendar event identifier appears in the new export (L3, L6).
+67. Rank related documents and re-embed a changed title while reusing unchanged vectors. Exercise the local model protocol with a fixture and check that applying a proposal requires review and undo protects later edits (L1, L3, L6).
 
 Run `dotnet test Plico.slnx -c Release` for the fast suite. Use the native harness for an executable and `scripts/Test-Distribution.ps1` for both package formats. Visual review starts with per-OS captures and geometry checks. Add pixel baselines when repeatable runner captures justify the maintenance. [Verification commands](keel.json)
 

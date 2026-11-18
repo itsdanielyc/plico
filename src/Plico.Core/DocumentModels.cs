@@ -45,7 +45,7 @@ public readonly record struct SearchMatchSpan(int Start, int Length);
 public readonly record struct PdfPageHighlight(double X, double Y, double Width, double Height);
 
 /// <summary>The part of a search query that needs correction before it can run.</summary>
-public enum SearchQueryIssue { NoSearchTerms, Tag, AddedDate, DocumentDate, Folder, ReviewStatus, TextAvailability, BooleanSyntax }
+public enum SearchQueryIssue { NoSearchTerms, Tag, AddedDate, DocumentDate, Folder, ReviewStatus, TextAvailability, BooleanSyntax, StructuredMetadata }
 
 /// <summary>Results in display order and whether there are more at the next offset.</summary>
 public sealed record DocumentPage(IReadOnlyList<DocumentSummary> Items, bool HasMore)

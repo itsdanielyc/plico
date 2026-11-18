@@ -7,7 +7,7 @@ using Plico.Core;
 namespace Plico.Desktop;
 
 /// <summary>The window's file pickers and handoff to the operating system.</summary>
-internal interface IWorkspaceDialogs
+internal partial interface IWorkspaceDialogs
 {
     Task<IReadOnlyList<string>> PickDocumentsAsync();
     Task<string?> PickFolderAsync(string title, string? startFolder = null);
@@ -34,7 +34,7 @@ internal interface IWorkspaceDialogs
     void OpenPath(string path);
 }
 
-internal sealed class WorkspaceDialogs(Window owner) : IWorkspaceDialogs
+internal sealed partial class WorkspaceDialogs(Window owner) : IWorkspaceDialogs
 {
     private static readonly FilePickerFileType SupportedDocuments = new("PDF and images")
     {

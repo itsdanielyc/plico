@@ -35,6 +35,7 @@ public sealed class StructuredMetadataTests
         Assert.Equal(expected.Fields, persisted.Fields);
         Assert.Equal("Northstar Properties", Assert.Single(reopened.SuggestCorrespondents(documentId, token)).Name);
         Assert.Equal(new TagAppearance("Tenancy", "Home", "#6B2ED0"), reopened.GetTagAppearances().Single(tag => tag.Label == "Tenancy"));
+        Assert.Equal(documentId, Assert.Single(reopened.Find(new("type:lease (correspondent:Northstar OR field:deposit)", "Home"), token).Items).Id);
         Assert.Equal(originalBytes, File.ReadAllBytes(reopened.ResolvePdf(Assert.Single(reopened.Find(new(), token).Items))));
     }
 

@@ -74,7 +74,7 @@ internal sealed partial class LibraryCatalog
     private static readonly string[] Migrations =
         [Schema, FingerprintMigration, DisplayTitleMigration, PdfFingerprintMigration, OcrCopyMigration, AddedDateIndexMigration,
             PdfMoveMigration, SavedSearchMigration, DocumentDateMigration, TextPresenceMigration, TrashMigration, FilingMigration,
-            StructuredMetadataMigration, ArchiveSerialMigration];
+            StructuredMetadataMigration, ArchiveSerialMigration, DeadlineMigration, EmbeddingMigration, AssistantUndoMigration];
 
     internal static long SchemaVersion => Migrations.Length;
 
@@ -415,7 +415,15 @@ internal sealed partial class LibraryCatalog
         }
         if (filter.Tag is not null)
         {
-            conditions.Add("d.id IN (SELECT document_id FROM document_tags WHERE tag_key = $tag)");
+            conditions.Add("""
+                d.id IN (
+                    WITH RECURSIVE branch(key) AS (
+                        SELECT $tag UNION
+                        SELECT appearance.tag_key FROM tag_appearance appearance JOIN branch ON appearance.parent_key = branch.key
+                    )
+                    SELECT dt.document_id FROM document_tags dt JOIN branch ON dt.tag_key = branch.key
+                )
+                """);
             command.Parameters.AddWithValue("$tag", SearchTerms.TagKey(filter.Tag));
         }
         if (search.TagKeys.Count > 0)
@@ -438,6 +446,7 @@ internal sealed partial class LibraryCatalog
         {
             ApplyDocumentDateFilter(command, conditions, documentPeriod);
         }
+        foreach (var metadata in search.MetadataTerms) conditions.Add(MetadataSearchCondition(command, metadata));
         if (documentId is not null)
         {
             conditions.Add("d.id = $id");

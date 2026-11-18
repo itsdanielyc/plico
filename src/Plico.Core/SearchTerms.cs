@@ -17,6 +17,10 @@ internal static partial class SearchTerms
     private const string FolderPrefix = "folder:";
     private const string StatusPrefix = "status:";
     private const string TextPrefix = "text:";
+    private const string CorrespondentPrefix = "correspondent:";
+    private const string DocumentTypePrefix = "type:";
+    private const string FieldPrefix = "field:";
+    private const string ArchiveSerialPrefix = "asn:";
     private const string InboxStatus = "inbox";
     private const string ReviewedStatus = "reviewed";
     private const string TextMissing = "missing";
@@ -35,6 +39,7 @@ internal static partial class SearchTerms
     {
         internal bool IsValid => QueryIssue is null;
         internal BooleanSearch? Advanced { get; init; }
+        internal IReadOnlyList<MetadataSearchTerm> MetadataTerms { get; init; } = [];
         internal string HighlightExpression => Advanced?.PositiveText ?? string.Join(" OR ", FtsPhrases()
             .Matches(FullTextExpression).Select(match => match.Value));
     }
@@ -117,6 +122,10 @@ internal static partial class SearchTerms
             !query.Contains(DatedPrefix, StringComparison.OrdinalIgnoreCase) &&
             !query.Contains(StatusPrefix, StringComparison.OrdinalIgnoreCase) &&
             !query.Contains(TextPrefix, StringComparison.OrdinalIgnoreCase) &&
+            !query.Contains(CorrespondentPrefix, StringComparison.OrdinalIgnoreCase) &&
+            !query.Contains(DocumentTypePrefix, StringComparison.OrdinalIgnoreCase) &&
+            !query.Contains(FieldPrefix, StringComparison.OrdinalIgnoreCase) &&
+            !query.Contains(ArchiveSerialPrefix, StringComparison.OrdinalIgnoreCase) &&
             !query.Contains(FolderPrefix, StringComparison.OrdinalIgnoreCase)) return CompileParts(query, query, [], null, null, null);
 
         HashSet<string>? tagKeys = null;
@@ -125,6 +134,7 @@ internal static partial class SearchTerms
         string? folderPath = null;
         bool? reviewed = null;
         bool? hasText = null;
+        List<MetadataSearchTerm>? metadataTerms = null;
         var text = new StringBuilder(query.Length);
         int textStart = 0;
         for (int cursor = 0; cursor < query.Length;)
@@ -174,6 +184,14 @@ internal static partial class SearchTerms
                         return InvalidSearch(SearchQueryIssue.TextAvailability);
                     (hasText, clauseEnd) = availability;
                 }
+                else if (ReadMetadataPrefix(remaining) is { } prefix)
+                {
+                    if (ReadFilterValue(query, cursor + prefix.Length) is not { } value ||
+                        ReadMetadataTerm(prefix, value.Label) is not { } term)
+                        return InvalidSearch(SearchQueryIssue.StructuredMetadata);
+                    (metadataTerms ??= []).Add(term);
+                    clauseEnd = value.End;
+                }
             }
             if (clauseEnd > cursor)
             {
@@ -195,17 +213,49 @@ internal static partial class SearchTerms
 
         if (textStart == 0) return CompileParts(query, query, [], null, null, null);
         text.Append(query.AsSpan(textStart));
-        return CompileParts(query, text.ToString(), tagKeys is not null ? tagKeys : [], addedPeriod, documentPeriod, folderPath, reviewed, hasText);
+        return CompileParts(query, text.ToString(), tagKeys is not null ? tagKeys : [], addedPeriod, documentPeriod, folderPath,
+            reviewed, hasText, metadataTerms);
     }
 
     private static CompiledSearch CompileParts(string originalQuery, string textQuery, IReadOnlyCollection<string> tagKeys,
-        DatePeriod? addedPeriod, DatePeriod? documentPeriod, string? folderPath, bool? reviewed = null, bool? hasText = null)
+        DatePeriod? addedPeriod, DatePeriod? documentPeriod, string? folderPath, bool? reviewed = null, bool? hasText = null,
+        IReadOnlyList<MetadataSearchTerm>? metadataTerms = null)
     {
         string expression = FullTextExpression(textQuery);
         bool isValid = expression.Length > 0 || tagKeys.Count > 0 || addedPeriod.HasValue || documentPeriod.HasValue ||
-            folderPath is not null || reviewed.HasValue || hasText.HasValue || string.IsNullOrWhiteSpace(originalQuery);
+            folderPath is not null || reviewed.HasValue || hasText.HasValue || metadataTerms is { Count: > 0 } ||
+            string.IsNullOrWhiteSpace(originalQuery);
         return isValid ? new CompiledSearch(expression, tagKeys, addedPeriod, documentPeriod, folderPath, reviewed, hasText, QueryIssue: null)
+            { MetadataTerms = metadataTerms ?? [] }
             : InvalidSearch(SearchQueryIssue.NoSearchTerms);
+    }
+
+    internal enum MetadataSearchKind { Correspondent, DocumentType, Field, ArchiveSerial }
+    internal readonly record struct MetadataSearchTerm(MetadataSearchKind Kind, string NameKey, long Serial = 0);
+
+    private static string? ReadMetadataPrefix(ReadOnlySpan<char> value)
+    {
+        if (value.StartsWith(CorrespondentPrefix, StringComparison.OrdinalIgnoreCase)) return CorrespondentPrefix;
+        if (value.StartsWith(DocumentTypePrefix, StringComparison.OrdinalIgnoreCase)) return DocumentTypePrefix;
+        if (value.StartsWith(FieldPrefix, StringComparison.OrdinalIgnoreCase)) return FieldPrefix;
+        if (value.StartsWith(ArchiveSerialPrefix, StringComparison.OrdinalIgnoreCase)) return ArchiveSerialPrefix;
+        return null;
+    }
+
+    private static MetadataSearchTerm? ReadMetadataTerm(string prefix, string value)
+    {
+        string label = value.Trim();
+        if (label.Length == 0 || label.Any(char.IsControl)) return null;
+        if (prefix == ArchiveSerialPrefix)
+            return long.TryParse(label, NumberStyles.None, CultureInfo.InvariantCulture, out long serial) && serial > 0
+                ? new(MetadataSearchKind.ArchiveSerial, "", serial) : null;
+        var kind = prefix switch
+        {
+            CorrespondentPrefix => MetadataSearchKind.Correspondent,
+            DocumentTypePrefix => MetadataSearchKind.DocumentType,
+            _ => MetadataSearchKind.Field
+        };
+        return new(kind, label.Normalize(NormalizationForm.FormC).ToUpperInvariant());
     }
 
     private static CompiledSearch InvalidSearch(SearchQueryIssue issue) => new("", [], null, null, null, null, null, issue);
