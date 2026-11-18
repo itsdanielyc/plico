@@ -111,3 +111,8 @@ Ruling for v0.17.0. Implement the brief’s first nine ranked items together on 
 | 21 | Users can opt into a loopback model to review filing suggestions and ask questions using selected library text. Applying suggestions is explicit and reversible. | L1 validation, L3 protocol and privacy tests, L6 native review and chat |
 
 The intake lane owns format adapters, scanner and phone capture. The PDF and desktop lane owns versioned editing, binder export, PDF tools and desktop polish. The coordinator registers catalog migrations and integrates shared call sites and release evidence. [Capture and intake handoff](docs/handoff/capture-intake.md)
+## Capture and intake
+
+| Slice | Done when | Levels | Status |
+|---|---|---|---|
+| #17 Additional import formats | HEIC still photos, email, text and Markdown become searchable PDFs. Readable attachments travel with email. Office uses a private local LibreOffice process and reports a recoverable error when it is unavailable. | L0, L3, L6, L7 | Hosted verification pending |
