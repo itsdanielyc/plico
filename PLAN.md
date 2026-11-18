@@ -105,4 +105,4 @@ Ruling for v0.17.0. Implement the brief’s first nine ranked items together on 
 
 | Slice | Done when | Levels | Status |
 |---|---|---|---|
-| #17 Additional import formats | HEIC still photos, email, text and Markdown become searchable PDFs. Readable attachments travel with email. Office uses a private local LibreOffice process and reports a recoverable error when it is unavailable. | L0, L3, L6, L7 | Five hosted source runners passed. Package and Apple silicon checks are pending. |
+| #17 Additional import formats | HEIC still photos, email, text and Markdown become searchable PDFs. Readable attachments travel with email. Office uses a private local LibreOffice process and reports a recoverable error when it is unavailable. | L0, L3, L6, L7 | Native verification covered all six hosted targets. The installed LibreOffice probe passed on Ubuntu x64. The archive matrix is in progress. |
