@@ -79,13 +79,13 @@ public sealed partial class LibraryTests
     {
         var token = TestContext.Current.CancellationToken;
         using var temporary = new TemporaryLibrary();
-        string? occupiedPath = null;
+        bool createCollision = false;
         using var library = InboxLibrary.Open(temporary.Path, (source, destination, allowHardLink) =>
         {
-            if (destination == occupiedPath)
+            if (createCollision)
             {
                 File.Copy(Fixture(Mixed), destination);
-                occupiedPath = null;
+                createCollision = false;
             }
             return PdfFilePublication.TryClaim(source, destination, allowHardLink);
         });
@@ -93,7 +93,7 @@ public sealed partial class LibraryTests
         string restorePath = library.ResolvePdf(original);
         File.Delete(restorePath);
         library.Refresh(token);
-        occupiedPath = restorePath;
+        createCollision = true;
 
         var error = await Assert.ThrowsAsync<IOException>(() => library.RestoreUnavailablePdfAsync(original.RelativePath, Fixture(Letter), token));
 

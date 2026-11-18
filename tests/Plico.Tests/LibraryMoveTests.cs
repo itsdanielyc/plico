@@ -111,13 +111,13 @@ public sealed partial class LibraryMoveTests
     {
         var token = TestContext.Current.CancellationToken;
         using var temporary = new TemporaryLibrary();
-        string? occupiedPath = null;
+        string? occupiedFilename = null;
         string occupiedFixture = Path.Combine(AppContext.BaseDirectory, "fixtures", "Match Ledger.pdf");
         const string movedRelativePath = "Filed/Lease Renewal (2).pdf";
         long sourceId;
         using (var library = InboxLibrary.Open(temporary.Path, (source, destination, allowHardLink) =>
         {
-            if (destination == occupiedPath) File.Copy(occupiedFixture, destination);
+            if (Path.GetFileName(destination) == occupiedFilename) File.Copy(occupiedFixture, destination);
             return PdfFilePublication.TryClaim(source, destination, allowHardLink);
         }))
         {
@@ -130,7 +130,7 @@ public sealed partial class LibraryMoveTests
             library.AddTag(original.Id, "Archive");
             library.SetReviewed(original.Id, true);
             string filing = Directory.CreateDirectory(Path.Combine(library.PdfDirectory, "Filed")).FullName;
-            occupiedPath = Path.Combine(filing, Path.GetFileName(original.RelativePath));
+            occupiedFilename = Path.GetFileName(original.RelativePath);
             using var database = new SqliteConnection(new SqliteConnectionStringBuilder
             {
                 DataSource = Path.Combine(temporary.Path, ".plico", "catalog.sqlite3"),
@@ -145,7 +145,7 @@ public sealed partial class LibraryMoveTests
             command.ExecuteNonQuery();
             var error = await Assert.ThrowsAsync<SqliteException>(() => library.MovePdfAsync(original.Id, filing, token));
             Assert.Contains("Interrupted catalog update", error.Message, StringComparison.Ordinal);
-            Assert.Equal(File.ReadAllBytes(occupiedFixture), File.ReadAllBytes(occupiedPath));
+            Assert.Equal(File.ReadAllBytes(occupiedFixture), File.ReadAllBytes(Path.Combine(filing, occupiedFilename)));
             Assert.Equal(File.ReadAllBytes(Fixture), File.ReadAllBytes(Path.Combine(library.PdfDirectory, movedRelativePath)));
             Assert.False(File.Exists(library.ResolvePdf(original)));
             command.CommandText = "DROP TRIGGER fail_test_move;";
