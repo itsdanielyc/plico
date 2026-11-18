@@ -163,6 +163,10 @@ If the scanner reports an error after delivering pages, choose **Save partial PD
 
 Choose **Batch separators** in the scan dialog to split at PATCH-T sheets. An optional custom barcode value acts as a second separator. Put a separator between documents. Plico files the document pages and skips the separator sheets.
 
+Under **Library tools… → Archive serial numbers**, save a PATCH-T sheet or numbered labels for A4 or Letter paper. Print the PDF at actual size. Stick an ASN label on the first page of each document and turn on **Read archive serial number labels** before scanning. A label starts a document and stays on its first page. If a number is already reserved, Plico files the new PDF and reports the unassigned number.
+
+Use **Set number on this document…** to assign, change, or clear a number. **Find by archive number…** opens its matching PDF. One number can belong to one document in a library. A trashed or unavailable document keeps its number.
+
 Choose **Feeder · manual duplex** for a one-sided feeder. Scan all fronts, then turn the stack over so the last front is the first sheet for the back-side pass. Keep every sheet in both passes, including blanks. **Finish later** saves the fronts in this library. Choose manual duplex again to continue. If the back pass has the wrong number of pages, reload the full stack and retry.
 
 If your scanner software saves to a folder, choose **Watch a folder…** under **Library** and select its output folder. Plico imports new or updated PDFs and images after they settle. The watch covers files directly inside that folder and lasts while Plico is open. **Stop watching** ends intake. Your scanner's source files remain in the output folder.

@@ -8,7 +8,8 @@ namespace Plico.Core;
 
 public sealed partial class InboxLibrary
 {
-    private sealed record StagedScanDocument(string Output, string Title, byte[]? Identity, PdfText? Text, DocumentSummary? Existing);
+    private sealed record StagedScanDocument(string Output, string Title, byte[]? Identity, PdfText? Text, DocumentSummary? Existing,
+        long? ArchiveSerialNumber);
 
     /// <summary>Files a capture batch, splitting at enabled barcode markers and resuming a saved manual duplex pass.</summary>
     public Task<ScanBatchOutcome> ScanBatchAsync(ScanRequest request,
@@ -50,13 +51,13 @@ public sealed partial class InboxLibrary
                 return new ScanBatchOutcome([], interruption);
             }
             string batchTitle = interruption is null ? title : $"{title} (partial)";
-            var documents = await FileScanBatchAsync(stage, context, batchTitle, pages, options, target, language,
+            var batch = await FileScanBatchAsync(stage, context, batchTitle, pages, options, target, language,
                 identity: null, token).ConfigureAwait(false);
-            return new ScanBatchOutcome(documents, interruption);
+            return batch with { Interruption = interruption };
         }, cancellationToken);
 
     // O(pages + output bytes) time and O(pages) page references before OCR and publication.
-    private async Task<IReadOnlyList<DocumentSummary>> FileScanBatchAsync(string stage, ScanningContext context, string title,
+    private async Task<ScanBatchOutcome> FileScanBatchAsync(string stage, ScanningContext context, string title,
         List<ProcessedImage> pages, ScanBatchOptions? options, string? target, OcrLanguage language, string? identity,
         CancellationToken cancellationToken)
     {
@@ -67,6 +68,8 @@ public sealed partial class InboxLibrary
         }
 
         var staged = new List<StagedScanDocument>(groups.Count);
+        var conflicts = new List<ArchiveSerialConflict>();
+        var reserved = new HashSet<long>();
         for (int index = 0; index < groups.Count; index++)
         {
             cancellationToken.ThrowIfCancellationRequested();
@@ -75,14 +78,22 @@ public sealed partial class InboxLibrary
             string output = Path.Combine(stage, $"batch-{number}.pdf");
             byte[]? source = identity is null ? null : SHA256.HashData(Encoding.UTF8.GetBytes($"{identity}\n{number}"));
             var existing = source is null ? null : FindUnchangedCandidate(_catalog.FindSource(source), cancellationToken);
+            var group = groups[index];
+            long? serial = group.ArchiveSerialNumber;
+            if (serial is long value && (!reserved.Add(value) ||
+                (_catalog.FindArchiveSerialDocumentId(value, presentOnly: false) is long owner && owner != existing?.Id)))
+            {
+                conflicts.Add(new ArchiveSerialConflict(index + 1, value));
+                serial = null;
+            }
             PdfText? text = null;
             if (existing is null)
             {
-                text = await _processor.ExportCapturedAsync(context, groups[index], output, language, cancellationToken)
+                text = await _processor.ExportCapturedAsync(context, group.Pages, output, language, cancellationToken)
                     .ConfigureAwait(false);
-                if (text.PageCount != groups[index].Count) throw new InvalidDataException("A scan document is missing captured pages.");
+                if (text.PageCount != group.Pages.Count) throw new InvalidDataException("A scan document is missing captured pages.");
             }
-            staged.Add(new StagedScanDocument(output, documentTitle, source, text, existing));
+            staged.Add(new StagedScanDocument(output, documentTitle, source, text, existing, serial));
         }
 
         var documents = new List<DocumentSummary>(groups.Count);
@@ -90,8 +101,8 @@ public sealed partial class InboxLibrary
         {
             cancellationToken.ThrowIfCancellationRequested();
             documents.Add(document.Existing ?? CommitPdf(document.Output, document.Title, document.Text!, cancellationToken,
-                document.Identity, destinationFolder: target, recognizedLanguage: language));
+                document.Identity, destinationFolder: target, recognizedLanguage: language, archiveSerialNumber: document.ArchiveSerialNumber));
         }
-        return documents;
+        return new ScanBatchOutcome(documents) { SerialConflicts = conflicts };
     }
 }

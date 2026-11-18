@@ -1,5 +1,6 @@
 using System.Runtime.CompilerServices;
 using NAPS2.Images;
+using NAPS2.ImportExport;
 using NAPS2.Pdf;
 using NAPS2.Scan;
 using Plico.Core;
@@ -74,6 +75,49 @@ public sealed partial class LibraryTests
     }
 
     private sealed record CapturedPage(string File, string? Barcode = null);
+
+    [Fact]
+    public async Task ASerialLabelKeepsItsFirstPageAndAConflictKeepsTheCapture()
+    {
+        using var temporary = new TemporaryLibrary();
+        using var library = InboxLibrary.Open(temporary.Path);
+        var token = TestContext.Current.CancellationToken;
+        var reserved = await library.ImportAsync(Fixture(LeaseFixture), token);
+        library.SetArchiveSerialNumber(reserved.Id, 890);
+        var pages = new CapturedPage[] { new(LedgerFixture, "ASN00890"), new(LeaseFixture, "ASN891"), new(LedgerFixture) };
+        var batch = await library.StoreScanBatchAsync("Archive fixture",
+            (context, cancellation) => CapturedFixturePages(context, pages, cancellation), (_, _) => Task.FromResult(false),
+            null, new ScanBatchOptions(false, ReadArchiveSerialNumbers: true), false, token);
+
+        Assert.Equal(2, batch.Documents.Count);
+        Assert.Equal(new ArchiveSerialConflict(1, 890), Assert.Single(batch.SerialConflicts));
+        Assert.Null(library.ReadArchiveSerialNumber(batch.Documents[0].Id));
+        Assert.Equal(1, batch.Documents[0].PageCount);
+        Assert.Equal(2, batch.Documents[1].PageCount);
+        Assert.Equal(reserved.Id, library.FindByArchiveSerialNumber(890)?.Id);
+        Assert.Equal(batch.Documents[1].Id, library.FindByArchiveSerialNumber(891)?.Id);
+    }
+
+    [Fact]
+    public async Task PrintedSeparatorAndArchiveLabelsDecodeUsingTheScannerBarcodeOptions()
+    {
+        using var temporary = new TemporaryLibrary();
+        var token = TestContext.Current.CancellationToken;
+        string separator = Path.Combine(temporary.Path, "separator.pdf");
+        string labels = Path.Combine(temporary.Path, "labels.pdf");
+        ArchiveLabels.WriteSeparatorSheet(separator, ScanPaper.A4, token);
+        ArchiveLabels.WriteSerialSheet(labels, ScanPaper.Letter, 470, quantity: 1, token);
+
+        using var context = DocumentProcessor.CreateCaptureContext(temporary.Path);
+        var options = new ImportParams { BarcodeDetectionOptions = ScanBatchPages.BarcodeOptions(new(true, ReadArchiveSerialNumbers: true)) };
+        var importer = new PdfImporter(context);
+        var printed = new List<ProcessedImage>();
+        await DocumentProcessor.CollectPagesAsync(importer.Import(separator, options, token), printed, token);
+        await DocumentProcessor.CollectPagesAsync(importer.Import(labels, options, token), printed, token);
+        Assert.Equal(2, printed.Count);
+        Assert.True(printed[0].PostProcessingData.Barcode.IsPatchT);
+        Assert.Equal(470, ArchiveLabels.ReadBarcode(printed[1].PostProcessingData.Barcode.DetectedText));
+    }
 
     private static async IAsyncEnumerable<ProcessedImage> CapturedFixturePages(ScanningContext context,
         IReadOnlyList<CapturedPage> pages, [EnumeratorCancellation] CancellationToken cancellationToken)

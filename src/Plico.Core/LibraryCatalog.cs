@@ -122,11 +122,13 @@ internal sealed partial class LibraryCatalog
 
     internal long Upsert(string relativePath, string title, PdfText text, FileVersion version,
         byte[] pdfFingerprint, byte[]? sourceFingerprint = null, OcrCopySource? ocrCopySource = null,
-        IReadOnlyList<long>? metadataSourceIds = null, OcrLanguage? recognizedLanguage = null, MigrationWrite? migration = null)
+        IReadOnlyList<long>? metadataSourceIds = null, OcrLanguage? recognizedLanguage = null, MigrationWrite? migration = null,
+        long? archiveSerialNumber = null)
     {
         metadataSourceIds ??= ocrCopySource is { } origin ? [origin.DocumentId] : null;
         using var connection = Connect();
-        using var transaction = metadataSourceIds is { Count: > 0 } || recognizedLanguage.HasValue || migration is not null
+        using var transaction = metadataSourceIds is { Count: > 0 } || recognizedLanguage.HasValue || migration is not null ||
+                                archiveSerialNumber.HasValue
             ? connection.BeginTransaction() : null;
         using var command = connection.CreateCommand();
         command.Transaction = transaction;
@@ -185,6 +187,7 @@ internal sealed partial class LibraryCatalog
             command.ExecuteNonQuery();
         }
         if (migration is not null) WriteMigratedMetadata(connection, transaction!, documentId, migration, isNew: true);
+        if (archiveSerialNumber is long serial) WriteArchiveSerialNumber(connection, transaction!, documentId, serial);
         transaction?.Commit();
         return documentId;
     }

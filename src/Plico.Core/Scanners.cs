@@ -73,7 +73,8 @@ public sealed record ScanRequest(ScannerDevice Device, ScanFeed Feed, ScanPaper 
     ScanResolution Resolution = ScanResolution.Standard, ScanCleanup? Cleanup = null, ScanBatchOptions? Batch = null)
 {
     /// <summary>Whether the scan can produce multiple documents or needs a second feeder pass.</summary>
-    public bool RequiresBatchCapture => Feed == ScanFeed.ManualDuplex || Batch?.SplitOnSeparators == true;
+    public bool RequiresBatchCapture => Feed == ScanFeed.ManualDuplex || Batch?.SplitOnSeparators == true ||
+                                        Batch?.ReadArchiveSerialNumbers == true;
 }
 
 /// <summary>Discovered scanners and actionable messages from unavailable drivers.</summary>

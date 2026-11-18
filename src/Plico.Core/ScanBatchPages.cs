@@ -4,7 +4,7 @@ using NAPS2.Scan;
 namespace Plico.Core;
 
 /// <summary>Splits at PATCH-T or an optional additional barcode value, omitting each separator sheet.</summary>
-public sealed record ScanBatchOptions(bool SplitOnSeparators, string? SeparatorBarcode = null);
+public sealed record ScanBatchOptions(bool SplitOnSeparators, string? SeparatorBarcode = null, bool ReadArchiveSerialNumbers = false);
 
 /// <summary>A pending first pass is ready for its back sides.</summary>
 public sealed record ManualDuplexPrompt(int FrontPageCount);
@@ -14,7 +14,16 @@ public enum ManualDuplexDecision { ScanBacks, SaveForLater, Discard }
 
 /// <summary>The cataloged PDFs, an optional capture error, and whether a front pass is saved for later.</summary>
 public sealed record ScanBatchOutcome(IReadOnlyList<DocumentSummary> Documents, ScanInterruption? Interruption = null,
-    bool HasPendingDuplex = false);
+    bool HasPendingDuplex = false)
+{
+    /// <summary>Scanned serial assignments rejected because the numbers were already reserved.</summary>
+    public IReadOnlyList<ArchiveSerialConflict> SerialConflicts { get; init; } = [];
+}
+
+/// <summary>The serial and position of a scanned PDF that was filed without the contested number.</summary>
+public sealed record ArchiveSerialConflict(int DocumentNumber, long ArchiveSerialNumber);
+
+internal sealed record ScanBatchGroup(ICollection<ProcessedImage> Pages, long? ArchiveSerialNumber);
 
 internal static class ScanBatchPages
 {
@@ -22,8 +31,8 @@ internal static class ScanBatchPages
 
     internal static BarcodeDetectionOptions BarcodeOptions(ScanBatchOptions? options) => new()
     {
-        DetectBarcodes = options?.SplitOnSeparators == true,
-        PatchTOnly = string.IsNullOrEmpty(options?.SeparatorBarcode)
+        DetectBarcodes = options?.SplitOnSeparators == true || options?.ReadArchiveSerialNumbers == true,
+        PatchTOnly = options?.ReadArchiveSerialNumbers != true && string.IsNullOrEmpty(options?.SeparatorBarcode)
     };
 
     // O(n) time and space for n page references.
@@ -47,26 +56,31 @@ internal static class ScanBatchPages
     }
 
     // O(n) time and space for n page references. Each separator ends the current document.
-    internal static List<ICollection<ProcessedImage>> Split(List<ProcessedImage> pages, ScanBatchOptions? options)
+    internal static List<ScanBatchGroup> Split(List<ProcessedImage> pages, ScanBatchOptions? options)
     {
-        if (options?.SplitOnSeparators != true) return pages.Count == 0 ? [] : [pages];
+        if (options is null || (!options.SplitOnSeparators && !options.ReadArchiveSerialNumbers))
+            return pages.Count == 0 ? [] : [new ScanBatchGroup(pages, null)];
 
-        var documents = new List<ICollection<ProcessedImage>>();
+        var documents = new List<ScanBatchGroup>();
         var current = new List<ProcessedImage>();
+        long? currentSerial = null;
         foreach (var page in pages)
         {
             Barcode barcode = page.PostProcessingData.Barcode;
-            if (!barcode.IsPatchT && !(barcode.IsDetected && options.SeparatorBarcode is { Length: > 0 } separator &&
-                string.Equals(barcode.DetectedText, separator, StringComparison.Ordinal)))
+            bool separator = options.SplitOnSeparators && (barcode.IsPatchT ||
+                (barcode.IsDetected && options.SeparatorBarcode is { Length: > 0 } configured &&
+                 string.Equals(barcode.DetectedText, configured, StringComparison.Ordinal)));
+            long? serial = options.ReadArchiveSerialNumbers && barcode.IsDetected
+                ? ArchiveLabels.ReadBarcode(barcode.DetectedText) : null;
+            if (separator || serial.HasValue)
             {
-                current.Add(page);
-                continue;
+                if (current.Count > 0) documents.Add(new ScanBatchGroup(current, currentSerial));
+                current = [];
+                currentSerial = serial;
             }
-            if (current.Count == 0) continue;
-            documents.Add(current);
-            current = [];
+            if (!separator) current.Add(page);
         }
-        if (current.Count != 0) documents.Add(current);
+        if (current.Count != 0) documents.Add(new ScanBatchGroup(current, currentSerial));
         return documents;
     }
 }

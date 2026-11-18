@@ -90,6 +90,7 @@ internal static partial class NativeVerification
             await VerifyScannerDialogAsync(window, evidenceDirectory);
             string scanRecoveryEvidence = await VerifyScanRecoveryAsync(window, model, dialogs, evidenceDirectory);
             await VerifyManualDuplexDialogAsync(window, evidenceDirectory);
+            await VerifyArchiveSerialDialogAsync(window, evidenceDirectory);
             await VerifySavedSearchAsync(window, model, dialogs, evidenceDirectory);
             await VerifyDocumentDateAsync(window, model, dialogs, evidenceDirectory);
             await VerifyBatchOcrAsync(window, model, fixture, evidenceDirectory, priorOcrSource);
@@ -1106,6 +1107,9 @@ internal sealed partial class FixtureDialogs(params string[] documents) : IWorks
         PartialScanChoice?.Invoke(interruption, cancellationToken) ?? Task.FromResult(false);
     public Task<ManualDuplexDecision> ChooseDuplexActionAsync(ManualDuplexPrompt prompt, CancellationToken cancellationToken) =>
         Task.FromResult(ManualDuplexDecision.SaveForLater);
+    public Task<ArchiveSerialInput?> PickArchiveSerialAsync(ArchiveSerialAction action, long? current = null) =>
+        Task.FromResult<ArchiveSerialInput?>(null);
+    public Task<string?> PickArchiveSheetPathAsync(string filename) => Task.FromResult<string?>(null);
     public Task<string?> EditTitleAsync(string currentTitle) => Task.FromResult(EditedTitle);
     public Task<DocumentDateEdit?> EditDocumentDateAsync(DateOnly? currentDate) =>
         DocumentDateChoice?.Invoke(currentDate) ?? Task.FromResult<DocumentDateEdit?>(null);

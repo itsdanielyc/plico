@@ -374,7 +374,7 @@ public sealed partial class InboxLibrary : IDisposable
     private DocumentSummary CommitPdf(string stagedPdf, string title, PdfText text, CancellationToken cancellationToken,
         byte[]? sourceFingerprint = null, byte[]? pdfFingerprint = null, OcrCopySource? ocrCopySource = null,
         IReadOnlyList<long>? metadataSourceIds = null, string? destinationFolder = null, OcrLanguage? recognizedLanguage = null,
-        MigrationWrite? migration = null)
+        MigrationWrite? migration = null, long? archiveSerialNumber = null)
     {
         var version = FileVersion.Read(stagedPdf);
         var fingerprint = pdfFingerprint ?? FingerprintPdf(stagedPdf, cancellationToken);
@@ -388,7 +388,7 @@ public sealed partial class InboxLibrary : IDisposable
             _catalog.RecordPendingMigration(migration.Key, new(RelativePdfPath(path), fingerprint, sourceFingerprint));
         string publishedPdf = PublishPdf(stagedPdf, title, target, cancellationToken, reserve);
         long id = _catalog.Upsert(RelativePdfPath(publishedPdf), title, text, version, fingerprint, sourceFingerprint,
-            ocrCopySource, metadataSourceIds, recognizedLanguage, migration);
+            ocrCopySource, metadataSourceIds, recognizedLanguage, migration, archiveSerialNumber);
         return _catalog.Get(id);
     }
 

@@ -191,6 +191,13 @@
                                 <MenuItem Header="{translation:Tr CheckLibraryIntegrity}" Command="{Binding CheckIntegrityCommand}" />
                                 <MenuItem Header="{translation:Tr ExportLibraryMetadataJSON}" Command="{Binding ExportMetadataCommand}" />
                                 <MenuItem Header="{translation:Tr ExportSearchResultsCSV}" Command="{Binding ExportSearchCsvCommand}" />
+                                <MenuItem Header="Archive serial numbers">
+                                    <MenuItem Header="Set number on this document…" Command="{Binding EditArchiveSerialCommand}"
+                                              IsEnabled="{Binding HasSelection}" />
+                                    <MenuItem Header="Find by archive number…" Command="{Binding FindArchiveSerialCommand}" />
+                                    <MenuItem Header="Save label sheets…" Command="{Binding PrintArchiveLabelsCommand}" />
+                                    <MenuItem Header="Save a PATCH-T separator…" Command="{Binding PrintSeparatorSheetCommand}" />
+                                </MenuItem>
                                 <Separator />
                                 <MenuItem Header="{translation:Tr RefreshIndex}" Command="{Binding RefreshIndexCommand}" />
                                 <MenuItem Header="{translation:Tr MetadataDefinitions}" Command="{Binding ManageMetadataCommand}" />

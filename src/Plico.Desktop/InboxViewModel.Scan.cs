@@ -55,6 +55,10 @@ internal sealed partial class InboxViewModel
         int withoutText = batch.Documents.Count(document => !document.HasText);
         Status = $"{DocumentCount(batch.Documents.Count)} from the scan added to the inbox.";
         if (withoutText != 0) Status += $" {DocumentCount(withoutText)} without searchable text.";
+        foreach (var conflict in batch.SerialConflicts)
+        {
+            Status += $" Scan {conflict.DocumentNumber} filed unassigned. ASN {conflict.ArchiveSerialNumber} is in use.";
+        }
     }
 
     private async Task<bool> ConfirmPartialScanAsync(ScanInterruption interruption, CancellationToken cancellationToken)
