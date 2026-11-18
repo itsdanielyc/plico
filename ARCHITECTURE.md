@@ -133,6 +133,8 @@ The watch can also queue files already in its folder. It gathers supported top-l
 
 Resume and catch up starts the remembered watch and checks existing files in one desktop operation. The desktop publishes the active watch after queuing finishes and disposes a watcher if startup fails or is cancelled. Queued files use the established stability and duplicate checks.
 
+Catch-up on open uses a separate machine-local preference keyed by library path. A missing setting defaults to off. The window starts catch-up after its library and OCR settings are loaded. Library selection starts catch-up within the same cancellable operation after opening a different library.
+
 ## Scope decisions
 
 Keep one catalog per library. An additional database or search daemon would add setup and duplicate state. Each installer uses the same published application files as its portable archive. Windows setup generates an uninstall list from those files and removes directories only when empty. The macOS disk image carries the signed app and an Applications link. The Ubuntu package owns the application, launcher, and desktop entry. The library belongs to the user.

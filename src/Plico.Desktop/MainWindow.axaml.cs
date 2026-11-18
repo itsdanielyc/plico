@@ -28,6 +28,12 @@ public sealed partial class MainWindow : Window
         };
     }
 
+    protected override async void OnOpened(EventArgs e)
+    {
+        base.OnOpened(e);
+        if (ViewModel is { } model) await model.CatchUpWhenWindowOpensAsync();
+    }
+
     protected override void OnKeyDown(KeyEventArgs e)
     {
         base.OnKeyDown(e);

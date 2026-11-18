@@ -1,0 +1,153 @@
+using Avalonia.Controls;
+using Avalonia.Controls.Primitives;
+using Avalonia.Headless.XUnit;
+using Plico.Desktop;
+using Xunit;
+
+namespace Plico.Tests;
+
+public sealed partial class InboxWindowTests
+{
+    [AvaloniaFact]
+    public async Task CatchUpOnOpenIsOptInAndSurvivesReopeningTheWindow()
+    {
+        using var library = new TemporaryLibrary();
+        using var source = new TemporaryLibrary();
+        using var settings = new TemporaryLibrary();
+        var preference = new WatchFolderPreference(settings.Path);
+        preference.Save(library.Path, source.Path);
+
+        using (var first = new InboxViewModel(new FixtureDialogs(), watchPreference: preference))
+        {
+            first.InitializeLibrary(() => library.Path);
+            var window = new MainWindow { DataContext = first };
+            window.Show();
+            try
+            {
+                Assert.False(first.IsWatchingFolder);
+                var check = Assert.IsType<CheckBox>(window.FindControl<CheckBox>("CatchUpOnOpenCheckBox"));
+                Assert.True(check.IsEffectivelyVisible);
+                Assert.Equal(false, check.IsChecked);
+                check.SetCurrentValue(ToggleButton.IsCheckedProperty, true);
+                Assert.False(first.IsWatchingFolder);
+            }
+            finally { window.Close(); }
+        }
+
+        string scan = PutScanInFolder(source.Path);
+        using (var reopened = new InboxViewModel(new FixtureDialogs(), watchPreference: new WatchFolderPreference(settings.Path)))
+        {
+            reopened.InitializeLibrary(() => library.Path);
+            var window = new MainWindow { DataContext = reopened };
+            window.Show();
+            try
+            {
+                await WaitForAsync(() => reopened.IsWatchingFolder && reopened.InboxCount == 1 && !reopened.IsBusy);
+                Assert.True(File.Exists(scan));
+                var check = Assert.IsType<CheckBox>(window.FindControl<CheckBox>("CatchUpOnOpenCheckBox"));
+                Assert.Equal(true, check.IsChecked);
+                check.SetCurrentValue(ToggleButton.IsCheckedProperty, false);
+                await WaitForAsync(() => reopened.Documents.Count == 1);
+                await WaitForPreviewAsync(reopened);
+            }
+            finally
+            {
+                await reopened.PrepareCloseAsync();
+                window.Close();
+            }
+        }
+
+        using var disabled = new InboxViewModel(new FixtureDialogs(), watchPreference: new WatchFolderPreference(settings.Path));
+        disabled.InitializeLibrary(() => library.Path);
+        var disabledWindow = new MainWindow { DataContext = disabled };
+        disabledWindow.Show();
+        try
+        {
+            Assert.False(disabled.IsWatchingFolder);
+            Assert.False(disabled.IsBusy);
+            Assert.Equal(false, Assert.IsType<CheckBox>(disabledWindow.FindControl<CheckBox>("CatchUpOnOpenCheckBox")).IsChecked);
+            await WaitForPreviewAsync(disabled);
+        }
+        finally
+        {
+            await disabled.PrepareCloseAsync();
+            disabledWindow.Close();
+        }
+    }
+
+    [AvaloniaFact]
+    public async Task ChoosingALibraryCatchesUpOnlyIfThatLibraryIsEnabled()
+    {
+        using var first = new TemporaryLibrary();
+        using var second = new TemporaryLibrary();
+        using var firstSource = new TemporaryLibrary();
+        using var secondSource = new TemporaryLibrary();
+        using var settings = new TemporaryLibrary();
+        var preference = new WatchFolderPreference(settings.Path);
+        preference.Save(first.Path, firstSource.Path);
+        preference.Save(second.Path, secondSource.Path);
+        preference.SaveCatchUpOnOpen(second.Path, true);
+        PutScanInFolder(firstSource.Path);
+        PutScanInFolder(secondSource.Path);
+        var dialogs = new FixtureDialogs { FolderPath = second.Path };
+        using var model = new InboxViewModel(dialogs, watchPreference: preference);
+        model.InitializeLibrary(() => first.Path);
+
+        try
+        {
+            await model.ChooseLibraryCommand.ExecuteAsync(null);
+            await WaitForAsync(() => model.IsWatchingFolder && model.InboxCount == 1 && !model.IsBusy);
+            Assert.Equal(second.Path, model.LibraryPath);
+            Assert.Equal(Path.GetFileName(secondSource.Path), model.WatchedFolderName);
+            await model.StopFolderWatchCommand.ExecuteAsync(null);
+            await model.ChooseLibraryCommand.ExecuteAsync(null);
+            Assert.Equal("Library already open.", model.Status);
+            Assert.False(model.IsWatchingFolder);
+
+            dialogs.FolderPath = first.Path;
+            await model.ChooseLibraryCommand.ExecuteAsync(null);
+            Assert.Equal(first.Path, model.LibraryPath);
+            Assert.False(model.IsWatchingFolder);
+            Assert.Equal(0, model.InboxCount);
+        }
+        finally { await model.PrepareCloseAsync(); }
+    }
+
+    [AvaloniaFact]
+    public async Task OpeningALibraryWithAMissingSavedSourceLeavesItUsable()
+    {
+        using var library = new TemporaryLibrary();
+        using var source = new TemporaryLibrary();
+        using var settings = new TemporaryLibrary();
+        string missing = Path.Combine(source.Path, "Scanner output");
+        var preference = new WatchFolderPreference(settings.Path);
+        preference.Save(library.Path, missing);
+        preference.SaveCatchUpOnOpen(library.Path, true);
+        using var model = new InboxViewModel(new FixtureDialogs(), watchPreference: preference);
+        model.InitializeLibrary(() => library.Path);
+        var window = new MainWindow { DataContext = model };
+        window.Show();
+        try
+        {
+            await WaitForAsync(() => !model.IsBusy && model.Status.Contains("The folder is unavailable.", StringComparison.Ordinal));
+            Assert.True(model.HasLibrary);
+            Assert.True(model.CanWork);
+            Assert.False(model.IsWatchingFolder);
+            Assert.True(model.CanOfferResumeFolderWatch);
+            Assert.Equal(missing, model.RememberedWatchFolder);
+        }
+        finally
+        {
+            await model.PrepareCloseAsync();
+            window.Close();
+        }
+    }
+
+    private static string PutScanInFolder(string folder)
+    {
+        string fixture = Path.Combine(AppContext.BaseDirectory, "fixtures", "Lease Renewal.pdf");
+        string scan = Path.Combine(folder, "Saved scan.pdf");
+        File.Copy(fixture, scan);
+        return scan;
+    }
+}

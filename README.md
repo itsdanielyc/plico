@@ -139,6 +139,8 @@ The number beside **Inbox** is the total awaiting review. Watched imports update
 
 Plico remembers the chosen folder for the current library. **Resume folder watch** starts watching it again. **Resume and catch up** also checks files already in that folder, including scans saved while Plico was closed.
 
+Enable **Catch up on open** to resume the saved watch and check existing scans whenever you open that library on this computer. **Stop watching** pauses the current session. Use the checkbox to control future opens.
+
 Choose **Import existing files** while a watch is active to check its current files again. Exact copies already in the library are skipped.
 
 If the operating system reports lost notifications, Plico checks the folder again and queues scans that appeared or changed during the watch. **Import existing files** is still available for older files.

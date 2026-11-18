@@ -9,17 +9,47 @@ internal sealed partial class InboxViewModel
 {
     private FolderWatch? _folderWatch;
     private readonly WatchFolderPreference? _watchPreference;
+    private bool _catchUpOnOpen;
     [ObservableProperty] private string? _rememberedWatchFolder;
 
     public bool IsWatchingFolder => _folderWatch is not null;
     public bool CanStartFolderWatch => CanWork && !IsWatchingFolder;
     public bool CanOfferResumeFolderWatch => RememberedWatchFolder is not null && !IsWatchingFolder;
     public bool CanOfferImportWatchFiles => IsWatchingFolder || CanOfferResumeFolderWatch;
+    public bool CanOfferCatchUpOnOpen => _watchPreference is not null && RememberedWatchFolder is not null;
     public string ImportWatchFilesLabel => IsWatchingFolder ? "Import existing files" : "Resume and catch up";
     public string WatchedFolderPath => _folderWatch?.Folder ?? "";
     public string WatchedFolderName => IsWatchingFolder
         ? new DirectoryInfo(WatchedFolderPath).Name
         : "";
+
+    public bool CatchUpOnOpen
+    {
+        get => _catchUpOnOpen;
+        set
+        {
+            if (value == _catchUpOnOpen) return;
+            if (IsBusy || _library is not { } library || _watchPreference is not { } preference || RememberedWatchFolder is not { } folder)
+            {
+                OnPropertyChanged(nameof(CatchUpOnOpen));
+                return;
+            }
+            try
+            {
+                if (value && preference.Load(library.RootPath) != folder) preference.Save(library.RootPath, folder);
+                preference.SaveCatchUpOnOpen(library.RootPath, value);
+                SetProperty(ref _catchUpOnOpen, value);
+            }
+            catch (Exception error) when (error is IOException or UnauthorizedAccessException)
+            {
+                Status = error.Message;
+                OnPropertyChanged(nameof(CatchUpOnOpen));
+            }
+        }
+    }
+
+    internal Task CatchUpWhenWindowOpensAsync() =>
+        CanWork && CatchUpOnOpen ? ResumeRememberedWatchAsync(queueExistingFiles: true) : Task.CompletedTask;
 
     [RelayCommand]
     private Task StartFolderWatchAsync() => RunOperationAsync("Choose a scanner output folder…", async token =>
@@ -104,9 +134,14 @@ internal sealed partial class InboxViewModel
     private string? RestoreWatchFolder(string libraryRoot)
     {
         RememberedWatchFolder = null;
+        SetProperty(ref _catchUpOnOpen, false, nameof(CatchUpOnOpen));
         try
         {
-            RememberedWatchFolder = _watchPreference?.Load(libraryRoot);
+            if (_watchPreference is { } preference && preference.Load(libraryRoot) is { } folder)
+            {
+                RememberedWatchFolder = folder;
+                SetProperty(ref _catchUpOnOpen, preference.LoadCatchUpOnOpen(libraryRoot), nameof(CatchUpOnOpen));
+            }
             return null;
         }
         catch (Exception error) when (error is IOException or UnauthorizedAccessException)
@@ -119,6 +154,7 @@ internal sealed partial class InboxViewModel
     {
         OnPropertyChanged(nameof(CanOfferResumeFolderWatch));
         OnPropertyChanged(nameof(CanOfferImportWatchFiles));
+        OnPropertyChanged(nameof(CanOfferCatchUpOnOpen));
     }
 
     [RelayCommand]

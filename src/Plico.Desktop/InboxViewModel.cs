@@ -143,7 +143,7 @@ internal sealed partial class InboxViewModel : ObservableObject, IDisposable
     }
 
     [RelayCommand]
-    private Task ChooseLibraryAsync() => RunOperationAsync("Choose a library folder…", async _ =>
+    private Task ChooseLibraryAsync() => RunOperationAsync("Choose a library folder…", async token =>
     {
         var selected = await _dialogs.PickFolderAsync("Choose a Plico library folder");
         if (selected is null)
@@ -151,12 +151,18 @@ internal sealed partial class InboxViewModel : ObservableObject, IDisposable
             Status = "Folder selection closed.";
             return;
         }
+        token.ThrowIfCancellationRequested();
         if (_library is { } library && Path.GetRelativePath(library.RootPath, selected) != ".")
         {
             await StopFolderWatchAsync();
         }
-        OpenLibrary(selected);
+        token.ThrowIfCancellationRequested();
+        bool opened = OpenLibrary(selected);
         _rememberLocation?.Invoke(LibraryPath);
+        if (opened && CatchUpOnOpen && RememberedWatchFolder is { } folder)
+        {
+            await StartWatchAsync(folder, token, queueExistingFiles: true);
+        }
     });
 
     [RelayCommand] private void Cancel() => _operationCancellation?.Cancel();
@@ -243,13 +249,13 @@ internal sealed partial class InboxViewModel : ObservableObject, IDisposable
     internal void RemoveTag(string tag) =>
         UpdateDocument((library, document) => library.RemoveTag(document.Id, tag), "Tag removed.");
 
-    private void OpenLibrary(string directory)
+    private bool OpenLibrary(string directory)
     {
         string target = Path.GetFullPath(directory);
         if (_library is not null && Path.GetRelativePath(_library.RootPath, target) == ".")
         {
             Status = "Library already open.";
-            return;
+            return false;
         }
 
         var replacement = InboxLibrary.Open(target);
@@ -283,6 +289,7 @@ internal sealed partial class InboxViewModel : ObservableObject, IDisposable
         if (importNotice is not null) Status += $" {importNotice}";
         if (intakeNotice is not null) Status += $" {intakeNotice}";
         if (replacement.MoveRecoveryNotice is { } moveNotice) Status += $" {moveNotice}";
+        return true;
     }
 
     private async Task ImportFilesAsync(IReadOnlyList<string> files, CancellationToken token, bool revealAdded = true,

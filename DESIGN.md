@@ -16,6 +16,8 @@ An active watch offers **Import existing files** under the folder name. The stat
 
 A paused watch offers **Resume folder watch** and **Resume and catch up**. Catch-up checks files already in the saved folder, then the action returns to **Import existing files** while the watch is active.
 
+**Catch up on open** appears when the library has a saved watch. It controls future library opens. A startup error leaves the library open with its manual resume actions available.
+
 The scan picker offers address entry alongside discovery. Connecting shows the device model and selects it so the same paper controls and Scan to inbox action apply.
 
 The picker restores the last scanner used to start a job when that device is available. Switching scanners restores the chosen device's paper controls. Refresh keeps the selected device when it is still available.
