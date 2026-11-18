@@ -33,6 +33,8 @@ The runtime carries English, French, and German Tesseract models. The app captur
 
 Direct scanner addresses are stored in per-user settings. A short write lease and atomic replacement preserve entries when separate Plico instances save them. The scanner picker reconstructs saved entries locally and checks the device when it starts a scan.
 
+The desktop holds unresolved import errors by source path for the active library. A successful retry clears that entry. Retry passes those paths through the same snapshot, OCR, and duplicate checks as regular intake.
+
 The picker saves the three typed capture choices together as one local settings file. A read with invalid values uses the regional defaults until the user selects a valid configuration.
 
 Folder watch coalesces filesystem events by path and samples pending files until two consecutive observations agree. It stays idle without pending events. Ready files wait for the current desktop operation, then use the same snapshot and duplicate checks as manual import. Watching stops with the active window or when the library changes. [.NET FileSystemWatcher](https://learn.microsoft.com/en-us/dotnet/api/system.io.filesystemwatcher)

@@ -1,5 +1,11 @@
 # Changelog
 
+## [0.14.0] - 2026-11-18
+
+- Open **Import errors** to see each unresolved file and its reason.
+- **Retry files** processes the unresolved inputs through the regular import workflow. Successful retries leave the error list.
+- **Clear list** resets the current library's error report.
+
 ## [0.13.0] - 2026-11-18
 
 - Back up your open library into a new folder containing the PDFs and a catalog snapshot.

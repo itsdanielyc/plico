@@ -11,7 +11,7 @@
 
 ## Critical journeys
 
-1. Import a digital PDF with selectable text. The PDF stays intact and a body term finds it after reopening the library (L3).
+1. Import a digital PDF with selectable text and find it after reopening the library. Inspect damaged inputs and retry repaired files through the desktop (L3, L4 and L6).
 2. Import image-only documents with the bundled OCR languages and verify accents in the embedded text. Check quoted search and the language preference (L3, L4 and L6).
 3. Tag and filter a document. Tag a selection and mark it reviewed or return it to the inbox. An unavailable document cancels the batch (L3, L4 and L6).
 4. Start each published bundle and make a portable backup. Reopen it with its metadata and verify cancellation clears staging (L3, L6 and L7).

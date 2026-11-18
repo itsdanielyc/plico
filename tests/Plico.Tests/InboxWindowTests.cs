@@ -337,6 +337,42 @@ public sealed class InboxWindowTests
         }
     }
 
+    [AvaloniaFact]
+    public async Task ImportErrorsRetainAllFailuresAndRetryOnlyThoseFiles()
+    {
+        using var library = new TemporaryLibrary();
+        using var files = new TemporaryLibrary();
+        string firstError = Path.Combine(files.Path, "First damaged.pdf");
+        string secondError = Path.Combine(files.Path, "Second damaged.pdf");
+        File.WriteAllText(firstError, "Invalid PDF");
+        File.WriteAllText(secondError, "Another invalid PDF");
+        string fixtureDirectory = Path.Combine(AppContext.BaseDirectory, "fixtures");
+        string goodImage = Path.Combine(fixtureDirectory, "Hardware Store Receipt.png");
+        var dialogs = new FixtureDialogs(firstError, goodImage, secondError);
+        using var model = new InboxViewModel(dialogs);
+        model.InitializeLibrary(() => library.Path);
+
+        await model.AddFilesCommand.ExecuteAsync(null);
+        await WaitForPreviewAsync(model);
+        var firstDocument = Assert.Single(model.Documents);
+        Assert.Equal(new[] { firstError, secondError }, model.ImportFailures.Select(error => error.SourcePath));
+
+        dialogs.SelectedFiles = [goodImage];
+        await model.AddFilesCommand.ExecuteAsync(null);
+        Assert.Equal(2, model.ImportFailures.Count);
+
+        File.Copy(Path.Combine(fixtureDirectory, "Lease Renewal.pdf"), firstError, overwrite: true);
+        File.Copy(Path.Combine(fixtureDirectory, "Mixed Pages.pdf"), secondError, overwrite: true);
+        dialogs.ImportErrorsChoice = ImportErrorsAction.Retry;
+        await model.InspectImportErrorsCommand.ExecuteAsync(null);
+        await WaitForPreviewAsync(model);
+
+        Assert.Empty(model.ImportFailures);
+        Assert.Equal(3, model.Documents.Count);
+        Assert.Contains(model.Documents, document => document.Id == firstDocument.Id);
+        Assert.Equal(new[] { firstError, secondError }, dialogs.InspectedImportFailures.Select(error => error.SourcePath));
+    }
+
     private static async Task WaitForAsync(Func<bool> condition)
     {
         using var timeout = CancellationTokenSource.CreateLinkedTokenSource(TestContext.Current.CancellationToken);

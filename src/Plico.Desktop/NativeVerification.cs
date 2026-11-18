@@ -56,16 +56,56 @@ internal static class NativeVerification
             await VerifyBatchReviewAsync(window, model, evidenceDirectory);
             await VerifyOcrLanguageAsync(window, model, dialogs, fixture, evidenceDirectory);
             await VerifyLibraryBackupAsync(window, dialogs, evidenceDirectory);
+            await VerifyImportErrorsAsync(window, model, dialogs, fixture, evidenceDirectory);
             await VerifyScannerDialogAsync(window, evidenceDirectory);
 
             File.WriteAllText(Path.Combine(evidenceDirectory, "passed.txt"),
-                "Native window completed multilingual OCR, phrase search, duplicate drop, folder watch, title edit, relocation, batch actions, library backup, and scanner settings display.");
+                "Native window completed multilingual OCR, phrase search, duplicate drop, folder watch, title edit, relocation, batch actions, library backup, and import retry.");
             desktop.Shutdown(0);
         }
         catch (Exception error)
         {
             File.WriteAllText(Path.Combine(evidenceDirectory, "error.txt"), error.ToString());
             desktop.Shutdown(1);
+        }
+    }
+
+    private static async Task VerifyImportErrorsAsync(MainWindow window, InboxViewModel model, FixtureDialogs dialogs,
+        string fixture, string directory)
+    {
+        var input = Directory.CreateTempSubdirectory("plico-verify-retry-");
+        try
+        {
+            string damaged = Path.Combine(input.FullName, "Check import.pdf");
+            File.WriteAllText(damaged, "Invalid test PDF");
+            dialogs.SelectedFiles = [damaged];
+            await ((IAsyncRelayCommand)Control<Button>(window, "AddFilesButton").Command!).ExecuteAsync(null);
+            var errors = Control<Button>(window, "ImportErrorsButton");
+            Require(errors.IsVisible && model.ImportFailures.Single().SourcePath == damaged,
+                "The native window did not report the damaged input.");
+
+            var dialog = new ImportErrorsDialog(model.ImportFailures);
+            var closed = dialog.ShowDialog<ImportErrorsAction>(window);
+            try
+            {
+                Require(Control<ListBox>(dialog, "FailuresList").ItemCount == 1, "The detail window did not list the source.");
+                await CaptureAsync(dialog, directory, "import-errors.png");
+            }
+            finally
+            {
+                dialog.Close();
+                await closed;
+            }
+
+            File.Copy(Path.Combine(Path.GetDirectoryName(fixture)!, "Mixed Pages.pdf"), damaged, overwrite: true);
+            dialogs.ImportErrorsChoice = ImportErrorsAction.Retry;
+            await ((IAsyncRelayCommand)errors.Command!).ExecuteAsync(null);
+            await UntilAsync(() => model.SelectedDocument?.Title == "Check import" && model.Preview is not null, () => model.Status);
+            Require(model.ImportFailures.Count == 0 && !errors.IsVisible, "The repaired file remained in the error list.");
+        }
+        finally
+        {
+            input.Delete(recursive: true);
         }
     }
 
@@ -335,10 +375,17 @@ internal sealed class FixtureDialogs(params string[] documents) : IWorkspaceDial
     internal string? FolderPath { get; set; }
     internal string? EditedTitle { get; init; }
     internal string? LastOpenedPath { get; private set; }
+    internal ImportErrorsAction ImportErrorsChoice { get; set; }
+    internal IReadOnlyList<ImportFailure> InspectedImportFailures { get; private set; } = [];
     internal IReadOnlyList<string> SelectedFiles { get; set; } = documents;
     public Task<IReadOnlyList<string>> PickDocumentsAsync() => Task.FromResult(SelectedFiles);
     public Task<string?> PickFolderAsync(string title) => Task.FromResult(FolderPath);
     public Task<ScanRequest?> PickScannerAsync() => Task.FromResult<ScanRequest?>(null);
     public Task<string?> EditTitleAsync(string currentTitle) => Task.FromResult(EditedTitle);
+    public Task<ImportErrorsAction> ShowImportErrorsAsync(IReadOnlyList<ImportFailure> failures)
+    {
+        InspectedImportFailures = failures;
+        return Task.FromResult(ImportErrorsChoice);
+    }
     public void OpenPath(string path) => LastOpenedPath = path;
 }

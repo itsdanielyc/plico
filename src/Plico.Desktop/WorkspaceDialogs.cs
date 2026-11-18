@@ -12,6 +12,7 @@ internal interface IWorkspaceDialogs
     Task<string?> PickFolderAsync(string title);
     Task<ScanRequest?> PickScannerAsync();
     Task<string?> EditTitleAsync(string currentTitle);
+    Task<ImportErrorsAction> ShowImportErrorsAsync(IReadOnlyList<ImportFailure> failures);
     void OpenPath(string path);
 }
 
@@ -52,6 +53,9 @@ internal sealed class WorkspaceDialogs(Window owner) : IWorkspaceDialogs
 
     public Task<string?> EditTitleAsync(string currentTitle) =>
         new DocumentTitleDialog(currentTitle).ShowDialog<string?>(owner);
+
+    public Task<ImportErrorsAction> ShowImportErrorsAsync(IReadOnlyList<ImportFailure> failures) =>
+        new ImportErrorsDialog(failures).ShowDialog<ImportErrorsAction>(owner);
 
     public void OpenPath(string path)
     {

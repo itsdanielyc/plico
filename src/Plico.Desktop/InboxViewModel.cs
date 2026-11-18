@@ -208,6 +208,7 @@ internal sealed partial class InboxViewModel : ObservableObject, IDisposable
         _library = replacement;
         CancelPreview();
         previous?.Dispose();
+        ClearImportErrors();
         SelectedDocument = null;
         LibraryPath = replacement.RootPath;
         OnPropertyChanged(nameof(HasLibrary));
@@ -223,7 +224,8 @@ internal sealed partial class InboxViewModel : ObservableObject, IDisposable
     {
         var library = RequireLibrary();
         var language = RecognitionLanguage;
-        var failures = new List<string>();
+        var failures = new List<ImportFailure>();
+        bool reportChanged = false;
         DocumentSummary? lastAdded = null;
         int added = 0;
         int alreadyPresent = 0;
@@ -238,6 +240,7 @@ internal sealed partial class InboxViewModel : ObservableObject, IDisposable
                 try
                 {
                     var result = await Task.Run(() => library.ImportFileAsync(file, token, language), token);
+                    reportChanged |= _unresolvedImports.Remove(file);
                     if (!result.Added)
                     {
                         alreadyPresent++;
@@ -249,12 +252,16 @@ internal sealed partial class InboxViewModel : ObservableObject, IDisposable
                 }
                 catch (Exception error) when (error is not OperationCanceledException)
                 {
-                    failures.Add($"{filename} — {error.Message}");
+                    var failure = new ImportFailure(file, error.Message);
+                    failures.Add(failure);
+                    _unresolvedImports[file] = failure;
+                    reportChanged = true;
                 }
             }
         }
         finally
         {
+            if (reportChanged) ImportFailures = _unresolvedImports.Values.ToArray();
             if (lastAdded is not null)
             {
                 if (revealAdded) Navigate(inboxOnly: true, preferredId: lastAdded.Id);
@@ -266,7 +273,7 @@ internal sealed partial class InboxViewModel : ObservableObject, IDisposable
         if (added > 0) outcomes.Add($"{DocumentCount(added)} added.");
         if (alreadyPresent > 0) outcomes.Add($"{DocumentCount(alreadyPresent)} already in the library.");
         if (unreadable > 0) outcomes.Add($"No text recognized in {DocumentCount(unreadable)}.");
-        if (failures.Count > 0) outcomes.Add($"{failures.Count} failed. {failures[0]}");
+        if (failures.Count > 0) outcomes.Add($"{failures.Count} failed. {failures[0].Filename} — {failures[0].Reason}");
         Status = string.Join(" ", outcomes);
     }
 
