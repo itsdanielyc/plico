@@ -164,8 +164,8 @@
             <Border Background="#FCFDF8" BorderBrush="#DDE2D7" BorderThickness="0,0,0,1" Padding="25,16">
                 <Grid ColumnDefinitions="*,Auto,Auto,Auto" ColumnSpacing="10">
                     <TextBox x:Name="SearchBox" Text="{Binding Query, Mode=TwoWay}" MaxLength="256"
-                             PlaceholderText="Search text, tag:…, added:…, folder:…" AutomationProperties.Name="Search documents"
-                             ToolTip.Tip="Use tag:tax, added:2026-11, or folder:&quot;Filed/Property&quot;. Put exact phrases in quotation marks."
+                             PlaceholderText="Search text, tag:…, dated:…, added:…, folder:…" AutomationProperties.Name="Search documents"
+                             ToolTip.Tip="Use dated:2024-02 for a document date and added:2026-11 for the date added. Combine them with tag:tax, folder:&quot;Filed/Property&quot;, or a quoted phrase."
                              VerticalContentAlignment="Center" CornerRadius="8" MinHeight="38">
                         <TextBox.InnerLeftContent>
                             <PathIcon Width="15" Height="15" Margin="11,0,1,0" Foreground="#536459"
@@ -233,7 +233,11 @@
                                             </Border>
                                             <StackPanel Grid.Column="1" Spacing="4">
                                                 <TextBlock Text="{Binding Title}" FontSize="13" FontWeight="SemiBold" TextTrimming="CharacterEllipsis" />
-                                                <TextBlock Text="{Binding AddedAt.LocalDateTime, StringFormat='{}{0:dd MMM yyyy}'}" Classes="muted" />
+                                                <WrapPanel Orientation="Horizontal">
+                                                    <TextBlock Text="{Binding DocumentDate, StringFormat='Dated {0:dd MMM yyyy}'}" Classes="muted"
+                                                               IsVisible="{Binding HasDocumentDate}" Margin="0,0,10,0" />
+                                                    <TextBlock Text="{Binding AddedAt.LocalDateTime, StringFormat='Added {0:dd MMM yyyy}'}" Classes="muted" />
+                                                </WrapPanel>
                                                 <TextBlock Text="{Binding Match}" Classes="muted" TextWrapping="Wrap"
                                                            MaxLines="2" TextTrimming="CharacterEllipsis" />
                                             </StackPanel>
@@ -290,6 +294,11 @@
                                         <Button x:Name="PdfLocationButton" Classes="document-location" Command="{Binding OpenDocumentFolderCommand}"
                                                 ToolTip.Tip="Open containing folder" AutomationProperties.Name="Open PDF's containing folder">
                                             <TextBlock Text="{Binding SelectedDocument.RelativePath}" Foreground="#386447" FontSize="12"
+                                                       TextDecorations="Underline" TextTrimming="CharacterEllipsis" />
+                                        </Button>
+                                        <Button x:Name="EditDocumentDateButton" Classes="document-location" Command="{Binding EditDocumentDateCommand}"
+                                                IsEnabled="{Binding CanWork}" ToolTip.Tip="Edit document date" AutomationProperties.Name="Edit document date">
+                                            <TextBlock Text="{Binding DocumentDateAction}" Foreground="#386447" FontSize="12"
                                                        TextDecorations="Underline" TextTrimming="CharacterEllipsis" />
                                         </Button>
                                     </StackPanel>

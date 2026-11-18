@@ -14,6 +14,7 @@ internal interface IWorkspaceDialogs
     Task<ScanRequest?> PickScannerAsync();
     Task<bool> ConfirmPartialScanAsync(ScanInterruption interruption, CancellationToken cancellationToken);
     Task<string?> EditTitleAsync(string currentTitle);
+    Task<DocumentDateEdit?> EditDocumentDateAsync(DateOnly? currentDate);
     Task<SavedSearchDecision?> EditSavedSearchAsync(SavedSearchDraft draft, string? scopeTag, bool editing);
     Task<TagRenameRequest?> RenameTagAsync(string currentName, IReadOnlyList<string> catalogNames);
     Task<CombinePdfsRequest?> OrderPdfCombinationAsync(IReadOnlyList<DocumentSummary> selectedDocuments);
@@ -67,6 +68,9 @@ internal sealed class WorkspaceDialogs(Window owner) : IWorkspaceDialogs
 
     public Task<string?> EditTitleAsync(string currentTitle) =>
         new DocumentTitleDialog(currentTitle).ShowDialog<string?>(owner);
+
+    public Task<DocumentDateEdit?> EditDocumentDateAsync(DateOnly? currentDate) =>
+        new DocumentDateDialog(currentDate).ShowDialog<DocumentDateEdit?>(owner);
 
     public Task<SavedSearchDecision?> EditSavedSearchAsync(SavedSearchDraft draft, string? scopeTag, bool editing) =>
         new SavedSearchDialog(draft, scopeTag, editing).ShowDialog<SavedSearchDecision?>(owner);

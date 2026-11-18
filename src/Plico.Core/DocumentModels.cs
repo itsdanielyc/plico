@@ -4,7 +4,7 @@ namespace Plico.Core;
 public enum OcrLanguage { English, French, German, Spanish }
 
 /// <summary>The order applied to all matching records before paging.</summary>
-public enum DocumentSort { Automatic = 0, Newest = 1, Title = 2 }
+public enum DocumentSort { Automatic = 0, Newest = 1, Title = 2, DocumentDate = 3 }
 
 /// <summary>The direction to look for another matching page from the current one.</summary>
 public enum PageMatchDirection { Forward, Backward }
@@ -26,7 +26,14 @@ public sealed record DocumentSummary(
     int PageCount,
     bool HasText,
     IReadOnlyList<string> Tags,
-    string Match);
+    string Match)
+{
+    /// <summary>The calendar date recorded from the document, when supplied.</summary>
+    public DateOnly? DocumentDate { get; init; }
+
+    /// <summary>Whether a document date has been recorded.</summary>
+    public bool HasDocumentDate => DocumentDate.HasValue;
+}
 
 /// <summary>Results in display order and whether there are more at the next offset.</summary>
 public sealed record DocumentPage(IReadOnlyList<DocumentSummary> Items, bool HasMore);

@@ -38,6 +38,8 @@ Use `tag:tax` to require an exact tag. Use `tag:tax tag:"Home insurance" renewal
 
 Use `added:2026`, `added:2026-11`, or `added:2026-11-18` to filter by year, month, or day added. The date follows the local date shown beside each document. Combine filters and text with a query such as `receipt tag:tax added:2026-11`.
 
+Choose **Set document date…** under a PDF’s filename to record the date on the paperwork. Enter it as `YYYY-MM-DD`, or save a blank field to clear it. Use `dated:2024`, `dated:2024-02`, or `dated:2024-02-29` to find PDFs by that date. The filter works with `added:`, tags, folders, and text.
+
 Use `folder:"Filed/Tax Forms"` to search that folder and its subfolders. Use `/` and the spelling and case shown in Plico’s file path. `folder:.` matches PDFs directly in `PDFs/`. Add text, tags, or dates to the same query.
 
 Choose **Save search…** to name the current query. The shortcut appears under **Saved searches** and restores the query, the selected sidebar tag, and the sort order. Open a shortcut and choose **Edit search…** to update it or remove it. The library backup includes saved searches.
@@ -46,7 +48,7 @@ Select a sidebar tag and choose **Rename…** to change its label across the lib
 
 Start typing in either tag field to reuse a tag from the current library. Use the Down Arrow and Enter to fill in a suggestion, then Enter again to apply it. You can also type a new label.
 
-Use **Sort** to browse by newest added or title A–Z. **Automatic** puts the best matches first during a text search and the most recent documents first while browsing.
+Use **Sort** to browse by newest added, title A–Z, or document date. **Document date** puts the newest recorded dates first, followed by undated documents. **Automatic** puts the best matches first during a text search and the most recent documents first while browsing.
 
 Use Ctrl or Shift when selecting rows, or choose **Select shown** to select the loaded results. Use **Tag selected** to apply a tag to the whole selection. The batch control can mark the selection reviewed or return reviewed documents to the inbox.
 
@@ -78,7 +80,7 @@ When a scan copied into `PDFs/` needs OCR, choose **Create searchable copy** in 
 
 To correct a PDF’s OCR, choose the language in **OCR** and select **Create OCR copy**. Plico renders the visible pages and writes fresh searchable text into a separate PDF with the source tags.
 
-Plico v0.16.0 upgrades the library catalog to version 8. Use a build with version 8 support to open an upgraded library.
+Plico v0.16.0 upgrades the library catalog to version 9. Use a build with version 9 support to open an upgraded library.
 
 To make a copy while Plico is open, choose **Back up library…** and select a destination outside the current library. Plico creates a dated folder with the PDFs and their catalog. **Open backup** shows that folder in the file manager. Choose the folder as a library to reopen it in Plico.
 

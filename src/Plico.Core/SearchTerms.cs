@@ -13,6 +13,7 @@ internal static partial class SearchTerms
     internal const char FolderSeparator = '/';
     private const string TagPrefix = "tag:";
     private const string AddedPrefix = "added:";
+    private const string DatedPrefix = "dated:";
     private const string FolderPrefix = "folder:";
     private const int YearLength = 4;
     private const int MonthLength = 7;
@@ -20,14 +21,14 @@ internal static partial class SearchTerms
     private const string IsoDayFormat = "yyyy-MM-dd";
     private const string WordPattern = @"[\p{L}\p{M}\p{N}]+";
     private const string QueryPattern = "\"[^\"]*\"|“[^”]*”|" + WordPattern;
-    private static readonly CompiledSearch InvalidSearch = new("", [], null, null, IsValid: false);
+    private static readonly CompiledSearch InvalidSearch = new("", [], null, null, null, IsValid: false);
 
     internal readonly record struct CompiledSearch(string FullTextExpression, IReadOnlyCollection<string> TagKeys,
-        AddedDatePeriod? AddedPeriod, string? FolderPath, bool IsValid);
+        DatePeriod? AddedPeriod, DatePeriod? DocumentPeriod, string? FolderPath, bool IsValid);
 
-    internal readonly record struct AddedDatePeriod(DateOnly FirstDay, DateOnly LastDay)
+    internal readonly record struct DatePeriod(DateOnly FirstDay, DateOnly LastDay)
     {
-        internal AddedDatePeriod Intersect(AddedDatePeriod other) => new(
+        internal DatePeriod Intersect(DatePeriod other) => new(
             FirstDay > other.FirstDay ? FirstDay : other.FirstDay,
             LastDay < other.LastDay ? LastDay : other.LastDay);
     }
@@ -38,10 +39,12 @@ internal static partial class SearchTerms
         ArgumentOutOfRangeException.ThrowIfGreaterThan(query.Length, MaximumQueryLength);
         if (!query.Contains(TagPrefix, StringComparison.OrdinalIgnoreCase) &&
             !query.Contains(AddedPrefix, StringComparison.OrdinalIgnoreCase) &&
-            !query.Contains(FolderPrefix, StringComparison.OrdinalIgnoreCase)) return CompileParts(query, query, [], null, null);
+            !query.Contains(DatedPrefix, StringComparison.OrdinalIgnoreCase) &&
+            !query.Contains(FolderPrefix, StringComparison.OrdinalIgnoreCase)) return CompileParts(query, query, [], null, null, null);
 
         HashSet<string>? tagKeys = null;
-        AddedDatePeriod? addedPeriod = null;
+        DatePeriod? addedPeriod = null;
+        DatePeriod? documentPeriod = null;
         string? folderPath = null;
         var text = new StringBuilder(query.Length);
         int textStart = 0;
@@ -59,12 +62,13 @@ internal static partial class SearchTerms
                 }
                 else if (remaining.StartsWith(AddedPrefix, StringComparison.OrdinalIgnoreCase))
                 {
-                    var (value, end) = ReadBareValue(query, cursor + AddedPrefix.Length);
-                    if (ParseAddedPeriod(value) is not { } period) return InvalidSearch;
-                    if (addedPeriod is { } previous) period = previous.Intersect(period);
-                    if (period.FirstDay > period.LastDay) return InvalidSearch;
-                    addedPeriod = period;
-                    clauseEnd = end;
+                    if (ReadDateClause(query, cursor + AddedPrefix.Length, addedPeriod) is not { } added) return InvalidSearch;
+                    (addedPeriod, clauseEnd) = added;
+                }
+                else if (remaining.StartsWith(DatedPrefix, StringComparison.OrdinalIgnoreCase))
+                {
+                    if (ReadDateClause(query, cursor + DatedPrefix.Length, documentPeriod) is not { } dated) return InvalidSearch;
+                    (documentPeriod, clauseEnd) = dated;
                 }
                 else if (remaining.StartsWith(FolderPrefix, StringComparison.OrdinalIgnoreCase))
                 {
@@ -92,21 +96,29 @@ internal static partial class SearchTerms
             cursor++;
         }
 
-        if (textStart == 0) return CompileParts(query, query, [], null, null);
+        if (textStart == 0) return CompileParts(query, query, [], null, null, null);
         text.Append(query.AsSpan(textStart));
-        return CompileParts(query, text.ToString(), tagKeys is not null ? tagKeys : [], addedPeriod, folderPath);
+        return CompileParts(query, text.ToString(), tagKeys is not null ? tagKeys : [], addedPeriod, documentPeriod, folderPath);
     }
 
     private static CompiledSearch CompileParts(string originalQuery, string textQuery, IReadOnlyCollection<string> tagKeys,
-        AddedDatePeriod? addedPeriod, string? folderPath)
+        DatePeriod? addedPeriod, DatePeriod? documentPeriod, string? folderPath)
     {
         string expression = FullTextExpression(textQuery);
-        bool isValid = expression.Length > 0 || tagKeys.Count > 0 || addedPeriod.HasValue || folderPath is not null ||
+        bool isValid = expression.Length > 0 || tagKeys.Count > 0 || addedPeriod.HasValue || documentPeriod.HasValue || folderPath is not null ||
             string.IsNullOrWhiteSpace(originalQuery);
-        return new CompiledSearch(expression, tagKeys, addedPeriod, folderPath, isValid);
+        return new CompiledSearch(expression, tagKeys, addedPeriod, documentPeriod, folderPath, isValid);
     }
 
-    private static AddedDatePeriod? ParseAddedPeriod(string value)
+    private static (DatePeriod Period, int End)? ReadDateClause(string query, int start, DatePeriod? previous)
+    {
+        var (value, end) = ReadBareValue(query, start);
+        if (ParseDatePeriod(value) is not { } parsed) return null;
+        var period = previous is { } current ? current.Intersect(parsed) : parsed;
+        return period.FirstDay <= period.LastDay ? (period, end) : null;
+    }
+
+    private static DatePeriod? ParseDatePeriod(string value)
     {
         string? day = value.Length switch
         {
@@ -122,7 +134,7 @@ internal static partial class SearchTerms
             MonthLength => new DateOnly(first.Year, first.Month, DateTime.DaysInMonth(first.Year, first.Month)),
             _ => first
         };
-        return new AddedDatePeriod(first, last);
+        return new DatePeriod(first, last);
     }
 
     private static (string Key, int End)? ReadTagClause(string query, int start)

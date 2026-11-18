@@ -49,6 +49,36 @@ public sealed class LibrarySortTests
             catalog.Find(search with { Sort = DocumentSort.Newest }, TestContext.Current.CancellationToken).Items.Select(document => document.Id));
     }
 
+    [Fact]
+    public void DocumentDateSortPaginatesWithStableTiesAndUndatedRecordsLast()
+    {
+        using var directory = new TemporaryLibrary();
+        var catalog = new LibraryCatalog(Path.Combine(directory.Path, "catalog.sqlite3"));
+        var firstDay = new DateOnly(2024, 1, 1);
+        long olderTie = AddDocument(catalog, "First with date", "Report");
+        long olderUndated = AddDocument(catalog, "First undated", "Report");
+        catalog.SetDocumentDate(olderTie, firstDay);
+
+        var dated = new List<long>();
+        for (int index = 1; index < LibraryCatalog.PageSize; index++)
+        {
+            long id = AddDocument(catalog, $"Dated {index:D2}", "Report");
+            catalog.SetDocumentDate(id, firstDay.AddDays(index));
+            dated.Add(id);
+        }
+        long newerTie = AddDocument(catalog, "Second with date", "Report");
+        catalog.SetDocumentDate(newerTie, firstDay);
+        long newerUndated = AddDocument(catalog, "Second undated", "Report");
+
+        var sort = new DocumentFilter(Sort: DocumentSort.DocumentDate);
+        var first = catalog.Find(sort, TestContext.Current.CancellationToken);
+        var next = catalog.Find(sort with { Offset = first.Items.Count }, TestContext.Current.CancellationToken);
+        Assert.True(first.HasMore);
+        Assert.Equal(dated.AsEnumerable().Reverse().Append(newerTie), first.Items.Select(document => document.Id));
+        Assert.Equal(new[] { olderTie, newerUndated, olderUndated }, next.Items.Select(document => document.Id));
+        Assert.False(next.HasMore);
+    }
+
     private static long AddDocument(LibraryCatalog catalog, string name, string body) =>
         catalog.Upsert($"{name}.pdf", name, new PdfText(body, PageCount: 1, HasTextOnEveryPage: true),
             new FileVersion(LastModifiedTicks: 0, Length: 0, Present: true), pdfFingerprint: []);

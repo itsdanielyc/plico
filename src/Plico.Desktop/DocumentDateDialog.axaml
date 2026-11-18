@@ -1,0 +1,19 @@
+<Window xmlns="https://github.com/avaloniaui" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        x:Class="Plico.Desktop.DocumentDateDialog" Title="Document date" Width="450" SizeToContent="Height"
+        CanResize="False" WindowStartupLocation="CenterOwner"
+        FontFamily="{StaticResource InterFont}" Background="#F4F5EF">
+    <StackPanel Margin="24" Spacing="12">
+        <StackPanel Spacing="5">
+            <TextBlock Text="Document date" FontWeight="SemiBold" />
+            <TextBox x:Name="DocumentDateBox" PlaceholderText="YYYY-MM-DD" AutomationProperties.Name="Document date" />
+            <TextBlock Text="Use YYYY-MM-DD. Leave blank to clear the date." TextWrapping="Wrap" FontSize="12" Foreground="#5C685D" />
+        </StackPanel>
+        <TextBlock x:Name="DateValidation" IsVisible="False" Foreground="#8E4037" TextWrapping="Wrap"
+                   AutomationProperties.LiveSetting="Polite" />
+        <StackPanel Orientation="Horizontal" Spacing="8" HorizontalAlignment="Right">
+            <Button Content="Cancel" IsCancel="True" Click="Cancel_Click" Padding="14,7" />
+            <Button x:Name="ConfirmDocumentDateButton" Content="Save date" IsDefault="True" Click="Save_Click"
+                    Padding="14,7" Background="#254C37" Foreground="White" />
+        </StackPanel>
+    </StackPanel>
+</Window>

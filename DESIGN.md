@@ -36,7 +36,9 @@ The sort selector sits beside the results count. It applies to the current inbox
 
 The results count shows **Searching…** after a query edit. **Load more** becomes available when the current search has a next page.
 
-The search box hints at `tag:`, `added:`, and `folder:` filters. Its tooltip gives examples and explains quotation marks for phrases. Date filters use displayed local dates and folder filters use the stored relative path.
+The search box hints at `tag:`, `dated:`, `added:`, and `folder:` filters. Its tooltip gives examples and explains quotation marks for phrases. `added:` uses the displayed local intake date. Folder filters use the stored relative path.
+
+The preview’s document date opens an editor with a year-month-day field. Saving a blank field clears the date. The list labels the document date and intake date so both are visible when filled.
 
 **Save search…** names the query and puts it in the sidebar. Opening a shortcut displays its name above the results and restores the selected tag and order. **Edit search…** opens the name, query, and order fields and offers to remove the shortcut.
 

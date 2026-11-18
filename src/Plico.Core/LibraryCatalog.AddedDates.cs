@@ -14,7 +14,7 @@ internal sealed partial class LibraryCatalog
     private readonly TimeZoneInfo? _addedDateTimeZone;
 
     private void ApplyAddedDateFilter(SqliteConnection connection, SqliteCommand command, List<string> conditions,
-        SearchTerms.AddedDatePeriod period)
+        SearchTerms.DatePeriod period)
     {
         int firstDay = period.FirstDay.DayNumber;
         int lastDay = period.LastDay.DayNumber;

@@ -10,7 +10,8 @@ internal sealed partial class InboxViewModel : ObservableObject, IDisposable
 {
     private static readonly SortChoice AutomaticSort = new(DocumentSort.Automatic, "Automatic");
     internal static readonly IReadOnlyList<SortChoice> AvailableSortChoices =
-        [AutomaticSort, new(DocumentSort.Newest, "Newest added"), new(DocumentSort.Title, "Title A–Z")];
+        [AutomaticSort, new(DocumentSort.Newest, "Newest added"), new(DocumentSort.Title, "Title A–Z"),
+            new(DocumentSort.DocumentDate, "Document date")];
 
     private readonly IWorkspaceDialogs _dialogs;
     private readonly Action<string>? _rememberLocation;
@@ -34,7 +35,9 @@ internal sealed partial class InboxViewModel : ObservableObject, IDisposable
     [ObservableProperty] private string _previewMessage = "";
     [ObservableProperty] private IReadOnlyList<DocumentSummary> _documents = [];
     [ObservableProperty] private IReadOnlyList<string> _tags = [];
-    [ObservableProperty] private DocumentSummary? _selectedDocument;
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(DocumentDateAction))]
+    private DocumentSummary? _selectedDocument;
     [ObservableProperty]
     [NotifyPropertyChangedFor(nameof(HasPreview))]
     private Bitmap? _preview;

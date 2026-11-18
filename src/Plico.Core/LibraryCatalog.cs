@@ -72,7 +72,7 @@ internal sealed partial class LibraryCatalog
         """;
     private static readonly string[] Migrations =
         [Schema, FingerprintMigration, DisplayTitleMigration, PdfFingerprintMigration, OcrCopyMigration, AddedDateIndexMigration,
-            PdfMoveMigration, SavedSearchMigration];
+            PdfMoveMigration, SavedSearchMigration, DocumentDateMigration];
 
     private readonly string _connectionString;
 
@@ -320,6 +320,10 @@ internal sealed partial class LibraryCatalog
         {
             ApplyAddedDateFilter(connection, command, conditions, addedPeriod);
         }
+        if (search.DocumentPeriod is { } documentPeriod)
+        {
+            ApplyDocumentDateFilter(command, conditions, documentPeriod);
+        }
         if (documentId is not null)
         {
             conditions.Add("d.id = $id");
@@ -331,7 +335,7 @@ internal sealed partial class LibraryCatalog
             SELECT d.id, COALESCE(d.display_title, d.title) AS display_name, d.relative_path, d.added_at, d.reviewed, d.page_count, d.has_text,
                    (SELECT json_group_array(t.label ORDER BY t.tag_key)
                     FROM document_tags dt JOIN tags t USING (tag_key) WHERE dt.document_id = d.id),
-                   {match}
+                   {match}, d.document_day
             FROM {from} {join}
             WHERE {string.Join(" AND ", conditions)}
             ORDER BY {order}
@@ -366,7 +370,10 @@ internal sealed partial class LibraryCatalog
                 DateTimeOffset.FromUnixTimeSeconds(results.GetInt64(3)), results.GetBoolean(4),
                 results.GetInt32(5), results.GetBoolean(6),
                 JsonSerializer.Deserialize<string[]>(results.GetString(7)) ?? [],
-                TrimSnippet(results.GetString(8))));
+                TrimSnippet(results.GetString(8)))
+            {
+                DocumentDate = results.IsDBNull(9) ? null : DateOnly.FromDayNumber(results.GetInt32(9))
+            });
         }
         cancellationToken.ThrowIfCancellationRequested();
         return new(documents, HasMore: false);
@@ -380,6 +387,8 @@ internal sealed partial class LibraryCatalog
                 return hasSearch ? $"documents_search.rank, {NewestCatalogEntry}" : NewestCatalogEntry;
             case DocumentSort.Newest:
                 return NewestCatalogEntry;
+            case DocumentSort.DocumentDate:
+                return $"d.document_day DESC, {NewestCatalogEntry}";
             case DocumentSort.Title:
                 // SQLite's built-in case-insensitive collation only folds ASCII.
                 connection.CreateCollation(TitleCollation, StringComparer.InvariantCultureIgnoreCase.Compare);

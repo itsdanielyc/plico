@@ -170,6 +170,9 @@ public sealed partial class InboxLibrary : IDisposable
     /// <summary>Moves a document into or out of the review queue without moving its PDF.</summary>
     public void SetReviewed(long documentId, bool reviewed) => _catalog.SetReviewed(documentId, reviewed);
 
+    /// <summary>Sets or clears the archived document’s calendar date in the library catalog.</summary>
+    public void SetDocumentDate(long documentId, DateOnly? date) => _catalog.SetDocumentDate(documentId, date);
+
     /// <summary>Updates the review state of the whole selection in a single transaction.</summary>
     public void SetReviewedDocuments(IReadOnlyList<long> documentIds, bool reviewed)
     {

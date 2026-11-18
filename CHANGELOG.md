@@ -32,6 +32,7 @@
 - Wait for Plico’s own PDF readers before filing a document, so an active preview can finish on Windows.
 - Reduce download and installation size by keeping debugger symbols out of release packages.
 - Save named searches with their sidebar tag and sort order. Catalog version 8 carries these shortcuts into library backups.
+- Set, clear, sort, and filter by document date. Catalog version 9 stores it with the PDF’s library record.
 
 ## [0.15.0] - 2026-11-18
 

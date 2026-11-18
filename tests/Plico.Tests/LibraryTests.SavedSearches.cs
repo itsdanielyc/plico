@@ -96,7 +96,12 @@ public sealed partial class LibraryTests
         {
             database.Open();
             using var command = database.CreateCommand();
-            command.CommandText = "DROP TABLE saved_searches; PRAGMA user_version = 7;";
+            command.CommandText = """
+                DROP INDEX documents_document_day;
+                ALTER TABLE documents DROP COLUMN document_day;
+                DROP TABLE saved_searches;
+                PRAGMA user_version = 7;
+                """;
             command.ExecuteNonQuery();
         }
 
@@ -112,6 +117,6 @@ public sealed partial class LibraryTests
         migrated.Open();
         using var version = migrated.CreateCommand();
         version.CommandText = "PRAGMA user_version;";
-        Assert.Equal(8L, version.ExecuteScalar());
+        Assert.Equal(9L, version.ExecuteScalar());
     }
 }
