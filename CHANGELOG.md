@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.16.1] - 2026-11-18
+
+The Windows executable and setup are unsigned. The macOS app is ad-hoc signed and has no Apple notarization. [First-launch instructions](https://github.com/itsdanielyc/plico/blob/main/README.md#download)
+
+- Leave unchanged scans available for explicit catch-up when a folder watch receives a late notification.
+- Recognize a new scan using a filename that disappeared during watch recovery.
+
 ## [0.16.0] - 2026-11-18
 
 The Windows executable and setup are unsigned. The macOS app is ad-hoc signed and has no Apple notarization. [First-launch instructions](https://github.com/itsdanielyc/plico/blob/main/README.md#download)

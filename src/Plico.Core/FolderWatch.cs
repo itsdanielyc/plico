@@ -16,9 +16,10 @@ public sealed class FolderWatch : IAsyncDisposable
         IgnoreInaccessible = false
     };
 
-    private sealed class Observation(FileVersion? sample = null)
+    private sealed class Observation(FileVersion? sample = null, bool includeKnownVersion = false)
     {
         internal FileVersion? Sample { get; } = sample;
+        internal bool IncludeKnownVersion { get; } = includeKnownVersion;
     }
 
     private readonly FileSystemWatcher _watcher;
@@ -31,7 +32,7 @@ public sealed class FolderWatch : IAsyncDisposable
         SingleReader = true,
         FullMode = BoundedChannelFullMode.DropOldest
     });
-    private Dictionary<string, FileVersion> _knownFiles;
+    private readonly Dictionary<string, FileVersion> _knownFiles;
     private Exception? _watchError;
     private long? _lastRestart;
 
@@ -108,7 +109,10 @@ public sealed class FolderWatch : IAsyncDisposable
         int queued = 0;
         foreach (string file in candidates)
         {
-            if (_pending.TryAdd(file, new Observation())) queued++;
+            var requested = new Observation(includeKnownVersion: true);
+            var observation = _pending.AddOrUpdate(file, requested, static (_, pending) =>
+                pending.IncludeKnownVersion ? pending : new Observation(pending.Sample, includeKnownVersion: true));
+            if (ReferenceEquals(observation, requested)) queued++;
         }
         if (queued > 0) _wakeups.Writer.TryWrite(true);
         return queued;
@@ -142,7 +146,8 @@ public sealed class FolderWatch : IAsyncDisposable
     private void ObservePath(string path)
     {
         if (_stop.IsCancellationRequested || !InboxLibrary.SupportsImport(path)) return;
-        _pending[path] = new Observation();
+        _pending.AddOrUpdate(path, static _ => new Observation(), static (_, pending) =>
+            new Observation(includeKnownVersion: pending.IncludeKnownVersion));
         _wakeups.Writer.TryWrite(true);
     }
 
@@ -190,10 +195,14 @@ public sealed class FolderWatch : IAsyncDisposable
             }
             if (entry.Value.Sample != current)
             {
-                _pending.TryUpdate(entry.Key, new Observation(current), entry.Value);
+                _pending.TryUpdate(entry.Key, new Observation(current, entry.Value.IncludeKnownVersion), entry.Value);
                 continue;
             }
             if (!_pending.TryRemove(entry)) continue;
+            if (!entry.Value.IncludeKnownVersion && _knownFiles.TryGetValue(entry.Key, out var known) && current == known)
+            {
+                continue;
+            }
             _knownFiles[entry.Key] = current;
             ready.Add(entry.Key);
         }
@@ -232,7 +241,7 @@ public sealed class FolderWatch : IAsyncDisposable
         _watcher.EnableRaisingEvents = true;
     }
 
-    // O(n) time and O(n) file stamps for one top-level scan. Existing queued samples stay in place.
+    // O(n + k) time for n current entries and k known paths, with O(n) temporary file stamps.
     private void ReconcileFolder(CancellationToken cancellationToken)
     {
         var current = ReadFolderVersions(Folder, cancellationToken);
@@ -241,7 +250,11 @@ public sealed class FolderWatch : IAsyncDisposable
             cancellationToken.ThrowIfCancellationRequested();
             if (!_knownFiles.TryGetValue(path, out var known) || version != known) _pending.TryAdd(path, new Observation());
         }
-        _knownFiles = current;
+        // Keep the last delivered version until a changed file settles. Forget removals so reused names start fresh.
+        foreach (string path in _knownFiles.Keys)
+        {
+            if (!current.ContainsKey(path)) _knownFiles.Remove(path);
+        }
     }
 
     private static Dictionary<string, FileVersion> ReadFolderVersions(string folder, CancellationToken cancellationToken)

@@ -19,8 +19,11 @@ public sealed class FolderWatchTests
         string fixture = Path.Combine(AppContext.BaseDirectory, "fixtures", "Lease Renewal.pdf");
         string unchanged = Path.Combine(incoming.Path, "Preexisting scan.pdf");
         string overwritten = Path.Combine(incoming.Path, "Overwritten scan.pdf");
+        string reused = Path.Combine(incoming.Path, "Reused scan name.pdf");
         File.Copy(fixture, unchanged);
         File.WriteAllText(overwritten, "This existing file will be replaced with a scan.");
+        File.Copy(fixture, reused);
+        DateTime originalWriteTime = File.GetLastWriteTimeUtc(reused);
 
         var delivered = Channel.CreateUnbounded<IReadOnlyList<string>>();
         var source = new InterruptibleWatcher(incoming.Path);
@@ -42,15 +45,16 @@ public sealed class FolderWatchTests
         string missed = Path.Combine(incoming.Path, "Missed scan.pdf");
         File.Copy(fixture, missed);
         File.Copy(fixture, overwritten, overwrite: true);
+        File.Delete(reused);
         File.Copy(fixture, Path.Combine(incoming.Path, "Scanner in progress.part"));
         source.ReportLoss(bufferOverflow ? new InternalBufferOverflowException() : new IOException("File notifications dropped."));
 
         var recovered = await NextBatchAsync(delivered.Reader, watch);
         Assert.Equal(new[] { missed, overwritten }, recovered.Order(StringComparer.Ordinal));
 
-        string afterRecovery = Path.Combine(incoming.Path, "After recovery.pdf");
-        File.Copy(fixture, afterRecovery);
-        Assert.Equal(afterRecovery, Assert.Single(await NextBatchAsync(delivered.Reader, watch)));
+        File.Copy(fixture, reused);
+        File.SetLastWriteTimeUtc(reused, originalWriteTime);
+        Assert.Equal(reused, Assert.Single(await NextBatchAsync(delivered.Reader, watch)));
         Assert.True(File.Exists(unchanged));
     }
 
@@ -119,7 +123,39 @@ public sealed class FolderWatchTests
 
     private sealed class InterruptibleWatcher(string directory) : FileSystemWatcher(directory)
     {
+        internal void ReportChange(string filename) => OnChanged(new FileSystemEventArgs(WatcherChangeTypes.Changed, Path, filename));
         internal void ReportLoss(Exception failure) => OnError(new ErrorEventArgs(failure));
+    }
+
+    [Fact]
+    public async Task LeavesUnchangedNotificationsForExplicitCatchUp()
+    {
+        using var incoming = new TemporaryLibrary();
+        using var destination = new TemporaryLibrary();
+        string fixture = Path.Combine(AppContext.BaseDirectory, "fixtures", "Lease Renewal.pdf");
+        const string existingFilename = "Existing scan.pdf";
+        const string newFilename = "New scan.pdf";
+        string existing = Path.Combine(incoming.Path, existingFilename);
+        string arrived = Path.Combine(incoming.Path, newFilename);
+        File.Copy(fixture, existing);
+
+        var delivered = Channel.CreateUnbounded<IReadOnlyList<string>>();
+        var source = new InterruptibleWatcher(incoming.Path);
+        var token = TestContext.Current.CancellationToken;
+        await using var watch = FolderWatch.Start(incoming.Path, destination.Path,
+            (paths, cancellation) => delivered.Writer.WriteAsync(paths, cancellation).AsTask(), _ => source, token);
+        source.EnableRaisingEvents = false;
+        File.Copy(fixture, arrived);
+        source.ReportChange(existingFilename);
+        source.ReportChange(newFilename);
+
+        Assert.Equal(new[] { arrived }, await NextBatchAsync(delivered.Reader, watch));
+
+        source.ReportChange(existingFilename);
+        watch.QueueExistingFiles(token);
+        source.ReportChange(existingFilename);
+
+        Assert.Equal(new[] { existing, arrived }, (await NextBatchAsync(delivered.Reader, watch)).Order(StringComparer.Ordinal));
     }
 
     [Fact]

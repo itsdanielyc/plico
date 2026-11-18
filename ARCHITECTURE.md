@@ -125,11 +125,11 @@ The query compiler strips review-status clauses before building the text express
 
 When query parsing finds an invalid clause, the result page carries a typed issue and skips the catalog read. The desktop maps the issue to a correction for the active query. A valid empty page uses the ordinary empty-result message.
 
-The watcher records top-level scan sizes and modification times before it subscribes. It reconciles once after subscription to catch arrivals during startup, and again when the operating system reports lost notifications. Only new or changed paths join the readiness queue. A backend that needs to restart is rearmed before reconciliation. A failed restart or unreadable folder is reported to the desktop. [.NET notification buffer overflow](https://learn.microsoft.com/en-us/dotnet/api/system.io.internalbufferoverflowexception?view=net-10.0)
+The watcher records top-level scan sizes and modification times before it subscribes. It reconciles once after subscription to catch arrivals during startup, and again when the operating system reports lost notifications. Notifications trigger stability checks. Automatic intake compares a settled file with its last known version, so a late notification alone cannot requeue an unchanged scan. Reconciliation keeps that previous version until a changed scan is delivered and forgets paths that have disappeared. A backend that needs to restart is rearmed before reconciliation. A failed restart or unreadable folder is reported to the desktop. [.NET notification buffer overflow](https://learn.microsoft.com/en-us/dotnet/api/system.io.internalbufferoverflowexception?view=net-10.0)
 
 The last watch folder is saved in local settings under the normalized library path. Reopening a library offers the saved folder as an explicit resume action.
 
-The watch can also queue files already in its folder. It gathers supported top-level paths before adding them to the same readiness queue used by filesystem events. Cancellation during the directory scan leaves the queue untouched by that request.
+The watch can also queue files already in its folder. It gathers supported top-level paths before adding them to the same readiness queue used by filesystem events. An explicit request includes known versions and keeps that intent if another notification arrives while the file settles. Cancellation during the directory scan leaves the queue untouched by that request.
 
 Resume and catch up starts the remembered watch and checks existing files in one desktop operation. The desktop publishes the active watch after queuing finishes and disposes a watcher if startup fails or is cancelled. Queued files use the established stability and duplicate checks.
 
