@@ -169,13 +169,13 @@
                     <Button x:Name="LibraryToolsButton" Classes="rail" Content="Library tools…" IsEnabled="{Binding CanWork}">
                         <Button.Flyout>
                             <MenuFlyout Placement="RightEdgeAlignedTop">
-                                <MenuItem Header="Import password-protected PDF…" Command="{Binding ImportProtectedPdfCommand}" />
                                 <MenuItem Header="Tag rules…" Command="{Binding ManageFilingRulesCommand}" />
                                 <MenuItem Header="Check library integrity…" Command="{Binding CheckIntegrityCommand}" />
                                 <MenuItem Header="Export library metadata (JSON)…" Command="{Binding ExportMetadataCommand}" />
                                 <MenuItem Header="Export search results (CSV)…" Command="{Binding ExportSearchCsvCommand}" />
                                 <Separator />
                                 <MenuItem Header="Refresh index" Command="{Binding RefreshIndexCommand}" />
+                                <MenuItem Header="Import password-protected PDF…" Command="{Binding ImportProtectedPdfCommand}" />
                             </MenuFlyout>
                         </Button.Flyout>
                     </Button>
