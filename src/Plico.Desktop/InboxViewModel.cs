@@ -248,7 +248,7 @@ internal sealed partial class InboxViewModel : ObservableObject, IDisposable
     private void AddTag()
     {
         if (string.IsNullOrWhiteSpace(TagInput)) return;
-        if (UpdateDocument((library, document) => library.AddTag(document.Id, TagInput), "Tag added.")) TagInput = "";
+        if (UpdateDocument((library, document) => library.AddTag(document.Id, TagInput), DesktopText.Translate("Tag added."))) TagInput = "";
     }
 
     [RelayCommand] private void PreviousPage() => NavigatePage(-1);
@@ -376,9 +376,9 @@ internal sealed partial class InboxViewModel : ObservableObject, IDisposable
         }
 
         var outcomes = new List<string>();
-        if (added > 0) outcomes.Add($"{DocumentCount(added)} added.");
-        if (alreadyPresent > 0) outcomes.Add($"{DocumentCount(alreadyPresent)} already in the library.");
-        if (unreadable > 0) outcomes.Add($"No text recognized in {DocumentCount(unreadable)}.");
+        if (added > 0) outcomes.Add(DesktopText.Format($"{DocumentCount(added)} added."));
+        if (alreadyPresent > 0) outcomes.Add(DesktopText.Format($"{DocumentCount(alreadyPresent)} already in the library."));
+        if (unreadable > 0) outcomes.Add(DesktopText.Format($"No text recognized in {DocumentCount(unreadable)}."));
         if (failures.Count > 0) outcomes.Add($"{failures.Count} failed. {failures[0].Filename} — {failures[0].Reason}");
         if (saveWarning is not null) outcomes.Add(saveWarning);
         Status = string.Join(" ", outcomes);

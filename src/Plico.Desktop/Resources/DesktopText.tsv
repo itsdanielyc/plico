@@ -116,6 +116,8 @@ DeletePages	Delete pages	Supprimer des pages
 DeletePermanently	Delete permanently…	Supprimer définitivement…
 DetectedPaymentDetails	Detected payment details	Informations de paiement détectées
 Discard	Discard	Ignorer
+DocumentActions	Document actions	Actions du document
+DocumentAddedDateFormat	Added {0:dd MMM yyyy}	Ajouté le {0:dd MMM yyyy}
 DocumentDate	Document date	Date du document
 DocumentDate2	Document date…	Date du document…
 DocumentDateCleared	Document date cleared.	Date du document effacée.
@@ -667,3 +669,9 @@ MigrationReport	Migration report	Rapport de migration
 MigrationDetails	Migration details	Détails de la migration
 SaveMigrationJson	Save JSON…	Enregistrer le JSON…
 DropSupportedDocument	Drop a supported document or image.	Déposez un document ou une image prise en charge.
+DatedDateFormat	Dated {0:dd MMM yyyy}	Daté du {0:dd MMM yyyy}
+SetDocumentDate	Set document date…	Dater le document…
+TagAdded	Tag added.	Étiquette ajoutée.
+ImportAddedFormat	{0} added.	Ajout de {0}.
+ImportAlreadyPresentFormat	{0} already in the library.	{0} déjà dans la bibliothèque.
+ImportUnreadableFormat	No text recognized in {0}.	Aucun texte reconnu dans {0}.
