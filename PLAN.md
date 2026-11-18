@@ -100,3 +100,9 @@ The v0.17.0 commit `ef4bdb6` passed source, archive, and published download chec
 ## Release scope
 
 Ruling for v0.17.0. Implement the brief’s first nine ranked items together on the six current platforms. Add managed PDFsharp for AES protection and retain the existing native dependencies. This covers offline capture, review, retrieval and export. Later work includes structured fields and reminders, separator sheets and manual duplex, versions, additional drivers, household export, phone intake, migration, formats, OCR engines, similarity, optional language models, PDF editing and desktop polish. Those slices require their own storage, driver or platform decisions.
+
+## Capture and intake
+
+| Slice | Done when | Levels | Status |
+|---|---|---|---|
+| #14 Windows TWAIN and macOS USB scanners | Local TWAIN and Image Capture entries appear beside the current sources. The native macOS helper can discover scanners from both builds and packages. Physical scans require a device. | L0, L1, L6, L7 | Hosted verification pending |

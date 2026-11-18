@@ -87,6 +87,7 @@ internal static partial class NativeVerification
             await VerifyExtractPagesAsync(window, model, dialogs, evidenceDirectory);
             await VerifyRotatePagesAsync(window, model, dialogs, evidenceDirectory);
             await VerifyScannerDialogAsync(window, evidenceDirectory);
+            await VerifyAppleScannerDiscoveryAsync();
             string scanRecoveryEvidence = await VerifyScanRecoveryAsync(window, model, dialogs, evidenceDirectory);
             await VerifySavedSearchAsync(window, model, dialogs, evidenceDirectory);
             await VerifyDocumentDateAsync(window, model, dialogs, evidenceDirectory);

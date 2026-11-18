@@ -40,6 +40,8 @@ public sealed partial class InboxLibrary
     private static Func<ScanningContext, CancellationToken, IAsyncEnumerable<ProcessedImage>> CreateScanSource(ScanRequest request)
     {
         var options = Scanners.CaptureOptions(request);
+        if (request.Device.NativeDevice.Driver == Driver.Apple)
+            return (context, token) => MacScannerBridge.CaptureAsync(context, options, token);
         return (context, token) => new ScanController(context).Scan(options, token);
     }
 

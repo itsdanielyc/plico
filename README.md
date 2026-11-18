@@ -130,8 +130,9 @@ Plico recognizes exact source files already in the library and reports that it r
 
 ### Scanner compatibility
 
-- Windows uses scanners with a WIA driver. Linux uses SANE drivers plus the `libsane1` runtime for supported local scanners.
-- All three platforms discover compatible eSCL or AirScan network scanners on the local network. On macOS you can also import a PDF saved by Image Capture for a USB-only scanner.
+- Windows lists WIA and TWAIN scanners. Install the driver that matches the Plico build's architecture. If the same scanner appears twice, choose the entry for the driver you want.
+- macOS lists local scanners available in Image Capture, including supported USB devices. Linux uses SANE drivers plus the `libsane1` runtime for supported local scanners.
+- All three platforms discover compatible eSCL or AirScan network scanners on the local network.
 
 If discovery misses an eSCL scanner, enter its hostname, IP address, or full eSCL URL in **Scan** and select **Connect**. A hostname or IP address uses HTTP and the standard `/eSCL` path. Enter an HTTPS URL if your scanner uses HTTPS.
 
