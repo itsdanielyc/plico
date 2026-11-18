@@ -21,6 +21,7 @@ internal interface IWorkspaceDialogs
     Task<PdfPageCopyRequest?> ChoosePdfPageCopyAsync(DocumentSummary document, int currentPage, PdfPageCopyAction action);
     Task<ImportErrorsAction> ShowImportErrorsAsync(IReadOnlyList<ImportFailure> failures);
     Task ShowOcrCopyBatchResultsAsync(IReadOnlyList<OcrCopyBatchItem> results);
+    Task ShowIndexRefreshReportAsync(RefreshResult result);
     Task CopyTextAsync(string text);
     void OpenPath(string path);
 }
@@ -90,6 +91,9 @@ internal sealed class WorkspaceDialogs(Window owner) : IWorkspaceDialogs
 
     public Task ShowOcrCopyBatchResultsAsync(IReadOnlyList<OcrCopyBatchItem> results) =>
         new OcrCopyResultsDialog(results).ShowDialog(owner);
+
+    public Task ShowIndexRefreshReportAsync(RefreshResult result) =>
+        new IndexReportDialog(result).ShowDialog(owner);
 
     public Task CopyTextAsync(string text) =>
         (owner.Clipboard ?? throw new InvalidOperationException("The clipboard is unavailable.")).SetTextAsync(text);

@@ -49,7 +49,11 @@ public sealed record DocumentPage(IReadOnlyList<DocumentSummary> Items, bool Has
 public sealed record SavedSearch(long Id, string Name, string Query, string? ScopeTag, DocumentSort Sort);
 
 /// <summary>Newly indexed files, recovery of moved PDFs, and files that could not be read.</summary>
-public sealed record RefreshResult(int Indexed, IReadOnlyList<string> Warnings, int Relocated = 0);
+public sealed record RefreshResult(int Indexed, IReadOnlyList<string> Warnings, int Relocated = 0)
+{
+    /// <summary>The relative paths that became unavailable during this refresh.</summary>
+    public IReadOnlyList<string> UnavailablePaths { get; init; } = [];
+}
 
 /// <summary>The portable backup folder and number of PDFs copied into it.</summary>
 public sealed record BackupResult(string Location, int PdfCount);

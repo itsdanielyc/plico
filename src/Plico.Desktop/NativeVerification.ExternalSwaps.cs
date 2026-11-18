@@ -49,5 +49,6 @@ internal static partial class NativeVerification
                     !document.HasText && !document.Tags.Contains(tag)),
             $"The catalog did not follow both PDFs through their exchanged names. {model.Status}");
         await CaptureAsync(window, directory, "swapped-pdf-paths.png");
+        await VerifyIndexReportAsync(window, model, directory, secondPath, model.SelectedDocument!);
     }
 }

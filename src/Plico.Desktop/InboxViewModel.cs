@@ -157,19 +157,6 @@ internal sealed partial class InboxViewModel : ObservableObject, IDisposable
         _rememberLocation?.Invoke(LibraryPath);
     });
 
-    [RelayCommand]
-    private Task RefreshIndexAsync() => RunOperationAsync("Checking the PDF folder…", async token =>
-    {
-        var library = RequireLibrary();
-        var result = await Task.Run(() => library.Refresh(token), token);
-        Tags = library.GetTags();
-        RefreshInboxCount();
-        LoadResults(reloadPreview: result.Indexed > 0 || result.Relocated > 0);
-        Status = $"{DocumentCount(result.Indexed)} indexed.";
-        if (result.Relocated > 0) Status += $" {DocumentCount(result.Relocated)} moved.";
-        if (result.Warnings.Count > 0) Status += $" {result.Warnings[0]}";
-    });
-
     [RelayCommand] private void Cancel() => _operationCancellation?.Cancel();
     [RelayCommand] private void ShowInbox() => Navigate(inboxOnly: true);
     [RelayCommand] private void ShowAll() => Navigate(inboxOnly: false);
@@ -280,6 +267,7 @@ internal sealed partial class InboxViewModel : ObservableObject, IDisposable
         previous?.Dispose();
         var importNotice = RestoreImportFailures(replacement.RootPath);
         OcrCopyBatchResults = [];
+        LatestIndexRefresh = null;
         LatestBackupLocation = null;
         LatestExportLocation = null;
         TagInput = "";
@@ -482,6 +470,7 @@ internal sealed partial class InboxViewModel : ObservableObject, IDisposable
         OnPropertyChanged(nameof(CanWork));
         OnPropertyChanged(nameof(IsIdle));
         OnPropertyChanged(nameof(CanStartFolderWatch));
+        OnPropertyChanged(nameof(ShowIndexReport));
     }
 
     partial void OnSelectedDocumentChanged(DocumentSummary? oldValue, DocumentSummary? newValue)

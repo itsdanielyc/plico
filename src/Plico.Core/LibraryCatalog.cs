@@ -601,7 +601,7 @@ internal sealed partial class LibraryCatalog
         command.ExecuteNonQuery();
     }
 
-    internal void MarkMissing(IEnumerable<string> relativePaths)
+    internal IReadOnlyList<string> MarkMissing(IEnumerable<string> relativePaths)
     {
         using var connection = Connect();
         using var transaction = connection.BeginTransaction();
@@ -609,12 +609,14 @@ internal sealed partial class LibraryCatalog
         command.Transaction = transaction;
         command.CommandText = "UPDATE documents SET is_present = 0 WHERE relative_path = $path AND is_present = 1;";
         var path = command.Parameters.Add("$path", SqliteType.Text);
+        List<string>? unavailable = null;
         foreach (var relativePath in relativePaths)
         {
             path.Value = relativePath;
-            command.ExecuteNonQuery();
+            if (command.ExecuteNonQuery() == 1) (unavailable ??= new List<string>()).Add(relativePath);
         }
         transaction.Commit();
+        return unavailable is null ? [] : unavailable;
     }
 
     internal void BackupTo(string destination)

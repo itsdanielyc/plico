@@ -44,11 +44,11 @@ public sealed partial class InboxLibrary
             }
         }
 
-        _catalog.MarkMissing(previous.Values
+        var unavailable = _catalog.MarkMissing(previous.Values
             .Where(file => file.Version.Present && !movedSources.Contains(file.RelativePath) &&
                 (!inventory.Observed.Contains(file.RelativePath) || inventory.Unreadable.Contains(file.RelativePath)))
             .Select(file => file.RelativePath));
-        return new(indexed, warnings, movedSources.Count);
+        return new(indexed, warnings, movedSources.Count) { UnavailablePaths = unavailable };
     }
 
     private HashSet<string> RelocateMatchedPdfs(IReadOnlyDictionary<string, IndexedPdf> moves, DiskInventory inventory,

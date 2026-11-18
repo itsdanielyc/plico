@@ -20,6 +20,8 @@ The preview shows the PDF path below its catalog title. The path opens the docum
 
 **Refresh index** follows uniquely matched files through external filename swaps. The result list and open preview follow the catalog record to its new path.
 
+The refresh status counts newly unavailable PDFs beside indexed and moved files. **Index report** opens the affected paths and notices from the latest refresh. A successful refresh with no affected paths or notices clears the action.
+
 Batch review lives below the document list. The selection count identifies its scope. The preview keeps the individual document's review action.
 
 **Create OCR copies** uses the current language for the selected PDFs. The status line shows progress through the selection. **OCR results** opens the latest batch report with a result and file path for each source.

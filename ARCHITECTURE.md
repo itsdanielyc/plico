@@ -37,6 +37,8 @@ Schema v4 stores the SHA-256 digest of the published PDF. Refresh matches unique
 
 An occupied destination can join an external move when its previous document also has a matched destination. Refresh resolves chains and exchanges and checks the destination file stamps before writing. One SQLite transaction vacates the old keys and assigns the final paths. New files that fill a vacated path get their own records.
 
+The refresh result carries the paths whose catalog records became unavailable in the current transaction. The desktop uses those paths and the refresh notices to display the latest report for the open library. Unavailable records retain their metadata so a returning PDF can reuse its ID.
+
 Schema v5 records the source document and language of each new OCR copy. The source ID, source fingerprint, and language identify an existing copy for reuse. A refresh that indexes changed PDF contents clears their previous import and OCR-copy associations.
 
 Schema v6 indexes the added timestamps of present PDFs. An `added:` filter bounds the lookup with UTC timestamps, then checks the exact local date for candidates near the period edges. This handles clock changes across midnight using the same local dates shown in the list. [SQLite partial indexes](https://sqlite.org/partialindex.html), [.NET time-zone conversion](https://learn.microsoft.com/en-us/dotnet/api/system.timezoneinfo.converttime)

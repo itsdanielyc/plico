@@ -56,6 +56,7 @@
 43. Select a changed PDF, a source with an existing copy in the chosen language, and a new scan. Compare the per-file results, verify the copied tags and date, and repeat the batch. Cancel at the second file and check the first copy and the remaining source (L3, L4 and L6).
 44. Open **Without text** and use batch OCR. Find the new PDFs with `text:present` and a term from a scan. Check a mixed-page PDF, compound and conflicting clauses, a changed file after refresh, and a version 9 catalog upgrade (L3, L4 and L6).
 45. Exchange two indexed filenames and refresh. Check the IDs, tags, review state, date, and preview. Move the PDFs in a chain and fill the vacated path with another PDF. Exercise a blocked chain and force the catalog transaction to fail before retrying (L3 and L6).
+46. Remove a cataloged PDF, damage another, and add an unreadable file. Verify the newly unavailable paths and all notices in the report. Repeat the refresh, then restore the originals and check their IDs and metadata (L3, L4 and L6).
 
 Run `dotnet test Plico.slnx -c Release` for the fast suite. Run the native harness from `keel.json` for installed-platform evidence. Visual review starts with per-OS captures and geometry checks. Add pixel baselines when repeatable runner captures justify the maintenance.
 
