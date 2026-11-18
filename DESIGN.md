@@ -60,6 +60,8 @@ A malformed filter shows **Check search** beside the sort selector and an exampl
 
 The preview’s document date opens an editor with a year-month-day field. Saving a blank field clears the date. The list labels the document date and intake date so both are visible when filled.
 
+**Document date…** in the batch controls opens the same editor with the selected PDF count. A shared date fills the field. Mixed or missing dates open with an empty field and an explicit **Clear dates** action. After confirmation, matching PDFs remain selected in the refreshed results.
+
 **Save search…** names the query and puts it in the sidebar. Opening a shortcut displays its name above the results and restores the selected tag and order. **Edit search…** opens the name, query, and order fields and offers to remove the shortcut.
 
 A saved Inbox search updates as you mark documents reviewed. The next matching PDF stays available in the same search.

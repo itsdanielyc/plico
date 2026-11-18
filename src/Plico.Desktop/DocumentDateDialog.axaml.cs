@@ -4,18 +4,28 @@ using Avalonia.Interactivity;
 
 namespace Plico.Desktop;
 
-/// <summary>An accepted date edit. An empty dialog result means the editor was closed.</summary>
+/// <summary>An accepted date edit. A null date clears the stored value.</summary>
 internal sealed record DocumentDateEdit(DateOnly? Date);
 
-/// <summary>Edits the calendar date printed on a document.</summary>
+/// <summary>Edits the recorded calendar date for one or more documents.</summary>
 internal sealed partial class DocumentDateDialog : Window
 {
     private const string DateFormat = "yyyy-MM-dd";
+    private readonly bool _isBatchEdit;
 
-    internal DocumentDateDialog(DateOnly? currentDate)
+    internal DocumentDateDialog(DateOnly? currentDate, int documentCount = 1)
     {
+        _isBatchEdit = documentCount > 1;
         InitializeComponent();
         DocumentDateBox.Text = currentDate?.ToString(DateFormat, CultureInfo.InvariantCulture) ?? "";
+        if (!_isBatchEdit) return;
+
+        DocumentDatePrompt.Text = $"Document date for {documentCount} PDFs";
+        DocumentDateHint.Text = "Use YYYY-MM-DD.";
+        ClearDocumentDatesButton.IsVisible = true;
+        ConfirmDocumentDateButton.IsEnabled = currentDate.HasValue;
+        DocumentDateBox.TextChanging += (_, _) =>
+            ConfirmDocumentDateButton.IsEnabled = !string.IsNullOrWhiteSpace(DocumentDateBox.Text);
     }
 
     protected override void OnOpened(EventArgs e)
@@ -27,12 +37,17 @@ internal sealed partial class DocumentDateDialog : Window
 
     private void Cancel_Click(object? sender, RoutedEventArgs e) => Close();
 
+    private void Clear_Click(object? sender, RoutedEventArgs e)
+    {
+        if (_isBatchEdit) Close(new DocumentDateEdit(null));
+    }
+
     private void Save_Click(object? sender, RoutedEventArgs e)
     {
         string value = DocumentDateBox.Text?.Trim() ?? "";
         if (value.Length == 0)
         {
-            Close(new DocumentDateEdit(null));
+            if (!_isBatchEdit) Close(new DocumentDateEdit(null));
             return;
         }
         if (DateOnly.TryParseExact(value, DateFormat, CultureInfo.InvariantCulture, DateTimeStyles.None, out var date))

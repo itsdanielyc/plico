@@ -229,6 +229,17 @@ public sealed partial class InboxLibrary : IDisposable
     /// <summary>Sets or clears the archived document’s calendar date in the library catalog.</summary>
     public void SetDocumentDate(long documentId, DateOnly? date) => _catalog.SetDocumentDate(documentId, date);
 
+    /// <summary>Updates the document date of the entire selection in one catalog transaction.</summary>
+    /// <param name="documentIds">The selected catalog IDs. Repeated IDs refer to the same document.</param>
+    /// <param name="date">The calendar date to assign, or null to clear it.</param>
+    /// <param name="cancellationToken">Cancels the change before the catalog commit.</param>
+    /// <exception cref="InvalidOperationException">A selected document is unavailable.</exception>
+    public void SetDocumentDates(IReadOnlyList<long> documentIds, DateOnly? date, CancellationToken cancellationToken = default)
+    {
+        ArgumentNullException.ThrowIfNull(documentIds);
+        if (documentIds.Count > 0) _catalog.SetDocumentDates(documentIds, date, cancellationToken);
+    }
+
     /// <summary>Updates the review state of the whole selection in a single transaction.</summary>
     public void SetReviewedDocuments(IReadOnlyList<long> documentIds, bool reviewed)
     {

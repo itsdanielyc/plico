@@ -297,6 +297,9 @@
                                                     Click="RemoveBatchTag_Click" IsVisible="{Binding HasTaggedBatchSelection}"
                                                     IsEnabled="{Binding CanWork}" AutomationProperties.Name="Remove a tag from the selected PDFs"
                                                     Margin="6,0,0,4" Padding="10,7" />
+                                            <Button x:Name="EditBatchDocumentDateButton" Classes="secondary" Content="Document date…"
+                                                    Click="EditBatchDocumentDate_Click" IsEnabled="{Binding CanWork}"
+                                                    AutomationProperties.Name="Edit the document date of the selected PDFs" Margin="6,0,0,4" Padding="10,7" />
                                             <Button x:Name="CreateSelectedOcrCopiesButton" Classes="secondary" Content="Create OCR copies"
                                                     Command="{Binding CreateSelectedOcrCopiesCommand}" IsEnabled="{Binding CanWork}"
                                                     AutomationProperties.Name="Create OCR copies of the selected PDFs" Margin="6,0,0,4" Padding="10,7" />

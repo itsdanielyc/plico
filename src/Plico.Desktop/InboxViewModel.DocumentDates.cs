@@ -23,4 +23,29 @@ internal sealed partial class InboxViewModel
         LoadResults(document.Id);
         Status = edit.Date.HasValue ? "Document date saved." : "Document date cleared.";
     });
+
+    internal Task EditBatchDocumentDatesAsync()
+    {
+        if (!HasBatchSelection) return Task.CompletedTask;
+        var selection = _batchSelection;
+        var selectedIds = selection.Select(document => document.Id).ToArray();
+        DateOnly? commonDate = selection[0].DocumentDate;
+        if (commonDate.HasValue && selection.Any(document => document.DocumentDate != commonDate)) commonDate = null;
+
+        return RunOperationAsync("Edit document dates…", async token =>
+        {
+            var edit = await _dialogs.EditBatchDocumentDatesAsync(commonDate, selectedIds.Length);
+            if (edit is null)
+            {
+                Status = "Document date editor closed.";
+                return;
+            }
+
+            var library = RequireLibrary();
+            await Task.Run(() => library.SetDocumentDates(selectedIds, edit.Date, token), token);
+            LoadResults(retainLoadedResults: true);
+            string count = DocumentCount(selectedIds.Length);
+            Status = edit.Date.HasValue ? $"Document date saved for {count}." : $"Document dates cleared for {count}.";
+        });
+    }
 }

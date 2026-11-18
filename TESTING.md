@@ -64,6 +64,7 @@
 51. Choose an intake subfolder and file both an imported PDF and recovered scanner pages. Check a repeat across folders, an occupied filename, and a destination that disappears during capture. Switch libraries to check the preference, and verify watched files enter the PDF root (L3, L4 and L6).
 52. Remove a tag from a mixed selection. Check the chooser's assignment counts, cancellation, and retained selection. Include a duplicate selected ID, a normalized tag spelling, and another document with the same tag. Mark a selection member unavailable and verify every link is retained (L3, L4 and L6).
 53. Select PDFs across two loaded pages and apply a tag. Check their selection and the active sort. Remove the current filter tag from a selection spanning both pages, then load the next page and check for complete, distinct results (L3, L4 and L6).
+54. Open **Document date…** with mixed dates and check the empty field, cancel, then apply a leap-day date. Verify the selected PDFs across pages, a repeated ID, and the search results after an explicit clear. Cancel a catalog edit and make one selected PDF unavailable before an update to check that every recorded date is preserved (L3, L4 and L6).
 
 Run `dotnet test Plico.slnx -c Release` for the fast suite. Run the native harness from `keel.json` for installed-platform evidence. Visual review starts with per-OS captures and geometry checks. Add pixel baselines when repeatable runner captures justify the maintenance.
 

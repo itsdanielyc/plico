@@ -4,16 +4,21 @@
         FontFamily="{StaticResource InterFont}" Background="#F4F5EF">
     <StackPanel Margin="24" Spacing="12">
         <StackPanel Spacing="5">
-            <TextBlock Text="Document date" FontWeight="SemiBold" />
+            <TextBlock x:Name="DocumentDatePrompt" Text="Document date" FontWeight="SemiBold" TextWrapping="Wrap" />
             <TextBox x:Name="DocumentDateBox" PlaceholderText="YYYY-MM-DD" AutomationProperties.Name="Document date" />
-            <TextBlock Text="Use YYYY-MM-DD. Leave blank to clear the date." TextWrapping="Wrap" FontSize="12" Foreground="#5C685D" />
+            <TextBlock x:Name="DocumentDateHint" Text="Use YYYY-MM-DD. Leave blank to clear the date."
+                       TextWrapping="Wrap" FontSize="12" Foreground="#5C685D" />
         </StackPanel>
         <TextBlock x:Name="DateValidation" IsVisible="False" Foreground="#8E4037" TextWrapping="Wrap"
                    AutomationProperties.LiveSetting="Polite" />
-        <StackPanel Orientation="Horizontal" Spacing="8" HorizontalAlignment="Right">
-            <Button Content="Cancel" IsCancel="True" Click="Cancel_Click" Padding="14,7" />
-            <Button x:Name="ConfirmDocumentDateButton" Content="Save date" IsDefault="True" Click="Save_Click"
-                    Padding="14,7" Background="#254C37" Foreground="White" />
-        </StackPanel>
+        <Grid ColumnDefinitions="*,Auto" ColumnSpacing="8">
+            <Button x:Name="ClearDocumentDatesButton" Content="Clear dates" HorizontalAlignment="Left"
+                    IsVisible="False" Click="Clear_Click" Padding="14,7" />
+            <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="8">
+                <Button x:Name="CancelDocumentDateButton" Content="Cancel" IsCancel="True" Click="Cancel_Click" Padding="14,7" />
+                <Button x:Name="ConfirmDocumentDateButton" Content="Save date" IsDefault="True" Click="Save_Click"
+                        Padding="14,7" Background="#254C37" Foreground="White" />
+            </StackPanel>
+        </Grid>
     </StackPanel>
 </Window>

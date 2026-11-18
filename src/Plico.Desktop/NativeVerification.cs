@@ -91,9 +91,10 @@ internal static partial class NativeVerification
             await VerifyFolderSearchPickerAsync(window, model, dialogs, evidenceDirectory);
             await VerifyIntakeFolderAsync(window, model, dialogs, fixture, evidenceDirectory);
             await VerifyBatchTagPagingAsync(window, model, fixture, evidenceDirectory);
+            await VerifyBatchDocumentDatesAsync(window, model, dialogs, evidenceDirectory);
 
             File.WriteAllText(Path.Combine(evidenceDirectory, "passed.txt"),
-                $"Verified {runtime}. Native window completed multilingual OCR and correction, oriented JPEG and multi-page TIFF import, PDF combination, page extraction and rotation, phrase, tag, review-status, folder, and text-availability search, query correction, saved search restoration, document-date editing, filtering, and inheritance, result sorting, fit-width and selectable page text previews, match navigation, tag merging, suggestions, and edits across loaded result pages, duplicate drop, folder watch and inbox counting, title edit, single and batch PDF moves, external relocation and PDF swaps, index reporting and PDF restoration from files and folders, selected PDF export, library backup, text copy, single and batch OCR copies, saved import error recovery and retry, and filing through the chosen intake folder. {scanRecoveryEvidence}");
+                $"Verified {runtime}. Native window completed multilingual OCR and correction, oriented JPEG and multi-page TIFF import, PDF combination, page extraction and rotation, phrase, tag, review-status, folder, and text-availability search, query correction, saved search restoration, single and batch document-date editing, date filtering and inheritance, result sorting, fit-width and selectable page text previews, match navigation, tag merging, suggestions, and edits across loaded result pages, duplicate drop, folder watch and inbox counting, title edit, single and batch PDF moves, external relocation and PDF swaps, index reporting and PDF restoration from files and folders, selected PDF export, library backup, text copy, single and batch OCR copies, saved import error recovery and retry, and filing through the chosen intake folder. {scanRecoveryEvidence}");
             desktop.Shutdown(0);
         }
         catch (Exception error)
@@ -1021,6 +1022,7 @@ internal sealed class FixtureDialogs(params string[] documents) : IWorkspaceDial
     internal int FolderPickerCalls { get; private set; }
     internal string? EditedTitle { get; init; }
     internal Func<DateOnly?, Task<DocumentDateEdit?>>? DocumentDateChoice { get; set; }
+    internal Func<DateOnly?, int, Task<DocumentDateEdit?>>? BatchDocumentDateChoice { get; set; }
     internal Func<SavedSearchDraft, string?, bool, Task<SavedSearchDecision?>>? SavedSearchChoice { get; set; }
     internal TagRenameRequest? TagRenameChoice { get; set; }
     internal Func<IReadOnlyList<BatchTagOption>, Task<string?>>? TagRemovalChoice { get; set; }
@@ -1050,6 +1052,8 @@ internal sealed class FixtureDialogs(params string[] documents) : IWorkspaceDial
     public Task<string?> EditTitleAsync(string currentTitle) => Task.FromResult(EditedTitle);
     public Task<DocumentDateEdit?> EditDocumentDateAsync(DateOnly? currentDate) =>
         DocumentDateChoice?.Invoke(currentDate) ?? Task.FromResult<DocumentDateEdit?>(null);
+    public Task<DocumentDateEdit?> EditBatchDocumentDatesAsync(DateOnly? commonDate, int documentCount) =>
+        BatchDocumentDateChoice?.Invoke(commonDate, documentCount) ?? Task.FromResult<DocumentDateEdit?>(null);
     public Task<SavedSearchDecision?> EditSavedSearchAsync(SavedSearchDraft draft, string? scopeTag, bool editing) =>
         SavedSearchChoice?.Invoke(draft, scopeTag, editing) ?? Task.FromResult<SavedSearchDecision?>(null);
     public Task<TagRenameRequest?> RenameTagAsync(string currentName, IReadOnlyList<string> catalogNames) => Task.FromResult(TagRenameChoice);

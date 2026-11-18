@@ -15,6 +15,7 @@ internal interface IWorkspaceDialogs
     Task<bool> ConfirmPartialScanAsync(ScanInterruption interruption, CancellationToken cancellationToken);
     Task<string?> EditTitleAsync(string currentTitle);
     Task<DocumentDateEdit?> EditDocumentDateAsync(DateOnly? currentDate);
+    Task<DocumentDateEdit?> EditBatchDocumentDatesAsync(DateOnly? commonDate, int documentCount);
     Task<SavedSearchDecision?> EditSavedSearchAsync(SavedSearchDraft draft, string? scopeTag, bool editing);
     Task<TagRenameRequest?> RenameTagAsync(string currentName, IReadOnlyList<string> catalogNames);
     Task<string?> ChooseTagToRemoveAsync(IReadOnlyList<BatchTagOption> options);
@@ -82,6 +83,9 @@ internal sealed class WorkspaceDialogs(Window owner) : IWorkspaceDialogs
 
     public Task<DocumentDateEdit?> EditDocumentDateAsync(DateOnly? currentDate) =>
         new DocumentDateDialog(currentDate).ShowDialog<DocumentDateEdit?>(owner);
+
+    public Task<DocumentDateEdit?> EditBatchDocumentDatesAsync(DateOnly? commonDate, int documentCount) =>
+        new DocumentDateDialog(commonDate, documentCount).ShowDialog<DocumentDateEdit?>(owner);
 
     public Task<SavedSearchDecision?> EditSavedSearchAsync(SavedSearchDraft draft, string? scopeTag, bool editing) =>
         new SavedSearchDialog(draft, scopeTag, editing).ShowDialog<SavedSearchDecision?>(owner);

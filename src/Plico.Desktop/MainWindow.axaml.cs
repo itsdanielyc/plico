@@ -112,7 +112,10 @@ public sealed partial class MainWindow : Window
     private async void ApplyBatchTag_Click(object? sender, RoutedEventArgs e) => await ApplyBatchTagAsync();
 
     private async void RemoveBatchTag_Click(object? sender, RoutedEventArgs e) =>
-        await UpdateBatchTagsAsync(static model => model.RemoveSelectedTagAsync());
+        await UpdateSelectedDocumentsAsync(static model => model.RemoveSelectedTagAsync());
+
+    private async void EditBatchDocumentDate_Click(object? sender, RoutedEventArgs e) =>
+        await UpdateSelectedDocumentsAsync(static model => model.EditBatchDocumentDatesAsync());
 
     private async void BatchTag_KeyDown(object? sender, KeyEventArgs e)
     {
@@ -121,9 +124,9 @@ public sealed partial class MainWindow : Window
         await ApplyBatchTagAsync();
     }
 
-    private Task ApplyBatchTagAsync() => UpdateBatchTagsAsync(static model => model.ApplySelectedTagAsync());
+    private Task ApplyBatchTagAsync() => UpdateSelectedDocumentsAsync(static model => model.ApplySelectedTagAsync());
 
-    private async Task UpdateBatchTagsAsync(Func<InboxViewModel, Task> update)
+    private async Task UpdateSelectedDocumentsAsync(Func<InboxViewModel, Task> update)
     {
         if (ViewModel is not { CanWork: true, HasBatchSelection: true } model) return;
         var originalDocuments = model.Documents;

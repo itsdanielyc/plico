@@ -35,4 +35,22 @@ internal sealed partial class LibraryCatalog
         command.Parameters.AddWithValue("$id", documentId);
         if (command.ExecuteNonQuery() != 1) throw new InvalidOperationException(DocumentUnavailableMessage);
     }
+
+    internal void SetDocumentDates(IReadOnlyList<long> documentIds, DateOnly? date, CancellationToken cancellationToken)
+    {
+        cancellationToken.ThrowIfCancellationRequested();
+        using var connection = Connect();
+        using var transaction = connection.BeginTransaction();
+        using var command = connection.CreateCommand();
+        command.Transaction = transaction;
+        command.CommandText = """
+            UPDATE documents SET document_day = $day
+            WHERE is_present = 1 AND id IN (SELECT value FROM json_each($ids));
+            """;
+        command.Parameters.AddWithValue("$day", (object?)date?.DayNumber ?? DBNull.Value);
+        int expected = BindSelection(command, documentIds);
+        RequireSelection(command.ExecuteNonQuery(), expected);
+        cancellationToken.ThrowIfCancellationRequested();
+        transaction.Commit();
+    }
 }

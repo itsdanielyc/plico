@@ -46,6 +46,8 @@ Use `added:2026`, `added:2026-11`, or `added:2026-11-18` to filter by year, mont
 
 Choose **Set document date…** under a PDF’s filename to record the date on the paperwork. Enter it as `YYYY-MM-DD`, or save a blank field to clear it. Use `dated:2024`, `dated:2024-02`, or `dated:2024-02-29` to find PDFs by that date. The filter works with `added:`, tags, folders, and text.
 
+Select several PDFs and choose **Document date…** to assign a shared date. Use **Clear dates** in that editor to clear the selected documents’ dates.
+
 Use `folder:"Filed/Tax Forms"` to search that folder and its subfolders. Use `/` and the spelling and case shown in Plico’s file path. `folder:.` matches PDFs directly in `PDFs/`. Add text, tags, or dates to the same query.
 
 Use **Folder…** beside search to choose a folder and apply the same filter. Switching folders keeps the other search terms and filters. Choosing the library’s `PDFs/` folder shows unfiled PDFs.
