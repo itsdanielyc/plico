@@ -62,7 +62,11 @@ public sealed partial class InboxLibrary
     /// <param name="language">The bundled model used when the source needs OCR.</param>
     /// <param name="destinationFolder">An existing directory within the library's PDF directory, or null for the root.</param>
     public Task<FileImportResult> ImportFileAsync(string sourcePath, CancellationToken cancellationToken,
-        OcrLanguage language, string? destinationFolder)
+        OcrLanguage language, string? destinationFolder) =>
+        ImportSourceFileAsync(sourcePath, language, destinationFolder, migration: null, cancellationToken);
+
+    private Task<FileImportResult> ImportSourceFileAsync(string sourcePath, OcrLanguage language, string? destinationFolder,
+        MigrationWrite? migration, CancellationToken cancellationToken)
     {
         var extension = Path.GetExtension(sourcePath).ToLowerInvariant();
         if (!DocumentProcessor.SupportsExtension(extension))
@@ -73,6 +77,7 @@ public sealed partial class InboxLibrary
         string title = Path.GetFileNameWithoutExtension(sourcePath);
         return InStageAsync(async (stage, token) =>
         {
+            if (migration is not null && ResumeMigratedPdf(migration, token) is { } resumed) return resumed;
             string? target = destinationFolder is null ? null : ResolveIntakeDirectory(destinationFolder);
             var snapshot = Path.Combine(stage, StagedSourceStem + extension);
             var initialVersion = FileVersion.Read(sourcePath);
@@ -83,12 +88,13 @@ public sealed partial class InboxLibrary
             }
             var existing = await FindPriorImportAsync(fingerprint,
                 DocumentProcessor.IsPdf(extension) ? new FileInfo(snapshot).Length : null, token).ConfigureAwait(false);
-            if (existing is not null) return new FileImportResult(existing, Added: false);
+            if (existing is not null)
+                return new FileImportResult(migration is null ? existing : _catalog.ApplyMigrationToExisting(existing.Id, migration), Added: false);
 
             string pdf = Path.Combine(stage, StagedPdfName);
             var prepared = await _processor.PrepareAsync(snapshot, pdf, language, token).ConfigureAwait(false);
             var document = CommitPdf(pdf, title, prepared.Text, token, fingerprint, prepared.CopiedSource ? fingerprint : null,
-                destinationFolder: target, recognizedLanguage: prepared.CopiedSource ? null : language);
+                destinationFolder: target, recognizedLanguage: prepared.CopiedSource ? null : language, migration: migration);
             return new FileImportResult(document, Added: true);
         }, cancellationToken);
     }

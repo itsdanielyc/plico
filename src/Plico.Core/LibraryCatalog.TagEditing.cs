@@ -48,12 +48,19 @@ internal sealed partial class LibraryCatalog
         {
             throw new InvalidOperationException($"The tag “{existingLabel}” already exists. Choose Merge tags to combine them.");
         }
+        if (existingLabel is not null &&
+            TagIsAncestor(command.Connection!, command.Transaction!, (string)command.Parameters["$sourceKey"].Value!, destinationKey))
+            throw new ArgumentException("Choose a destination outside this tag’s branch.");
 
         command.CommandText = """
             INSERT INTO tags (tag_key, label) VALUES ($destinationKey, $label) ON CONFLICT(tag_key) DO NOTHING;
             INSERT OR IGNORE INTO document_tags (document_id, tag_key)
             SELECT document_id, $destinationKey FROM document_tags WHERE tag_key = $sourceKey;
             UPDATE saved_searches SET scope_tag_key = $destinationKey WHERE scope_tag_key = $sourceKey;
+            """;
+        command.ExecuteNonQuery();
+        MoveTagAppearance(command, existingLabel is not null);
+        command.CommandText = """
             DELETE FROM document_tags WHERE tag_key = $sourceKey;
             DELETE FROM tags WHERE tag_key = $sourceKey;
             """;
