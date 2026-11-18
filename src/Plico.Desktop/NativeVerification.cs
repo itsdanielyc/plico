@@ -356,9 +356,9 @@ internal static class NativeVerification
 
     private static async Task VerifyBatchMoveAsync(MainWindow window, InboxViewModel model, FixtureDialogs dialogs, string directory)
     {
-        var selected = model.Documents.Where(document => document.Title is "Paperwork packet" or "Sideways receipt").ToList();
-        Require(selected.Count == 2, "The PDFs for batch filing were missing from the search.");
-        Control<ListBox>(window, "DocumentList").SelectedItems = selected;
+        var sources = model.Documents.Where(document => document.Title is "Paperwork packet" or "Sideways receipt").ToArray();
+        Require(sources.Length == 2, "The PDFs for batch filing were missing from the search.");
+        Control<ListBox>(window, "DocumentList").SelectedItems = sources.ToList();
         var action = Control<Button>(window, "MoveSelectedPdfsButton");
         Require(model.HasBatchSelection && action.IsEffectivelyVisible && action.IsEnabled, "The selection did not offer batch filing.");
         await CaptureAsync(window, directory, "batch-move-selection.png");
@@ -379,11 +379,12 @@ internal static class NativeVerification
         }
         Require(dialogs.FolderPickerCalls == previousPicks + 1 && dialogs.LastFolderStart == pdfs && model.Query == query &&
             model.Status == "Moved 2 documents.", model.Status);
-        foreach (var source in selected)
+        foreach (var source in sources)
         {
             var moved = model.Documents.Single(document => document.Id == source.Id);
             Require(moved.RelativePath.StartsWith("Filed/Packets/", StringComparison.Ordinal) &&
-                File.Exists(Path.Combine(pdfs, moved.RelativePath)) && !File.Exists(Path.Combine(pdfs, source.RelativePath)), model.Status);
+                File.Exists(Path.Combine(pdfs, moved.RelativePath)) && !File.Exists(Path.Combine(pdfs, source.RelativePath)),
+                $"The source {source.RelativePath} did not complete its move to {moved.RelativePath}.");
         }
 
         Control<TextBox>(window, "SearchBox").SetCurrentValue(TextBox.TextProperty, $"{ReceiptKeyword} folder:Filed/Packets");
