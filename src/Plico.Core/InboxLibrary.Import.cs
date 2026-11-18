@@ -36,8 +36,9 @@ public sealed partial class InboxLibrary
             if (existing is not null) return new FileImportResult(existing, Added: false);
 
             string pdf = Path.Combine(stage, StagedPdfName);
-            var text = await _processor.PrepareAsync(snapshot, pdf, token).ConfigureAwait(false);
-            return new FileImportResult(CommitPdf(pdf, title, text, token, fingerprint), Added: true);
+            var prepared = await _processor.PrepareAsync(snapshot, pdf, token).ConfigureAwait(false);
+            var document = CommitPdf(pdf, title, prepared.Text, token, fingerprint, prepared.CopiedSource ? fingerprint : null);
+            return new FileImportResult(document, Added: true);
         }, cancellationToken);
     }
 

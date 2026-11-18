@@ -1,5 +1,11 @@
 # Changelog
 
+## [0.5.0] - 2026-11-18
+
+- **Refresh index** can follow an indexed PDF into a new folder or filename. When the match is unique, it carries over that PDF's title, tags, review state, and duplicate detection.
+- Refresh builds the required fingerprints for older libraries. New imports receive them automatically.
+- If multiple copies make a match ambiguous, refresh creates separate catalog entries for the new paths.
+
 ## [0.4.1] - 2026-11-18
 
 - Select a PDF's filename in the preview to open its containing folder. This works for documents you organize into subfolders.

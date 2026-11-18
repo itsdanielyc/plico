@@ -58,7 +58,8 @@ internal sealed class LibraryCatalog
         """;
 
     private const string DisplayTitleMigration = "ALTER TABLE documents ADD COLUMN display_title TEXT;";
-    private static readonly string[] Migrations = [Schema, FingerprintMigration, DisplayTitleMigration];
+    private const string PdfFingerprintMigration = "ALTER TABLE documents ADD COLUMN pdf_sha256 BLOB;";
+    private static readonly string[] Migrations = [Schema, FingerprintMigration, DisplayTitleMigration, PdfFingerprintMigration];
 
     private readonly string _connectionString;
 
@@ -100,19 +101,20 @@ internal sealed class LibraryCatalog
         migration.Commit();
     }
 
-    internal long Upsert(string relativePath, string title, PdfText text, FileVersion version, byte[]? sourceFingerprint = null)
+    internal long Upsert(string relativePath, string title, PdfText text, FileVersion version,
+        byte[] pdfFingerprint, byte[]? sourceFingerprint = null)
     {
         using var connection = Connect();
         using var command = connection.CreateCommand();
         command.CommandText = """
-            INSERT INTO documents (title, relative_path, added_at, modified_ticks, file_bytes, page_count, has_text, body, source_sha256)
-            VALUES ($title, $path, $added, $modified, $bytes, $pages, $hasText, $text, $source)
+            INSERT INTO documents (title, relative_path, added_at, modified_ticks, file_bytes, page_count, has_text, body, source_sha256, pdf_sha256)
+            VALUES ($title, $path, $added, $modified, $bytes, $pages, $hasText, $text, $source, $pdf)
             ON CONFLICT(relative_path) DO UPDATE SET
                 title = CASE WHEN documents.display_title IS NULL THEN excluded.title
                              ELSE documents.display_title || char(10) || excluded.title END,
                 modified_ticks = excluded.modified_ticks, file_bytes = excluded.file_bytes,
                 page_count = excluded.page_count, has_text = excluded.has_text, body = excluded.body, is_present = 1,
-                source_sha256 = excluded.source_sha256
+                source_sha256 = excluded.source_sha256, pdf_sha256 = excluded.pdf_sha256
             RETURNING id;
             """;
         command.Parameters.AddWithValue("$title", title);
@@ -124,6 +126,7 @@ internal sealed class LibraryCatalog
         command.Parameters.AddWithValue("$hasText", text.Body.Length > 0);
         command.Parameters.AddWithValue("$text", text.Body);
         command.Parameters.AddWithValue("$source", sourceFingerprint is null ? DBNull.Value : sourceFingerprint);
+        command.Parameters.AddWithValue("$pdf", pdfFingerprint);
         return (long)command.ExecuteScalar()!;
     }
 
@@ -331,18 +334,53 @@ internal sealed class LibraryCatalog
         }
     }
 
-    internal Dictionary<string, FileVersion> ReadFileVersions()
+    internal Dictionary<string, IndexedPdf> ReadIndexedFiles()
     {
         using var connection = Connect();
         using var command = connection.CreateCommand();
-        command.CommandText = "SELECT relative_path, modified_ticks, file_bytes, is_present FROM documents;";
+        command.CommandText = "SELECT id, relative_path, modified_ticks, file_bytes, is_present, pdf_sha256 FROM documents;";
         using var results = command.ExecuteReader();
-        var versions = new Dictionary<string, FileVersion>(StringComparer.Ordinal);
+        var versions = new Dictionary<string, IndexedPdf>(StringComparer.Ordinal);
         while (results.Read())
         {
-            versions.Add(results.GetString(0), new(results.GetInt64(1), results.GetInt64(2), results.GetBoolean(3)));
+            string path = results.GetString(1);
+            var version = new FileVersion(results.GetInt64(2), results.GetInt64(3), results.GetBoolean(4));
+            var fingerprint = results.IsDBNull(5) ? null : results.GetFieldValue<byte[]>(5);
+            versions.Add(path, new IndexedPdf(results.GetInt64(0), path, version, fingerprint));
         }
         return versions;
+    }
+
+    internal void UpdateFileStamp(long documentId, FileVersion version, byte[] pdfFingerprint)
+    {
+        using var connection = Connect();
+        using var command = connection.CreateCommand();
+        command.CommandText = """
+            UPDATE documents SET modified_ticks = $modified, file_bytes = $bytes, is_present = 1,
+                pdf_sha256 = $pdf WHERE id = $id;
+            """;
+        command.Parameters.AddWithValue("$modified", version.LastModifiedTicks);
+        command.Parameters.AddWithValue("$bytes", version.Length);
+        command.Parameters.AddWithValue("$pdf", pdfFingerprint);
+        command.Parameters.AddWithValue("$id", documentId);
+        command.ExecuteNonQuery();
+    }
+
+    internal void Relocate(long documentId, string relativePath, string filename, FileVersion version)
+    {
+        using var connection = Connect();
+        using var command = connection.CreateCommand();
+        command.CommandText = """
+            UPDATE documents SET relative_path = $path, modified_ticks = $modified, file_bytes = $bytes, is_present = 1,
+                title = CASE WHEN display_title IS NULL THEN $name ELSE display_title || char(10) || $name END
+            WHERE id = $id;
+            """;
+        command.Parameters.AddWithValue("$path", relativePath);
+        command.Parameters.AddWithValue("$modified", version.LastModifiedTicks);
+        command.Parameters.AddWithValue("$bytes", version.Length);
+        command.Parameters.AddWithValue("$name", filename);
+        command.Parameters.AddWithValue("$id", documentId);
+        command.ExecuteNonQuery();
     }
 
     internal void MarkMissing(IEnumerable<string> relativePaths)

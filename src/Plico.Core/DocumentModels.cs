@@ -18,15 +18,17 @@ public sealed record DocumentSummary(
 /// <summary>Results in display order and whether there are more at the next offset.</summary>
 public sealed record DocumentPage(IReadOnlyList<DocumentSummary> Items, bool HasMore);
 
-/// <summary>Files reindexed from disk and any files that could not be read.</summary>
-public sealed record RefreshResult(int Indexed, IReadOnlyList<string> Warnings);
+/// <summary>Newly indexed files, recovery of moved PDFs, and files that could not be read.</summary>
+public sealed record RefreshResult(int Indexed, IReadOnlyList<string> Warnings, int Relocated = 0);
 
 /// <summary>The existing or newly created catalog entry for a supplied file.</summary>
 public sealed record FileImportResult(DocumentSummary Document, bool Added);
 
 internal sealed record PdfText(string Body, int PageCount, bool HasTextOnEveryPage);
+internal readonly record struct PreparedPdf(PdfText Text, bool CopiedSource);
 
 internal readonly record struct ImportCandidate(long Id, string RelativePath, FileVersion Version);
+internal sealed record IndexedPdf(long Id, string RelativePath, FileVersion Version, byte[]? Fingerprint);
 
 internal readonly record struct FileVersion(long LastModifiedTicks, long Length, bool Present)
 {

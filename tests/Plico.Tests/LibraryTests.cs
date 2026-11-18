@@ -194,6 +194,7 @@ public sealed class LibraryTests
                 DROP INDEX documents_legacy_file_bytes;
                 ALTER TABLE documents DROP COLUMN source_sha256;
                 ALTER TABLE documents DROP COLUMN display_title;
+                ALTER TABLE documents DROP COLUMN pdf_sha256;
                 PRAGMA user_version = 1;
                 """;
             command.ExecuteNonQuery();

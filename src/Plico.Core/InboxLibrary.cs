@@ -155,50 +155,13 @@ public sealed partial class InboxLibrary : IDisposable
         return DocumentProcessor.RenderPageAsync(ResolvePdf(document), pageNumber, cancellationToken);
     }
 
-    /// <summary>Reconciles copied, edited, missing, and recovered PDFs with the index.</summary>
-    // O(files + catalog rows + updated PDF text) time and O(catalog rows + largest updated text) space.
+    /// <summary>Reconciles copied, edited, moved, and missing PDFs with the index.</summary>
     public RefreshResult Refresh(CancellationToken cancellationToken = default)
     {
         _fileOperations.Wait(cancellationToken);
         try
         {
-            int indexed = 0;
-            var warnings = new List<string>();
-            var known = _catalog.ReadFileVersions();
-            var options = new EnumerationOptions
-            {
-                RecurseSubdirectories = true,
-                AttributesToSkip = FileAttributes.ReparsePoint,
-                IgnoreInaccessible = false,
-                MatchCasing = MatchCasing.CaseInsensitive
-            };
-            foreach (var path in Directory.EnumerateFiles(PdfDirectory, "*.pdf", options))
-            {
-                cancellationToken.ThrowIfCancellationRequested();
-                string relativePath = RelativePdfPath(path);
-                var previouslyIndexed = known.GetValueOrDefault(relativePath);
-                try
-                {
-                    var current = FileVersion.Read(path);
-                    if (previouslyIndexed != current)
-                    {
-                        var text = DocumentProcessor.ReadPdf(path, cancellationToken);
-                        if (FileVersion.Read(path) != current)
-                        {
-                            throw new IOException("The file changed while Plico read it. Refresh again once it is saved.");
-                        }
-                        _catalog.Upsert(relativePath, Path.GetFileNameWithoutExtension(path), text, current);
-                        indexed++;
-                    }
-                    known.Remove(relativePath);
-                }
-                catch (Exception error) when (error is IOException or UnauthorizedAccessException or InvalidDataException)
-                {
-                    warnings.Add($"{relativePath} — {error.Message}");
-                }
-            }
-            _catalog.MarkMissing(known.Where(item => item.Value.Present).Select(item => item.Key));
-            return new(indexed, warnings);
+            return ReconcileFiles(cancellationToken);
         }
         finally
         {
@@ -232,12 +195,13 @@ public sealed partial class InboxLibrary : IDisposable
     }
 
     private DocumentSummary CommitPdf(string stagedPdf, string title, PdfText text, CancellationToken cancellationToken,
-        byte[]? sourceFingerprint = null)
+        byte[]? sourceFingerprint = null, byte[]? pdfFingerprint = null)
     {
         var version = FileVersion.Read(stagedPdf);
+        var fingerprint = pdfFingerprint ?? FingerprintPdf(stagedPdf, cancellationToken);
         cancellationToken.ThrowIfCancellationRequested();
         string publishedPdf = PublishPdf(stagedPdf, title);
-        long id = _catalog.Upsert(RelativePdfPath(publishedPdf), title, text, version, sourceFingerprint);
+        long id = _catalog.Upsert(RelativePdfPath(publishedPdf), title, text, version, fingerprint, sourceFingerprint);
         return _catalog.Get(id);
     }
 

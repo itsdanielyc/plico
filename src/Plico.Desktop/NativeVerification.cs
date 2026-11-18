@@ -49,11 +49,12 @@ internal static class NativeVerification
             await VerifyDropAsync(window, model, fixture, evidenceDirectory);
             await VerifyWatchedFolderAsync(window, model, fixture, evidenceDirectory);
             await VerifyTitleEditorAsync(window, model, evidenceDirectory);
-            VerifyDocumentLocation(window, model, dialogs);
+            VerifyDocumentLocation(window, dialogs, Path.Combine(model.LibraryPath, "PDFs"));
+            await VerifyMovedPdfAsync(window, model, dialogs, evidenceDirectory);
             await VerifyScannerDialogAsync(window, evidenceDirectory);
 
             File.WriteAllText(Path.Combine(evidenceDirectory, "passed.txt"),
-                "Native window completed OCR, review and search, duplicate drop, folder watch, title edit, PDF folder selection, and scanner settings display.");
+                "Native window completed OCR, review and search, duplicate drop, folder watch, title edit, PDF relocation, and scanner settings display.");
             desktop.Shutdown(0);
         }
         catch (Exception error)
@@ -63,13 +64,30 @@ internal static class NativeVerification
         }
     }
 
-    private static void VerifyDocumentLocation(MainWindow window, InboxViewModel model, FixtureDialogs dialogs)
+    private static void VerifyDocumentLocation(MainWindow window, FixtureDialogs dialogs, string expectedFolder)
     {
         var location = Control<Button>(window, "PdfLocationButton");
         Require(location.IsVisible && location.IsEnabled && location.Command is not null, "The document path did not offer its folder.");
         location.Command!.Execute(null);
-        Require(dialogs.LastOpenedPath == Path.Combine(model.LibraryPath, "PDFs") && Directory.Exists(dialogs.LastOpenedPath),
+        Require(dialogs.LastOpenedPath == expectedFolder && Directory.Exists(dialogs.LastOpenedPath),
             "The document path did not open the PDF's actual containing folder.");
+    }
+
+    private static async Task VerifyMovedPdfAsync(MainWindow window, InboxViewModel model, FixtureDialogs dialogs, string directory)
+    {
+        var selected = model.SelectedDocument ?? throw new InvalidOperationException("Select the watched PDF before moving it.");
+        var pdfFolder = Path.Combine(model.LibraryPath, "PDFs");
+        var filingFolder = Directory.CreateDirectory(Path.Combine(pdfFolder, "Filed")).FullName;
+        var movedPdf = Path.Combine(filingFolder, "Housing renewal.pdf");
+        File.Move(Path.Combine(pdfFolder, selected.RelativePath), movedPdf);
+        await model.RefreshIndexCommand.ExecuteAsync(null);
+        Require(model.Status.Contains("1 document moved.", StringComparison.Ordinal), model.Status);
+
+        var search = Control<TextBox>(window, "SearchBox");
+        search.SetCurrentValue(TextBox.TextProperty, EditedDocumentTitle);
+        await UntilAsync(() => model.SelectedDocument?.Id == selected.Id && model.Preview is not null, () => model.Status);
+        VerifyDocumentLocation(window, dialogs, filingFolder);
+        await CaptureAsync(window, directory, "moved-pdf.png");
     }
 
     private static async Task VerifyTitleEditorAsync(MainWindow window, InboxViewModel model, string directory)

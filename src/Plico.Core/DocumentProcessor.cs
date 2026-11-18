@@ -28,7 +28,7 @@ internal sealed class DocumentProcessor(string dataDirectory)
 
     internal static bool SupportsExtension(string extension) => IsPdf(extension) || ImageExtensions.Contains(extension);
 
-    internal async Task<PdfText> PrepareAsync(string stagedSource, string outputPath, CancellationToken cancellationToken)
+    internal async Task<PreparedPdf> PrepareAsync(string stagedSource, string outputPath, CancellationToken cancellationToken)
     {
         string stagingDirectory = Path.GetDirectoryName(outputPath)!;
         bool isPdf = IsPdf(Path.GetExtension(stagedSource));
@@ -38,7 +38,7 @@ internal sealed class DocumentProcessor(string dataDirectory)
             if (existing.HasTextOnEveryPage)
             {
                 File.Move(stagedSource, outputPath);
-                return existing;
+                return new(existing, CopiedSource: true);
             }
         }
 
@@ -46,7 +46,8 @@ internal sealed class DocumentProcessor(string dataDirectory)
         var pages = isPdf
             ? new PdfImporter(context).Import(stagedSource, progress: cancellationToken)
             : new ImageImporter(context).Import(stagedSource, progress: cancellationToken);
-        return await ExportAsync(context, pages, outputPath, cancellationToken).ConfigureAwait(false);
+        var text = await ExportAsync(context, pages, outputPath, cancellationToken).ConfigureAwait(false);
+        return new(text, CopiedSource: false);
     }
 
     internal async Task<PdfText> ExportAsync(

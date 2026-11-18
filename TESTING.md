@@ -18,7 +18,7 @@
 5. Discover scanners from the real shell. Physical feed, duplex and flatbed checks require a compatible device (manual).
 6. Start watching a folder from the native window. Import a newly completed file, find it by text, preserve the previous search until the user changes it, and stop the watch (L3 and L6).
 7. Capture and search a page from a loopback eSCL scanner. Verify address validation, saved addresses, and capture availability when settings are unreadable (L1, L3, L4 and L6 layout).
-8. Edit a catalog title, find it by title and filename, and preserve tags and review state after reindexing. Open the selected PDF's actual folder (L3, L4 and L6).
+8. Edit a catalog title and find it by title and filename. Move a PDF on disk, refresh, and check its metadata and containing folder. Confirm ambiguous copies have distinct records (L3, L4 and L6).
 
 Run `dotnet test Plico.slnx -c Release` for the fast suite. Run the native harness from `keel.json` for installed-platform evidence. Visual review starts with per-OS captures and geometry checks. Add pixel baselines when repeatable runner captures justify the maintenance.
 

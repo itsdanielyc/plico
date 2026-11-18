@@ -133,9 +133,9 @@ internal sealed partial class InboxViewModel : ObservableObject, IDisposable
         var result = await Task.Run(() => library.Refresh(token), token);
         Tags = library.GetTags();
         LoadResults();
-        Status = result.Warnings.Count == 0
-            ? $"{DocumentCount(result.Indexed)} indexed."
-            : $"{DocumentCount(result.Indexed)} indexed. {result.Warnings[0]}";
+        Status = $"{DocumentCount(result.Indexed)} indexed.";
+        if (result.Relocated > 0) Status += $" {DocumentCount(result.Relocated)} moved.";
+        if (result.Warnings.Count > 0) Status += $" {result.Warnings[0]}";
     });
 
     [RelayCommand] private void Cancel() => _operationCancellation?.Cancel();
