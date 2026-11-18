@@ -116,6 +116,8 @@ DeletePages	Delete pages	Supprimer des pages
 DeletePermanently	Delete permanently…	Supprimer définitivement…
 DetectedPaymentDetails	Detected payment details	Informations de paiement détectées
 Discard	Discard	Ignorer
+DocumentActions	Document actions	Actions du document
+DocumentAddedDateFormat	Added {0:dd MMM yyyy}	Ajouté le {0:dd MMM yyyy}
 DocumentDate	Document date	Date du document
 DocumentDate2	Document date…	Date du document…
 DocumentDateCleared	Document date cleared.	Date du document effacée.
@@ -482,3 +484,9 @@ WatchingForNewOrUpdatedFilesIn0	Watching for new or updated files in {0}.	Survei
 WithoutText	Without text	Sans texte
 ZoomIn	Zoom in	Agrandir
 ZoomOut	Zoom out	Réduire
+DatedDateFormat	Dated {0:dd MMM yyyy}	Daté du {0:dd MMM yyyy}
+SetDocumentDate	Set document date…	Dater le document…
+TagAdded	Tag added.	Étiquette ajoutée.
+ImportAddedFormat	{0} added.	Ajout de {0}.
+ImportAlreadyPresentFormat	{0} already in the library.	{0} déjà dans la bibliothèque.
+ImportUnreadableFormat	No text recognized in {0}.	Aucun texte reconnu dans {0}.

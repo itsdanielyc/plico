@@ -5,7 +5,7 @@ namespace Plico.Desktop;
 internal sealed partial class InboxViewModel
 {
     public string DocumentDateAction => SelectedDocument?.DocumentDate is { } date
-        ? $"Dated {date:dd MMM yyyy}" : "Set document date…";
+        ? DesktopText.Format($"Dated {date:dd MMM yyyy}") : DesktopText.Translate("Set document date…");
 
     [RelayCommand]
     private Task EditDocumentDateAsync() => RunOperationAsync("Edit document date…", async token =>

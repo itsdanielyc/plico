@@ -91,6 +91,11 @@
             <Setter Property="Background" Value="{DynamicResource SelectionSurface}" />
             <Setter Property="Foreground" Value="{DynamicResource WorkspaceInk}" />
         </Style>
+        <Style Selector="WrapPanel.document-actions > Button">
+            <Setter Property="FontSize" Value="12" />
+            <Setter Property="Padding" Value="7,4" />
+            <Setter Property="Margin" Value="0,0,5,3" />
+        </Style>
     </Window.Styles>
 
     <Grid ColumnDefinitions="204,*">
@@ -302,7 +307,7 @@
                                                 <WrapPanel Orientation="Horizontal">
                                                     <TextBlock Text="{Binding DocumentDate, StringFormat='Dated {0:dd MMM yyyy}'}" Classes="muted"
                                                                IsVisible="{Binding HasDocumentDate}" Margin="0,0,10,0" />
-                                                    <TextBlock Text="{Binding AddedAt.LocalDateTime, StringFormat='Added {0:dd MMM yyyy}'}" Classes="muted" />
+                                                    <TextBlock Text="{Binding AddedAt.LocalDateTime, StringFormat={translation:Tr DocumentAddedDateFormat}}" Classes="muted" />
                                                 </WrapPanel>
                                                 <local:SearchExcerpt Document="{Binding}" Classes="muted" TextWrapping="Wrap"
                                                            MaxLines="2" TextTrimming="CharacterEllipsis" />
@@ -373,7 +378,7 @@
                         <Panel>
                             <TextBlock Text="{translation:Tr SelectADocumentToPreviewIt}" IsVisible="{Binding !HasSelection}"
                                        Foreground="{DynamicResource SubtleInk}" FontSize="13" HorizontalAlignment="Center" VerticalAlignment="Center" />
-                            <Grid IsVisible="{Binding HasSelection}" RowDefinitions="Auto,*,Auto" RowSpacing="11" Margin="15">
+                            <Grid IsVisible="{Binding HasSelection}" RowDefinitions="Auto,*,Auto" RowSpacing="8" Margin="12">
                                 <Grid ColumnDefinitions="*,Auto" ColumnSpacing="10">
                                     <StackPanel Spacing="4">
                                         <TextBlock Text="{Binding SelectedDocument.Title}" TextTrimming="CharacterEllipsis" FontSize="17" FontWeight="SemiBold" />
@@ -407,8 +412,8 @@
                                         </StackPanel>
                                     </StackPanel>
                                 </Grid>
-                                <Border Grid.Row="1" Background="{DynamicResource PreviewSurface}" CornerRadius="8" Padding="12" ClipToBounds="True">
-                                    <Grid RowDefinitions="*,Auto,Auto" RowSpacing="7">
+                                <Border Grid.Row="1" Background="{DynamicResource PreviewSurface}" CornerRadius="8" Padding="8" ClipToBounds="True">
+                                    <Grid RowDefinitions="*,Auto,Auto" RowSpacing="5">
                                         <Grid ColumnDefinitions="Auto,*">
                                             <ScrollViewer HorizontalScrollBarVisibility="Disabled" VerticalScrollBarVisibility="Auto"
                                                           Width="68" Margin="0,0,7,0" IsVisible="{Binding HasVisiblePageThumbnails}">
@@ -486,57 +491,61 @@
                                         </Grid>
                                     </Grid>
                                 </Border>
-                                <StackPanel Grid.Row="2" Spacing="8">
-                                    <TextBlock Text="{translation:Tr NoSearchableTextFound}" Foreground="{DynamicResource WarningInk}" FontSize="12"
-                                               TextWrapping="Wrap" IsVisible="{Binding HasNoSearchableText}" />
-                                    <Grid ColumnDefinitions="*,Auto" ColumnSpacing="8">
-                                        <WrapPanel Orientation="Horizontal">
-                                            <Button x:Name="MovePdfButton" Classes="secondary" Content="{translation:Tr MoveToFolder}"
-                                                    Command="{Binding MovePdfCommand}" IsEnabled="{Binding CanWork}" Margin="0,0,6,4" />
-                                            <Button x:Name="ExportPdfButton" Classes="secondary" Content="{translation:Tr ExportPDF2}"
-                                                    Command="{Binding ExportPdfCommand}" IsEnabled="{Binding CanWork}" Margin="0,0,6,4" />
-                                            <Button x:Name="ExtractPdfPagesButton" Classes="secondary" Content="{translation:Tr ExtractPages}"
-                                                    Command="{Binding ExtractPdfPagesCommand}" IsEnabled="{Binding CanWork}"
-                                                    IsVisible="{Binding HasMultiplePages}" Margin="0,0,6,4" />
-                                            <Button x:Name="RotatePdfPagesButton" Classes="secondary" Content="{translation:Tr RotatePages2}"
-                                                    Command="{Binding RotatePdfPagesCommand}" IsEnabled="{Binding CanWork}" Margin="0,0,6,4" />
-                                            <Button x:Name="PdfToolsButton" Classes="secondary" Content="{translation:Tr PDFTools}" IsEnabled="{Binding CanWork}"
-                                                    Margin="0,0,6,4">
-                                                <Button.Flyout>
-                                                    <MenuFlyout>
-                                                        <MenuItem x:Name="EditPdfPagesItem" Header="{translation:Tr EditPages}" Command="{Binding EditPdfPagesCommand}" />
-                                                        <MenuItem x:Name="PdfVersionsItem" Header="{translation:Tr VersionHistory}" Command="{Binding ShowPdfVersionsCommand}" />
-                                                        <Separator />
-                                                        <MenuItem Header="{translation:Tr ExportBinder}" Command="{Binding ExportHouseholdBinderCommand}" />
-                                                        <MenuItem Header="{translation:Tr ExportRedactedPDF}" Command="{Binding ExportRedactedPdfCommand}" />
-                                                        <MenuItem Header="{translation:Tr ExportStampedPDF}" Command="{Binding ExportStampedPdfCommand}" />
-                                                        <MenuItem Header="{translation:Tr ExportCompressedPDF}" Command="{Binding ExportCompressedPdfCommand}" />
-                                                    </MenuFlyout>
-                                                </Button.Flyout>
-                                            </Button>
-                                            <Button x:Name="TrashDocumentButton" Classes="secondary" Content="{translation:Tr TrashNext}"
-                                                    Command="{Binding TrashDocumentCommand}" IsEnabled="{Binding CanWork}"
-                                                    ToolTip.Tip="{translation:Tr MoveTheOpenPDFToTrashXInTheResultsList}" Margin="0,0,6,4" />
-                                            <Button x:Name="SuggestFilingButton" Classes="secondary" Content="{translation:Tr FilingSuggestions2}"
-                                                    Command="{Binding SuggestFilingCommand}" IsEnabled="{Binding CanWork}" Margin="0,0,6,4" />
-                                        </WrapPanel>
-                                        <Button Grid.Column="1" x:Name="CreateSearchableCopyButton" Classes="secondary"
-                                                Content="{Binding SearchableCopyAction}" Command="{Binding CreateSearchableCopyCommand}"
-                                                ToolTip.Tip="{translation:Tr CreateASeparatePDFUsingTheSelectedOCRLanguage}"
-                                                IsEnabled="{Binding CanWork}" VerticalAlignment="Top" />
-                                    </Grid>
-                                    <ItemsControl ItemsSource="{Binding SelectedDocument.Tags}" MaxHeight="67">
-                                        <ItemsControl.ItemsPanel><ItemsPanelTemplate><WrapPanel /></ItemsPanelTemplate></ItemsControl.ItemsPanel>
-                                        <ItemsControl.ItemTemplate>
-                                            <DataTemplate x:DataType="x:String">
-                                                <Button Click="RemoveTag_Click" Margin="0,0,5,3" Padding="8,4"
-                                                        Background="{DynamicResource TagSurface}" MaxWidth="144"
-                                                        AutomationProperties.Name="{Binding StringFormat='Remove tag {0}'}">
-                                                    <TextBlock Text="{Binding StringFormat='{}{0}  ×'}" FontSize="11" TextTrimming="CharacterEllipsis" />
+                                <StackPanel Grid.Row="2" Spacing="6">
+                                    <ScrollViewer x:Name="DocumentActionsScroll" MaxHeight="58" Focusable="True"
+                                                  HorizontalScrollBarVisibility="Disabled" VerticalScrollBarVisibility="Auto"
+                                                  AllowAutoHide="False"
+                                                  AutomationProperties.Name="{translation:Tr DocumentActions}">
+                                        <StackPanel Spacing="4">
+                                            <WrapPanel Orientation="Horizontal" Classes="document-actions">
+                                                <Button x:Name="PdfToolsButton" Classes="secondary" Content="{translation:Tr PDFTools}"
+                                                        IsEnabled="{Binding CanWork}">
+                                                    <Button.Flyout>
+                                                        <MenuFlyout>
+                                                            <MenuItem x:Name="EditPdfPagesItem" Header="{translation:Tr EditPages}" Command="{Binding EditPdfPagesCommand}" />
+                                                            <MenuItem x:Name="PdfVersionsItem" Header="{translation:Tr VersionHistory}" Command="{Binding ShowPdfVersionsCommand}" />
+                                                            <Separator />
+                                                            <MenuItem Header="{translation:Tr ExportBinder}" Command="{Binding ExportHouseholdBinderCommand}" />
+                                                            <MenuItem Header="{translation:Tr ExportRedactedPDF}" Command="{Binding ExportRedactedPdfCommand}" />
+                                                            <MenuItem Header="{translation:Tr ExportStampedPDF}" Command="{Binding ExportStampedPdfCommand}" />
+                                                            <MenuItem Header="{translation:Tr ExportCompressedPDF}" Command="{Binding ExportCompressedPdfCommand}" />
+                                                        </MenuFlyout>
+                                                    </Button.Flyout>
                                                 </Button>
-                                            </DataTemplate>
-                                        </ItemsControl.ItemTemplate>
-                                    </ItemsControl>
+                                                <Button x:Name="MovePdfButton" Classes="secondary" Content="{translation:Tr MoveToFolder}"
+                                                        Command="{Binding MovePdfCommand}" IsEnabled="{Binding CanWork}" />
+                                                <Button x:Name="ExportPdfButton" Classes="secondary" Content="{translation:Tr ExportPDF2}"
+                                                        Command="{Binding ExportPdfCommand}" IsEnabled="{Binding CanWork}" />
+                                                <Button x:Name="CreateSearchableCopyButton" Classes="secondary" Content="{Binding SearchableCopyAction}"
+                                                        Command="{Binding CreateSearchableCopyCommand}" IsEnabled="{Binding CanWork}"
+                                                        ToolTip.Tip="{translation:Tr CreateASeparatePDFUsingTheSelectedOCRLanguage}" />
+                                                <Button x:Name="TrashDocumentButton" Classes="secondary" Content="{translation:Tr TrashNext}"
+                                                        Command="{Binding TrashDocumentCommand}" IsEnabled="{Binding CanWork}"
+                                                        ToolTip.Tip="{translation:Tr MoveTheOpenPDFToTrashXInTheResultsList}" />
+                                                <Button x:Name="SuggestFilingButton" Classes="secondary" Content="{translation:Tr FilingSuggestions2}"
+                                                        Command="{Binding SuggestFilingCommand}" IsEnabled="{Binding CanWork}" />
+                                                <Button x:Name="ExtractPdfPagesButton" Classes="secondary" Content="{translation:Tr ExtractPages}"
+                                                        Command="{Binding ExtractPdfPagesCommand}" IsEnabled="{Binding CanWork}"
+                                                        IsVisible="{Binding HasMultiplePages}" />
+                                                <Button x:Name="RotatePdfPagesButton" Classes="secondary" Content="{translation:Tr RotatePages2}"
+                                                        Command="{Binding RotatePdfPagesCommand}" IsEnabled="{Binding CanWork}" />
+                                            </WrapPanel>
+                                            <TextBlock Text="{translation:Tr NoSearchableTextFound}" Foreground="{DynamicResource WarningInk}" FontSize="12"
+                                                       TextWrapping="Wrap" IsVisible="{Binding HasNoSearchableText}" />
+                                            <ItemsControl ItemsSource="{Binding SelectedDocument.Tags}">
+                                                <ItemsControl.ItemsPanel><ItemsPanelTemplate><WrapPanel /></ItemsPanelTemplate></ItemsControl.ItemsPanel>
+                                                <ItemsControl.ItemTemplate>
+                                                    <DataTemplate x:DataType="x:String">
+                                                        <Button Click="RemoveTag_Click" Margin="0,0,5,3" Padding="8,4"
+                                                                Background="{DynamicResource TagSurface}" MaxWidth="144"
+                                                                AutomationProperties.Name="{Binding StringFormat='Remove tag {0}'}">
+                                                            <TextBlock Text="{Binding StringFormat='{}{0}  ×'}" FontSize="11" TextTrimming="CharacterEllipsis" />
+                                                        </Button>
+                                                    </DataTemplate>
+                                                </ItemsControl.ItemTemplate>
+                                            </ItemsControl>
+                                        </StackPanel>
+                                    </ScrollViewer>
                                     <Grid ColumnDefinitions="*,Auto,Auto" ColumnSpacing="6" IsEnabled="{Binding CanWork}">
                                         <AutoCompleteBox x:Name="TagBox" Classes="tag-entry" Text="{Binding TagInput, Mode=TwoWay}"
                                                          PlaceholderText="{translation:Tr Tag}" AutomationProperties.Name="{translation:Tr TagForThisDocument}" FontSize="12"
