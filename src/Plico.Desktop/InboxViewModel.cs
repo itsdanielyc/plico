@@ -79,8 +79,9 @@ internal sealed partial class InboxViewModel : ObservableObject, IDisposable
         }
     }
 
-    internal async Task CancelAndWaitAsync()
+    internal async Task PrepareCloseAsync()
     {
+        await StopFolderWatchAsync();
         var completion = _operationCompletion;
         _operationCancellation?.Cancel();
         if (completion is not null) await completion.Task;
@@ -111,11 +112,15 @@ internal sealed partial class InboxViewModel : ObservableObject, IDisposable
     [RelayCommand]
     private Task ChooseLibraryAsync() => RunOperationAsync("Choose a library folder…", async _ =>
     {
-        var selected = await _dialogs.PickLibraryAsync();
+        var selected = await _dialogs.PickFolderAsync("Choose a Plico library folder");
         if (selected is null)
         {
             Status = "Folder selection closed.";
             return;
+        }
+        if (_library is { } library && Path.GetRelativePath(library.RootPath, selected) != ".")
+        {
+            await StopFolderWatchAsync();
         }
         OpenLibrary(selected);
         _rememberLocation?.Invoke(LibraryPath);
@@ -183,13 +188,14 @@ internal sealed partial class InboxViewModel : ObservableObject, IDisposable
         LibraryPath = replacement.RootPath;
         OnPropertyChanged(nameof(HasLibrary));
         OnPropertyChanged(nameof(CanWork));
+        OnPropertyChanged(nameof(CanStartFolderWatch));
         OnPropertyChanged(nameof(LibraryName));
         Tags = replacement.GetTags();
         Navigate(inboxOnly: true);
         Status = "Library ready.";
     }
 
-    private async Task ImportFilesAsync(IReadOnlyList<string> files, CancellationToken token)
+    private async Task ImportFilesAsync(IReadOnlyList<string> files, CancellationToken token, bool revealAdded = true)
     {
         var library = RequireLibrary();
         var failures = new List<string>();
@@ -224,7 +230,11 @@ internal sealed partial class InboxViewModel : ObservableObject, IDisposable
         }
         finally
         {
-            if (lastAdded is not null) Navigate(inboxOnly: true, preferredId: lastAdded.Id);
+            if (lastAdded is not null)
+            {
+                if (revealAdded) Navigate(inboxOnly: true, preferredId: lastAdded.Id);
+                else LoadResults();
+            }
         }
 
         var outcomes = new List<string>();
@@ -235,10 +245,13 @@ internal sealed partial class InboxViewModel : ObservableObject, IDisposable
         Status = string.Join(" ", outcomes);
     }
 
-    private async Task RunOperationAsync(string workingStatus, Func<CancellationToken, Task> operation)
+    private async Task RunOperationAsync(
+        string workingStatus, Func<CancellationToken, Task> operation, CancellationToken externalCancellation = default)
     {
         if (IsBusy) return;
-        using var cancellation = new CancellationTokenSource();
+        using var cancellation = externalCancellation.CanBeCanceled
+            ? CancellationTokenSource.CreateLinkedTokenSource(externalCancellation)
+            : new CancellationTokenSource();
         var completion = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
         _operationCancellation = cancellation;
         _operationCompletion = completion;
@@ -350,6 +363,7 @@ internal sealed partial class InboxViewModel : ObservableObject, IDisposable
     {
         OnPropertyChanged(nameof(CanWork));
         OnPropertyChanged(nameof(IsIdle));
+        OnPropertyChanged(nameof(CanStartFolderWatch));
     }
 
     partial void OnSelectedDocumentChanged(DocumentSummary? oldValue, DocumentSummary? newValue)
@@ -422,6 +436,21 @@ internal sealed partial class InboxViewModel : ObservableObject, IDisposable
     {
         _searchTimer.Stop();
         CancelPreview();
-        _library?.Dispose();
+        var library = _library;
+        _library = null;
+        if (IsBusy || IsWatchingFolder) _ = FinishDisposalAsync(library);
+        else library?.Dispose();
+    }
+
+    private async Task FinishDisposalAsync(InboxLibrary? library)
+    {
+        try
+        {
+            await PrepareCloseAsync();
+        }
+        finally
+        {
+            library?.Dispose();
+        }
     }
 }

@@ -21,6 +21,8 @@ Search uses a bounded page of document records and SQLite FTS5. The UI never loa
 
 The runtime contains the English Tesseract model. PDF parsing and text extraction use PDFium. Scanner discovery uses the supported local OS driver and eSCL on the local network. Platform requirements and support are versioned in the release notes.
 
+Folder watch coalesces filesystem events by path and samples pending files until two consecutive observations agree. It stays idle without pending events. Ready files wait for the current desktop operation, then use the same snapshot and duplicate checks as manual import. Watching stops with the active window or when the library changes. [.NET FileSystemWatcher](https://learn.microsoft.com/en-us/dotnet/api/system.io.filesystemwatcher)
+
 ## Scope decisions
 
-Keep one catalog per library. An additional database or search daemon would add setup and duplicate state. Keep the initial release archives self-contained. Installer integration and importing from a scanner watch folder can follow as separate, testable slices.
+Keep one catalog per library. An additional database or search daemon would add setup and duplicate state. Keep release archives self-contained. Desktop installer integration can follow as a separate, testable slice.

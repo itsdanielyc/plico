@@ -25,7 +25,12 @@ public sealed partial class InboxLibrary
         return InStageAsync(async (stage, token) =>
         {
             var snapshot = Path.Combine(stage, $"source{extension}");
+            var initialVersion = FileVersion.Read(sourcePath);
             var fingerprint = await CopyAndFingerprintAsync(sourcePath, snapshot, token).ConfigureAwait(false);
+            if (FileVersion.Read(sourcePath) != initialVersion)
+            {
+                throw new IOException("The source changed while Plico copied it. Import it after it finishes saving.");
+            }
             var existing = await FindPriorImportAsync(fingerprint,
                 DocumentProcessor.IsPdf(extension) ? new FileInfo(snapshot).Length : null, token).ConfigureAwait(false);
             if (existing is not null) return new FileImportResult(existing, Added: false);

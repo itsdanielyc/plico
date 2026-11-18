@@ -33,6 +33,8 @@ Plico recognizes exact source files already in the library and reports that it r
 
 Scanning supports automatic source selection, flatbed, feeder, and duplex when the selected device provides them. OCR and search run locally. Scan discovery contacts the local network when you open the scanner picker.
 
+If your scanner software saves to a folder, choose **Watch a folder…** under **Library** and select its output folder. Plico imports new or updated PDFs and images after they settle. The watch covers files directly inside that folder and lasts while Plico is open. **Stop watching** ends intake. Your scanner's source files remain in the output folder.
+
 ## Development
 
 Use the .NET SDK in [global.json](global.json).

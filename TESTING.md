@@ -16,6 +16,7 @@
 3. Tag, filter, and mark a new document reviewed through the desktop view (L4 and L6).
 4. Start the published archive on fresh Windows, macOS, and Ubuntu runners (L7).
 5. Discover scanners from the real shell. Physical feed, duplex and flatbed checks require a compatible device (manual).
+6. Start watching a folder from the native window. Import a newly completed file, find it by text, preserve the previous search until the user changes it, and stop the watch (L3 and L6).
 
 Run `dotnet test Plico.slnx -c Release` for the fast suite. Run the native harness from `keel.json` for installed-platform evidence. Visual review starts with per-OS captures and geometry checks. Add pixel baselines when repeatable runner captures justify the maintenance.
 

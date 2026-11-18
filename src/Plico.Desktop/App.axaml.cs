@@ -21,7 +21,8 @@ public sealed class App : Application
             if (desktop.Args is [VerifySwitch, var evidenceDirectory, var fixture])
             {
                 var testLibrary = Directory.CreateTempSubdirectory("plico-verify-");
-                var model = new InboxViewModel(new FixtureDialogs(fixture));
+                var incoming = Directory.CreateDirectory(Path.Combine(testLibrary.FullName, "Incoming"));
+                var model = new InboxViewModel(new FixtureDialogs(fixture) { FolderPath = incoming.FullName });
                 model.InitializeLibrary(() => testLibrary.FullName);
                 window.DataContext = model;
                 desktop.Exit += (_, _) =>

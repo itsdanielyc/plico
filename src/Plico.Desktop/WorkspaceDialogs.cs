@@ -9,7 +9,7 @@ namespace Plico.Desktop;
 internal interface IWorkspaceDialogs
 {
     Task<IReadOnlyList<string>> PickDocumentsAsync();
-    Task<string?> PickLibraryAsync();
+    Task<string?> PickFolderAsync(string title);
     Task<ScanRequest?> PickScannerAsync();
     void OpenPath(string path);
 }
@@ -34,11 +34,11 @@ internal sealed class WorkspaceDialogs(Window owner) : IWorkspaceDialogs
         return files.Select(file => file.TryGetLocalPath()).OfType<string>().ToArray();
     }
 
-    public async Task<string?> PickLibraryAsync()
+    public async Task<string?> PickFolderAsync(string title)
     {
         var folders = await owner.StorageProvider.OpenFolderPickerAsync(new FolderPickerOpenOptions
         {
-            Title = "Choose a Plico library folder",
+            Title = title,
             AllowMultiple = false
         });
         return folders.FirstOrDefault()?.TryGetLocalPath();

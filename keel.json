@@ -11,7 +11,7 @@
     "lint": "dotnet build Plico.slnx -c Release",
     "unit": "dotnet test Plico.slnx -c Release",
     "contracts": null,
-    "integration": "dotnet test Plico.slnx -c Release --filter FullyQualifiedName~LibraryTests",
+    "integration": "dotnet test Plico.slnx -c Release --filter \"FullyQualifiedName~LibraryTests|FullyQualifiedName~FolderWatchTests\"",
     "ui": "dotnet test Plico.slnx -c Release --filter FullyQualifiedName~InboxWindowTests",
     "build": "dotnet build Plico.slnx -c Release",
     "e2e": "pwsh -File scripts/Test-Native.ps1 -Executable <path-to-Plico> -EvidenceDirectory artifacts/native",

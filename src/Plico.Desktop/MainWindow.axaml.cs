@@ -33,11 +33,12 @@ public sealed partial class MainWindow : Window
     protected override async void OnClosing(WindowClosingEventArgs e)
     {
         base.OnClosing(e);
-        if (ViewModel is not { IsBusy: true } model) return;
+        if (ViewModel is not { } model || (!model.IsBusy && !model.IsWatchingFolder)) return;
         e.Cancel = true;
         if (_closeWhenIdle) return;
         _closeWhenIdle = true;
-        await model.CancelAndWaitAsync();
+        IsEnabled = false;
+        await model.PrepareCloseAsync();
         Close();
     }
 

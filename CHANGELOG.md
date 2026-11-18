@@ -1,5 +1,13 @@
 # Changelog
 
+## [0.2.0] - 2026-11-18
+
+- Watch a scanner output folder while Plico is open. New and updated PDFs, PNGs, and JPEGs enter the same OCR and duplicate detection workflow.
+- Stop watching from the library sidebar. Automatic imports preserve the current search and the original files.
+- File import checks that a source stays unchanged while it is copied.
+
+Self-contained archives are available for Windows 11 x64, macOS 26 Apple silicon, and Ubuntu 24.04 x64. The Windows executable is unsigned. The macOS app is ad-hoc signed. See the README for first-launch and scanner setup.
+
 ## [0.1.1] - 2026-11-18
 
 - Drop PDFs and images directly into the Plico window.

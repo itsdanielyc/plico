@@ -6,4 +6,6 @@ The two panes let people browse while recognizing a page by sight. The preview u
 
 During a file drag, the reading area displays a copy target. On drop, the existing import status reports each batch outcome, including files already in the library.
 
+Folder watch uses the Library rail and shows the selected folder beside the stop action. Automatic imports update results using the current filters so a new scan does not interrupt reading.
+
 Keep labels present on actions. Use a polite live region for processing status. Keep the PDF accessible by keyboard and show a visible response for unavailable previews.

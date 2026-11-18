@@ -13,6 +13,7 @@ internal static class NativeVerification
 {
     private const string ReceiptKeyword = "WRENCH470";
     private const string TestTag = "Workshop";
+    private const string LetterKeyword = "NORTHSTAR";
     private static readonly TimeSpan StateTimeout = TimeSpan.FromSeconds(6);
     private static readonly TimeSpan StateCheckInterval = TimeSpan.FromMilliseconds(30);
 
@@ -44,9 +45,10 @@ internal static class NativeVerification
                 "The reviewed and tagged PDF was not found by OCR text.");
             await CaptureAsync(window, evidenceDirectory, "search.png");
             await VerifyDropAsync(window, model, fixture, evidenceDirectory);
+            await VerifyWatchedFolderAsync(window, model, fixture, evidenceDirectory);
 
             File.WriteAllText(Path.Combine(evidenceDirectory, "passed.txt"),
-                "Native window imported and previewed a searchable PDF, tagged and reviewed it, found it by text, and skipped a dropped duplicate.");
+                "Native window completed OCR, tag and review, full-text search, duplicate drop, and watched-folder import.");
             desktop.Shutdown(0);
         }
         catch (Exception error)
@@ -54,6 +56,28 @@ internal static class NativeVerification
             File.WriteAllText(Path.Combine(evidenceDirectory, "error.txt"), error.ToString());
             desktop.Shutdown(1);
         }
+    }
+
+    private static async Task VerifyWatchedFolderAsync(MainWindow window, InboxViewModel model, string fixture, string directory)
+    {
+        var start = Control<Button>(window, "StartFolderWatchButton");
+        var stop = Control<Button>(window, "StopFolderWatchButton");
+        Require(start.IsEnabled && start.Command is IAsyncRelayCommand, "The folder watch control was not available.");
+        await ((IAsyncRelayCommand)start.Command!).ExecuteAsync(null);
+        Require(model.IsWatchingFolder && stop.IsVisible, $"The folder watch did not start. {model.Status}");
+
+        string letter = Path.Combine(Path.GetDirectoryName(fixture)!, "Lease Renewal.pdf");
+        string incoming = Path.Combine(model.WatchedFolderPath, "Scanner output.pdf");
+        File.Copy(letter, incoming);
+        await UntilAsync(() => !model.IsBusy && model.Status == "1 document added.", () => model.Status);
+        Require(model.Query == ReceiptKeyword && model.SelectedDocument?.Reviewed == true && File.Exists(incoming),
+            "A watched import changed the current view or consumed the source file.");
+
+        Control<TextBox>(window, "SearchBox").SetCurrentValue(TextBox.TextProperty, LetterKeyword);
+        await UntilAsync(() => model.SelectedDocument?.Title == "Scanner output" && model.Preview is not null, () => model.Status);
+        await CaptureAsync(window, directory, "watched-folder.png");
+        await ((IAsyncRelayCommand)stop.Command!).ExecuteAsync(null);
+        Require(!model.IsWatchingFolder, "The folder watch did not stop.");
     }
 
     private static async Task VerifyDropAsync(MainWindow window, InboxViewModel model, string fixture, string directory)
@@ -118,8 +142,9 @@ internal static class NativeVerification
 /// <summary>A labelled fixture picker for verification with the same real library used by normal launches.</summary>
 internal sealed class FixtureDialogs(params string[] documents) : IWorkspaceDialogs
 {
+    internal string? FolderPath { get; init; }
     public Task<IReadOnlyList<string>> PickDocumentsAsync() => Task.FromResult<IReadOnlyList<string>>(documents);
-    public Task<string?> PickLibraryAsync() => Task.FromResult<string?>(null);
+    public Task<string?> PickFolderAsync(string title) => Task.FromResult(FolderPath);
     public Task<ScanRequest?> PickScannerAsync() => Task.FromResult<ScanRequest?>(null);
     public void OpenPath(string path) => throw new InvalidOperationException("The verification fixture does not launch other apps.");
 }

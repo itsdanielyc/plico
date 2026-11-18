@@ -10,6 +10,7 @@
 | 2026-11-18 | L7 | Published v0.1.0 assets downloaded by separate runners, verified with SHA-256 and exercised through import, preview, tag, review and OCR search | windows-2025, macos-26 arm64, ubuntu-24.04 x64 | [Release 44216082364](https://github.com/itsdanielyc/plico/actions/runs/44216082364), 3 of 3 green |
 | 2026-11-18 | L0–L1, L3–L4, L6 | Twelve tests per platform. Exact repeat detection, preservation of v1 review state, distinct metadata for reused titles, readable OCR excerpts, and the native file-drop journey. Negative checks exposed duplicate insertion, lost review state, an inherited record ID, a late text match, and a disconnected drop handler. | windows-2025, macos-26 arm64, ubuntu-24.04 x64 | [CI 44216494712](https://github.com/itsdanielyc/plico/actions/runs/44216494712), 3 of 3 green |
 | 2026-11-18 | L7 | v0.1.1 candidate `c5613a3` extracts and passes OCR, search, tag, review, and repeat drop checks. Search and drop-target screenshots reviewed. | windows-2025, macos-26 arm64, ubuntu-24.04 x64 | [Archives 44216494230](https://github.com/itsdanielyc/plico/actions/runs/44216494230), 3 of 3 green |
+| 2026-11-18 | L7 | Published v0.1.1 archive checksums and repeat-drop journey passed on fresh runners | windows-2025, macos-26 arm64, ubuntu-24.04 x64 | [Release 44216879066](https://github.com/itsdanielyc/plico/actions/runs/44216879066), 3 of 3 green |
 
 ## Unverified
 
