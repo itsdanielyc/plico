@@ -249,6 +249,7 @@ public sealed class LibraryMoveTests
             database.Open();
             using var command = database.CreateCommand();
             command.CommandText = """
+                DROP TABLE saved_searches;
                 DROP TABLE pending_pdf_move;
                 DROP INDEX documents_added_at;
                 DROP INDEX documents_ocr_copies;
