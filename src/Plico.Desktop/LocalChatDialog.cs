@@ -42,6 +42,11 @@ internal sealed class LocalChatDialog : Window
         _question.MinHeight = 68;
         _searchLibrary.IsChecked = input.DocumentTitle is null;
         _searchLibrary.IsEnabled = input.DocumentTitle is not null;
+        _searchLibrary.PropertyChanged += (_, change) =>
+        {
+            // A new search scope should use only the history generated in that scope.
+            if (change.Property == CheckBox.IsCheckedProperty) _history.Clear();
+        };
         var heading = new StackPanel { Spacing = 4 };
         if (input.DocumentTitle is { } title)
             heading.Children.Add(new TextBlock { Text = title, FontWeight = FontWeight.SemiBold, TextTrimming = TextTrimming.CharacterEllipsis });
@@ -75,6 +80,7 @@ internal sealed class LocalChatDialog : Window
         _request = request;
         _send.IsEnabled = false;
         _stop.IsEnabled = true;
+        _searchLibrary.IsEnabled = false;
         _status.Text = "Waiting for the local model…";
         try
         {
@@ -109,6 +115,7 @@ internal sealed class LocalChatDialog : Window
             _request = null;
             _send.IsEnabled = true;
             _stop.IsEnabled = false;
+            _searchLibrary.IsEnabled = _input.DocumentTitle is not null;
         }
     }
 }
