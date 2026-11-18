@@ -24,9 +24,10 @@ internal static partial class NativeVerification
         var pageTwo = SecondThumbnail()!;
         pageTwo.RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
         await UntilAsync(() => model.Preview is not null && model.PageLabel == "2 / 2", () => model.Status);
-        Control<Button>(window, "ZoomInButton").Command!.Execute(null);
-        await UntilAsync(() => model.Preview is not null && model.PreviewZoomPercent == 100 && model.PreviewDisplayWidth > 0, () => model.Status);
         var previewScroll = Control<ScrollViewer>(window, "PreviewScroll");
+        Control<Button>(window, "ZoomInButton").Command!.Execute(null);
+        await UntilAsync(() => model.Preview is not null && model.PreviewZoomPercent == 100 &&
+            previewScroll.Offset.X > 0 && previewScroll.Offset.Y > 0, () => model.Status);
         Require(previewScroll.HorizontalScrollBarVisibility == ScrollBarVisibility.Auto && previewScroll.Viewport.Height >= 96,
             $"The zoomed PDF could not scroll or fit a usable viewport. Preview height {previewScroll.Viewport.Height}.");
         await CaptureAsync(window, evidence, "pdf-thumbnails-and-zoom.png");
