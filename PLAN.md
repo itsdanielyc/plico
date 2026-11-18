@@ -105,4 +105,4 @@ Ruling for v0.17.0. Implement the brief’s first nine ranked items together on 
 
 | Slice | Done when | Levels | Status |
 |---|---|---|---|
-| #19 OCR languages, orientation and RapidOCR | Four additional packaged Tesseract models are selectable. Optional orientation rotates confident sideways pages before OCR. RapidOCR writes a searchable layer on its supported targets and Tesseract is available on all six. Repeated OCR copies distinguish engine and orientation choices. | L0, L1, L3, L6, L7 | Focused tests passed on Windows x64. Hosted source and package checks are pending. |
+| #19 OCR languages, orientation and RapidOCR | Four additional packaged Tesseract models are selectable. Optional orientation rotates confident sideways pages before OCR. RapidOCR writes a searchable layer on its supported targets and Tesseract is available on all six. Repeated OCR copies distinguish engine and orientation choices. | L0, L1, L3, L6, L7 | Local Windows and both hosted Ubuntu source checks passed. The other hosted jobs are in progress. |
