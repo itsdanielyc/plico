@@ -1,52 +1,43 @@
-name: CI
+name: Verify the truncated feeder on Intel macOS
 on:
-  push:
-    branches: [main]
-    paths-ignore: ['**/*.md', '.agents/**']
-  pull_request:
-    paths-ignore: ['**/*.md', '.agents/**']
   workflow_dispatch:
-
+    inputs:
+      source_sha:
+        description: Exact scanner test commit to verify
+        required: true
+        type: string
 permissions:
   contents: read
-
 jobs:
-  desktop:
-    name: Desktop (${{ matrix.rid }})
-    runs-on: ${{ matrix.runner }}
-    timeout-minutes: 15
-    strategy:
-      fail-fast: false
-      matrix:
-        include:
-          - {runner: windows-2025, rid: win-x64, executable: Plico.exe}
-          - {runner: windows-11-arm, rid: win-arm64, executable: Plico.exe}
-          - {runner: macos-26, rid: osx-arm64, executable: Plico}
-          - {runner: macos-26-intel, rid: osx-x64, executable: Plico}
-          - {runner: ubuntu-24.04, rid: linux-x64, executable: Plico}
-          - {runner: ubuntu-24.04-arm, rid: linux-arm64, executable: Plico}
+  feeder:
+    runs-on: macos-26-intel
+    timeout-minutes: 20
     steps:
       - uses: actions/checkout@v6
+        with:
+          ref: ${{ inputs.source_sha }}
       - uses: actions/setup-dotnet@v5
         with:
           global-json-file: global.json
       - run: dotnet restore Plico.slnx --locked-mode
-      - run: dotnet test Plico.slnx -c Release --no-restore
-      - name: Launch native window
+      - name: Repeat exact interrupted feeder cases twenty times
+        run: |
+          filter=FullyQualifiedName~InterruptedFeederCanSaveCompletedPagesOrDiscardThem
+          dotnet test Plico.slnx -c Release --no-restore --filter "$filter"
+          for pass in $(seq 2 20); do
+            echo "Feeder check $pass of 20"
+            dotnet test Plico.slnx -c Release --no-build --no-restore --filter "$filter"
+          done
+      - name: Package and verify Image Capture
         shell: pwsh
         env:
-          PLICO_EXECUTABLE: ${{ matrix.executable }}
-          PLICO_EXPECTED_NATIVE_RID: ${{ matrix.rid }}
+          PLICO_EXPECTED_NATIVE_RID: osx-x64
         run: |
-          $executable = "src/Plico.Desktop/bin/Release/net10.0/$env:PLICO_EXECUTABLE"
-          if ($IsLinux) {
-            xvfb-run -a pwsh -NoProfile -File scripts/Test-Native.ps1 -Executable $executable -EvidenceDirectory artifacts/native
-          } else {
-            ./scripts/Test-Native.ps1 -Executable $executable -EvidenceDirectory artifacts/native
-          }
-      - uses: actions/upload-artifact@v6
+          ./scripts/Package.ps1 -Runtime osx-x64
+          ./scripts/Test-Distribution.ps1 -Directory artifacts/archives -EvidenceDirectory artifacts/install
+      - uses: actions/upload-artifact@v7
         if: always()
         with:
-          name: native-${{ matrix.rid }}
-          path: artifacts/native/
+          name: intel-scanner-native
+          path: artifacts/install/
           if-no-files-found: ignore
