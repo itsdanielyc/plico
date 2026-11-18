@@ -30,6 +30,8 @@ internal interface IWorkspaceDialogs
     Task<IReadOnlyList<FilingSelection>?> ShowFilingSuggestionsAsync(IReadOnlyList<FilingSuggestion> suggestions);
     Task ShowFilingRulesAsync(IReadOnlyList<FilingRule> rules, Func<FilingRule, FilingRule> save, Action<long> remove);
     Task ShowIntegrityReportAsync(IntegrityReport report);
+    Task<string?> PickMigrationSourceAsync(LibraryMigrationFormat format, bool isFolder);
+    Task ShowMigrationReportAsync(LibraryMigrationReport report);
     Task CopyTextAsync(string text);
     void OpenPath(string path);
 }
@@ -94,6 +96,26 @@ internal sealed class WorkspaceDialogs(Window owner) : IWorkspaceDialogs
         new ScanDialog(Scanners.DiscoverAsync, settings: new SavedScannerStore(ApplicationSettings.DirectoryPath),
             captureOptions: new ScanOptionsPreference(ApplicationSettings.DirectoryPath))
             .ShowDialog<ScanRequest?>(owner);
+
+    public async Task<string?> PickMigrationSourceAsync(LibraryMigrationFormat format, bool isFolder)
+    {
+        if (isFolder)
+            return await PickFolderAsync(format == LibraryMigrationFormat.Mariner
+                ? "Choose a Mariner Paperless library" : "Choose a Paperless-ngx export folder");
+        bool evernote = format == LibraryMigrationFormat.Evernote;
+        var fileTypes = new FilePickerFileType(evernote ? "Evernote export" : "Paperless-ngx ZIP export")
+        {
+            Patterns = evernote ? ["*.enex", "*.ENEX"] : ["*.zip", "*.ZIP"]
+        };
+        var files = await owner.StorageProvider.OpenFilePickerAsync(new FilePickerOpenOptions
+        {
+            Title = evernote ? "Choose an Evernote ENEX file" : "Choose a Paperless-ngx ZIP export",
+            FileTypeFilter = [fileTypes, FilePickerFileTypes.All]
+        });
+        return files.FirstOrDefault()?.TryGetLocalPath();
+    }
+
+    public Task ShowMigrationReportAsync(LibraryMigrationReport report) => new MigrationReportDialog(report).ShowDialog(owner);
 
     public Task<bool> ConfirmPartialScanAsync(ScanInterruption interruption, CancellationToken cancellationToken) =>
         new ScanInterruptedDialog(interruption).ShowDecisionAsync(owner, cancellationToken);

@@ -104,6 +104,7 @@ internal static partial class NativeVerification
             await VerifyFilingSuggestionsAsync(window, model, dialogs, evidenceDirectory);
             await VerifyPortabilityAsync(window, model, dialogs, evidenceDirectory);
             await VerifyAdditionalIntakeAsync(window, model, dialogs, fixture, evidenceDirectory);
+            await VerifyMigrationAsync(window, model, dialogs, evidenceDirectory);
 
             File.WriteAllText(Path.Combine(evidenceDirectory, "passed.txt"),
                 $"Verified {runtime}. Native window completed multilingual OCR and correction, oriented JPEG and multi-page TIFF import, PDF combination, page extraction and rotation, phrase, tag, review-status, folder, and text-availability search, query correction, saved search restoration, single and batch document-date editing, date filtering and inheritance, result sorting, continued review across loaded results, fit-width and selectable page text previews, match navigation, tag merging, suggestions, and edits across loaded result pages, duplicate drop, folder watch with catch-up on open and intake routing, inbox counting, title edit, single and batch PDF moves, external relocation and PDF swaps, index reporting and PDF restoration from files and folders, single and batch PDF export, library backup, text copy, single and batch OCR copies, saved import error recovery and retry destinations, per-scanner capture option restoration, and filing through the chosen intake folder. {scanRecoveryEvidence}");
@@ -1059,6 +1060,8 @@ internal static partial class NativeVerification
 internal sealed class FixtureDialogs(params string[] documents) : IWorkspaceDialogs
 {
     internal string? FolderPath { get; set; }
+    internal string? MigrationSource { get; set; }
+    internal LibraryMigrationReport? MigrationReport { get; private set; }
     internal string? LastFolderStart { get; private set; }
     internal int FolderPickerCalls { get; private set; }
     internal string? EditedTitle { get; init; }
@@ -1093,6 +1096,12 @@ internal sealed class FixtureDialogs(params string[] documents) : IWorkspaceDial
         return Task.FromResult(FolderPath);
     }
     public Task<ScanRequest?> PickScannerAsync() => Task.FromResult(ScannerChoice);
+    public Task<string?> PickMigrationSourceAsync(LibraryMigrationFormat format, bool isFolder) => Task.FromResult(MigrationSource);
+    public Task ShowMigrationReportAsync(LibraryMigrationReport report)
+    {
+        MigrationReport = report;
+        return Task.CompletedTask;
+    }
     public Task<bool> ConfirmPartialScanAsync(ScanInterruption interruption, CancellationToken cancellationToken) =>
         PartialScanChoice?.Invoke(interruption, cancellationToken) ?? Task.FromResult(false);
     public Task<string?> EditTitleAsync(string currentTitle) => Task.FromResult(EditedTitle);

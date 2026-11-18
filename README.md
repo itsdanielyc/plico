@@ -30,6 +30,12 @@ In addition to PDFs, PNG, JPEG and TIFF, Plico imports HEIC and HEIF still photo
 
 Install [LibreOffice](https://www.libreoffice.org/download/) to import Word, Excel, PowerPoint, RTF and OpenDocument files. Plico uses your local installation to convert these files to PDF. When an installation is missing, the file remains available in **Import errors** for retry.
 
+### Migrate a library
+
+Open **Library tools… → Migrate a library** and select a Paperless-ngx export folder or ZIP, an Evernote ENEX file, or a Mariner Paperless library folder. Plico copies the source paperwork, preserves available dates and tags, and keeps local edits when the same export is retried. Mariner organizations become correspondents. Paperless archive numbers and supported custom fields are carried over, including links that resolve after the target documents arrive.
+
+The migration report lists reused documents, missing files, and original values that need manual attention. Save it as JSON before closing when you want a record of the import. ENEX notes and their readable attachments become searchable PDFs. Keep your original export for resources the report marks as unconverted.
+
 Select a language in **OCR** for scans, imports, and searchable copies. Plico remembers the choice and uses that bundled model for recognition.
 
 Plico imports a multi-page TIFF as one searchable PDF. The pages follow the scan’s order, orientation, and resolution.

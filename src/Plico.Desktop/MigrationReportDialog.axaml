@@ -1,0 +1,16 @@
+<Window xmlns="https://github.com/avaloniaui" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        x:Class="Plico.Desktop.MigrationReportDialog" Title="Migration report" Width="690" Height="455"
+        MinWidth="540" MinHeight="360" WindowStartupLocation="CenterOwner"
+        FontFamily="{StaticResource InterFont}" Background="#F4F5EF">
+    <Grid Margin="24" RowDefinitions="Auto,*,Auto" RowSpacing="12">
+        <TextBlock x:Name="MigrationSummary" FontSize="18" FontWeight="SemiBold" TextWrapping="Wrap" />
+        <TextBox x:Name="MigrationNotices" Grid.Row="1" IsReadOnly="True" AcceptsReturn="True"
+                 TextWrapping="Wrap" ScrollViewer.VerticalScrollBarVisibility="Auto"
+                 AutomationProperties.Name="Migration details" />
+        <Grid Grid.Row="2" ColumnDefinitions="*,Auto,Auto" ColumnSpacing="10">
+            <TextBlock x:Name="MigrationSaveStatus" TextWrapping="Wrap" VerticalAlignment="Center" />
+            <Button Grid.Column="1" Content="Save JSON…" Click="Save_Click" />
+            <Button Grid.Column="2" Content="Close" IsCancel="True" Click="Close_Click" />
+        </Grid>
+    </Grid>
+</Window>

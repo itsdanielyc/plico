@@ -173,6 +173,12 @@
                                 <MenuItem Header="Check library integrity…" Command="{Binding CheckIntegrityCommand}" />
                                 <MenuItem Header="Export library metadata (JSON)…" Command="{Binding ExportMetadataCommand}" />
                                 <MenuItem Header="Export search results (CSV)…" Command="{Binding ExportSearchCsvCommand}" />
+                                <MenuItem Header="Migrate a library">
+                                    <MenuItem Header="Paperless-ngx folder…" Command="{Binding MigratePaperlessFolderCommand}" />
+                                    <MenuItem Header="Paperless-ngx ZIP…" Command="{Binding MigratePaperlessZipCommand}" />
+                                    <MenuItem Header="Evernote ENEX…" Command="{Binding MigrateEvernoteCommand}" />
+                                    <MenuItem Header="Mariner Paperless…" Command="{Binding MigrateMarinerCommand}" />
+                                </MenuItem>
                                 <Separator />
                                 <MenuItem Header="Refresh index" Command="{Binding RefreshIndexCommand}" />
                             </MenuFlyout>
