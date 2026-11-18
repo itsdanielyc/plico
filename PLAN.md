@@ -105,4 +105,4 @@ Ruling for v0.17.0. Implement the brief’s first nine ranked items together on 
 
 | Slice | Done when | Levels | Status |
 |---|---|---|---|
-| #12 Batch splitting and manual duplex | Scanner batches omit PATCH-T and configured separators. Manual duplex matches reverse-order backs to fronts and can resume after closing the library or correcting a count mismatch. | L0, L1, L3, L6 | Six hosted targets passed. The Apple silicon check used macOS 15. The macOS 26 run is pending. |
+| #12 Batch splitting and manual duplex | Scanner batches omit PATCH-T and configured separators. Manual duplex matches reverse-order backs to fronts and can resume after closing the library or correcting a count mismatch. | L0, L1, L3, L6 | All six hosted targets passed. The ASN source matrix also exercised the batch slice on macOS 26 Apple silicon. |
