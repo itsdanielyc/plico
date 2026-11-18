@@ -121,6 +121,9 @@
                     <TextBlock IsVisible="{Binding IsWatchingFolder}" Text="{Binding WatchedFolderName, StringFormat='Watching {0}'}"
                                ToolTip.Tip="{Binding WatchedFolderPath}" TextTrimming="CharacterEllipsis"
                                Foreground="#CADDCA" FontSize="12" Margin="12,7,0,0" />
+                    <Button x:Name="ImportWatchFolderFilesButton" Classes="rail" Content="Import existing files"
+                            Command="{Binding ImportWatchFolderFilesCommand}" IsVisible="{Binding IsWatchingFolder}"
+                            IsEnabled="{Binding CanWork}" />
                     <Button x:Name="StopFolderWatchButton" Classes="rail" Content="Stop watching"
                             Command="{Binding StopFolderWatchCommand}" IsVisible="{Binding IsWatchingFolder}" />
                 </StackPanel>

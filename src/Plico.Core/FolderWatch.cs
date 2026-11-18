@@ -7,6 +7,11 @@ namespace Plico.Core;
 public sealed class FolderWatch : IAsyncDisposable
 {
     private static readonly TimeSpan SampleInterval = TimeSpan.FromMilliseconds(650);
+    private static readonly EnumerationOptions ExistingFileOptions = new()
+    {
+        AttributesToSkip = FileAttributes.ReparsePoint,
+        IgnoreInaccessible = false
+    };
 
     private sealed class Observation(FileVersion? sample = null)
     {
@@ -69,6 +74,32 @@ public sealed class FolderWatch : IAsyncDisposable
             throw new ArgumentException("Choose your scanner's output folder. This folder already holds the library PDFs.", nameof(folder));
         }
         return new FolderWatch(source, import);
+    }
+
+    // O(n) time to scan n directory entries and O(k) space for the k supported paths.
+    /// <summary>Queues supported files already in the watched directory for stability checking.</summary>
+    /// <returns>The number of files newly added to the watch's queue.</returns>
+    public int QueueExistingFiles(CancellationToken cancellationToken = default)
+    {
+        using var cancelWithWatch = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken, _stop.Token);
+        var token = cancelWithWatch.Token;
+        token.ThrowIfCancellationRequested();
+        var candidates = new List<string>();
+        foreach (string file in Directory.EnumerateFiles(Folder, "*", ExistingFileOptions))
+        {
+            token.ThrowIfCancellationRequested();
+            if (InboxLibrary.SupportsImport(file)) candidates.Add(file);
+        }
+
+        // Gather the candidates before changing the live queue so cancellation leaves the request unqueued.
+        token.ThrowIfCancellationRequested();
+        int queued = 0;
+        foreach (string file in candidates)
+        {
+            if (_pending.TryAdd(file, new Observation())) queued++;
+        }
+        if (queued > 0) _wakeups.Writer.TryWrite(true);
+        return queued;
     }
 
     /// <summary>Stops new notifications and waits for in-flight intake to unwind.</summary>

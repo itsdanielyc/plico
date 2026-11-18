@@ -65,6 +65,8 @@ If your scanner software saves to a folder, choose **Watch a folder…** under *
 
 Plico remembers the chosen folder for the current library. **Resume folder watch** starts watching it again when you are ready.
 
+Choose **Import existing files** while a watch is active to pick up files already in that folder, including scans saved while Plico was closed.
+
 ## Development
 
 Use the .NET SDK in [global.json](global.json).

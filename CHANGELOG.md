@@ -7,6 +7,7 @@
 - Sort the current view by newest added or title A–Z. Automatic order puts the best matches first during a text search.
 - Choose **Fit width** in the preview to enlarge the page and scroll through it.
 - Choose **Copy text** to copy the searchable text from every page of the selected PDF.
+- Choose **Import existing files** from an active watch to process scans saved while Plico was closed.
 
 ## [0.15.0] - 2026-11-18
 

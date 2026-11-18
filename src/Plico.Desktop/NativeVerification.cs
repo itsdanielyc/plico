@@ -370,6 +370,7 @@ internal static class NativeVerification
     {
         var start = Control<Button>(window, "StartFolderWatchButton");
         var stop = Control<Button>(window, "StopFolderWatchButton");
+        var existing = Control<Button>(window, "ImportWatchFolderFilesButton");
         Require(start.IsEnabled && start.Command is IAsyncRelayCommand, "The folder watch control was not available.");
         await ((IAsyncRelayCommand)start.Command!).ExecuteAsync(null);
         Require(model.IsWatchingFolder && stop.IsVisible, $"The folder watch did not start. {model.Status}");
@@ -386,12 +387,19 @@ internal static class NativeVerification
         await CaptureAsync(window, directory, "watched-folder.png");
         string originalFolder = model.WatchedFolderPath;
         await ((IAsyncRelayCommand)stop.Command!).ExecuteAsync(null);
-        Require(!model.IsWatchingFolder, "The folder watch did not stop.");
+        Require(!model.IsWatchingFolder && !existing.IsVisible, "The folder watch did not stop.");
         var resume = Control<Button>(window, "ResumeFolderWatchButton");
         Require(resume.IsVisible && resume.Command is IAsyncRelayCommand, "The native window did not offer the remembered folder.");
         await CaptureAsync(window, directory, "resume-watch.png");
         await ((IAsyncRelayCommand)resume.Command!).ExecuteAsync(null);
         Require(model.IsWatchingFolder && model.WatchedFolderPath == originalFolder, "The watch did not resume its previous folder.");
+        Require(existing.IsVisible && existing.IsEnabled && existing.Command is IAsyncRelayCommand,
+            "The resumed watch did not offer to import existing files.");
+        await ((IAsyncRelayCommand)existing.Command!).ExecuteAsync(null);
+        await UntilAsync(() => !model.IsBusy && model.Status == "1 document already in the library.", () => model.Status);
+        Require(model.Query == LetterKeyword && model.Documents.Count == 1 && File.Exists(incoming),
+            "Importing the existing file changed the current search or consumed its source.");
+        await CaptureAsync(window, directory, "watch-existing-files.png");
         await ((IAsyncRelayCommand)stop.Command!).ExecuteAsync(null);
     }
 

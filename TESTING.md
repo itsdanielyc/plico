@@ -22,6 +22,7 @@
 9. Sort filtered search results by newest added. Sort edited titles across pages, including case-insensitive ties. Retain the visible PDF selection when choosing a new order (L3, L4 and L6).
 10. Fit a portrait preview to width and scroll to its bottom. Turn the page and confirm scrolling starts at the top. Return to the full-page view (L4 and L6).
 11. Copy text from the selected PDF through the preview. Check that a PDF without searchable text hides the action and a missing catalog entry rejects the read. Include accented OCR text in the native journey (L3, L4 and L6).
+12. Queue an existing scan through an active watch. Exercise cancellation, unsupported files and subfolder entries. Confirm a repeat uses the existing PDF and keeps the current search (L3 and L6).
 
 Run `dotnet test Plico.slnx -c Release` for the fast suite. Run the native harness from `keel.json` for installed-platform evidence. Visual review starts with per-OS captures and geometry checks. Add pixel baselines when repeatable runner captures justify the maintenance.
 

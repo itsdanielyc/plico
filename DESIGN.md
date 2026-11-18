@@ -8,6 +8,8 @@ During a file drag, the reading area displays a copy target. On drop, the existi
 
 Folder watch uses the Library rail and shows the selected folder beside the stop action. Automatic imports update results using the current filters so a new scan does not interrupt reading.
 
+An active watch offers **Import existing files** under the folder name. The status bar reports how many files were queued and shows the import outcome when the watch processes them.
+
 The scan picker offers address entry alongside discovery. Connecting shows the device model and selects it so the same paper controls and Scan to inbox action apply.
 
 The preview shows the PDF path below its catalog title. The path opens the document's containing folder in the file manager.

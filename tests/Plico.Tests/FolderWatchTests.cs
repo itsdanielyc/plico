@@ -6,6 +6,33 @@ namespace Plico.Tests;
 public sealed class FolderWatchTests
 {
     [Fact]
+    public async Task ExistingFileRequestQueuesOnlySupportedTopLevelFiles()
+    {
+        using var incoming = new TemporaryLibrary();
+        using var destination = new TemporaryLibrary();
+        string fixture = Path.Combine(AppContext.BaseDirectory, "fixtures", "Lease Renewal.pdf");
+        string savedScan = Path.Combine(incoming.Path, "Queued lease.pdf");
+        File.Copy(fixture, savedScan);
+        File.Copy(fixture, Path.Combine(incoming.Path, "Writing scan.part"));
+        string nested = Directory.CreateDirectory(Path.Combine(incoming.Path, "Other files")).FullName;
+        File.Copy(fixture, Path.Combine(nested, "Nested lease.pdf"));
+
+        var received = new TaskCompletionSource<IReadOnlyList<string>>(TaskCreationOptions.RunContinuationsAsynchronously);
+        await using var watch = FolderWatch.Start(incoming.Path, destination.Path, (paths, _) =>
+        {
+            received.TrySetResult(paths);
+            return Task.CompletedTask;
+        });
+
+        Assert.Throws<OperationCanceledException>(() => watch.QueueExistingFiles(new CancellationToken(canceled: true)));
+        Assert.Equal(1, watch.QueueExistingFiles(TestContext.Current.CancellationToken));
+        var batch = await received.Task.WaitAsync(TimeSpan.FromSeconds(15), TestContext.Current.CancellationToken);
+
+        Assert.Equal(savedScan, Assert.Single(batch));
+        Assert.True(File.Exists(savedScan));
+    }
+
+    [Fact]
     public async Task RenamedScanImportsAfterArrivalAndKeepsBothSources()
     {
         using var incoming = new TemporaryLibrary();

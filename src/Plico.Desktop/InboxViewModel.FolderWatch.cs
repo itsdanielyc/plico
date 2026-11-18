@@ -44,6 +44,25 @@ internal sealed partial class InboxViewModel
         });
     }
 
+    [RelayCommand]
+    private Task ImportWatchFolderFilesAsync()
+    {
+        if (_folderWatch is not { } watch) return Task.CompletedTask;
+        return RunOperationAsync("Checking the watched folder…", async token =>
+        {
+            try
+            {
+                int queued = await Task.Run(() => watch.QueueExistingFiles(token), token);
+                if (ReferenceEquals(_folderWatch, watch))
+                {
+                    Status = queued > 0 ? $"{DocumentCount(queued)} queued for the folder watch." : "No additional files to check.";
+                }
+            }
+            catch (Exception error) when ((error is OperationCanceledException or ObjectDisposedException) &&
+                                          !ReferenceEquals(_folderWatch, watch)) { }
+        });
+    }
+
     private void StartWatch(string folder)
     {
         var library = RequireLibrary();
