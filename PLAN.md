@@ -34,6 +34,6 @@
 | 29 | Import existing watched files | An active watch can queue supported files already in its folder. Stability checks, duplicate detection, and the current view apply to that batch. | L3, L6 | Tested locally on Windows x64 and Ubuntu x64 (L3, L6) |
 | 30 | Responsive typed search | A catalog search runs in the background. The latest query controls the results, abandoned work observes cancellation, and paging follows the current query. | L3, L4, L6 | Tested locally on Windows x64 and Ubuntu x64 (L3, L4, L6) |
 | 31 | Jump to matching PDF page | A multi-page text result offers a jump to the first page matching the full query. A title-only hit or terms on separate pages produce zero matching pages. | L3, L4, L6 | Tested locally on Windows x64 and Ubuntu x64 (L3, L4, L6) |
-| 32 | OCR an indexed scan | A scan copied into the library can produce a searchable PDF with the same pages and tags. The source bytes are preserved. A repeat reuses the copy, and blank or cancelled work leaves the source as the only PDF. | L3, L4, L6 | In progress |
+| 32 | OCR an indexed scan | A scan copied into the library can produce a searchable PDF with the same pages and tags. The source bytes are preserved. A repeat reuses the copy, and blank or cancelled work leaves the source as the only PDF. | L3, L4, L6 | Tested locally on Windows x64 and Ubuntu x64 (L3, L4, L6) |
 
 The initial release is followed by focused improvements and fresh evidence.
