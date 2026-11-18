@@ -17,7 +17,8 @@ jobs:
           global-json-file: global.json
       - name: Restore candidate and confirm product source
         run: |
-          git diff --exit-code 214a4164fe8c8d597d71b1280daba470d8789cb2 -- src
+          test "$(git rev-parse HEAD:src)" = 8220fbf6c623cc4ff4a11d15ef7af73c052e4d88
+          test "$(git rev-parse HEAD:Directory.Packages.props)" = 05590f12c2b3fcfa81bd88f6a0656eed7db3e080
           dotnet restore Plico.slnx --locked-mode
       - name: Verify embedding ranking, grounded chat and confirmed filing
         env:
