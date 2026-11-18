@@ -32,6 +32,6 @@
 | 27 | Fit width in the preview | Enlarge the current page to the width of the preview. Vertical scrolling exposes the rest of the page and returns to the top when the page changes. | L4, L6 | Tested locally on Windows x64 and Ubuntu x64 (L4, L6) |
 | 28 | Copy searchable document text | Copy the selected document's extracted text. Only documents with searchable text offer the action. | L3, L4, L6 | Tested locally on Windows x64 and Ubuntu x64 (L3, L4, L6) |
 | 29 | Import existing watched files | An active watch can queue supported files already in its folder. Stability checks, duplicate detection, and the current view apply to that batch. | L3, L6 | Tested locally on Windows x64 and Ubuntu x64 (L3, L6) |
-| 30 | Responsive typed search | A catalog search runs in the background. The latest query controls the results, abandoned work observes cancellation, and paging follows the current query. | L3, L4, L6 | In progress |
+| 30 | Responsive typed search | A catalog search runs in the background. The latest query controls the results, abandoned work observes cancellation, and paging follows the current query. | L3, L4, L6 | Tested locally on Windows x64 and Ubuntu x64 (L3, L4, L6) |
 
 The initial release is followed by focused improvements and fresh evidence.
