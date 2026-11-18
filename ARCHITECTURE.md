@@ -19,6 +19,8 @@ Creating a searchable copy reads an indexed scan into private staging under the 
 
 TIFF intake decodes each directory with LibTiff.Net and draws its orientation and resolution into a staged image-only PDF. The existing PDF import and OCR pipeline processes that intermediate file. Page counts must agree before the final PDF is published. The converter limits each decoded raster to 160 million pixels and releases page buffers as it proceeds. [LibTiff.Net decoder API](https://bitmiracle.github.io/libtiff.net/help/api/BitMiracle.LibTiff.Classic.Tiff.html)
 
+JPEG intake reads the image origin with Skia. For a rotation or reflection, Plico transforms the staged raster and resolution into a private JPEG at high quality. The existing image importer uses that upright JPEG for both the PDF and OCR. Exact-source deduplication hashes the original JPEG bytes. [Skia codec orientation](https://learn.microsoft.com/en-us/dotnet/api/skiasharp.skcodec.encodedorigin)
+
 Batch review and tagging update the selected IDs in one SQLite transaction. A row-count check preserves the selection's previous state if a document became unavailable. The desktop restores matching selections after the tag update.
 
 Tag renaming updates the label for a capitalization change or moves the catalog links to the destination key. The transaction includes links on missing PDFs so they follow the new tag when the file returns. A merge keeps the destination’s label and uses its existing document links once.

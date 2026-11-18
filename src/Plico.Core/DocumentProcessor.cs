@@ -56,6 +56,10 @@ internal sealed class DocumentProcessor(string dataDirectory)
             stagedSource = normalizedPdf;
             isPdf = true;
         }
+        else if (!isPdf)
+        {
+            stagedSource = JpegOrientation.NormalizeIfNeeded(stagedSource, stagingDirectory, cancellationToken);
+        }
 
         using var context = CreateCaptureContext(stagingDirectory);
         var pages = isPdf

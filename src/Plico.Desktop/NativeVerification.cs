@@ -73,10 +73,11 @@ internal static class NativeVerification
             await VerifyTiffImportAsync(window, model, dialogs, fixture, evidenceDirectory);
             await VerifyTagSuggestionAsync(window, model, evidenceDirectory);
             await VerifyAdjacentMatchesAsync(window, model, dialogs, fixture, evidenceDirectory);
+            await VerifyOrientedJpegAsync(window, model, dialogs, fixture, evidenceDirectory);
             await VerifyScannerDialogAsync(window, evidenceDirectory);
 
             File.WriteAllText(Path.Combine(evidenceDirectory, "passed.txt"),
-                $"Verified {runtime}. Native window completed multilingual OCR, multi-page TIFF import, phrase and tag search, result sorting, fit-width preview, match navigation, tag merging and suggestions, duplicate drop, folder watch, title edit, relocation, batch actions, selected PDF export, library backup, text copy, searchable PDF copy, and import retry.");
+                $"Verified {runtime}. Native window completed multilingual OCR, oriented JPEG and multi-page TIFF import, phrase and tag search, result sorting, fit-width preview, match navigation, tag merging and suggestions, duplicate drop, folder watch, title edit, relocation, batch actions, selected PDF export, library backup, text copy, searchable PDF copy, and import retry.");
             desktop.Shutdown(0);
         }
         catch (Exception error)
@@ -271,6 +272,22 @@ internal static class NativeVerification
 
         await previousMatch.ExecuteAsync(previous.CommandParameter);
         await UntilAsync(() => model.PageLabel == "2 / 5" && model.Preview is not null, () => model.Status);
+    }
+
+    private static async Task VerifyOrientedJpegAsync(MainWindow window, InboxViewModel model, FixtureDialogs dialogs,
+        string fixture, string directory)
+    {
+        const string title = "Sideways receipt";
+        dialogs.SelectedFiles = [Path.Combine(Path.GetDirectoryName(fixture)!, $"{title}.JPG")];
+        await ((IAsyncRelayCommand)Control<Button>(window, "AddFilesButton").Command!).ExecuteAsync(null);
+        var imported = model.SelectedDocument;
+        Require(imported is { Title: title, PageCount: 1, HasText: true }, $"The photo did not become a searchable PDF. {model.Status}");
+
+        Control<TextBox>(window, "SearchBox").SetCurrentValue(TextBox.TextProperty, ReceiptKeyword);
+        await UntilAsync(() => model.SelectedDocument is { } selected && selected.Id == imported!.Id &&
+            selected.Match.Contains(ReceiptKeyword, StringComparison.OrdinalIgnoreCase) && model.Preview is not null, () => model.Status);
+        Require(model.Preview!.PixelSize.Width < model.Preview.PixelSize.Height, "The imported photo was still sideways.");
+        await CaptureAsync(window, directory, "upright-jpeg.png");
     }
 
     private static async Task VerifyTagSuggestionAsync(MainWindow window, InboxViewModel model, string directory)
