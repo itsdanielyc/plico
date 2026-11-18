@@ -1,5 +1,4 @@
 using Plico.Core;
-using SkiaSharp;
 using UglyToad.PdfPig;
 using Xunit;
 
@@ -21,28 +20,7 @@ public sealed class ExpandedOcrTests
         using var temporary = new TemporaryLibrary();
         using var library = InboxLibrary.Open(temporary.Path);
         var token = TestContext.Current.CancellationToken;
-        const int uprightWidth = 880;
-        const int uprightHeight = 1120;
-        using var sideways = new SKBitmap(uprightHeight, uprightWidth);
-        using (var canvas = new SKCanvas(sideways))
-        using (var font = new SKFont(SKTypeface.Default, 26))
-        using (var ink = new SKPaint { Color = SKColors.Black, IsAntialias = true })
-        {
-            canvas.Clear(SKColors.White);
-            canvas.Translate(uprightHeight, 0);
-            canvas.RotateDegrees(90);
-            for (int row = 0; row < 25; row++)
-            {
-                string text = row % 2 == 0 ? "ORIENTED470 is written on the original certificate." :
-                    "Please preserve these letters, dates, and addresses.";
-                canvas.DrawText(text, 55, 80 + row * 38, SKTextAlign.Left, font, ink);
-            }
-        }
-        string original = Path.Combine(temporary.Path, "Sideways source.png");
-        using (var output = File.Create(original))
-        using (var encoded = sideways.Encode(SKEncodedImageFormat.Png, 100))
-            encoded.SaveTo(output);
-
+        string original = Path.Combine(AppContext.BaseDirectory, "fixtures", "Sideways orientation.png");
         library.ConfigureOcr(new(AutoOrient: true));
         var result = await library.ImportFileAsync(original, token);
         using var pdf = PdfDocument.Open(library.ResolvePdf(result.Document));
