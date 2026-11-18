@@ -163,7 +163,7 @@ internal sealed partial class LibraryCatalog
         command.Parameters.AddWithValue("$source", sourceFingerprint is null ? DBNull.Value : sourceFingerprint);
         command.Parameters.AddWithValue("$pdf", pdfFingerprint);
         command.Parameters.Add("$ocrSource", SqliteType.Integer).Value = (object?)ocrCopySource?.DocumentId ?? DBNull.Value;
-        command.Parameters.Add("$ocrLanguage", SqliteType.Text).Value = (object?)ocrCopySource?.Language.ToString() ?? DBNull.Value;
+        command.Parameters.Add("$ocrLanguage", SqliteType.Text).Value = (object?)ocrCopySource?.CatalogKey ?? DBNull.Value;
         long documentId = (long)command.ExecuteScalar()!;
         if (metadataSourceIds is { Count: > 0 })
         {
@@ -233,7 +233,7 @@ internal sealed partial class LibraryCatalog
         if (ocrCopySource is { } source)
         {
             command.Parameters.AddWithValue("$ocrSource", source.DocumentId);
-            command.Parameters.AddWithValue("$ocrLanguage", source.Language.ToString());
+            command.Parameters.AddWithValue("$ocrLanguage", source.CatalogKey);
         }
         return ReadFileReferences(command);
     }

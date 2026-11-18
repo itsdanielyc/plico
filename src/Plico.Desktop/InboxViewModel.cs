@@ -272,6 +272,7 @@ internal sealed partial class InboxViewModel : ObservableObject, IDisposable
         var previous = _library;
         CancelTypedSearch();
         _library = replacement;
+        replacement.ConfigureOcr(_ocrProcessing);
         CancelPreview();
         previous?.Dispose();
         var importNotice = RestoreImportFailures(replacement.RootPath);

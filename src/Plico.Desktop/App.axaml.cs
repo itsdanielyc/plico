@@ -60,6 +60,7 @@ public sealed partial class App : Application
                 var recognition = new OcrLanguagePreference(settingsDirectory);
                 model.InitializeRecognitionLanguage(recognition.Load, recognition.Save);
                 model.InitializeLocalModels(new LocalModelPreference(settingsDirectory));
+                model.InitializeOcrProcessing(new OcrProcessingPreference(settingsDirectory));
                 window.DataContext = model;
                 AttachPdfActivation(desktop, window, model);
                 desktop.Exit += (_, _) => model.Dispose();

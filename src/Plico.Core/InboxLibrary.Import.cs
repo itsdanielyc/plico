@@ -30,14 +30,15 @@ public sealed partial class InboxLibrary
         string snapshot = Path.Combine(stage, StagedSourceStem + DocumentProcessor.PdfExtension);
         var sourceFingerprint = await CopyAndFingerprintAsync(source, snapshot, token).ConfigureAwait(false);
         EnsureCurrentFile(source, version);
-        var ocrSource = new OcrCopySource(original.Id, language);
+        var recognition = _processor.ProcessingOptions;
+        var ocrSource = new OcrCopySource(original.Id, language, recognition);
         var existing = FindUnchangedCandidate(_catalog.FindOcrCopies(sourceFingerprint, ocrSource), token);
         if (existing is not null) return new FileImportResult(existing, Added: false);
 
         string output = Path.Combine(stage, StagedPdfName);
         var text = original.HasText
-            ? await _processor.ReprocessPdfAsync(snapshot, output, language, token).ConfigureAwait(false)
-            : (await _processor.PrepareAsync(snapshot, output, language, token).ConfigureAwait(false)).Text;
+            ? await _processor.ReprocessPdfAsync(snapshot, output, language, token, recognition: recognition).ConfigureAwait(false)
+            : (await _processor.PrepareAsync(snapshot, output, language, token, recognition).ConfigureAwait(false)).Text;
         if (text.Body.Length == 0) throw new InvalidDataException("OCR found no searchable text in this PDF.");
         if (text.PageCount != original.PageCount)
         {
@@ -47,7 +48,7 @@ public sealed partial class InboxLibrary
         EnsureCurrentFile(source, version);
         string suffix = original.HasText ? $" ({language} OCR)" : SearchableCopySuffix;
         var copy = CommitPdf(output, original.Title + suffix, text, token,
-            sourceFingerprint, ocrCopySource: ocrSource);
+            sourceFingerprint, ocrCopySource: ocrSource, recognizedLanguage: language);
         return new FileImportResult(copy, Added: true);
     }, cancellationToken);
 

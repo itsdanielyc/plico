@@ -4,7 +4,7 @@ A local paperwork inbox for Windows, macOS, and Linux. Scan or import documents 
 
 ## Download
 
-Get Plico from [GitHub Releases](https://github.com/itsdanielyc/plico/releases). The archives include the .NET runtime and English, French, German, and Spanish OCR models. Extract the entire archive before launching.
+Get Plico from [GitHub Releases](https://github.com/itsdanielyc/plico/releases). The archives include the .NET runtime and English, French, German, Spanish, Italian, Portuguese, Dutch, and Polish OCR models. Extract the entire archive before launching.
 
 | Platform | Launch |
 | --- | --- |
@@ -37,6 +37,8 @@ Open **Library tools… → Migrate a library** and select a Paperless-ngx expor
 The migration report lists reused documents, missing files, and original values that need manual attention. Save it as JSON before closing when you want a record of the import. ENEX notes and their readable attachments become searchable PDFs. Keep your original export for resources the report marks as unconverted.
 
 Select a language in **OCR** for scans, imports, and searchable copies. Plico remembers the choice and uses that bundled model for recognition.
+
+Use **OCR… → Turn sideways pages upright** to rotate pages when orientation detection is confident. Choose **Use RapidOCR** to try the bundled Latin-script recognition engine on Windows, Linux, or Apple silicon. Intel Macs use Tesseract. Plico remembers the engine and rotation options on this computer.
 
 Plico imports a multi-page TIFF as one searchable PDF. The pages follow the scan’s order, orientation, and resolution.
 

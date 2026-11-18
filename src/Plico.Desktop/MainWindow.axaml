@@ -276,7 +276,17 @@
                             Command="{Binding ChooseSearchFolderCommand}" Content="{translation:Tr Folder}" IsEnabled="{Binding CanWork}"
                             AutomationProperties.Name="{translation:Tr ChooseALibraryFolderToSearch}" MinHeight="38" />
                     <StackPanel Grid.Column="2" Orientation="Horizontal" Spacing="6">
-                        <TextBlock Text="OCR" Classes="muted" VerticalAlignment="Center" />
+                        <Button x:Name="OcrProcessingButton" Classes="secondary" Content="OCR…" IsEnabled="{Binding IsIdle}"
+                                AutomationProperties.Name="OCR engine and orientation">
+                            <Button.Flyout>
+                                <MenuFlyout>
+                                    <MenuItem x:Name="RapidOcrChoice" Header="Use RapidOCR" ToggleType="CheckBox"
+                                              IsChecked="{Binding UseRapidOcr, Mode=TwoWay}" IsEnabled="{Binding CanUseRapidOcr}" />
+                                    <MenuItem x:Name="OrientPagesChoice" Header="Turn sideways pages upright" ToggleType="CheckBox"
+                                              IsChecked="{Binding AutoOrientPages, Mode=TwoWay}" />
+                                </MenuFlyout>
+                            </Button.Flyout>
+                        </Button>
                         <ComboBox x:Name="OcrLanguageBox" ItemsSource="{Binding RecognitionLanguages}"
                                   SelectedItem="{Binding RecognitionLanguage, Mode=TwoWay}" MinWidth="96" MinHeight="38"
                                   IsEnabled="{Binding IsIdle}" AutomationProperties.Name="{translation:Tr OCRLanguage}" />

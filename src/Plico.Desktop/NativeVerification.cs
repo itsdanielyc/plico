@@ -71,6 +71,7 @@ internal static partial class NativeVerification
             await VerifySortAsync(window, model, evidenceDirectory);
             await VerifyBatchReviewAsync(window, model, dialogs, evidenceDirectory);
             await VerifyOcrLanguagesAsync(window, model, dialogs, fixture, evidenceDirectory);
+            await VerifyOcrProcessingChoicesAsync(window, model, evidenceDirectory);
             await VerifyCopiedTextAsync(window, model, dialogs);
             await VerifyLibraryBackupAsync(window, model, dialogs, evidenceDirectory);
             await VerifyImportErrorsAsync(window, model, dialogs, fixture, evidenceDirectory);
