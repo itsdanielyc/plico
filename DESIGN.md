@@ -30,6 +30,8 @@ Batch review lives below the document list. The selection count identifies its s
 
 The OCR selector sits beside intake controls. Its current language is visible before a new file or scan begins.
 
+The scan interruption dialog shows the captured page count and the scanner error. **Save partial PDF** applies OCR and adds the available pages to the inbox. **Discard** closes the dialog and clears the captured pages from staging.
+
 The sort selector sits beside the results count. It applies to the current inbox, tag, or text search. The selected PDF stays open when it is visible in the reordered list.
 
 The results count shows **Searching…** after a query edit. **Load more** becomes available when the current search has a next page.

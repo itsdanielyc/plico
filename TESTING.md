@@ -42,8 +42,11 @@
 29. Use **Move PDFs…** with several selected files and one destination. Check filename collisions, reserved paths, already-filed PDFs, picker cancellation, and a missing source. Cancel or change the next source after a completed move and verify the reported counts (L3, L4 and L6).
 30. Extract nonconsecutive and overlapping ranges from a PDF. Verify original order, selected embedded text, source bytes and tags, validation of the title and ranges, cancellation, and a stale page count. Find an extracted page by its OCR match in the native app (L1, L3, L4 and L6).
 31. Rotate a selected receipt page and find it by its OCR text. Confirm that the copy preserves its page order and tags and that the reverse turn restores the page. Check the actual preview pixels for a half turn and a square scan with an invisible text layer. Exercise a cancelled copy and a stale page count (L3, L4 and L6).
+32. Interrupt the loopback feeder after two pages. Check the count before OCR, save the available pages, and search for the receipt. Discard and cancel to check staging cleanup. A jam before the first page reports the scanner error (L3, L4 and L6).
 
 Run `dotnet test Plico.slnx -c Release` for the fast suite. Run the native harness from `keel.json` for installed-platform evidence. Visual review starts with per-OS captures and geometry checks. Add pixel baselines when repeatable runner captures justify the maintenance.
+
+The native harness checks the scan recovery dialog with a synthetic fault. Set `PLICO_VERIFY_INTERRUPTED_SCANNER` to a loopback eSCL fixture that delivers two pages, including the hardware receipt, before failing to run the full Scan action and search check.
 
 Use **Verify release candidate** (`archives.yml`) on the exact release commit. Each runtime runs the solution tests before packaging, then verifies the portable and installed copies. The publisher requires a successful run and all package files for that commit. Its smoke matrix downloads the newly published assets and runs the distribution checks again.
 

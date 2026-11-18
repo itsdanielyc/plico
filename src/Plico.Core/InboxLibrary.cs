@@ -1,6 +1,4 @@
 using System.Text;
-using NAPS2.Images;
-using NAPS2.Scan;
 
 namespace Plico.Core;
 
@@ -84,27 +82,6 @@ public sealed partial class InboxLibrary : IDisposable
     public async Task<DocumentSummary> ImportAsync(string sourcePath, CancellationToken cancellationToken = default,
         OcrLanguage language = OcrLanguage.English) =>
         (await ImportFileAsync(sourcePath, cancellationToken, language).ConfigureAwait(false)).Document;
-
-    /// <summary>Captures a scan job as a single searchable PDF in the inbox.</summary>
-    public Task<DocumentSummary> ScanAsync(ScanRequest request, CancellationToken cancellationToken = default,
-        OcrLanguage language = OcrLanguage.English)
-    {
-        var options = Scanners.CaptureOptions(request);
-        return StoreScanAsync(Scanners.ScanTitle(), (context, token) => new ScanController(context).Scan(options, token),
-            cancellationToken, language);
-    }
-
-    internal Task<DocumentSummary> StoreScanAsync(
-        string title,
-        Func<ScanningContext, CancellationToken, IAsyncEnumerable<ProcessedImage>> capture,
-        CancellationToken cancellationToken, OcrLanguage language = OcrLanguage.English) =>
-        InStageAsync(async (stage, token) =>
-        {
-            using var context = DocumentProcessor.CreateCaptureContext(stage);
-            string output = Path.Combine(stage, StagedPdfName);
-            var text = await _processor.ExportAsync(context, capture(context, token), output, language, token).ConfigureAwait(false);
-            return CommitPdf(output, title, text, token);
-        }, cancellationToken);
 
     /// <summary>Returns a bounded page of results for the selected filters.</summary>
     public DocumentPage Find(DocumentFilter filter) => _catalog.Find(filter);

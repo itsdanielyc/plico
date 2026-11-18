@@ -45,6 +45,16 @@ public sealed record ScanRequest(ScannerDevice Device, ScanFeed Feed, ScanPaper 
 /// <summary>Discovered scanners and actionable messages from unavailable drivers.</summary>
 public sealed record ScanDiscovery(IReadOnlyList<ScannerDevice> Devices, IReadOnlyList<string> Warnings);
 
+/// <summary>The completed pages and driver error from an interrupted scan.</summary>
+/// <param name="CapturedPages">The number of complete pages delivered before the error.</param>
+/// <param name="Reason">The message to show when asking whether to keep the pages.</param>
+public sealed record ScanInterruption(int CapturedPages, string Reason);
+
+/// <summary>The saved document, if any, and the reason a scan ended early.</summary>
+/// <param name="Document">The saved PDF, or null if the captured pages were discarded.</param>
+/// <param name="Interruption">The error and page count, or null for an ordinary completed scan.</param>
+public sealed record ScanOutcome(DocumentSummary? Document, ScanInterruption? Interruption);
+
 /// <summary>Discovers devices over supported host drivers and local network eSCL.</summary>
 public static class Scanners
 {

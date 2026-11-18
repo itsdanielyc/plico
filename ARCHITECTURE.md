@@ -77,6 +77,8 @@ The desktop holds unresolved import errors by source path for the active library
 
 The picker saves the three typed capture choices together as one local settings file. A read with invalid values uses the regional defaults until the user selects a valid configuration.
 
+When a scanner fails after delivering pages, the capture pipeline keeps those pages in staging. The desktop asks whether to save them before running OCR. Saving verifies the exported page count and publishes a clearly titled partial PDF. Discarding or cancelling releases the staged files. [NAPS2 capture and error handling](https://www.naps2.com/sdk/doc/api/NAPS2.Scan.ScanController.html)
+
 Folder watch coalesces filesystem events by path and samples pending files until two consecutive observations agree. It stays idle without pending events. Ready files wait for the current desktop operation, then use the same snapshot and duplicate checks as manual import. Watching stops with the active window or when the library changes. [.NET FileSystemWatcher](https://learn.microsoft.com/en-us/dotnet/api/system.io.filesystemwatcher)
 
 The watcher records top-level scan sizes and modification times before it subscribes. It reconciles once after subscription to catch arrivals during startup, and again when the operating system reports lost notifications. Only new or changed paths join the readiness queue. A backend that needs to restart is rearmed before reconciliation. A failed restart or unreadable folder is reported to the desktop. [.NET notification buffer overflow](https://learn.microsoft.com/en-us/dotnet/api/system.io.internalbufferoverflowexception?view=net-10.0)

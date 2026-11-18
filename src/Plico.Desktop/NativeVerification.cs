@@ -13,7 +13,7 @@ using Plico.Core;
 
 namespace Plico.Desktop;
 
-internal static class NativeVerification
+internal static partial class NativeVerification
 {
     internal const string EditedDocumentTitle = "October housing";
     private const string ExpectedRuntimeVariable = "PLICO_EXPECTED_NATIVE_RID";
@@ -81,9 +81,10 @@ internal static class NativeVerification
             await VerifyExtractPagesAsync(window, model, dialogs, evidenceDirectory);
             await VerifyRotatePagesAsync(window, model, dialogs, evidenceDirectory);
             await VerifyScannerDialogAsync(window, evidenceDirectory);
+            string scanRecoveryEvidence = await VerifyScanRecoveryAsync(window, model, dialogs, evidenceDirectory);
 
             File.WriteAllText(Path.Combine(evidenceDirectory, "passed.txt"),
-                $"Verified {runtime}. Native window completed multilingual OCR and correction, oriented JPEG and multi-page TIFF import, PDF combination, page extraction and rotation, phrase and tag search, result sorting, fit-width preview, match navigation, tag merging and suggestions, duplicate drop, folder watch, title edit, single and batch PDF moves, external relocation, selected PDF export, library backup, text copy, searchable PDF copy, and import retry.");
+                $"Verified {runtime}. Native window completed multilingual OCR and correction, oriented JPEG and multi-page TIFF import, PDF combination, page extraction and rotation, phrase and tag search, result sorting, fit-width preview, match navigation, tag merging and suggestions, duplicate drop, folder watch, title edit, single and batch PDF moves, external relocation, selected PDF export, library backup, text copy, searchable PDF copy, and import retry. {scanRecoveryEvidence}");
             desktop.Shutdown(0);
         }
         catch (Exception error)
@@ -967,6 +968,8 @@ internal sealed class FixtureDialogs(params string[] documents) : IWorkspaceDial
     internal TagRenameRequest? TagRenameChoice { get; set; }
     internal Func<IReadOnlyList<DocumentSummary>, Task<CombinePdfsRequest?>>? CombineChoice { get; set; }
     internal Func<DocumentSummary, int, PdfPageCopyAction, Task<PdfPageCopyRequest?>>? PageCopyChoice { get; set; }
+    internal ScanRequest? ScannerChoice { get; set; }
+    internal Func<ScanInterruption, CancellationToken, Task<bool>>? PartialScanChoice { get; set; }
     internal string? LastOpenedPath { get; private set; }
     internal string? LastCopiedText { get; private set; }
     internal ImportErrorsAction ImportErrorsChoice { get; set; }
@@ -979,7 +982,9 @@ internal sealed class FixtureDialogs(params string[] documents) : IWorkspaceDial
         LastFolderStart = startFolder;
         return Task.FromResult(FolderPath);
     }
-    public Task<ScanRequest?> PickScannerAsync() => Task.FromResult<ScanRequest?>(null);
+    public Task<ScanRequest?> PickScannerAsync() => Task.FromResult(ScannerChoice);
+    public Task<bool> ConfirmPartialScanAsync(ScanInterruption interruption, CancellationToken cancellationToken) =>
+        PartialScanChoice?.Invoke(interruption, cancellationToken) ?? Task.FromResult(false);
     public Task<string?> EditTitleAsync(string currentTitle) => Task.FromResult(EditedTitle);
     public Task<TagRenameRequest?> RenameTagAsync(string currentName, IReadOnlyList<string> catalogNames) => Task.FromResult(TagRenameChoice);
     public Task<CombinePdfsRequest?> OrderPdfCombinationAsync(IReadOnlyList<DocumentSummary> selectedDocuments) =>

@@ -45,6 +45,13 @@ public sealed class NetworkScannerTests
         </scan:ScannerStatus>
         """;
 
+    private const string FailedJob = """
+        <scan:ScannerStatus xmlns:scan="http://schemas.hp.com/imaging/escl/2011/05/03" xmlns:pwg="http://www.pwg.org/schemas/2010/12/sm">
+          <pwg:State>Idle</pwg:State><scan:AdfState>ScannerAdfJam</scan:AdfState>
+          <scan:Jobs><scan:JobInfo><pwg:JobUri>/eSCL/ScanJobs/1</pwg:JobUri><pwg:JobState>Aborted</pwg:JobState></scan:JobInfo></scan:Jobs>
+        </scan:ScannerStatus>
+        """;
+
     [Theory]
     [InlineData(ScanResolution.Quick, 150)]
     [InlineData(ScanResolution.Standard, 300)]
@@ -86,6 +93,96 @@ public sealed class NetworkScannerTests
         Assert.Equal((expectedDpi, expectedDpi), await requested.Task.WaitAsync(token));
         Assert.Equal(1, document.PageCount);
         Assert.Equal(document.Id, Assert.Single(library.Find(new DocumentFilter(Query: "WRENCH470"), TestContext.Current.CancellationToken).Items).Id);
+    }
+
+    [Theory]
+    [InlineData(true, false)]
+    [InlineData(false, false)]
+    [InlineData(true, true)]
+    public async Task InterruptedFeederCanSaveCompletedPagesOrDiscardThem(bool savePages, bool truncatePage)
+    {
+        var token = TestContext.Current.CancellationToken;
+        await using var scanner = await StartInterruptedFeederAsync(token, truncatePage);
+        using var temporary = new TemporaryLibrary();
+        using var library = InboxLibrary.Open(temporary.Path);
+        var device = await Scanners.ConnectAsync(new Uri(scanner.Urls.Single()).Authority, token);
+        int decisions = 0;
+        var scan = await library.ScanWithRecoveryAsync(new ScanRequest(device, ScanFeed.Feeder, ScanPaper.Letter),
+            (interruption, _) =>
+            {
+                decisions++;
+                Assert.Equal(2, interruption.CapturedPages);
+                Assert.NotEmpty(interruption.Reason);
+                Assert.Empty(Directory.EnumerateFiles(library.PdfDirectory, "*.pdf"));
+                Assert.Empty(library.Find(new DocumentFilter(), token).Items);
+                return Task.FromResult(savePages);
+            }, token);
+
+        Assert.Equal(1, decisions);
+        Assert.Equal(2, scan.Interruption?.CapturedPages);
+        if (savePages)
+        {
+            var partial = Assert.IsType<DocumentSummary>(scan.Document);
+            Assert.EndsWith("(partial)", partial.Title);
+            Assert.Equal(2, partial.PageCount);
+            Assert.Equal(1, library.FindFirstMatchingPage(partial, "WRENCH470", token));
+            Assert.Equal(partial.Id, Assert.Single(library.Find(new DocumentFilter(Query: "WRENCH470"), token).Items).Id);
+        }
+        else
+        {
+            Assert.Null(scan.Document);
+            Assert.Empty(Directory.EnumerateFiles(library.PdfDirectory, "*.pdf"));
+            Assert.Empty(library.Find(new DocumentFilter(), token).Items);
+        }
+        Assert.Empty(Directory.EnumerateDirectories(Path.Combine(temporary.Path, ".plico"), "import-*"));
+    }
+
+    internal static async Task<WebApplication> StartInterruptedFeederAsync(CancellationToken cancellationToken, bool truncatePage = false)
+    {
+        string fixtures = Path.Combine(AppContext.BaseDirectory, "fixtures");
+        byte[] receipt = await File.ReadAllBytesAsync(Path.Combine(fixtures, "Hardware Store Receipt.png"), cancellationToken);
+        byte[] invoice = await File.ReadAllBytesAsync(Path.Combine(fixtures, "Spanish Receipt.png"), cancellationToken);
+        byte[][] pages = [receipt, invoice];
+        var builder = WebApplication.CreateSlimBuilder();
+        builder.Logging.ClearProviders();
+        builder.WebHost.ConfigureKestrel(options => options.Listen(IPAddress.Loopback, 0));
+        var scanner = builder.Build();
+        int pageRequests = 0;
+        string feederCapabilities = Capabilities.Replace("PlatenInputCaps", "AdfSimplexInputCaps", StringComparison.Ordinal)
+            .Replace("Platen", "Adf", StringComparison.Ordinal);
+        scanner.MapGet(EsclPath + "/ScannerCapabilities", () => Results.Text(feederCapabilities, "application/xml"));
+        scanner.MapGet(EsclPath + "/ScannerStatus", () => Results.Text(Volatile.Read(ref pageRequests) > pages.Length ? FailedJob : Ready, "application/xml"));
+        scanner.MapPost(EsclPath + "/ScanJobs", () => Results.Created(JobLocation, null as object));
+        scanner.MapGet(JobLocation + "/NextDocument", async context =>
+        {
+            int pageIndex = Interlocked.Increment(ref pageRequests) - 1;
+            if (pageIndex < pages.Length)
+            {
+                await Results.Bytes(pages[pageIndex], "image/png").ExecuteAsync(context);
+                return;
+            }
+            if (!truncatePage)
+            {
+                context.Response.StatusCode = StatusCodes.Status500InternalServerError;
+                return;
+            }
+            context.Response.ContentType = "image/png";
+            context.Response.ContentLength = receipt.Length;
+            await context.Response.Body.WriteAsync(receipt.AsMemory(0, receipt.Length / 2), context.RequestAborted);
+            await context.Response.Body.FlushAsync(context.RequestAborted);
+            context.Abort();
+        });
+        scanner.MapDelete(JobLocation, () => Results.NoContent());
+        try
+        {
+            await scanner.StartAsync(cancellationToken);
+            return scanner;
+        }
+        catch
+        {
+            await scanner.DisposeAsync();
+            throw;
+        }
     }
 
     [Theory]

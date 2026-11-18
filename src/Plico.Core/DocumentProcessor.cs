@@ -103,10 +103,22 @@ internal sealed class DocumentProcessor(string dataDirectory)
         CancellationToken cancellationToken)
     {
         var captured = new List<ProcessedImage>();
+        await CollectPagesAsync(pages, captured, cancellationToken).ConfigureAwait(false);
+        return await ExportCapturedAsync(context, captured, outputPath, language, cancellationToken).ConfigureAwait(false);
+    }
+
+    internal static async Task CollectPagesAsync(IAsyncEnumerable<ProcessedImage> pages, List<ProcessedImage> captured,
+        CancellationToken cancellationToken)
+    {
         await foreach (var image in pages.WithCancellation(cancellationToken).ConfigureAwait(false))
         {
             captured.Add(image);
         }
+    }
+
+    internal async Task<PdfText> ExportCapturedAsync(ScanningContext context, ICollection<ProcessedImage> captured,
+        string outputPath, OcrLanguage language, CancellationToken cancellationToken)
+    {
         cancellationToken.ThrowIfCancellationRequested();
         if (captured.Count == 0)
         {

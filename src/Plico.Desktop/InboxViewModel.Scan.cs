@@ -1,4 +1,6 @@
+using Avalonia.Threading;
 using CommunityToolkit.Mvvm.Input;
+using Plico.Core;
 
 namespace Plico.Desktop;
 
@@ -17,8 +19,25 @@ internal sealed partial class InboxViewModel
         }
 
         Status = $"Scanning from {request.Device.Name}…";
-        var document = await Task.Run(() => library.ScanAsync(request, token, language), token);
+        var scan = await Task.Run(() => library.ScanWithRecoveryAsync(request,
+            (interruption, cancellation) => Dispatcher.UIThread.InvokeAsync(() => ConfirmPartialScanAsync(interruption, cancellation)),
+            token, language), token);
+        if (scan.Document is not { } document)
+        {
+            Status = "Captured pages discarded.";
+            return;
+        }
+
         Navigate(inboxOnly: true, preferredId: document.Id);
-        Status = document.HasText ? "Scan added to inbox." : "Scan added. No searchable text was recognized.";
+        string scanName = scan.Interruption is null ? "Scan" : "Partial scan";
+        Status = document.HasText ? $"{scanName} added to inbox." : $"{scanName} added. No searchable text was recognized.";
     });
+
+    private async Task<bool> ConfirmPartialScanAsync(ScanInterruption interruption, CancellationToken cancellationToken)
+    {
+        cancellationToken.ThrowIfCancellationRequested();
+        bool save = await _dialogs.ConfirmPartialScanAsync(interruption, cancellationToken);
+        if (save) Status = "Recognizing captured pages…";
+        return save;
+    }
 }

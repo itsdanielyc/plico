@@ -12,6 +12,7 @@ internal interface IWorkspaceDialogs
     Task<IReadOnlyList<string>> PickDocumentsAsync();
     Task<string?> PickFolderAsync(string title, string? startFolder = null);
     Task<ScanRequest?> PickScannerAsync();
+    Task<bool> ConfirmPartialScanAsync(ScanInterruption interruption, CancellationToken cancellationToken);
     Task<string?> EditTitleAsync(string currentTitle);
     Task<TagRenameRequest?> RenameTagAsync(string currentName, IReadOnlyList<string> catalogNames);
     Task<CombinePdfsRequest?> OrderPdfCombinationAsync(IReadOnlyList<DocumentSummary> selectedDocuments);
@@ -59,6 +60,9 @@ internal sealed class WorkspaceDialogs(Window owner) : IWorkspaceDialogs
         new ScanDialog(Scanners.DiscoverAsync, settings: new SavedScannerStore(ApplicationSettings.DirectoryPath),
             captureOptions: new ScanOptionsPreference(ApplicationSettings.DirectoryPath))
             .ShowDialog<ScanRequest?>(owner);
+
+    public Task<bool> ConfirmPartialScanAsync(ScanInterruption interruption, CancellationToken cancellationToken) =>
+        new ScanInterruptedDialog(interruption).ShowDecisionAsync(owner, cancellationToken);
 
     public Task<string?> EditTitleAsync(string currentTitle) =>
         new DocumentTitleDialog(currentTitle).ShowDialog<string?>(owner);

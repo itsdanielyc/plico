@@ -97,6 +97,8 @@ Scanning supports automatic source selection, flatbed, feeder, and duplex when t
 
 The scan picker remembers the paper source, size, and resolution you choose.
 
+If the scanner reports an error after delivering pages, choose **Save partial PDF** or **Discard**. A saved partial scan opens in the inbox with searchable text from the pages that arrived.
+
 If your scanner software saves to a folder, choose **Watch a folder…** under **Library** and select its output folder. Plico imports new or updated PDFs and images after they settle. The watch covers files directly inside that folder and lasts while Plico is open. **Stop watching** ends intake. Your scanner's source files remain in the output folder.
 
 Plico remembers the chosen folder for the current library. **Resume folder watch** starts watching it again when you are ready.
