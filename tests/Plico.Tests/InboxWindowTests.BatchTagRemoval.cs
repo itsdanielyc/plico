@@ -76,6 +76,7 @@ public sealed partial class InboxWindowTests
         {
             foreach (var dialog in window.OwnedWindows.ToArray()) dialog.Close();
             await WaitForAsync(() => !model.IsBusy);
+            if (model.SelectedDocument is not null) await WaitForPreviewAsync(model);
             window.Close();
         }
     }

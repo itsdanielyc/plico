@@ -142,15 +142,7 @@ public sealed partial class InboxLibrary
             cancellationToken.ThrowIfCancellationRequested();
             string path = Path.Combine(target, NumberedName(stem, sequence) + DocumentProcessor.PdfExtension);
             if (Path.Exists(path)) continue;
-            try
-            {
-                File.Move(stagedPdf, path, overwrite: false);
-                return path;
-            }
-            catch (IOException) when (Path.Exists(path))
-            {
-                // Another export can claim this name before the staged file is moved.
-            }
+            if (StagedPdfPublication.TryPublish(stagedPdf, path)) return path;
         }
     }
 }

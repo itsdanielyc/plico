@@ -2,6 +2,8 @@
 
 ## [0.16.0] - 2026-11-18
 
+The Windows executable and setup are unsigned. The macOS app is ad-hoc signed and has no Apple notarization. [First-launch instructions](https://github.com/itsdanielyc/plico/blob/main/README.md#download)
+
 - Added a native Windows ARM64 app in ZIP and per-user setup formats.
 - Use **Open backup** from the status bar after saving a library backup.
 - Sort the current view by newest added or title A–Z. Automatic order puts the best matches first during a text search.
@@ -58,6 +60,7 @@
 - Opt in to automatic watch catch-up when opening a library on this computer.
 - Include watched scans and catch-up scans in a library's custom intake folder.
 - Retry failed watched scans using the current watch destination after reopening the library.
+- Keep both PDFs when independent exports compete for the same filename.
 
 ## [0.15.0] - 2026-11-18
 
