@@ -88,6 +88,8 @@ Choose **Combine PDFs…** to make a single document from the selection. Set the
 
 Choose **Export binder…** to share a hand-picked set of household documents as one searchable PDF. Set the binder title and order, then choose a folder. Plico adds printable contents pages and PDF bookmarks. The selected documents stay in the library.
 
+Open **PDF tools…** to reorder, delete, or rotate pages in the current PDF. **Version history…** lets you export a previous copy, make it current, or add a revised PDF to the same document. **Split into documents** saves consecutive parts in the inbox and keeps the original. For a locked file, use **Library tools… → Import password-protected PDF…** and enter its password. Plico keeps the encrypted original in version history.
+
 Choose **Extract pages…** in a multi-page preview and enter a selection such as `1,3-5`. The excerpt opens in the inbox with those pages in source order, embedded text, and source tags. Page annotations belong to the source PDF.
 
 Choose **Rotate pages…** for sideways or upside-down scans. Select pages, choose a direction, and title the new PDF. The copy keeps every page, its searchable text, and the source tags.

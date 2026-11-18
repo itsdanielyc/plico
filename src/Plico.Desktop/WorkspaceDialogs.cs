@@ -22,6 +22,10 @@ internal interface IWorkspaceDialogs
     Task<CombinePdfsRequest?> OrderPdfCombinationAsync(IReadOnlyList<DocumentSummary> selectedDocuments);
     Task<CombinePdfsRequest?> OrderHouseholdBinderAsync(IReadOnlyList<DocumentSummary> selectedDocuments);
     Task<PdfPageCopyRequest?> ChoosePdfPageCopyAsync(DocumentSummary document, int currentPage, PdfPageCopyAction action);
+    Task<PdfPageEditRequest?> EditPdfPagesAsync(DocumentSummary document, int currentPage);
+    Task<PdfVersionDecision?> ChoosePdfVersionAsync(DocumentSummary document, IReadOnlyList<PdfVersion> versions);
+    Task<string?> PickPdfAsync(string title);
+    Task<string?> GetPdfPasswordAsync(string sourcePath);
     Task<ImportErrorsAction> ShowImportErrorsAsync(IReadOnlyList<ImportFailure> failures);
     Task ShowOcrCopyBatchResultsAsync(IReadOnlyList<OcrCopyBatchItem> results);
     Task<IndexReportDecision?> ShowIndexRefreshReportAsync(IndexReport report);
@@ -111,6 +115,14 @@ internal sealed class WorkspaceDialogs(Window owner) : IWorkspaceDialogs
     public Task<PdfPageCopyRequest?> ChoosePdfPageCopyAsync(DocumentSummary document, int currentPage, PdfPageCopyAction action) =>
         new PdfPageCopyDialog(document.PageCount, currentPage, action).ShowDialog<PdfPageCopyRequest?>(owner);
 
+    public Task<PdfPageEditRequest?> EditPdfPagesAsync(DocumentSummary document, int currentPage) =>
+        new PdfPageEditor(document.PageCount, currentPage).ShowDialog<PdfPageEditRequest?>(owner);
+
+    public Task<PdfVersionDecision?> ChoosePdfVersionAsync(DocumentSummary document, IReadOnlyList<PdfVersion> versions) =>
+        new PdfVersionHistoryDialog(document, versions).ShowDialog<PdfVersionDecision?>(owner);
+
+    public Task<string?> GetPdfPasswordAsync(string sourcePath) => new UnlockPdfDialog(sourcePath).ShowDialog<string?>(owner);
+
     public Task<ImportErrorsAction> ShowImportErrorsAsync(IReadOnlyList<ImportFailure> failures) =>
         new ImportErrorsDialog(failures).ShowDialog<ImportErrorsAction>(owner);
 
@@ -134,11 +146,13 @@ internal sealed class WorkspaceDialogs(Window owner) : IWorkspaceDialogs
 
     public Task ShowIntegrityReportAsync(IntegrityReport report) => new IntegrityReportDialog(report).ShowDialog(owner);
 
-    public async Task<string?> PickRestorePdfAsync()
+    public Task<string?> PickRestorePdfAsync() => PickPdfAsync("Choose a matching PDF");
+
+    public async Task<string?> PickPdfAsync(string title)
     {
         var files = await owner.StorageProvider.OpenFilePickerAsync(new FilePickerOpenOptions
         {
-            Title = "Choose a matching PDF",
+            Title = title,
             AllowMultiple = false,
             FileTypeFilter = [PdfDocuments]
         });

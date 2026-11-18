@@ -19,12 +19,14 @@ public sealed partial class InboxLibrary
         string? stage = null;
         try
         {
+            RecoverPdfRevision(cancellationToken);
             var recovery = RecoverPendingPdfMove(cancellationToken);
             if (recovery.PendingDestination is not null) throw new IOException(recovery.Notice);
             var inventory = CaptureBackupInventory(cancellationToken);
             var trash = _catalog.ReadTrashFiles();
+            var history = _catalog.ReadPdfVersions();
             var trashVersions = new List<(string Path, FileVersion Version)>(trash.Count);
-            int total = inventory.Count + trash.Count;
+            int total = checked(inventory.Count + trash.Count + history.Count);
             stage = CreateCopyStage(target, BackupStagePrefix);
             var pdfDestination = Directory.CreateDirectory(Path.Combine(stage, PdfFolderName)).FullName;
             var catalogDestination = Directory.CreateDirectory(Path.Combine(stage, MetadataFolderName)).FullName;
@@ -44,6 +46,15 @@ public sealed partial class InboxLibrary
                 await CopyPdfAsync(source.Path, Path.Combine(catalogDestination, TrashFolderName, TrashFilename(item.DocumentId)),
                     source.Version, BackupInventoryChanged, cancellationToken).ConfigureAwait(false);
                 trashVersions.Add((source.Path, source.Version));
+                progress?.Report(new BackupProgress(++copied, total));
+            }
+            foreach (var file in history)
+            {
+                cancellationToken.ThrowIfCancellationRequested();
+                string folder = Directory.CreateDirectory(Path.Combine(catalogDestination, PdfVersionsFolderName,
+                    PdfVersionDocumentFolder(file.DocumentId))).FullName;
+                await CopyHistoryFileAsync(file, Path.Combine(folder, PdfVersionFilename(file.Version.Key)), cancellationToken)
+                    .ConfigureAwait(false);
                 progress?.Report(new BackupProgress(++copied, total));
             }
 

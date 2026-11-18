@@ -1,0 +1,37 @@
+<Window xmlns="https://github.com/avaloniaui" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        x:Class="Plico.Desktop.PdfPageEditor" Title="Edit PDF pages"
+        Width="520" SizeToContent="Height" CanResize="False" WindowStartupLocation="CenterOwner"
+        FontFamily="{StaticResource InterFont}" Background="#F4F5EF">
+    <StackPanel Margin="24" Spacing="12">
+        <ComboBox x:Name="ActionBox" HorizontalAlignment="Stretch" AutomationProperties.Name="Page editing action">
+            <ComboBoxItem Content="Reorder pages" />
+            <ComboBoxItem Content="Delete pages" />
+            <ComboBoxItem Content="Split into documents" />
+            <ComboBoxItem Content="Rotate pages" />
+        </ComboBox>
+        <Grid x:Name="OrderPanel" ColumnDefinitions="*,Auto" ColumnSpacing="8">
+            <ListBox x:Name="PageOrder" MaxHeight="240" AutomationProperties.Name="Pages in output order" />
+            <StackPanel Grid.Column="1" Spacing="8">
+                <Button x:Name="MoveEarlier" Content="Move up" HorizontalAlignment="Stretch" Click="MoveEarlier_Click" />
+                <Button x:Name="MoveLater" Content="Move down" HorizontalAlignment="Stretch" Click="MoveLater_Click" />
+            </StackPanel>
+        </Grid>
+        <StackPanel x:Name="RangePanel" Spacing="5" IsVisible="False">
+            <TextBlock x:Name="RangeHint" TextWrapping="Wrap" />
+            <TextBox x:Name="PagesBox" AutomationProperties.Name="Pages" />
+        </StackPanel>
+        <ComboBox x:Name="TurnBox" HorizontalAlignment="Stretch" IsVisible="False" AutomationProperties.Name="Rotation">
+            <ComboBoxItem Content="90° clockwise" />
+            <ComboBoxItem Content="180°" />
+            <ComboBoxItem Content="90° counterclockwise" />
+        </ComboBox>
+        <TextBlock x:Name="ResultHint" Foreground="#5C685D" TextWrapping="Wrap" />
+        <TextBlock x:Name="ValidationMessage" IsVisible="False" Foreground="#8E4037" TextWrapping="Wrap"
+                   AutomationProperties.LiveSetting="Polite" />
+        <StackPanel Orientation="Horizontal" Spacing="8" HorizontalAlignment="Right">
+            <Button Content="Cancel" IsCancel="True" Click="Cancel_Click" />
+            <Button x:Name="ApplyPageEdit" Content="Apply" IsDefault="True" Click="Apply_Click"
+                    Background="#254C37" Foreground="White" />
+        </StackPanel>
+    </StackPanel>
+</Window>

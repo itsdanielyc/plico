@@ -169,6 +169,7 @@
                     <Button x:Name="LibraryToolsButton" Classes="rail" Content="Library tools…" IsEnabled="{Binding CanWork}">
                         <Button.Flyout>
                             <MenuFlyout Placement="RightEdgeAlignedTop">
+                                <MenuItem Header="Import password-protected PDF…" Command="{Binding ImportProtectedPdfCommand}" />
                                 <MenuItem Header="Tag rules…" Command="{Binding ManageFilingRulesCommand}" />
                                 <MenuItem Header="Check library integrity…" Command="{Binding CheckIntegrityCommand}" />
                                 <MenuItem Header="Export library metadata (JSON)…" Command="{Binding ExportMetadataCommand}" />
@@ -450,6 +451,15 @@
                                                     IsVisible="{Binding HasMultiplePages}" Margin="0,0,6,4" />
                                             <Button x:Name="RotatePdfPagesButton" Classes="secondary" Content="Rotate pages…"
                                                     Command="{Binding RotatePdfPagesCommand}" IsEnabled="{Binding CanWork}" Margin="0,0,6,4" />
+                                            <Button x:Name="PdfToolsButton" Classes="secondary" Content="PDF tools…" IsEnabled="{Binding CanWork}"
+                                                    Margin="0,0,6,4">
+                                                <Button.Flyout>
+                                                    <MenuFlyout>
+                                                        <MenuItem x:Name="EditPdfPagesItem" Header="Edit pages…" Command="{Binding EditPdfPagesCommand}" />
+                                                        <MenuItem x:Name="PdfVersionsItem" Header="Version history…" Command="{Binding ShowPdfVersionsCommand}" />
+                                                    </MenuFlyout>
+                                                </Button.Flyout>
+                                            </Button>
                                             <Button x:Name="TrashDocumentButton" Classes="secondary" Content="Trash &amp; next"
                                                     Command="{Binding TrashDocumentCommand}" IsEnabled="{Binding CanWork}"
                                                     ToolTip.Tip="Move the open PDF to Trash (X in the results list)" Margin="0,0,6,4" />
