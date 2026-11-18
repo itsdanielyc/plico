@@ -96,6 +96,7 @@ internal static partial class NativeVerification
             await VerifyReviewPositionAsync(window, model, evidenceDirectory);
             await VerifyWatchCatchUpAsync(window, model, fixture, evidenceDirectory);
             await VerifyWatchCatchUpOnOpenAsync(window, model, dialogs, fixture, evidenceDirectory);
+            await VerifyRetryFilingAsync(window, model, dialogs, fixture, evidenceDirectory);
 
             File.WriteAllText(Path.Combine(evidenceDirectory, "passed.txt"),
                 $"Verified {runtime}. Native window completed multilingual OCR and correction, oriented JPEG and multi-page TIFF import, PDF combination, page extraction and rotation, phrase, tag, review-status, folder, and text-availability search, query correction, saved search restoration, single and batch document-date editing, date filtering and inheritance, result sorting, continued review across loaded results, fit-width and selectable page text previews, match navigation, tag merging, suggestions, and edits across loaded result pages, duplicate drop, folder watch with catch-up on open and intake routing, inbox counting, title edit, single and batch PDF moves, external relocation and PDF swaps, index reporting and PDF restoration from files and folders, single and batch PDF export, library backup, text copy, single and batch OCR copies, saved import error recovery and retry destinations, per-scanner capture option restoration, and filing through the chosen intake folder. {scanRecoveryEvidence}");
@@ -555,35 +556,18 @@ internal static partial class NativeVerification
     private static async Task VerifyImportErrorsAsync(MainWindow window, InboxViewModel model, FixtureDialogs dialogs,
         string fixture, string directory)
     {
-        const string addedFilename = "Check import.pdf";
-        const string watchedFilename = "Check watched retry.pdf";
-        const string intakeName = "Retry intake";
-        string libraryRoot = model.LibraryPath;
-        string pdfs = Path.Combine(libraryRoot, "PDFs");
-        string previousIntake = Path.Combine(pdfs, model.IntakeFolder);
-        string source = model.RememberedWatchFolder ?? throw new InvalidOperationException("The watch fixture has no saved folder.");
-        string watched = Path.Combine(source, watchedFilename);
         var input = Directory.CreateTempSubdirectory("plico-verify-retry-");
+        string libraryRoot = model.LibraryPath;
         string? rememberedFolder = dialogs.FolderPath;
-        var previousFiles = dialogs.SelectedFiles;
         try
         {
-            string intake = Directory.CreateDirectory(Path.Combine(pdfs, intakeName)).FullName;
-            await ChooseNativeIntakeFolderAsync(window, model, dialogs, intake);
-            Require(!model.IncludeWatchedScans, "The retry fixture expects watched scans to file at the PDF root.");
-            string damaged = Path.Combine(input.FullName, addedFilename);
+            string damaged = Path.Combine(input.FullName, "Check import.pdf");
             File.WriteAllText(damaged, "Invalid test PDF");
             dialogs.SelectedFiles = [damaged];
             await ((IAsyncRelayCommand)Control<Button>(window, "AddFilesButton").Command!).ExecuteAsync(null);
             var errors = Control<Button>(window, "ImportErrorsButton");
             Require(errors.IsVisible && model.ImportFailures.Single().SourcePath == damaged,
                 "The native window did not report the damaged input.");
-
-            await model.ResumeFolderWatchCommand.ExecuteAsync(null);
-            Require(model.IsWatchingFolder, $"The retry fixture did not resume watching. {model.Status}");
-            File.WriteAllText(watched, "Invalid test scan");
-            await UntilAsync(() => !model.IsBusy && model.ImportFailures.Count == 2, () => model.Status);
-            await model.StopFolderWatchCommand.ExecuteAsync(null);
 
             string otherLibrary = Directory.CreateDirectory(Path.Combine(libraryRoot, "Verification library")).FullName;
             dialogs.FolderPath = otherLibrary;
@@ -592,16 +576,14 @@ internal static partial class NativeVerification
                 $"The blank library did not open without errors. {model.Status}");
             dialogs.FolderPath = libraryRoot;
             await model.ChooseLibraryCommand.ExecuteAsync(null);
-            Require(model.LibraryPath == libraryRoot && errors.IsVisible && model.ImportFailures.Count == 2 &&
-                    model.ImportFailures.Any(failure => failure.SourcePath == damaged) &&
-                    model.ImportFailures.Any(failure => failure.SourcePath == watched),
-                $"Reopening the library did not restore both import errors. {model.Status}");
+            Require(model.LibraryPath == libraryRoot && errors.IsVisible && model.ImportFailures.Single().SourcePath == damaged,
+                $"Reopening the library did not restore its import error. {model.Status}");
 
             var dialog = new ImportErrorsDialog(model.ImportFailures);
             var closed = dialog.ShowDialog<ImportErrorsAction>(window);
             try
             {
-                Require(Control<ListBox>(dialog, "FailuresList").ItemCount == 2, "The detail window did not list both sources.");
+                Require(Control<ListBox>(dialog, "FailuresList").ItemCount == 1, "The detail window did not list the source.");
                 await CaptureAsync(dialog, directory, "import-errors.png");
             }
             finally
@@ -610,29 +592,16 @@ internal static partial class NativeVerification
                 await closed;
             }
 
-            string fixtures = Path.GetDirectoryName(fixture)!;
-            File.Copy(Path.Combine(fixtures, "Mixed Pages.pdf"), damaged, overwrite: true);
-            File.Copy(Path.Combine(fixtures, "Match Ledger.pdf"), watched, overwrite: true);
-            // Distinguish the watched fixture from other imports of the same ledger.
-            File.AppendAllText(watched, "\n\n   \n  \n");
+            File.Copy(Path.Combine(Path.GetDirectoryName(fixture)!, "Mixed Pages.pdf"), damaged, overwrite: true);
             Control<ComboBox>(window, "OcrLanguageBox").SetCurrentValue(ComboBox.SelectedItemProperty, OcrLanguage.English);
             dialogs.ImportErrorsChoice = ImportErrorsAction.Retry;
             await ((IAsyncRelayCommand)errors.Command!).ExecuteAsync(null);
-            Require(model.ImportFailures.Count == 0 && !errors.IsVisible, "Repaired files remained in the error list.");
-            Require(model.Status == "2 documents added." && File.Exists(Path.Combine(intake, addedFilename)) &&
-                    File.Exists(Path.Combine(pdfs, watchedFilename)) && File.Exists(damaged) && File.Exists(watched),
-                "Retry did not preserve the filing choice for both sources.");
-            model.SelectedDocument = model.Documents.Single(document => document.RelativePath == $"{intakeName}/{addedFilename}");
-            await UntilAsync(() => model.Preview is not null, () => model.PreviewMessage);
-            await CaptureAsync(window, directory, "retry-filing.png");
-            await ChooseNativeIntakeFolderAsync(window, model, dialogs, previousIntake);
+            await UntilAsync(() => model.SelectedDocument?.Title == "Check import" && model.Preview is not null, () => model.Status);
+            Require(model.ImportFailures.Count == 0 && !errors.IsVisible, "The repaired file remained in the error list.");
         }
         finally
         {
-            await model.StopFolderWatchCommand.ExecuteAsync(null);
             dialogs.FolderPath = rememberedFolder;
-            dialogs.SelectedFiles = previousFiles;
-            File.Delete(watched);
             input.Delete(recursive: true);
         }
     }

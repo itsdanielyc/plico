@@ -43,7 +43,7 @@ New pages land in the Inbox after processing. A person can select a result, see 
 
 ## Assumptions
 
-- Ruling. Start with a private GitHub repository because visibility was unspecified. It can be changed with the owner's direction.
+- Ruling. Plico's GitHub repository is public at the owner's request.
 - Ruling. Start with Windows x64, macOS Apple silicon, and Linux x64. Additional architectures incur native-package and verification work.
 
 ## Provenance
