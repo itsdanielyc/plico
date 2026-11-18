@@ -19,6 +19,20 @@ public sealed class LibraryTests
     private const string LetterKeyword = "NORTHSTAR";
 
     [Fact]
+    public async Task CancelledCatalogReadLeavesTheLibraryAvailableForTheNextSearch()
+    {
+        using var temporary = new TemporaryLibrary();
+        using var library = InboxLibrary.Open(temporary.Path);
+        var document = await library.ImportAsync(Fixture(Letter), TestContext.Current.CancellationToken);
+        var filter = new DocumentFilter(Query: LetterKeyword);
+        var cancelled = new CancellationToken(canceled: true);
+
+        Assert.Throws<OperationCanceledException>(() => library.Find(filter, cancelled));
+
+        Assert.Equal(document.Id, Assert.Single(library.Find(filter, TestContext.Current.CancellationToken).Items).Id);
+    }
+
+    [Fact]
     public async Task ReadingIndexedTextRejectsAnEntryMarkedMissing()
     {
         using var temporary = new TemporaryLibrary();
@@ -40,7 +54,7 @@ public sealed class LibraryTests
         var imported = await library.ImportAsync(Fixture(Letter), TestContext.Current.CancellationToken);
 
         Assert.Equal(File.ReadAllBytes(Fixture(Letter)), File.ReadAllBytes(library.ResolvePdf(imported)));
-        Assert.Equal(imported.Id, Assert.Single(library.Find(new DocumentFilter(Query: LetterKeyword)).Items).Id);
+        Assert.Equal(imported.Id, Assert.Single(library.Find(new DocumentFilter(Query: LetterKeyword), TestContext.Current.CancellationToken).Items).Id);
     }
 
     [Fact]
@@ -52,7 +66,7 @@ public sealed class LibraryTests
         using var pdf = PdfDocument.Open(library.ResolvePdf(imported));
 
         Assert.Contains(ReceiptKeyword, ContentOrderTextExtractor.GetText(pdf.GetPage(1)), StringComparison.OrdinalIgnoreCase);
-        var found = Assert.Single(library.Find(new DocumentFilter(Query: ReceiptKeyword)).Items);
+        var found = Assert.Single(library.Find(new DocumentFilter(Query: ReceiptKeyword), TestContext.Current.CancellationToken).Items);
         Assert.Equal(imported.Id, found.Id);
         Assert.InRange(found.Match.IndexOf(ReceiptKeyword, StringComparison.OrdinalIgnoreCase), 0, 22);
         Assert.True(File.Exists(Fixture(Receipt)));
@@ -80,7 +94,7 @@ public sealed class LibraryTests
         using var library = InboxLibrary.Open(temporary.Path);
 
         await Assert.ThrowsAsync<InvalidDataException>(() => library.ImportAsync(source, TestContext.Current.CancellationToken));
-        Assert.Empty(library.Find(new DocumentFilter()).Items);
+        Assert.Empty(library.Find(new DocumentFilter(), TestContext.Current.CancellationToken).Items);
         Assert.Empty(Directory.EnumerateFiles(library.PdfDirectory));
         Assert.True(File.Exists(source));
     }
@@ -103,8 +117,8 @@ public sealed class LibraryTests
         string moved = Path.Combine(temporary.Path, "Moved");
         Directory.Move(original, moved);
         using var reopened = InboxLibrary.Open(moved);
-        Assert.Empty(reopened.Find(new DocumentFilter(InboxOnly: true)).Items);
-        var matching = Assert.Single(reopened.Find(new DocumentFilter(Query: "norths*", Tag: "réntal")).Items);
+        Assert.Empty(reopened.Find(new DocumentFilter(InboxOnly: true), TestContext.Current.CancellationToken).Items);
+        var matching = Assert.Single(reopened.Find(new DocumentFilter(Query: "norths*", Tag: "réntal"), TestContext.Current.CancellationToken).Items);
         Assert.Equal(documentId, matching.Id);
         Assert.Equal("Réntal", Assert.Single(matching.Tags));
         Assert.True(File.Exists(reopened.ResolvePdf(matching)));
@@ -122,7 +136,7 @@ public sealed class LibraryTests
 
         Assert.Equal(1, refreshed.Indexed);
         Assert.Empty(refreshed.Warnings);
-        Assert.Single(library.Find(new DocumentFilter(Query: LetterKeyword)).Items);
+        Assert.Single(library.Find(new DocumentFilter(Query: LetterKeyword), TestContext.Current.CancellationToken).Items);
         Assert.Equal(0, library.Refresh(TestContext.Current.CancellationToken).Indexed);
     }
 
@@ -137,7 +151,7 @@ public sealed class LibraryTests
         Assert.Equal(2, document.PageCount);
         Assert.All(pdf.GetPages(), page =>
             Assert.Contains(ReceiptKeyword, ContentOrderTextExtractor.GetText(page), StringComparison.OrdinalIgnoreCase));
-        Assert.Equal(document.Id, Assert.Single(library.Find(new DocumentFilter(Query: ReceiptKeyword)).Items).Id);
+        Assert.Equal(document.Id, Assert.Single(library.Find(new DocumentFilter(Query: ReceiptKeyword), TestContext.Current.CancellationToken).Items).Id);
     }
 
     private static async IAsyncEnumerable<ProcessedImage> ReadCapturedPages(
@@ -216,7 +230,7 @@ public sealed class LibraryTests
 
         using var upgraded = InboxLibrary.Open(temporary.Path);
         var duplicate = await upgraded.ImportFileAsync(Fixture(Letter), TestContext.Current.CancellationToken);
-        var searchResult = Assert.Single(upgraded.Find(new DocumentFilter(Query: LetterKeyword, Tag: "housing")).Items);
+        var searchResult = Assert.Single(upgraded.Find(new DocumentFilter(Query: LetterKeyword, Tag: "housing"), TestContext.Current.CancellationToken).Items);
 
         Assert.False(duplicate.Added);
         Assert.Equal(originalId, searchResult.Id);
@@ -260,7 +274,7 @@ public sealed class LibraryTests
             library.AddTag(id, "Rent");
             library.SetReviewed(id, true);
             library.SetTitle(id, "  October housing  ");
-            var named = Assert.Single(library.Find(new DocumentFilter(Query: "October")).Items);
+            var named = Assert.Single(library.Find(new DocumentFilter(Query: "October"), TestContext.Current.CancellationToken).Items);
             Assert.Equal("October housing", named.Title);
             Assert.Equal(document.RelativePath, named.RelativePath);
             Assert.Equal(File.ReadAllBytes(source), File.ReadAllBytes(library.ResolvePdf(named)));
@@ -270,12 +284,12 @@ public sealed class LibraryTests
         }
 
         using var reopened = InboxLibrary.Open(temporary.Path);
-        var found = Assert.Single(reopened.Find(new DocumentFilter(Query: "Binder88", Tag: "rent")).Items);
+        var found = Assert.Single(reopened.Find(new DocumentFilter(Query: "Binder88", Tag: "rent"), TestContext.Current.CancellationToken).Items);
         Assert.Equal("October housing", found.Title);
         Assert.Equal(id, found.Id);
         Assert.True(found.Reviewed);
         Assert.Equal(2, found.PageCount);
-        Assert.Single(reopened.Find(new DocumentFilter(Query: "October NORTHSTAR")).Items);
+        Assert.Single(reopened.Find(new DocumentFilter(Query: "October NORTHSTAR"), TestContext.Current.CancellationToken).Items);
     }
 
     [Fact]
@@ -287,7 +301,7 @@ public sealed class LibraryTests
 
         Assert.Throws<ArgumentException>(() => library.SetTitle(document.Id, "    "));
         Assert.Throws<ArgumentException>(() => library.SetTitle(document.Id, "Broken\nTitle"));
-        Assert.Equal(document.Title, Assert.Single(library.Find(new DocumentFilter(Query: LetterKeyword)).Items).Title);
+        Assert.Equal(document.Title, Assert.Single(library.Find(new DocumentFilter(Query: LetterKeyword), TestContext.Current.CancellationToken).Items).Title);
     }
 
     [Fact]
@@ -297,12 +311,12 @@ public sealed class LibraryTests
         using var library = InboxLibrary.Open(temporary.Path);
         var document = await library.ImportAsync(Fixture(Letter), TestContext.Current.CancellationToken);
 
-        Assert.Equal(document.Id, Assert.Single(library.Find(new DocumentFilter(Query: "\"new term\" norths")).Items).Id);
-        Assert.Single(library.Find(new DocumentFilter(Query: "northstar lease")).Items);
-        Assert.Empty(library.Find(new DocumentFilter(Query: "\"northstar lease\"")).Items);
-        Assert.Empty(library.Find(new DocumentFilter(Query: "\"new ter\"")).Items);
-        Assert.Single(library.Find(new DocumentFilter(Query: "\"new ter")).Items);
-        Assert.Single(library.Find(new DocumentFilter(Query: "“new term”")).Items);
+        Assert.Equal(document.Id, Assert.Single(library.Find(new DocumentFilter(Query: "\"new term\" norths"), TestContext.Current.CancellationToken).Items).Id);
+        Assert.Single(library.Find(new DocumentFilter(Query: "northstar lease"), TestContext.Current.CancellationToken).Items);
+        Assert.Empty(library.Find(new DocumentFilter(Query: "\"northstar lease\""), TestContext.Current.CancellationToken).Items);
+        Assert.Empty(library.Find(new DocumentFilter(Query: "\"new ter\""), TestContext.Current.CancellationToken).Items);
+        Assert.Single(library.Find(new DocumentFilter(Query: "\"new ter"), TestContext.Current.CancellationToken).Items);
+        Assert.Single(library.Find(new DocumentFilter(Query: "“new term”"), TestContext.Current.CancellationToken).Items);
     }
 
     private static string Fixture(string name) => Path.Combine(AppContext.BaseDirectory, "fixtures", name);

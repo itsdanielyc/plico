@@ -24,7 +24,7 @@ public sealed class LibraryMoveTests
         var movedPath = Path.Combine(subfolder, "Renewal55.pdf");
         File.Move(library.ResolvePdf(imported.Document), movedPath);
         var refreshed = library.Refresh(token);
-        var moved = Assert.Single(library.Find(new DocumentFilter(Query: "Renewal55", Tag: "housing")).Items);
+        var moved = Assert.Single(library.Find(new DocumentFilter(Query: "Renewal55", Tag: "housing"), TestContext.Current.CancellationToken).Items);
         var repeated = await library.ImportFileAsync(Fixture, token);
 
         Assert.Equal(1, refreshed.Relocated);
@@ -50,7 +50,7 @@ public sealed class LibraryMoveTests
         File.Move(originalPath, Path.Combine(library.PdfDirectory, "Copy 2.pdf"));
 
         var refreshed = library.Refresh(token);
-        var copies = library.Find(new DocumentFilter(Query: "NORTHSTAR")).Items;
+        var copies = library.Find(new DocumentFilter(Query: "NORTHSTAR"), TestContext.Current.CancellationToken).Items;
 
         Assert.Equal(0, refreshed.Relocated);
         Assert.Equal(2, refreshed.Indexed);
@@ -96,6 +96,6 @@ public sealed class LibraryMoveTests
         Assert.Equal(0, upgraded.Refresh(token).Indexed);
         File.Move(before, Path.Combine(upgraded.PdfDirectory, "Moved lease.pdf"));
         Assert.Equal(1, upgraded.Refresh(token).Relocated);
-        Assert.Equal(id, Assert.Single(upgraded.Find(new DocumentFilter(Tag: "Property")).Items).Id);
+        Assert.Equal(id, Assert.Single(upgraded.Find(new DocumentFilter(Tag: "Property"), TestContext.Current.CancellationToken).Items).Id);
     }
 }

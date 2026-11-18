@@ -23,7 +23,7 @@ public static class HeadlessApplication
         AppBuilder.Configure<App>().UseHeadless(new AvaloniaHeadlessPlatformOptions()).WithInterFont();
 }
 
-public sealed class InboxWindowTests
+public sealed partial class InboxWindowTests
 {
     [AvaloniaFact]
     public async Task CopyTextUsesTheSelectedPdfAndIsHiddenForAnEmptyPage()
@@ -117,7 +117,7 @@ public sealed class InboxWindowTests
         using (var library = InboxLibrary.Open(temporary.Path))
         {
             BatchFixtures.AddTwoDocuments(library, TestContext.Current.CancellationToken);
-            var documents = library.Find(new DocumentFilter()).Items;
+            var documents = library.Find(new DocumentFilter(), TestContext.Current.CancellationToken).Items;
             library.SetTitle(documents[0].Id, "Zebra lease");
             library.SetTitle(documents[1].Id, "Alpine lease");
         }

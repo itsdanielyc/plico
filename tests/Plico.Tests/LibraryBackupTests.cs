@@ -20,7 +20,7 @@ public sealed class LibraryBackupTests
 
         var backup = await library.BackupAsync(destination.Path, cancellationToken: token);
         using var reopened = InboxLibrary.Open(backup.Location);
-        var found = Assert.Single(reopened.Find(new DocumentFilter(Query: "NORTHSTAR", Tag: "Property")).Items);
+        var found = Assert.Single(reopened.Find(new DocumentFilter(Query: "NORTHSTAR", Tag: "Property"), TestContext.Current.CancellationToken).Items);
 
         Assert.Equal(1, backup.PdfCount);
         Assert.Equal(document.Id, found.Id);
@@ -47,7 +47,7 @@ public sealed class LibraryBackupTests
         await Assert.ThrowsAnyAsync<OperationCanceledException>(() =>
             library.BackupAsync(destination.Path, progress, cancellation.Token));
         Assert.Empty(Directory.EnumerateFileSystemEntries(destination.Path));
-        Assert.Equal(2, library.Find(new DocumentFilter()).Items.Count);
+        Assert.Equal(2, library.Find(new DocumentFilter(), TestContext.Current.CancellationToken).Items.Count);
     }
 
     [Fact]

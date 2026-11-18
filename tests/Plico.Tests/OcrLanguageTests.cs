@@ -20,7 +20,7 @@ public sealed class OcrLanguageTests
         using var pdf = PdfDocument.Open(library.ResolvePdf(imported.Document));
 
         Assert.Contains(accentedWord, ContentOrderTextExtractor.GetText(pdf.GetPage(1)), StringComparison.OrdinalIgnoreCase);
-        Assert.Equal(imported.Document.Id, Assert.Single(library.Find(new DocumentFilter(Query: accentedWord)).Items).Id);
+        Assert.Equal(imported.Document.Id, Assert.Single(library.Find(new DocumentFilter(Query: accentedWord), TestContext.Current.CancellationToken).Items).Id);
     }
 
     [Fact]

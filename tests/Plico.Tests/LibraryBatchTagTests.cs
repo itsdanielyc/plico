@@ -11,7 +11,7 @@ public sealed class LibraryBatchTagTests
         using var directory = new TemporaryLibrary();
         using var library = InboxLibrary.Open(directory.Path);
         BatchFixtures.AddTwoDocuments(library, TestContext.Current.CancellationToken);
-        var documents = library.Find(new DocumentFilter()).Items;
+        var documents = library.Find(new DocumentFilter(), TestContext.Current.CancellationToken).Items;
         var ids = documents.Select(document => document.Id).ToArray();
         library.AddTag(ids[0], "Records");
 
@@ -20,7 +20,7 @@ public sealed class LibraryBatchTagTests
 
         library.AddTagToDocuments(ids, " records ");
 
-        var tagged = library.Find(new DocumentFilter(Tag: "RECORDS")).Items;
+        var tagged = library.Find(new DocumentFilter(Tag: "RECORDS"), TestContext.Current.CancellationToken).Items;
         Assert.Equal(2, tagged.Count);
         Assert.All(tagged, document => Assert.Equal("Records", Assert.Single(document.Tags)));
     }

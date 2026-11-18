@@ -12,17 +12,17 @@ public sealed class LibraryReviewTests
         using var library = InboxLibrary.Open(directory.Path);
         BatchFixtures.AddTwoDocuments(library, TestContext.Current.CancellationToken);
         var inbox = new DocumentFilter(InboxOnly: true);
-        var selected = library.Find(inbox).Items.Select(document => document.Id).ToArray();
+        var selected = library.Find(inbox, TestContext.Current.CancellationToken).Items.Select(document => document.Id).ToArray();
 
         Assert.Throws<InvalidOperationException>(() => library.SetReviewedDocuments([selected[0], long.MaxValue], true));
-        Assert.Equal(2, library.Find(inbox).Items.Count);
+        Assert.Equal(2, library.Find(inbox, TestContext.Current.CancellationToken).Items.Count);
 
         library.SetReviewedDocuments(selected, true);
-        Assert.Empty(library.Find(inbox).Items);
-        Assert.All(library.Find(new DocumentFilter()).Items, document => Assert.True(document.Reviewed));
+        Assert.Empty(library.Find(inbox, TestContext.Current.CancellationToken).Items);
+        Assert.All(library.Find(new DocumentFilter(), TestContext.Current.CancellationToken).Items, document => Assert.True(document.Reviewed));
 
         library.SetReviewedDocuments(selected, false);
-        Assert.Equal(2, library.Find(inbox).Items.Count);
+        Assert.Equal(2, library.Find(inbox, TestContext.Current.CancellationToken).Items.Count);
     }
 }
 

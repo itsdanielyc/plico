@@ -20,6 +20,8 @@ The OCR selector sits beside intake controls. Its current language is visible be
 
 The sort selector sits beside the results count. It applies to the current inbox, tag, or text search. The selected PDF stays open when it is visible in the reordered list.
 
+The results count shows **Searching…** after a query edit. **Load more** becomes available when the current search has a next page.
+
 The preview shows the whole page by default. **Fit width** fills the available reading width and allows vertical scrolling. Page navigation stays visible and starts each new page at the top.
 
 **Copy text** sits beside the page controls when the selected PDF has searchable text. The status bar confirms a successful copy.

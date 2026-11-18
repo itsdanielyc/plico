@@ -1,5 +1,4 @@
 using Avalonia.Media.Imaging;
-using Avalonia.Threading;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using Plico.Core;
@@ -9,14 +8,12 @@ namespace Plico.Desktop;
 /// <summary>Coordinates the inbox, document actions, and the independently cancellable preview.</summary>
 internal sealed partial class InboxViewModel : ObservableObject, IDisposable
 {
-    private static readonly TimeSpan SearchDelay = TimeSpan.FromMilliseconds(180);
     private static readonly SortChoice AutomaticSort = new(DocumentSort.Automatic, "Automatic");
     private static readonly IReadOnlyList<SortChoice> AvailableSortChoices =
         [AutomaticSort, new(DocumentSort.Newest, "Newest added"), new(DocumentSort.Title, "Title A–Z")];
 
     private readonly IWorkspaceDialogs _dialogs;
     private readonly Action<string>? _rememberLocation;
-    private readonly DispatcherTimer _searchTimer = new() { Interval = SearchDelay };
     private InboxLibrary? _library;
     private CancellationTokenSource? _operationCancellation;
     private TaskCompletionSource? _operationCompletion;
@@ -48,12 +45,14 @@ internal sealed partial class InboxViewModel : ObservableObject, IDisposable
     [ObservableProperty] private bool _hasMore;
 
     internal InboxViewModel(IWorkspaceDialogs dialogs, Action<string>? rememberLocation = null,
-        WatchFolderPreference? watchPreference = null)
+        WatchFolderPreference? watchPreference = null,
+        Func<InboxLibrary, DocumentFilter, CancellationToken, DocumentPage>? searchDocuments = null)
     {
         _dialogs = dialogs;
         _rememberLocation = rememberLocation;
         _watchPreference = watchPreference;
-        _searchTimer.Tick += (_, _) => LoadResults();
+        _searchDocuments = searchDocuments ?? (static (library, filter, token) => library.Find(filter, token));
+        _searchTimer.Tick += (_, _) => _ = LoadTypedSearchAsync();
     }
 
     public bool HasLibrary => _library is not null;
@@ -97,6 +96,7 @@ internal sealed partial class InboxViewModel : ObservableObject, IDisposable
 
     internal async Task PrepareCloseAsync()
     {
+        CancelTypedSearch();
         await StopFolderWatchAsync();
         var completion = _operationCompletion;
         _operationCancellation?.Cancel();
@@ -157,7 +157,11 @@ internal sealed partial class InboxViewModel : ObservableObject, IDisposable
     [RelayCommand] private void Cancel() => _operationCancellation?.Cancel();
     [RelayCommand] private void ShowInbox() => Navigate(inboxOnly: true);
     [RelayCommand] private void ShowAll() => Navigate(inboxOnly: false);
-    [RelayCommand] private void LoadMore() => LoadResults(append: true);
+    [RelayCommand]
+    private void LoadMore()
+    {
+        if (HasMore) LoadResults(append: true);
+    }
     [RelayCommand] private void TogglePreviewFit() => FitPreviewWidth = !FitPreviewWidth;
     [RelayCommand] private void OpenPdfFolder() => OpenPath(() => RequireLibrary().PdfDirectory);
 
@@ -241,6 +245,7 @@ internal sealed partial class InboxViewModel : ObservableObject, IDisposable
 
         var replacement = InboxLibrary.Open(target);
         var previous = _library;
+        CancelTypedSearch();
         _library = replacement;
         CancelPreview();
         previous?.Dispose();
@@ -356,34 +361,6 @@ internal sealed partial class InboxViewModel : ObservableObject, IDisposable
         LoadResults(preferredId);
     }
 
-    private void LoadResults(long? preferredId = null, bool append = false, bool reloadPreview = false)
-    {
-        _searchTimer.Stop();
-        _watchResultsPending = false;
-        bool hasQuery = !string.IsNullOrWhiteSpace(Query);
-        Heading = hasQuery ? "Search results" : _activeTag ?? (_inboxOnly ? "Inbox" : "All documents");
-        EmptyMessage = hasQuery || _activeTag is not null ? "No documents match." :
-            _inboxOnly ? "Add a file to start your inbox." : "This library has no documents yet.";
-        OnPropertyChanged(nameof(InboxSelected));
-        OnPropertyChanged(nameof(AllSelected));
-        if (_library is null) return;
-
-        try
-        {
-            long? selection = preferredId ?? SelectedDocument?.Id;
-            var page = _library.Find(new DocumentFilter(Query, _activeTag, _inboxOnly && !hasQuery,
-                append ? Documents.Count : 0, SortOption?.Order ?? DocumentSort.Automatic));
-            ReplaceResults(append ? [.. Documents, .. page.Items] : page.Items, selection, reloadPreview);
-            HasMore = page.HasMore;
-            ResultCount = HasMore ? $"Showing {DocumentCount(Documents.Count)}" : DocumentCount(Documents.Count);
-            if (_activeTag is not null && hasQuery) ResultCount += $" in {_activeTag}";
-        }
-        catch (Exception error)
-        {
-            Status = error.Message;
-        }
-    }
-
     private void ReplaceResults(IReadOnlyList<DocumentSummary> documents, long? selectedId, bool reloadPreview)
     {
         var previous = SelectedDocument;
@@ -437,14 +414,6 @@ internal sealed partial class InboxViewModel : ObservableObject, IDisposable
         _library ?? throw new InvalidOperationException("Choose a library folder first.");
 
     private static string DocumentCount(int count) => count == 1 ? "1 document" : $"{count} documents";
-
-    partial void OnQueryChanged(string value)
-    {
-        _searchTimer.Stop();
-        _searchTimer.Start();
-    }
-
-    partial void OnSortOptionChanged(SortChoice? value) => LoadResults();
 
     partial void OnDocumentsChanged(IReadOnlyList<DocumentSummary> value)
     {
@@ -535,7 +504,7 @@ internal sealed partial class InboxViewModel : ObservableObject, IDisposable
 
     public void Dispose()
     {
-        _searchTimer.Stop();
+        CancelTypedSearch();
         CancelPreview();
         var library = _library;
         _library = null;

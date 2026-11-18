@@ -85,7 +85,7 @@ public sealed class NetworkScannerTests
         Assert.Equal(1, jobs);
         Assert.Equal((expectedDpi, expectedDpi), await requested.Task.WaitAsync(token));
         Assert.Equal(1, document.PageCount);
-        Assert.Equal(document.Id, Assert.Single(library.Find(new DocumentFilter(Query: "WRENCH470")).Items).Id);
+        Assert.Equal(document.Id, Assert.Single(library.Find(new DocumentFilter(Query: "WRENCH470"), TestContext.Current.CancellationToken).Items).Id);
     }
 
     [Theory]

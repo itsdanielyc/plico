@@ -8,6 +8,7 @@
 - Choose **Fit width** in the preview to enlarge the page and scroll through it.
 - Choose **Copy text** to copy the searchable text from every page of the selected PDF.
 - Choose **Import existing files** from an active watch to process scans saved while Plico was closed.
+- Typed searches run in the background and give the latest query priority. **Load more** follows the current search results.
 
 ## [0.15.0] - 2026-11-18
 

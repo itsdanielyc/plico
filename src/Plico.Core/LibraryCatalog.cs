@@ -1,5 +1,6 @@
 using System.Text.Json;
 using Microsoft.Data.Sqlite;
+using SQLitePCL;
 
 namespace Plico.Core;
 
@@ -7,6 +8,7 @@ namespace Plico.Core;
 internal sealed class LibraryCatalog
 {
     private const int ConnectionTimeoutSeconds = 5;
+    private const int SearchCancellationInstructions = 1_000;
     private const int SnippetMarker = 30;
     private const int SnippetLeadingCharacters = 20;
     internal const int PageSize = 60;
@@ -180,7 +182,8 @@ internal sealed class LibraryCatalog
     internal DocumentSummary Get(long documentId) => Query(new DocumentFilter(), documentId).Items.SingleOrDefault() ??
         throw new InvalidOperationException(DocumentUnavailableMessage);
 
-    internal DocumentPage Find(DocumentFilter filter) => Query(filter);
+    internal DocumentPage Find(DocumentFilter filter, CancellationToken cancellationToken = default) =>
+        Query(filter, cancellationToken: cancellationToken);
 
     internal string ReadIndexedText(long documentId)
     {
@@ -191,8 +194,9 @@ internal sealed class LibraryCatalog
         return command.ExecuteScalar() as string ?? throw new InvalidOperationException(DocumentUnavailableMessage);
     }
 
-    private DocumentPage Query(DocumentFilter filter, long? documentId = null)
+    private DocumentPage Query(DocumentFilter filter, long? documentId = null, CancellationToken cancellationToken = default)
     {
+        cancellationToken.ThrowIfCancellationRequested();
         ArgumentOutOfRangeException.ThrowIfNegative(filter.Offset);
         var expression = SearchTerms.FullTextExpression(filter.Query);
         if (!string.IsNullOrWhiteSpace(filter.Query) && expression.Length == 0)
@@ -201,6 +205,12 @@ internal sealed class LibraryCatalog
         }
 
         using var connection = Connect();
+        if (cancellationToken.CanBeCanceled)
+        {
+            // This connection is unpooled, so the handler's lifetime is the current read.
+            raw.sqlite3_progress_handler(connection.Handle!, SearchCancellationInstructions,
+                static state => state is CancellationToken { IsCancellationRequested: true } ? 1 : 0, cancellationToken);
+        }
         using var command = connection.CreateCommand();
         var conditions = new List<string> { "d.is_present = 1" };
         string join = "";
@@ -241,10 +251,24 @@ internal sealed class LibraryCatalog
             """;
         command.Parameters.AddWithValue("$limit", PageSize + 1);
         command.Parameters.AddWithValue("$offset", filter.Offset);
+        try
+        {
+            return ReadResultPage(command, cancellationToken);
+        }
+        catch (SqliteException error) when (error.SqliteErrorCode == raw.SQLITE_INTERRUPT && cancellationToken.IsCancellationRequested)
+        {
+            throw new OperationCanceledException("The catalog read was cancelled.", error, cancellationToken);
+        }
+    }
+
+    private static DocumentPage ReadResultPage(SqliteCommand command, CancellationToken cancellationToken)
+    {
+        cancellationToken.ThrowIfCancellationRequested();
         using var results = command.ExecuteReader();
         var documents = new List<DocumentSummary>(PageSize);
         while (results.Read())
         {
+            cancellationToken.ThrowIfCancellationRequested();
             if (documents.Count == PageSize)
             {
                 return new(documents, HasMore: true);
@@ -256,6 +280,7 @@ internal sealed class LibraryCatalog
                 JsonSerializer.Deserialize<string[]>(results.GetString(7)) ?? [],
                 TrimSnippet(results.GetString(8))));
         }
+        cancellationToken.ThrowIfCancellationRequested();
         return new(documents, HasMore: false);
     }
 

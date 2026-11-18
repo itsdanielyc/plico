@@ -55,7 +55,7 @@ public sealed class FolderWatchTests
 
         var paths = await importedPaths.Task.WaitAsync(TimeSpan.FromSeconds(15), TestContext.Current.CancellationToken);
         Assert.Equal("Scan desk.pdf", Path.GetFileName(Assert.Single(paths)));
-        Assert.Equal("Scan desk", Assert.Single(library.Find(new DocumentFilter(Query: "NORTHSTAR")).Items).Title);
+        Assert.Equal("Scan desk", Assert.Single(library.Find(new DocumentFilter(Query: "NORTHSTAR"), TestContext.Current.CancellationToken).Items).Title);
         Assert.True(File.Exists(finished));
         Assert.True(File.Exists(oldFile));
 

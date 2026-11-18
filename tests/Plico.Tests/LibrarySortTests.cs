@@ -20,8 +20,8 @@ public sealed class LibrarySortTests
         }
 
         var titleOrder = new DocumentFilter(Sort: DocumentSort.Title);
-        var firstPage = catalog.Find(titleOrder);
-        var secondPage = catalog.Find(titleOrder with { Offset = firstPage.Items.Count });
+        var firstPage = catalog.Find(titleOrder, TestContext.Current.CancellationToken);
+        var secondPage = catalog.Find(titleOrder with { Offset = firstPage.Items.Count }, TestContext.Current.CancellationToken);
 
         Assert.True(firstPage.HasMore);
         Assert.Equal("Apricot 00", firstPage.Items[0].Title);
@@ -44,9 +44,9 @@ public sealed class LibrarySortTests
 
         var search = new DocumentFilter(Query: "bills", Tag: tag, InboxOnly: true);
 
-        Assert.Equal(new[] { relevant, newest }, catalog.Find(search).Items.Select(document => document.Id));
+        Assert.Equal(new[] { relevant, newest }, catalog.Find(search, TestContext.Current.CancellationToken).Items.Select(document => document.Id));
         Assert.Equal(new[] { newest, relevant },
-            catalog.Find(search with { Sort = DocumentSort.Newest }).Items.Select(document => document.Id));
+            catalog.Find(search with { Sort = DocumentSort.Newest }, TestContext.Current.CancellationToken).Items.Select(document => document.Id));
     }
 
     private static long AddDocument(LibraryCatalog catalog, string name, string body) =>
