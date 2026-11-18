@@ -14,13 +14,12 @@ public sealed partial class InboxLibrary
     /// <summary>Checks whether a filename is one of the types accepted by the import pipeline.</summary>
     public static bool SupportsImport(string path) => DocumentProcessor.SupportsExtension(Path.GetExtension(path));
 
-    /// <summary>Uses OCR to make a tagged, searchable copy of an indexed scan, or returns an existing searchable copy.</summary>
+    /// <summary>Makes a tagged copy with fresh OCR, or reuses a copy of the same source version in the selected language.</summary>
     /// <exception cref="InvalidDataException">OCR produced no text or changed the page count.</exception>
     public Task<FileImportResult> CreateSearchableCopyAsync(long documentId, CancellationToken cancellationToken = default,
         OcrLanguage language = OcrLanguage.English) => InStageAsync(async (stage, token) =>
     {
         var original = _catalog.Get(documentId);
-        if (original.HasText) throw new InvalidOperationException("This PDF already contains searchable text.");
         string source = ResolvePdf(original);
         var version = _catalog.GetFileVersion(documentId);
         if (FileVersion.Read(source) != version)
@@ -31,20 +30,24 @@ public sealed partial class InboxLibrary
         string snapshot = Path.Combine(stage, StagedSourceStem + DocumentProcessor.PdfExtension);
         var sourceFingerprint = await CopyAndFingerprintAsync(source, snapshot, token).ConfigureAwait(false);
         EnsureCurrentFile(source, version);
-        var existing = FindPriorSource(sourceFingerprint, token, searchableOnly: true);
+        var ocrSource = new OcrCopySource(original.Id, language);
+        var existing = FindUnchangedCandidate(_catalog.FindOcrCopies(sourceFingerprint, ocrSource), token);
         if (existing is not null) return new FileImportResult(existing, Added: false);
 
         string output = Path.Combine(stage, StagedPdfName);
-        var prepared = await _processor.PrepareAsync(snapshot, output, language, token).ConfigureAwait(false);
-        if (prepared.Text.Body.Length == 0) throw new InvalidDataException("OCR found no searchable text in this PDF.");
-        if (prepared.Text.PageCount != original.PageCount)
+        var text = original.HasText
+            ? await _processor.ReprocessPdfAsync(snapshot, output, language, token).ConfigureAwait(false)
+            : (await _processor.PrepareAsync(snapshot, output, language, token).ConfigureAwait(false)).Text;
+        if (text.Body.Length == 0) throw new InvalidDataException("OCR found no searchable text in this PDF.");
+        if (text.PageCount != original.PageCount)
         {
             throw new InvalidDataException("The OCR output has a different page count from the indexed scan.");
         }
 
         EnsureCurrentFile(source, version);
-        var copy = CommitPdf(output, original.Title + SearchableCopySuffix, prepared.Text, token,
-            sourceFingerprint, prepared.CopiedSource ? sourceFingerprint : null, copyTagsFromDocumentId: original.Id);
+        string suffix = original.HasText ? $" ({language} OCR)" : SearchableCopySuffix;
+        var copy = CommitPdf(output, original.Title + suffix, text, token,
+            sourceFingerprint, ocrCopySource: ocrSource);
         return new FileImportResult(copy, Added: true);
     }, cancellationToken);
 
@@ -81,7 +84,7 @@ public sealed partial class InboxLibrary
 
     private async Task<DocumentSummary?> FindPriorImportAsync(byte[] fingerprint, long? legacyPdfBytes, CancellationToken cancellationToken)
     {
-        var previous = FindPriorSource(fingerprint, cancellationToken);
+        var previous = FindUnchangedCandidate(_catalog.FindSource(fingerprint), cancellationToken);
         if (previous is not null) return previous;
 
         if (legacyPdfBytes is null) return null;
@@ -100,9 +103,9 @@ public sealed partial class InboxLibrary
         return null;
     }
 
-    private DocumentSummary? FindPriorSource(byte[] fingerprint, CancellationToken cancellationToken, bool searchableOnly = false)
+    private DocumentSummary? FindUnchangedCandidate(IReadOnlyList<CatalogFileReference> candidates, CancellationToken cancellationToken)
     {
-        foreach (var candidate in _catalog.FindSource(fingerprint, searchableOnly))
+        foreach (var candidate in candidates)
         {
             cancellationToken.ThrowIfCancellationRequested();
             if (ResolveUnchangedPdf(candidate) is not null) return _catalog.Get(candidate.Id);

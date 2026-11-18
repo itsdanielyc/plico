@@ -453,6 +453,7 @@ internal sealed partial class InboxViewModel : ObservableObject, IDisposable
         OnPropertyChanged(nameof(HasSelection));
         OnPropertyChanged(nameof(ReviewAction));
         OnPropertyChanged(nameof(HasNoSearchableText));
+        OnPropertyChanged(nameof(SearchableCopyAction));
         OnPropertyChanged(nameof(HasPageMatchAction));
         NotifyPageChanged();
     }

@@ -64,7 +64,14 @@ internal sealed partial class LibraryCatalog
 
     private const string DisplayTitleMigration = "ALTER TABLE documents ADD COLUMN display_title TEXT;";
     private const string PdfFingerprintMigration = "ALTER TABLE documents ADD COLUMN pdf_sha256 BLOB;";
-    private static readonly string[] Migrations = [Schema, FingerprintMigration, DisplayTitleMigration, PdfFingerprintMigration];
+    private const string OcrCopyMigration = """
+        ALTER TABLE documents ADD COLUMN ocr_copy_source_id INTEGER REFERENCES documents(id) ON DELETE SET NULL;
+        ALTER TABLE documents ADD COLUMN ocr_copy_language TEXT;
+        CREATE INDEX documents_ocr_copies ON documents(ocr_copy_source_id, source_sha256, ocr_copy_language)
+            WHERE ocr_copy_language IS NOT NULL;
+        """;
+    private static readonly string[] Migrations =
+        [Schema, FingerprintMigration, DisplayTitleMigration, PdfFingerprintMigration, OcrCopyMigration];
 
     private readonly string _connectionString;
 
@@ -107,21 +114,23 @@ internal sealed partial class LibraryCatalog
     }
 
     internal long Upsert(string relativePath, string title, PdfText text, FileVersion version,
-        byte[] pdfFingerprint, byte[]? sourceFingerprint = null, long? copyTagsFromDocumentId = null)
+        byte[] pdfFingerprint, byte[]? sourceFingerprint = null, OcrCopySource? ocrCopySource = null)
     {
         using var connection = Connect();
-        using var transaction = copyTagsFromDocumentId.HasValue ? connection.BeginTransaction() : null;
+        using var transaction = ocrCopySource.HasValue ? connection.BeginTransaction() : null;
         using var command = connection.CreateCommand();
         command.Transaction = transaction;
         command.CommandText = """
-            INSERT INTO documents (title, relative_path, added_at, modified_ticks, file_bytes, page_count, has_text, body, source_sha256, pdf_sha256)
-            VALUES ($title, $path, $added, $modified, $bytes, $pages, $hasText, $text, $source, $pdf)
+            INSERT INTO documents (title, relative_path, added_at, modified_ticks, file_bytes, page_count, has_text, body,
+                                   source_sha256, pdf_sha256, ocr_copy_source_id, ocr_copy_language)
+            VALUES ($title, $path, $added, $modified, $bytes, $pages, $hasText, $text, $source, $pdf, $ocrSource, $ocrLanguage)
             ON CONFLICT(relative_path) DO UPDATE SET
                 title = CASE WHEN documents.display_title IS NULL THEN excluded.title
                              ELSE documents.display_title || char(10) || excluded.title END,
                 modified_ticks = excluded.modified_ticks, file_bytes = excluded.file_bytes,
                 page_count = excluded.page_count, has_text = excluded.has_text, body = excluded.body, is_present = 1,
-                source_sha256 = excluded.source_sha256, pdf_sha256 = excluded.pdf_sha256
+                source_sha256 = excluded.source_sha256, pdf_sha256 = excluded.pdf_sha256,
+                ocr_copy_source_id = excluded.ocr_copy_source_id, ocr_copy_language = excluded.ocr_copy_language
             RETURNING id;
             """;
         command.Parameters.AddWithValue("$title", title);
@@ -134,8 +143,10 @@ internal sealed partial class LibraryCatalog
         command.Parameters.AddWithValue("$text", text.Body);
         command.Parameters.AddWithValue("$source", sourceFingerprint is null ? DBNull.Value : sourceFingerprint);
         command.Parameters.AddWithValue("$pdf", pdfFingerprint);
+        command.Parameters.Add("$ocrSource", SqliteType.Integer).Value = (object?)ocrCopySource?.DocumentId ?? DBNull.Value;
+        command.Parameters.Add("$ocrLanguage", SqliteType.Text).Value = (object?)ocrCopySource?.Language.ToString() ?? DBNull.Value;
         long documentId = (long)command.ExecuteScalar()!;
-        if (copyTagsFromDocumentId is long sourceId)
+        if (ocrCopySource is { } source)
         {
             command.CommandText = """
                 INSERT OR IGNORE INTO document_tags (document_id, tag_key)
@@ -143,7 +154,7 @@ internal sealed partial class LibraryCatalog
                 """;
             command.Parameters.Clear();
             command.Parameters.AddWithValue("$copy", documentId);
-            command.Parameters.AddWithValue("$original", sourceId);
+            command.Parameters.AddWithValue("$original", source.DocumentId);
             command.ExecuteNonQuery();
             transaction!.Commit();
         }
@@ -159,8 +170,12 @@ internal sealed partial class LibraryCatalog
         return (long)command.ExecuteScalar()! == 1;
     }
 
-    internal IReadOnlyList<CatalogFileReference> FindSource(byte[] fingerprint, bool searchableOnly = false) =>
-        ReadImportCandidates(searchableOnly ? "source_sha256 = $value AND has_text = 1" : "source_sha256 = $value", fingerprint);
+    internal IReadOnlyList<CatalogFileReference> FindSource(byte[] fingerprint) =>
+        ReadImportCandidates("source_sha256 = $value AND ocr_copy_language IS NULL", fingerprint);
+
+    internal IReadOnlyList<CatalogFileReference> FindOcrCopies(byte[] fingerprint, OcrCopySource source) =>
+        ReadImportCandidates("source_sha256 = $value AND ocr_copy_source_id = $ocrSource AND ocr_copy_language = $ocrLanguage AND has_text = 1",
+            fingerprint, source);
 
     internal IReadOnlyList<CatalogFileReference> FindLegacyPdfs(long fileBytes) =>
         ReadImportCandidates("source_sha256 IS NULL AND file_bytes = $value", fileBytes);
@@ -175,7 +190,7 @@ internal sealed partial class LibraryCatalog
         command.ExecuteNonQuery();
     }
 
-    private IReadOnlyList<CatalogFileReference> ReadImportCandidates(string condition, object value)
+    private IReadOnlyList<CatalogFileReference> ReadImportCandidates(string condition, object value, OcrCopySource? ocrCopySource = null)
     {
         using var connection = Connect();
         using var command = connection.CreateCommand();
@@ -184,6 +199,11 @@ internal sealed partial class LibraryCatalog
             WHERE is_present = 1 AND {condition} ORDER BY id DESC;
             """;
         command.Parameters.AddWithValue("$value", value);
+        if (ocrCopySource is { } source)
+        {
+            command.Parameters.AddWithValue("$ocrSource", source.DocumentId);
+            command.Parameters.AddWithValue("$ocrLanguage", source.Language.ToString());
+        }
         return ReadFileReferences(command);
     }
 

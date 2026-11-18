@@ -39,7 +39,8 @@ public sealed partial class InboxWindowTests
             Assert.True(model.InboxSelected);
             Assert.Contains(model.Documents, document => document.Id == source.Id && !document.HasText);
             Assert.True(Assert.IsType<DocumentSummary>(model.SelectedDocument).HasText);
-            Assert.False(action.IsEffectivelyVisible);
+            Assert.True(action.IsEffectivelyVisible);
+            Assert.Equal("Create OCR copy", action.Content);
         }
         finally
         {

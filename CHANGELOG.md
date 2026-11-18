@@ -20,6 +20,7 @@
 - Move between matching pages in a PDF with **Previous match** and **Next match**.
 - Apply JPEG photo orientation before creating the PDF and running OCR.
 - Choose Spanish OCR for scans, imports, and searchable copies. The Spanish model runs locally and comes bundled with Plico.
+- Use **Create OCR copy** to recognize a PDF’s visible pages again in the selected language. Catalog version 5 tracks the source and language for repeat requests.
 
 ## [0.15.0] - 2026-11-18
 

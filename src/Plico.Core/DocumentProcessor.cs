@@ -1,6 +1,8 @@
+using System.Runtime.CompilerServices;
 using System.Text;
 using NAPS2.Images;
 using NAPS2.Images.Skia;
+using NAPS2.Images.Transforms;
 using NAPS2.ImportExport;
 using NAPS2.Ocr;
 using NAPS2.Pdf;
@@ -24,6 +26,7 @@ internal sealed class DocumentProcessor(string dataDirectory)
     {
         ".png", ".jpg", ".jpeg"
     };
+    private static readonly FileFormatTransform RenderForOcr = new(ImageFileFormat.Png);
 
     internal static bool IsPdf(string extension) => string.Equals(extension, PdfExtension, StringComparison.OrdinalIgnoreCase);
 
@@ -71,6 +74,26 @@ internal sealed class DocumentProcessor(string dataDirectory)
             throw new InvalidDataException("The searchable PDF is missing pages from the TIFF scan.");
         }
         return new(text, CopiedSource: false);
+    }
+
+    /// <summary>Creates fresh OCR from the visible PDF pages, including pages that already contain text.</summary>
+    internal async Task<PdfText> ReprocessPdfAsync(string sourcePath, string outputPath, OcrLanguage language,
+        CancellationToken cancellationToken)
+    {
+        using var context = CreateCaptureContext(Path.GetDirectoryName(outputPath)!);
+        var pages = new PdfImporter(context).Import(sourcePath, progress: cancellationToken);
+        return await ExportAsync(context, RenderedPages(pages, cancellationToken), outputPath, language, cancellationToken)
+            .ConfigureAwait(false);
+    }
+
+    private static async IAsyncEnumerable<ProcessedImage> RenderedPages(IAsyncEnumerable<ProcessedImage> pages,
+        [EnumeratorCancellation] CancellationToken cancellationToken)
+    {
+        await foreach (var page in pages.WithCancellation(cancellationToken).ConfigureAwait(false))
+        {
+            // An image transform sends the page through the OCR exporter instead of forwarding its old text layer.
+            yield return page.WithTransform(RenderForOcr, disposeSelf: true);
+        }
     }
 
     internal async Task<PdfText> ExportAsync(

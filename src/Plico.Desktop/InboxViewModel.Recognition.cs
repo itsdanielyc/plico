@@ -12,11 +12,12 @@ internal sealed partial class InboxViewModel
     [ObservableProperty] private OcrLanguage _recognitionLanguage = OcrLanguage.English;
 
     public IReadOnlyList<OcrLanguage> RecognitionLanguages => AvailableRecognitionLanguages;
+    public string SearchableCopyAction => HasNoSearchableText ? "Create searchable copy" : "Create OCR copy";
 
     [RelayCommand]
     private Task CreateSearchableCopyAsync()
     {
-        if (SelectedDocument is not { HasText: false } scan) return Task.CompletedTask;
+        if (SelectedDocument is not { } scan) return Task.CompletedTask;
         var language = RecognitionLanguage;
         return RunOperationAsync("Creating a searchable copy…", async token =>
         {

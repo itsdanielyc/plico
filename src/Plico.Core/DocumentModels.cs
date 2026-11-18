@@ -45,6 +45,7 @@ public sealed record FileImportResult(DocumentSummary Document, bool Added);
 
 internal sealed record PdfText(string Body, int PageCount, bool HasTextOnEveryPage);
 internal readonly record struct PreparedPdf(PdfText Text, bool CopiedSource);
+internal readonly record struct OcrCopySource(long DocumentId, OcrLanguage Language);
 
 internal readonly record struct CatalogFileReference(long Id, string RelativePath, FileVersion Version);
 internal sealed record IndexedPdf(long Id, string RelativePath, FileVersion Version, byte[]? Fingerprint);

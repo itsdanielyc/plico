@@ -309,11 +309,12 @@
                                     </Grid>
                                 </Border>
                                 <StackPanel Grid.Row="2" Spacing="8">
-                                    <Grid ColumnDefinitions="*,Auto" ColumnSpacing="8" IsVisible="{Binding HasNoSearchableText}">
+                                    <Grid ColumnDefinitions="*,Auto" ColumnSpacing="8">
                                         <TextBlock Text="No searchable text found" Foreground="#795327" FontSize="12"
-                                                   VerticalAlignment="Center" TextWrapping="Wrap" />
+                                                   VerticalAlignment="Center" TextWrapping="Wrap" IsVisible="{Binding HasNoSearchableText}" />
                                         <Button Grid.Column="1" x:Name="CreateSearchableCopyButton" Classes="secondary"
-                                                Content="Create searchable copy" Command="{Binding CreateSearchableCopyCommand}"
+                                                Content="{Binding SearchableCopyAction}" Command="{Binding CreateSearchableCopyCommand}"
+                                                ToolTip.Tip="Create a separate PDF using the selected OCR language"
                                                 IsEnabled="{Binding CanWork}" />
                                     </Grid>
                                     <ItemsControl ItemsSource="{Binding SelectedDocument.Tags}" MaxHeight="67">

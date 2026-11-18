@@ -15,7 +15,7 @@ A library is a user-selected directory. `PDFs/` holds ordinary PDFs. `.plico/cat
 
 Import renders into private staging and checks the processed PDF before moving it into `PDFs/` without overwriting existing files. An interrupted index write leaves a readable PDF that can be picked up on refresh. Plico preserves the selected source files. Catalog updates and full-text index triggers run together in SQLite transactions.
 
-Creating a searchable copy reads an indexed scan into private staging under the file-operation lease. A matching source fingerprint can reuse a searchable PDF. A new copy must contain text and have the indexed scan’s page count. Inserting the copy and linking its source tags use one catalog transaction.
+Creating a searchable copy reads an indexed PDF into private staging under the file-operation lease. For a PDF with existing text, NAPS2 renders its visible pages for fresh OCR. A new copy must contain text and have the indexed PDF’s page count. Inserting the copy, its source and language, and its source tags uses one catalog transaction. [NAPS2 PDF exporter](https://github.com/cyanfish/naps2/blob/c6c762214293097c522fc1b7656f106fbb66a7f2/NAPS2.Sdk/Pdf/PdfExporter.cs)
 
 TIFF intake decodes each directory with LibTiff.Net and draws its orientation and resolution into a staged image-only PDF. The existing PDF import and OCR pipeline processes that intermediate file. Page counts must agree before the final PDF is published. The converter limits each decoded raster to 160 million pixels and releases page buffers as it proceeds. [LibTiff.Net decoder API](https://bitmiracle.github.io/libtiff.net/help/api/BitMiracle.LibTiff.Classic.Tiff.html)
 
@@ -32,6 +32,8 @@ Schema v2 indexes the SHA-256 digest of the source. Import computes it while cop
 Schema v3 stores an optional display title. The FTS title field includes the display title and filename when a title has been edited. Existing FTS entries remain valid through migration. A refresh updates file text while preserving user-assigned titles.
 
 Schema v4 stores the SHA-256 digest of the published PDF. Refresh pairs a unique absent catalog path with a unique new path when those PDF bytes match. It updates the path and filename search terms on the same catalog record. Matching duplicates are treated as separate files, and unchanged indexed files need only a file stamp check.
+
+Schema v5 records the source document and language of each new OCR copy. The source ID, source fingerprint, and language identify an existing copy for reuse. A refresh that indexes changed PDF contents clears their previous import and OCR-copy associations.
 
 Backup copies the PDF tree and takes an online SQLite snapshot under the library's file-operation lease. It validates the file inventory and publishes the staged backup by an atomic directory move inside the selected destination. [Microsoft.Data.Sqlite online backup](https://learn.microsoft.com/en-us/dotnet/standard/data/sqlite/backup)
 

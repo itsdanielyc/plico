@@ -34,6 +34,7 @@
 21. Save a scan between the watch inventory and subscription. Simulate lost filesystem notifications and save a new scan and an updated scan. Verify that both arrive, an unchanged older PDF stays outside intake, and the next filesystem notification works (L3, L6).
 22. Search `Match Ledger.pdf` for `"ledger renewal"` and jump between pages two and four. Try both directions at the bounds, change the preview page manually, and check that a new search starts with its own first match (L3, L4 and L6).
 23. Import `Sideways receipt.JPG` and `Mirrored receipt.jpeg`. Verify that both PDFs are upright and contain the receipt’s searchable text, that the anisotropic DPI translates to the same physical page dimensions, and that a repeat reuses the PDF (L3 and L6).
+24. Import the Spanish receipt using English OCR, then create an OCR copy using Spanish. Check accented text, page size and count, source tags and bytes, and reuse after reopening. Identical PDFs with distinct tags must produce distinct copies (L3, L4 and L6).
 
 Run `dotnet test Plico.slnx -c Release` for the fast suite. Run the native harness from `keel.json` for installed-platform evidence. Visual review starts with per-OS captures and geometry checks. Add pixel baselines when repeatable runner captures justify the maintenance.
 

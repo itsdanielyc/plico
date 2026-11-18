@@ -60,6 +60,8 @@ The library starts under Documents/Plico. Select the library name in the sidebar
 
 When a scan copied into `PDFs/` needs OCR, choose **Create searchable copy** in its preview. Plico adds a searchable PDF to the inbox with the scan’s tags.
 
+To correct a PDF’s OCR, choose the language in **OCR** and select **Create OCR copy**. Plico renders the visible pages and writes fresh searchable text into a separate PDF with the source tags. Use Plico v0.16.0 or later to open a library with a version 5 catalog.
+
 To make a copy while Plico is open, choose **Back up library…** and select a destination outside the current library. Plico creates a dated folder with the PDFs and their catalog. **Open backup** shows that folder in the file manager. Choose the folder as a library to reopen it in Plico.
 
 Refresh also follows a uniquely identifiable PDF that you move or rename inside `PDFs/`. Its title, tags, and review state travel with its catalog record. For libraries from older Plico versions, run **Refresh index** once while the original paths are present to prepare them for moves.

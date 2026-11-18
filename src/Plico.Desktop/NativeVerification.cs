@@ -77,7 +77,7 @@ internal static class NativeVerification
             await VerifyScannerDialogAsync(window, evidenceDirectory);
 
             File.WriteAllText(Path.Combine(evidenceDirectory, "passed.txt"),
-                $"Verified {runtime}. Native window completed multilingual OCR, oriented JPEG and multi-page TIFF import, phrase and tag search, result sorting, fit-width preview, match navigation, tag merging and suggestions, duplicate drop, folder watch, title edit, relocation, batch actions, selected PDF export, library backup, text copy, searchable PDF copy, and import retry.");
+                $"Verified {runtime}. Native window completed multilingual OCR and correction, oriented JPEG and multi-page TIFF import, phrase and tag search, result sorting, fit-width preview, match navigation, tag merging and suggestions, duplicate drop, folder watch, title edit, relocation, batch actions, selected PDF export, library backup, text copy, searchable PDF copy, and import retry.");
             desktop.Shutdown(0);
         }
         catch (Exception error)
@@ -389,28 +389,44 @@ internal static class NativeVerification
     private static async Task VerifyOcrLanguagesAsync(MainWindow window, InboxViewModel model, FixtureDialogs dialogs,
         string fixture, string directory)
     {
-        (OcrLanguage Language, string Filename, string Keyword, string Capture)[] cases =
-        [
-            (OcrLanguage.Spanish, "Spanish Receipt.png", "pequeño", "ocr-spanish.png"),
-            (OcrLanguage.French, "Facture française.png", "Règlement", "ocr-language.png")
-        ];
         string fixtures = Path.GetDirectoryName(fixture)!;
-        var languages = Control<ComboBox>(window, "OcrLanguageBox");
-        var search = Control<TextBox>(window, "SearchBox");
-        var addFiles = (IAsyncRelayCommand)Control<Button>(window, "AddFilesButton").Command!;
-        foreach (var (language, filename, keyword, capture) in cases)
-        {
-            languages.SetCurrentValue(ComboBox.SelectedItemProperty, language);
-            Require(model.RecognitionLanguage == language, $"The OCR language control did not select {language}.");
-            dialogs.SelectedFiles = [Path.Combine(fixtures, filename)];
-            await addFiles.ExecuteAsync(null);
-            var imported = model.SelectedDocument;
-            Require(imported is { HasText: true } && imported.Title == Path.GetFileNameWithoutExtension(filename), model.Status);
-            search.SetCurrentValue(TextBox.TextProperty, keyword);
-            await UntilAsync(() => model.SelectedDocument is { } selected && selected.Id == imported!.Id &&
-                selected.Match.Contains(keyword, StringComparison.OrdinalIgnoreCase) && model.Preview is not null, () => model.Status);
-            await CaptureAsync(window, directory, capture);
-        }
+        var original = await ImportOcrFixtureAsync(window, model, dialogs, Path.Combine(fixtures, "Spanish Receipt.png"), OcrLanguage.English);
+        const string repairTag = "Repairs";
+        Control<AutoCompleteBox>(window, "TagBox").SetCurrentValue(AutoCompleteBox.TextProperty, repairTag);
+        Control<Button>(window, "AddTagButton").Command!.Execute(null);
+        Control<ComboBox>(window, "OcrLanguageBox").SetCurrentValue(ComboBox.SelectedItemProperty, OcrLanguage.Spanish);
+        var copy = Control<Button>(window, "CreateSearchableCopyButton");
+        Require(model.RecognitionLanguage == OcrLanguage.Spanish && copy.IsEffectivelyVisible && copy.IsEnabled &&
+            Equals(copy.Content, "Create OCR copy"), "The searchable receipt did not offer a fresh OCR copy in Spanish.");
+        await ((IAsyncRelayCommand)copy.Command!).ExecuteAsync(copy.CommandParameter);
+        var corrected = model.SelectedDocument;
+        Require(corrected is { HasText: true, Reviewed: false } && corrected.Id != original.Id &&
+            corrected.Tags.Contains(repairTag), $"OCR correction did not open a tagged copy. {model.Status}");
+        await VerifyOcrResultAsync(window, model, corrected!, "pequeño", directory, "ocr-spanish.png");
+
+        var french = await ImportOcrFixtureAsync(window, model, dialogs, Path.Combine(fixtures, "Facture française.png"), OcrLanguage.French);
+        await VerifyOcrResultAsync(window, model, french, "Règlement", directory, "ocr-language.png");
+    }
+
+    private static async Task<DocumentSummary> ImportOcrFixtureAsync(MainWindow window, InboxViewModel model, FixtureDialogs dialogs,
+        string path, OcrLanguage language)
+    {
+        Control<ComboBox>(window, "OcrLanguageBox").SetCurrentValue(ComboBox.SelectedItemProperty, language);
+        Require(model.RecognitionLanguage == language, $"The OCR language control did not select {language}.");
+        dialogs.SelectedFiles = [path];
+        await ((IAsyncRelayCommand)Control<Button>(window, "AddFilesButton").Command!).ExecuteAsync(null);
+        var imported = model.SelectedDocument;
+        Require(imported is { HasText: true } && imported.Title == Path.GetFileNameWithoutExtension(path), model.Status);
+        return imported!;
+    }
+
+    private static async Task VerifyOcrResultAsync(MainWindow window, InboxViewModel model, DocumentSummary document,
+        string keyword, string directory, string capture)
+    {
+        Control<TextBox>(window, "SearchBox").SetCurrentValue(TextBox.TextProperty, keyword);
+        await UntilAsync(() => model.SelectedDocument is { } selected && selected.Id == document.Id &&
+            selected.Match.Contains(keyword, StringComparison.OrdinalIgnoreCase) && model.Preview is not null, () => model.Status);
+        await CaptureAsync(window, directory, capture);
     }
 
     private static async Task VerifyPhraseSearchAsync(MainWindow window, InboxViewModel model, string directory)
