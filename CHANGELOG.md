@@ -1,5 +1,10 @@
 # Changelog
 
+## [0.9.0] - 2026-11-18
+
+- Search quoted phrases as adjacent whole words. Mix them with ordinary search terms in the same query.
+- Straight and curly quotation marks both work. While you type an opening quote, the matching terms continue to work.
+
 ## [0.8.0] - 2026-11-18
 
 - Apply a tag to several selected documents at once. Existing spellings of matching tags are reused.

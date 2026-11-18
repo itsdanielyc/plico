@@ -52,11 +52,12 @@ internal static class NativeVerification
             await VerifyTitleEditorAsync(window, model, evidenceDirectory);
             VerifyDocumentLocation(window, dialogs, Path.Combine(model.LibraryPath, "PDFs"));
             await VerifyMovedPdfAsync(window, model, dialogs, evidenceDirectory);
+            await VerifyPhraseSearchAsync(window, model, evidenceDirectory);
             await VerifyBatchReviewAsync(window, model, evidenceDirectory);
             await VerifyScannerDialogAsync(window, evidenceDirectory);
 
             File.WriteAllText(Path.Combine(evidenceDirectory, "passed.txt"),
-                "Native window completed OCR, review and search, duplicate drop, folder watch, title edit, PDF relocation, batch tagging and review, and scanner settings display.");
+                "Native window completed OCR, phrase search, duplicate drop, folder watch, title edit, PDF relocation, batch tagging and review, and scanner settings display.");
             desktop.Shutdown(0);
         }
         catch (Exception error)
@@ -64,6 +65,17 @@ internal static class NativeVerification
             File.WriteAllText(Path.Combine(evidenceDirectory, "error.txt"), error.ToString());
             desktop.Shutdown(1);
         }
+    }
+
+    private static async Task VerifyPhraseSearchAsync(MainWindow window, InboxViewModel model, string directory)
+    {
+        var document = model.SelectedDocument ?? throw new InvalidOperationException("Select a PDF before testing phrase search.");
+        var search = Control<TextBox>(window, "SearchBox");
+        search.SetCurrentValue(TextBox.TextProperty, "\"northstar lease\"");
+        await UntilAsync(() => model.Documents.Count == 0, () => model.Status);
+        search.SetCurrentValue(TextBox.TextProperty, "\"new term\" norths");
+        await UntilAsync(() => model.SelectedDocument?.Id == document.Id && model.Preview is not null, () => model.Status);
+        await CaptureAsync(window, directory, "phrase-search.png");
     }
 
     private static async Task VerifyBatchReviewAsync(MainWindow window, InboxViewModel model, string directory)

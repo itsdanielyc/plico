@@ -120,6 +120,7 @@
                 <Grid ColumnDefinitions="*,Auto,Auto" ColumnSpacing="10">
                     <TextBox x:Name="SearchBox" Text="{Binding Query, Mode=TwoWay}" MaxLength="256"
                              PlaceholderText="Search names and document text" AutomationProperties.Name="Search documents"
+                             ToolTip.Tip="Put quotation marks around an exact phrase"
                              VerticalContentAlignment="Center" CornerRadius="8" MinHeight="38">
                         <TextBox.InnerLeftContent>
                             <PathIcon Width="15" Height="15" Margin="11,0,1,0" Foreground="#536459"

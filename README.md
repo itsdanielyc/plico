@@ -24,6 +24,8 @@ On Linux, Plico uses X11 or XWayland. The Debian package declares its runtime li
 2. Select a document to preview it and add tags. **Mark reviewed** takes it out of the Inbox.
 3. Search by name or document text, including documents you already reviewed. Choose a tag to narrow the results.
 
+Put a phrase in quotation marks to search its adjacent whole words. For example, "lease renewal" north searches for the phrase together with a word beginning with north.
+
 Use Ctrl or Shift when selecting rows, or choose **Select shown** to select the loaded results. Use **Tag selected** to apply a tag to the whole selection. The batch control can mark the selection reviewed or return reviewed documents to the inbox.
 
 Use **Edit title** in the preview to change the document's catalog title. Search covers both the title and filename. Select the PDF's filename to open its containing folder.

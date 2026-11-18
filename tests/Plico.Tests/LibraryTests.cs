@@ -276,6 +276,21 @@ public sealed class LibraryTests
         Assert.Equal(document.Title, Assert.Single(library.Find(new DocumentFilter(Query: LetterKeyword)).Items).Title);
     }
 
+    [Fact]
+    public async Task QuotedSearchRequiresAdjacentWholeWords()
+    {
+        using var temporary = new TemporaryLibrary();
+        using var library = InboxLibrary.Open(temporary.Path);
+        var document = await library.ImportAsync(Fixture(Letter), TestContext.Current.CancellationToken);
+
+        Assert.Equal(document.Id, Assert.Single(library.Find(new DocumentFilter(Query: "\"new term\" norths")).Items).Id);
+        Assert.Single(library.Find(new DocumentFilter(Query: "northstar lease")).Items);
+        Assert.Empty(library.Find(new DocumentFilter(Query: "\"northstar lease\"")).Items);
+        Assert.Empty(library.Find(new DocumentFilter(Query: "\"new ter\"")).Items);
+        Assert.Single(library.Find(new DocumentFilter(Query: "\"new ter")).Items);
+        Assert.Single(library.Find(new DocumentFilter(Query: "“new term”")).Items);
+    }
+
     private static string Fixture(string name) => Path.Combine(AppContext.BaseDirectory, "fixtures", name);
 }
 

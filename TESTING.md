@@ -12,7 +12,7 @@
 ## Critical journeys
 
 1. Import a digital PDF with selectable text. The PDF stays intact and a body term finds it after reopening the library (L3).
-2. Import an image-only document. The resulting PDF contains independently extractable OCR text (L3 and L6).
+2. Import an image-only document and verify its embedded text. Search OCR text and verify quoted whole-word phrases (L3 and L6).
 3. Tag and filter a document. Tag a selection and mark it reviewed or return it to the inbox. An unavailable document cancels the batch (L3, L4 and L6).
 4. Start the published archive on fresh Windows, macOS, and Ubuntu runners (L7).
 5. Discover scanners from the real shell. Physical feed, duplex and flatbed checks require a compatible device (manual).
