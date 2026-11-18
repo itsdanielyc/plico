@@ -14,8 +14,7 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          - {runner: macos-26, rid: osx-arm64}
-          - {runner: macos-26-intel, rid: osx-x64}
+          - {runner: macos-15, rid: osx-arm64}
     env:
       PLICO_SOURCE_SHA: 3fb8754e5ae587fc32f810bc4bc8a1eec40a4e92
     steps:
