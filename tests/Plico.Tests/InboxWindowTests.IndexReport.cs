@@ -11,13 +11,35 @@ namespace Plico.Tests;
 public sealed partial class InboxWindowTests
 {
     [AvaloniaFact]
+    public async Task IndexReportOffersFolderRestoreWhenPdfsAreUnavailable()
+    {
+        var owner = new Window();
+        owner.Show();
+        var dialog = new IndexReportDialog(new IndexReport(["Filed/Lease Renewal.pdf"], []));
+        var closed = dialog.ShowDialog<IndexReportDecision?>(owner);
+        try
+        {
+            var restore = Assert.IsType<Button>(dialog.FindControl<Button>("RestoreFromFolderButton"));
+            Assert.True(restore.IsVisible && restore.IsEnabled);
+            restore.RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
+            Assert.IsType<IndexReportDecision.RestoreFolder>(await closed);
+        }
+        finally
+        {
+            if (dialog.IsVisible) dialog.Close();
+            await closed;
+            owner.Close();
+        }
+    }
+
+    [AvaloniaFact]
     public async Task IndexReportSelectsAnUnavailablePathForRestore()
     {
         const string relativePath = "Filed/Lease Renewal.pdf";
         var owner = new Window();
         owner.Show();
         var dialog = new IndexReportDialog(new IndexReport([relativePath], ["The last index refresh was interrupted."]));
-        var closed = dialog.ShowDialog<string?>(owner);
+        var closed = dialog.ShowDialog<IndexReportDecision?>(owner);
         try
         {
             var entries = Assert.IsType<ListBox>(dialog.FindControl<ListBox>("IndexReportList"));
@@ -27,7 +49,7 @@ public sealed partial class InboxWindowTests
             entries.SelectedIndex = 0;
             Assert.True(restore.IsEnabled);
             restore.RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
-            Assert.Equal(relativePath, await closed);
+            Assert.Equal(relativePath, Assert.IsType<IndexReportDecision.RestorePdf>(await closed).RelativePath);
         }
         finally
         {
@@ -87,7 +109,7 @@ public sealed partial class InboxWindowTests
             await Assert.IsAssignableFrom<IAsyncRelayCommand>(report.Command).ExecuteAsync(null);
             Assert.Equal(letter, Assert.Single(Assert.IsType<IndexReport>(dialogs.InspectedIndexReport).UnavailablePaths));
 
-            dialogs.IndexPathToRestore = letter;
+            dialogs.IndexReportChoice = new IndexReportDecision.RestorePdf(letter);
             await Assert.IsAssignableFrom<IAsyncRelayCommand>(report.Command).ExecuteAsync(null);
             Assert.Equal("PDF restore cancelled.", model.Status);
             Assert.True(report.IsVisible);

@@ -40,7 +40,7 @@ internal static partial class NativeVerification
             "The latest report did not distinguish the remaining path from the completed refresh notices.");
         await CaptureIndexReportAsync(window, report!, directory, "unavailable-index-report.png");
 
-        dialogs.IndexPathToRestore = source.RelativePath;
+        dialogs.IndexReportChoice = new IndexReportDecision.RestorePdf(source.RelativePath);
         dialogs.RestoreCandidate = holdingPath;
         try
         {
@@ -48,7 +48,7 @@ internal static partial class NativeVerification
         }
         finally
         {
-            dialogs.IndexPathToRestore = null;
+            dialogs.IndexReportChoice = null;
             dialogs.RestoreCandidate = null;
         }
         Require(model.Status == "PDF restored." && !show.IsVisible && File.Exists(holdingPath) && File.Exists(sourcePath),
@@ -56,6 +56,7 @@ internal static partial class NativeVerification
         await UntilAsync(() => model.SelectedDocument is { } restored && restored.Id == source.Id &&
             restored.Tags.SequenceEqual(source.Tags) && model.Preview is not null, () => model.Status);
         await CaptureAsync(window, directory, "restored-pdf.png");
+        await VerifyFolderRestoreAsync(window, model, dialogs, directory, source);
     }
 
     private static async Task CaptureIndexReportAsync(Window window, IndexReport report, string directory, string filename)
@@ -67,6 +68,7 @@ internal static partial class NativeVerification
             Require(Control<ListBox>(dialog, "IndexReportList").ItemCount == report.UnavailablePaths.Count + report.Notices.Count,
                 "The report did not display all its paths and notices.");
             Require(Control<Button>(dialog, "RestorePdfButton").IsEnabled, "The unavailable PDF did not offer restoration.");
+            Require(Control<Button>(dialog, "RestoreFromFolderButton").IsVisible, "The index report did not offer folder restoration.");
             await CaptureAsync(dialog, directory, filename);
         }
         finally

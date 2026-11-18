@@ -309,20 +309,43 @@ internal sealed partial class LibraryCatalog
         return paths;
     }
 
+    private const string UnavailablePdfQuery = """
+        SELECT id, relative_path, modified_ticks, file_bytes, pdf_sha256
+        FROM documents WHERE is_present = 0
+        """;
+
+    internal IReadOnlyList<IndexedPdf> ReadUnavailablePdfs(CancellationToken cancellationToken)
+    {
+        cancellationToken.ThrowIfCancellationRequested();
+        using var connection = Connect();
+        using var command = connection.CreateCommand();
+        command.CommandText = UnavailablePdfQuery + " ORDER BY relative_path;";
+        using var rows = command.ExecuteReader();
+        var result = new List<IndexedPdf>();
+        while (rows.Read())
+        {
+            cancellationToken.ThrowIfCancellationRequested();
+            result.Add(ReadUnavailablePdf(rows));
+        }
+        return result;
+    }
+
     internal IndexedPdf GetUnavailablePdf(string relativePath)
     {
         using var connection = Connect();
         using var command = connection.CreateCommand();
-        command.CommandText = """
-            SELECT id, modified_ticks, file_bytes, pdf_sha256
-            FROM documents WHERE relative_path = $path AND is_present = 0;
-            """;
+        command.CommandText = UnavailablePdfQuery + " AND relative_path = $path;";
         command.Parameters.AddWithValue("$path", relativePath);
         using var rows = command.ExecuteReader();
         if (!rows.Read()) throw new InvalidOperationException("This PDF is no longer marked unavailable. Refresh the index.");
-        var version = new FileVersion(rows.GetInt64(1), rows.GetInt64(2), Present: false);
-        var fingerprint = rows.IsDBNull(3) ? null : rows.GetFieldValue<byte[]>(3);
-        return new IndexedPdf(rows.GetInt64(0), relativePath, version, fingerprint);
+        return ReadUnavailablePdf(rows);
+    }
+
+    private static IndexedPdf ReadUnavailablePdf(SqliteDataReader row)
+    {
+        var version = new FileVersion(row.GetInt64(2), row.GetInt64(3), Present: false);
+        var fingerprint = row.IsDBNull(4) ? null : row.GetFieldValue<byte[]>(4);
+        return new IndexedPdf(row.GetInt64(0), row.GetString(1), version, fingerprint);
     }
 
     private DocumentPage Query(DocumentFilter filter, long? documentId = null, CancellationToken cancellationToken = default)

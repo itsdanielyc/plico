@@ -4,6 +4,8 @@ public sealed partial class InboxLibrary
 {
     private const string RestoreMismatch = "The selected PDF does not match the original.";
     private const string RestoreOccupied = "A file or folder already occupies the original PDF path. Check it and refresh the index.";
+    private const string RestoreFingerprintUnavailable =
+        "This record has no saved fingerprint. Return the original PDF to its library folder and refresh the index.";
 
     /// <summary>Copies a verified original back to an unavailable catalog record's path and makes that record present.</summary>
     /// <param name="relativePath">The unavailable path relative to the library's PDF directory.</param>
@@ -24,7 +26,7 @@ public sealed partial class InboxLibrary
             if (recovery.PendingDestination is not null) throw new IOException(recovery.Notice);
             var original = _catalog.GetUnavailablePdf(relativePath);
             byte[] expectedFingerprint = original.Fingerprint ??
-                throw new InvalidOperationException("This record has no saved fingerprint. Return the original PDF to its library folder and refresh the index.");
+                throw new InvalidOperationException(RestoreFingerprintUnavailable);
             string destination = ResolvePdfPath(original.RelativePath);
             RequireRestoreDirectory(ReadExistingAttributes(PdfDirectory));
             if (ReadExistingAttributes(destination) is not null) throw new IOException(RestoreOccupied);

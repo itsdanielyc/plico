@@ -102,6 +102,8 @@ After **Refresh index**, the status shows how many PDFs are unavailable. **Index
 
 Select an unavailable entry in **Index report** and choose **Restore PDF…** to use a matching copy. Plico verifies the bytes and copies the PDF to its vacant original path. It creates missing ordinary subfolders and opens the existing catalog record with its metadata.
 
+Choose **Restore from folder…** to look for matching backup PDFs in a folder and its subfolders. Matching uses the file contents, so renamed backups work. Each restored PDF returns to its original path. The report keeps unresolved paths and displays any restore notices.
+
 Plico recognizes exact source files already in the library and reports that it reused the existing document. Existing libraries upgrade automatically. For older entries, repeat detection can also compare an unchanged digital PDF to the file you import.
 
 ### Scanner compatibility

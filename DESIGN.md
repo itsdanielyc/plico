@@ -24,6 +24,8 @@ The refresh status counts unavailable PDFs beside indexed and moved files. **Ind
 
 **Restore PDF…** belongs to a selected unavailable path in the report. The file picker asks for a matching PDF. A successful restore opens the original catalog entry and updates the unavailable count.
 
+**Restore from folder…** applies to all unavailable paths in the current library. The status shows restored and remaining counts, and **Index report** shows any problems with individual paths.
+
 Batch review lives below the document list. The selection count identifies its scope. The preview keeps the individual document's review action.
 
 **Create OCR copies** uses the current language for the selected PDFs. The status line shows progress through the selection. **OCR results** opens the latest batch report with a result and file path for each source.

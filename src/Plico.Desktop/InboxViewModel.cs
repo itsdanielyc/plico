@@ -268,6 +268,7 @@ internal sealed partial class InboxViewModel : ObservableObject, IDisposable
         var importNotice = RestoreImportFailures(replacement.RootPath);
         OcrCopyBatchResults = [];
         LatestIndexRefresh = null;
+        FolderRestoreNotices = [];
         LatestBackupLocation = null;
         LatestExportLocation = null;
         TagInput = "";

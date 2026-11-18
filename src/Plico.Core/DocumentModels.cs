@@ -68,6 +68,12 @@ public sealed record BatchMoveFailure(string RelativePath, string Reason);
 public sealed record BatchMoveResult(int Moved, int AlreadyInFolder, int Remaining, bool Cancelled = false,
     BatchMoveFailure? Failure = null);
 
+/// <summary>A backup file or catalog path that encountered a problem during folder restoration.</summary>
+public sealed record RestoreFolderIssue(string Path, string Reason);
+
+/// <summary>Confirmed restores, paths without a match, and problems found while restoring from a folder.</summary>
+public sealed record RestoreFolderResult(int Restored, int Unmatched, IReadOnlyList<RestoreFolderIssue> Issues, bool Cancelled = false);
+
 /// <summary>The number of PDFs copied so far and the total in the backup.</summary>
 public readonly record struct BackupProgress(int Copied, int Total);
 

@@ -21,7 +21,7 @@ internal interface IWorkspaceDialogs
     Task<PdfPageCopyRequest?> ChoosePdfPageCopyAsync(DocumentSummary document, int currentPage, PdfPageCopyAction action);
     Task<ImportErrorsAction> ShowImportErrorsAsync(IReadOnlyList<ImportFailure> failures);
     Task ShowOcrCopyBatchResultsAsync(IReadOnlyList<OcrCopyBatchItem> results);
-    Task<string?> ShowIndexRefreshReportAsync(IndexReport report);
+    Task<IndexReportDecision?> ShowIndexRefreshReportAsync(IndexReport report);
     Task<string?> PickRestorePdfAsync();
     Task CopyTextAsync(string text);
     void OpenPath(string path);
@@ -100,8 +100,8 @@ internal sealed class WorkspaceDialogs(Window owner) : IWorkspaceDialogs
     public Task ShowOcrCopyBatchResultsAsync(IReadOnlyList<OcrCopyBatchItem> results) =>
         new OcrCopyResultsDialog(results).ShowDialog(owner);
 
-    public Task<string?> ShowIndexRefreshReportAsync(IndexReport report) =>
-        new IndexReportDialog(report).ShowDialog<string?>(owner);
+    public Task<IndexReportDecision?> ShowIndexRefreshReportAsync(IndexReport report) =>
+        new IndexReportDialog(report).ShowDialog<IndexReportDecision?>(owner);
 
     public async Task<string?> PickRestorePdfAsync()
     {

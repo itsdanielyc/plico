@@ -107,7 +107,9 @@ public sealed partial class InboxLibrary
         return inventory;
     }
 
-    private IEnumerable<string> EnumeratePdfPaths() => Directory.EnumerateFiles(PdfDirectory, "*.pdf", new EnumerationOptions
+    private IEnumerable<string> EnumeratePdfPaths() => EnumeratePdfPaths(PdfDirectory);
+
+    private static IEnumerable<string> EnumeratePdfPaths(string directory) => Directory.EnumerateFiles(directory, "*.pdf", new EnumerationOptions
     {
         RecurseSubdirectories = true,
         AttributesToSkip = FileAttributes.ReparsePoint,

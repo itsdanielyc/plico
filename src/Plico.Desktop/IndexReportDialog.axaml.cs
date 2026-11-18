@@ -8,6 +8,12 @@ internal sealed record IndexReportLine(string Label, string Detail, string? Rest
 /// <summary>A snapshot of unresolved paths and the latest refresh notices for an open library.</summary>
 internal sealed record IndexReport(IReadOnlyList<string> UnavailablePaths, IReadOnlyList<string> Notices);
 
+internal abstract record IndexReportDecision
+{
+    internal sealed record RestorePdf(string RelativePath) : IndexReportDecision;
+    internal sealed record RestoreFolder : IndexReportDecision;
+}
+
 /// <summary>Displays unavailable paths and the latest refresh notices.</summary>
 internal sealed partial class IndexReportDialog : Window
 {
@@ -21,6 +27,7 @@ internal sealed partial class IndexReportDialog : Window
             RestorePdfButton.IsEnabled = IndexReportList.SelectedItem is IndexReportLine { RestorePath: not null };
         IndexReportList.ItemsSource = entries;
         RestorePdfButton.IsVisible = report.UnavailablePaths.Count > 0;
+        RestoreFromFolderButton.IsVisible = report.UnavailablePaths.Count > 0;
         if (report.UnavailablePaths.Count > 0) IndexReportList.SelectedIndex = 0;
     }
 
@@ -28,6 +35,8 @@ internal sealed partial class IndexReportDialog : Window
 
     private void Restore_Click(object? sender, RoutedEventArgs e)
     {
-        if (IndexReportList.SelectedItem is IndexReportLine { RestorePath: { } path }) Close(path);
+        if (IndexReportList.SelectedItem is IndexReportLine { RestorePath: { } path }) Close(new IndexReportDecision.RestorePdf(path));
     }
+
+    private void RestoreFromFolder_Click(object? sender, RoutedEventArgs e) => Close(new IndexReportDecision.RestoreFolder());
 }

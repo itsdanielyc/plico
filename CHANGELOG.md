@@ -45,6 +45,7 @@
 - See which PDFs became unavailable and read all refresh notices in the index report.
 - Keep unresolved PDF paths in the index report after another refresh or restart.
 - Restore a missing PDF from a verified copy through the index report and recover its original catalog entry.
+- Recover several unavailable PDFs from one folder of matching backups, including renamed files in subfolders.
 
 ## [0.15.0] - 2026-11-18
 
