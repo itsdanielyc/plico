@@ -46,5 +46,6 @@
 | 41 | Turn JPEG photos upright before OCR | JPEG orientation determines the PDF page and OCR input. A sideways or mirrored receipt is readable by its embedded text, and the source dimensions and fingerprint are respected. | L0, L3, L6 | Tested locally on Windows x64 and Ubuntu x64 (L0, L3, L6). Hosted matrix pending. |
 | 42 | Bundle Spanish OCR | Spanish appears in the OCR picker and survives reopening local settings. The bundled model embeds accents in a searchable receipt and accompanies its license in the packages. | L0, L3, L4, L6 | Tested locally on Windows x64 and Ubuntu x64 (L0, L3, L4, L6). Hosted matrix pending. |
 | 43 | Correct existing PDF text with a fresh OCR copy | A PDF with poor OCR can be recognized again in the chosen language. The fresh PDF keeps the source pages and tags. A repeat follows the original document, file version, and language. | L0, L3, L4, L6 | Tested locally on Windows x64 and Ubuntu x64 (L0, L3, L4, L6). Hosted matrix pending. |
+| 44 | Filter by date added | `added:` matches the displayed local year, month, or day and combines with tags and text. Calendar boundaries and clock changes are covered. | L0, L3, L4, L6 | In progress |
 
 The initial release is followed by focused improvements and fresh evidence.

@@ -24,7 +24,7 @@ The sort selector sits beside the results count. It applies to the current inbox
 
 The results count shows **Searching…** after a query edit. **Load more** becomes available when the current search has a next page.
 
-The search box hints at `tag:` filters and offers a quoted example in its tooltip. Multiple tag clauses narrow the same results view.
+The search box hints at `tag:` and `added:` filters. Its tooltip gives examples and explains quotation marks for phrases. Date-added filters use the local dates shown in the list.
 
 A selected sidebar tag offers **Rename…**. When the requested name belongs to another tag, the dialog describes the change and offers **Merge tags** as an explicit action. The resulting tag opens after the change.
 

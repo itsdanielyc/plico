@@ -1,3 +1,4 @@
+using System.Globalization;
 using System.Runtime.InteropServices;
 using Avalonia;
 using Avalonia.Controls;
@@ -138,13 +139,14 @@ internal static class NativeVerification
         Require(model.PageLabel == "1 / 2", "Search match navigation needs the first page of the mixed PDF.");
         var jump = Control<Button>(window, "GoToMatchButton");
         var search = Control<TextBox>(window, "SearchBox");
-        string tags = $"tag:{TestTag} tag:\"{reviewTag}\"";
-        search.SetCurrentValue(TextBox.TextProperty, tags);
+        string addedDay = document.AddedAt.LocalDateTime.ToString("yyyy-MM-dd", CultureInfo.InvariantCulture);
+        string filters = $"tag:{TestTag} tag:\"{reviewTag}\" added:{addedDay}";
+        search.SetCurrentValue(TextBox.TextProperty, filters);
         await UntilAsync(() => model.Heading == "Search results" && model.Documents.Count == 1, () => model.Status);
         Require(model.SelectedDocument?.Id == document.Id && !jump.IsVisible,
-            "Tag-only search did not isolate the mixed PDF.");
+            "Tag and date filters did not isolate the mixed PDF.");
 
-        search.SetCurrentValue(TextBox.TextProperty, $"{ReceiptKeyword} {tags}");
+        search.SetCurrentValue(TextBox.TextProperty, $"{ReceiptKeyword} {filters}");
         await UntilAsync(() => model.Documents.Count == 1 && jump.IsVisible && jump.IsEnabled, () => model.Status);
         Require(model.SelectedDocument?.Id == document.Id && jump.Command is IAsyncRelayCommand,
             "The mixed PDF’s search result did not offer a matching page.");

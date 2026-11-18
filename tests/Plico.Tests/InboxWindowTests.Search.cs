@@ -1,4 +1,5 @@
 using System.ComponentModel;
+using System.Globalization;
 using Avalonia.Controls;
 using Avalonia.Headless.XUnit;
 using Avalonia.Threading;
@@ -16,7 +17,7 @@ public sealed partial class InboxWindowTests
     [AvaloniaFact]
     public async Task GoToMatchOpensTheMatchingOcrPageFromTheCurrentResults()
     {
-        const string receiptQuery = "WRENCH470 tag:\"Workshop receipts\"";
+        string receiptQuery;
         using var temporary = new TemporaryLibrary();
         using (var library = InboxLibrary.Open(temporary.Path))
         {
@@ -24,6 +25,8 @@ public sealed partial class InboxWindowTests
             var document = await library.ImportAsync(fixture, TestContext.Current.CancellationToken);
             Assert.Equal(2, document.PageCount);
             library.AddTag(document.Id, "Workshop receipts");
+            string addedDay = document.AddedAt.LocalDateTime.ToString("yyyy-MM-dd", CultureInfo.InvariantCulture);
+            receiptQuery = $"WRENCH470 tag:\"Workshop receipts\" added:{addedDay}";
         }
 
         using var model = new InboxViewModel(new FixtureDialogs());

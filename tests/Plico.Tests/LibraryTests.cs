@@ -256,6 +256,7 @@ public sealed partial class LibraryTests
             connection.Open();
             using var command = connection.CreateCommand();
             command.CommandText = """
+                DROP INDEX documents_added_at;
                 DROP INDEX documents_ocr_copies;
                 DROP INDEX documents_source_sha256;
                 DROP INDEX documents_legacy_file_bytes;

@@ -71,12 +71,13 @@ internal sealed partial class LibraryCatalog
             WHERE ocr_copy_language IS NOT NULL;
         """;
     private static readonly string[] Migrations =
-        [Schema, FingerprintMigration, DisplayTitleMigration, PdfFingerprintMigration, OcrCopyMigration];
+        [Schema, FingerprintMigration, DisplayTitleMigration, PdfFingerprintMigration, OcrCopyMigration, AddedDateIndexMigration];
 
     private readonly string _connectionString;
 
-    internal LibraryCatalog(string path)
+    internal LibraryCatalog(string path, TimeZoneInfo? addedDateTimeZone = null)
     {
+        _addedDateTimeZone = addedDateTimeZone;
         _connectionString = new SqliteConnectionStringBuilder
         {
             DataSource = path,
@@ -309,6 +310,10 @@ internal sealed partial class LibraryCatalog
                 """);
             command.Parameters.AddWithValue("$tagKeys", JsonSerializer.Serialize(search.TagKeys));
             command.Parameters.AddWithValue("$tagCount", search.TagKeys.Count);
+        }
+        if (search.AddedPeriod is { } addedPeriod)
+        {
+            ApplyAddedDateFilter(connection, command, conditions, addedPeriod);
         }
         if (documentId is not null)
         {

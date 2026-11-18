@@ -36,6 +36,8 @@ Put a phrase in quotation marks to search its adjacent whole words. For example,
 
 Use `tag:tax` to require an exact tag. Use `tag:tax tag:"Home insurance" renewal` to require both tags and match renewal in the document. Tags ignore case. Use a backslash to include the closing quote or a backslash inside a quoted tag.
 
+Use `added:2026`, `added:2026-11`, or `added:2026-11-18` to filter by year, month, or day added. The date follows the local date shown beside each document. Combine filters and text with a query such as `receipt tag:tax added:2026-11`.
+
 Select a sidebar tag and choose **Rename…** to change its label across the library. Enter an existing tag name and choose **Merge tags** to put their documents under that tag.
 
 Start typing in either tag field to reuse a tag from the current library. Use the Down Arrow and Enter to fill in a suggestion, then Enter again to apply it. You can also type a new label.
@@ -60,7 +62,9 @@ The library starts under Documents/Plico. Select the library name in the sidebar
 
 When a scan copied into `PDFs/` needs OCR, choose **Create searchable copy** in its preview. Plico adds a searchable PDF to the inbox with the scan’s tags.
 
-To correct a PDF’s OCR, choose the language in **OCR** and select **Create OCR copy**. Plico renders the visible pages and writes fresh searchable text into a separate PDF with the source tags. Use Plico v0.16.0 or later to open a library with a version 5 catalog.
+To correct a PDF’s OCR, choose the language in **OCR** and select **Create OCR copy**. Plico renders the visible pages and writes fresh searchable text into a separate PDF with the source tags.
+
+Plico v0.16.0 upgrades the library catalog to version 6. Use a build with version 6 support to open an upgraded library.
 
 To make a copy while Plico is open, choose **Back up library…** and select a destination outside the current library. Plico creates a dated folder with the PDFs and their catalog. **Open backup** shows that folder in the file manager. Choose the folder as a library to reopen it in Plico.
 

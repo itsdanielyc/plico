@@ -1,3 +1,4 @@
+using System.Globalization;
 using System.Text;
 using System.Text.RegularExpressions;
 
@@ -9,31 +10,63 @@ internal static partial class SearchTerms
     internal const int MaximumTagLength = 48;
     internal const string FtsTokenizer = "unicode61 remove_diacritics 2";
     private const string TagPrefix = "tag:";
+    private const string AddedPrefix = "added:";
+    private const int YearLength = 4;
+    private const int MonthLength = 7;
+    private const int DayLength = 10;
+    private const string IsoDayFormat = "yyyy-MM-dd";
     private const string WordPattern = @"[\p{L}\p{M}\p{N}]+";
     private const string QueryPattern = "\"[^\"]*\"|“[^”]*”|" + WordPattern;
-    private static readonly CompiledSearch InvalidSearch = new("", [], IsValid: false);
+    private static readonly CompiledSearch InvalidSearch = new("", [], null, IsValid: false);
 
-    internal readonly record struct CompiledSearch(string FullTextExpression, IReadOnlyCollection<string> TagKeys, bool IsValid);
+    internal readonly record struct CompiledSearch(string FullTextExpression, IReadOnlyCollection<string> TagKeys,
+        AddedDatePeriod? AddedPeriod, bool IsValid);
+
+    internal readonly record struct AddedDatePeriod(DateOnly FirstDay, DateOnly LastDay)
+    {
+        internal AddedDatePeriod Intersect(AddedDatePeriod other) => new(
+            FirstDay > other.FirstDay ? FirstDay : other.FirstDay,
+            LastDay < other.LastDay ? LastDay : other.LastDay);
+    }
 
     // O(n) time and space in the bounded query length. Quoted text is scanned once.
     internal static CompiledSearch Compile(string query)
     {
         ArgumentOutOfRangeException.ThrowIfGreaterThan(query.Length, MaximumQueryLength);
-        if (!query.Contains(TagPrefix, StringComparison.OrdinalIgnoreCase)) return CompileParts(query, query, []);
+        if (!query.Contains(TagPrefix, StringComparison.OrdinalIgnoreCase) &&
+            !query.Contains(AddedPrefix, StringComparison.OrdinalIgnoreCase)) return CompileParts(query, query, [], null);
 
-        var tagKeys = new HashSet<string>(StringComparer.Ordinal);
+        HashSet<string>? tagKeys = null;
+        AddedDatePeriod? addedPeriod = null;
         var text = new StringBuilder(query.Length);
         int textStart = 0;
         for (int cursor = 0; cursor < query.Length;)
         {
-            if ((cursor == 0 || char.IsWhiteSpace(query[cursor - 1])) &&
-                query.AsSpan(cursor).StartsWith(TagPrefix, StringComparison.OrdinalIgnoreCase))
+            int clauseEnd = cursor;
+            if (cursor == 0 || char.IsWhiteSpace(query[cursor - 1]))
             {
-                if (ReadTagClause(query, cursor + TagPrefix.Length) is not { } tag) return InvalidSearch;
+                var remaining = query.AsSpan(cursor);
+                if (remaining.StartsWith(TagPrefix, StringComparison.OrdinalIgnoreCase))
+                {
+                    if (ReadTagClause(query, cursor + TagPrefix.Length) is not { } tag) return InvalidSearch;
+                    (tagKeys ??= new HashSet<string>(StringComparer.Ordinal)).Add(tag.Key);
+                    clauseEnd = tag.End;
+                }
+                else if (remaining.StartsWith(AddedPrefix, StringComparison.OrdinalIgnoreCase))
+                {
+                    var (value, end) = ReadBareValue(query, cursor + AddedPrefix.Length);
+                    if (ParseAddedPeriod(value) is not { } period) return InvalidSearch;
+                    if (addedPeriod is { } previous) period = previous.Intersect(period);
+                    if (period.FirstDay > period.LastDay) return InvalidSearch;
+                    addedPeriod = period;
+                    clauseEnd = end;
+                }
+            }
+            if (clauseEnd > cursor)
+            {
                 text.Append(query.AsSpan(textStart, cursor - textStart)).Append(' ');
-                tagKeys.Add(tag.Key);
-                textStart = tag.End;
-                cursor = tag.End;
+                textStart = clauseEnd;
+                cursor = clauseEnd;
                 continue;
             }
 
@@ -47,16 +80,36 @@ internal static partial class SearchTerms
             cursor++;
         }
 
-        if (tagKeys.Count == 0) return CompileParts(query, query, []);
+        if (textStart == 0) return CompileParts(query, query, [], null);
         text.Append(query.AsSpan(textStart));
-        return CompileParts(query, text.ToString(), tagKeys);
+        return CompileParts(query, text.ToString(), tagKeys is not null ? tagKeys : [], addedPeriod);
     }
 
-    private static CompiledSearch CompileParts(string originalQuery, string textQuery, IReadOnlyCollection<string> tagKeys)
+    private static CompiledSearch CompileParts(string originalQuery, string textQuery, IReadOnlyCollection<string> tagKeys,
+        AddedDatePeriod? addedPeriod)
     {
         string expression = FullTextExpression(textQuery);
-        bool isValid = expression.Length > 0 || tagKeys.Count > 0 || string.IsNullOrWhiteSpace(originalQuery);
-        return new CompiledSearch(expression, tagKeys, isValid);
+        bool isValid = expression.Length > 0 || tagKeys.Count > 0 || addedPeriod.HasValue || string.IsNullOrWhiteSpace(originalQuery);
+        return new CompiledSearch(expression, tagKeys, addedPeriod, isValid);
+    }
+
+    private static AddedDatePeriod? ParseAddedPeriod(string value)
+    {
+        string? day = value.Length switch
+        {
+            YearLength => value + "-01-01",
+            MonthLength => value + "-01",
+            DayLength => value,
+            _ => null
+        };
+        if (!DateOnly.TryParseExact(day, IsoDayFormat, CultureInfo.InvariantCulture, DateTimeStyles.None, out var first)) return null;
+        var last = value.Length switch
+        {
+            YearLength => new DateOnly(first.Year, 12, 31),
+            MonthLength => new DateOnly(first.Year, first.Month, DateTime.DaysInMonth(first.Year, first.Month)),
+            _ => first
+        };
+        return new AddedDatePeriod(first, last);
     }
 
     private static (string Key, int End)? ReadTagClause(string query, int start)
@@ -64,7 +117,7 @@ internal static partial class SearchTerms
         if (start == query.Length || char.IsWhiteSpace(query[start])) return null;
         var value = ClosingQuote(query[start]) is char closingQuote
             ? ReadQuotedTag(query, start + 1, closingQuote)
-            : ReadBareTag(query, start);
+            : ReadBareValue(query, start);
         if (value is not { } tag) return null;
         try
         {
@@ -77,7 +130,7 @@ internal static partial class SearchTerms
         }
     }
 
-    private static (string Label, int End) ReadBareTag(string query, int start)
+    private static (string Label, int End) ReadBareValue(string query, int start)
     {
         int end = start;
         while (end < query.Length && !char.IsWhiteSpace(query[end])) end++;
