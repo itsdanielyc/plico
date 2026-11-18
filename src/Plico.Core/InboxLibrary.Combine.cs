@@ -6,7 +6,7 @@ namespace Plico.Core;
 public sealed partial class InboxLibrary
 {
     private const int MinimumCombinedPdfs = 2;
-    private const int CombinedPdfVersion = 17;
+    private const int PdfPageCopyVersion = 17;
     private const string CombineSourceChanged = "A selected PDF changed while it was being copied. Refresh the index and combine the PDFs again.";
 
     /// <summary>Publishes a new PDF in the specified order and links each tag present on the source documents.</summary>
@@ -28,8 +28,7 @@ public sealed partial class InboxLibrary
             var files = _catalog.ReadSelectedFiles(selection);
             if (files.Count < MinimumCombinedPdfs) throw new ArgumentException("Select at least two distinct PDFs to combine.", nameof(documentIds));
             var sources = ResolveSelectedPdfSources(files, token);
-            using var combined = new PdfDocument { Version = CombinedPdfVersion };
-            combined.Info.Creator = "Plico";
+            using var combined = CreatePageCopyDocument();
             int expectedPages = 0;
             int appended = 0;
             foreach (var source in sources)
@@ -37,15 +36,12 @@ public sealed partial class InboxLibrary
                 token.ThrowIfCancellationRequested();
                 string snapshot = Path.Combine(stage, Path.GetRandomFileName() + DocumentProcessor.PdfExtension);
                 await CopyPdfAsync(source.Path, snapshot, source.Version, CombineSourceChanged, token).ConfigureAwait(false);
-                expectedPages = checked(expectedPages + AppendPdfPages(combined, snapshot, Path.GetFileName(source.Path)));
+                expectedPages = checked(expectedPages + AppendPdfPages(combined, snapshot, Path.GetFileName(source.Path), token));
                 progress?.Report(++appended);
             }
 
-            token.ThrowIfCancellationRequested();
             string output = Path.Combine(stage, StagedPdfName);
-            using (var stream = File.Open(output, FileMode.CreateNew, FileAccess.Write, FileShare.None)) combined.Save(stream);
-            var text = DocumentProcessor.ReadPdf(output, token);
-            if (text.PageCount != expectedPages) throw new InvalidDataException("The combined PDF has an incomplete page count.");
+            var text = SavePageCopy(combined, output, expectedPages, token);
             foreach (var source in sources)
             {
                 token.ThrowIfCancellationRequested();
@@ -55,15 +51,47 @@ public sealed partial class InboxLibrary
         }, cancellationToken);
     }
 
-    private static int AppendPdfPages(PdfDocument target, string snapshot, string sourceName)
+    private static PdfDocument CreatePageCopyDocument()
+    {
+        var document = new PdfDocument { Version = PdfPageCopyVersion };
+        document.Info.Creator = "Plico";
+        return document;
+    }
+
+    private static PdfText SavePageCopy(PdfDocument document, string output, int expectedPages, CancellationToken cancellationToken)
+    {
+        cancellationToken.ThrowIfCancellationRequested();
+        using (var stream = File.Open(output, FileMode.CreateNew, FileAccess.Write, FileShare.None)) document.Save(stream);
+        var text = DocumentProcessor.ReadPdf(output, cancellationToken);
+        if (text.PageCount != expectedPages) throw new InvalidDataException("The PDF copy has an unexpected page count.");
+        return text;
+    }
+
+    private static int AppendPdfPages(PdfDocument target, string snapshot, string sourceName,
+        CancellationToken cancellationToken, PdfPageSelection? selection = null)
     {
         try
         {
             using var input = PdfReader.Open(snapshot, PdfDocumentOpenMode.Import);
             int pages = input.PageCount;
             if (pages == 0) throw new InvalidDataException($"The PDF “{sourceName}” has no pages.");
-            target.Pages.InsertRange(target.PageCount, input, 0, pages, AnnotationCopyingType.DeepCopy);
-            return pages;
+            cancellationToken.ThrowIfCancellationRequested();
+            if (selection is null)
+            {
+                target.Pages.InsertRange(target.PageCount, input, 0, pages, AnnotationCopyingType.DeepCopy);
+                return pages;
+            }
+            if (selection.SourcePageCount != pages)
+            {
+                throw new InvalidDataException("The PDF page count changed. Refresh the index and choose pages again.");
+            }
+            foreach (var range in selection.Ranges)
+            {
+                cancellationToken.ThrowIfCancellationRequested();
+                // Annotations can link to pages outside the excerpt, so the range copy uses page content only.
+                target.Pages.InsertRange(target.PageCount, input, range.FirstPage - 1, range.Count, AnnotationCopyingType.DoNotCopy);
+            }
+            return selection.SelectedPageCount;
         }
         catch (PdfReaderException error)
         {

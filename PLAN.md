@@ -51,5 +51,6 @@
 | 46 | Move a PDF within the library | The folder picker files the PDF while retaining its catalog record and preview. Occupied names get a suffix, and reopening finishes a confirmed interrupted move even among identical PDFs. | L0, L3, L4, L6 | Tested locally on Windows x64 and Ubuntu x64 (L0, L3, L4, L6). Hosted matrix pending. |
 | 47 | Scope search by library folder | A folder clause includes its descendants, the root clause finds unfiled PDFs, and text, tags, and dates apply to the same results. | L0, L3, L4, L6 | Tested locally on Windows x64 and Ubuntu x64 (L0, L3, L4, L6). Hosted matrix pending. |
 | 48 | File a selection in one folder | One picker starts an ordered batch of recoverable moves. The full selection is checked before moving. A pause reports completed files and remaining work. | L0, L3, L4, L6 | Tested locally on Windows x64 and Ubuntu x64 (L0, L3, L4, L6). Hosted matrix pending. |
+| 49 | Extract pages into a separate PDF | A multi-page selection can become a titled excerpt with the chosen pages in source order, searchable text, and source tags. Invalid ranges, cancellation, or source changes stop publication. | L0, L1, L3, L4, L6 | In progress |
 
 The initial release is followed by focused improvements and fresh evidence.

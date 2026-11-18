@@ -47,6 +47,8 @@ Selected export reads the chosen catalog paths and file stamps under the same le
 
 Combining PDFs uses the selected-file checks and snapshots each source under the library lease. PDFsharp imports the pages, page annotations, and embedded text in the requested order. Plico verifies the output page count and source file stamps before publishing, then inserts the catalog record and unique source tags in one transaction. [NAPS2 PDFsharp page import](https://github.com/cyanfish/naps2-pdfsharp/blob/8d30f069e6cef9ee9b001372a94432de7f6a3146/PdfSharpCore/Pdf/PdfPages.cs)
 
+Page extraction uses that page-copy pipeline with ordered, merged ranges. The catalog operation checks the selection against the staged PDF’s page count, copies the selected page content and embedded text, and verifies the output count and source stamp before publication. The source document holds its page annotations.
+
 Search uses a bounded page of document records and SQLite FTS5. The UI never loads every document body to filter results. Tagged or reviewed documents remain in the same filesystem location.
 
 Result ordering runs in SQLite before the page limit. Newest added follows catalog insertion order. Alphabetical order compares the visible titles case-insensitively, with the most recently added record breaking ties.

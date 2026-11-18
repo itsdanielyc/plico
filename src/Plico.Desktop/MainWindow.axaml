@@ -320,13 +320,18 @@
                                 <StackPanel Grid.Row="2" Spacing="8">
                                     <TextBlock Text="No searchable text found" Foreground="#795327" FontSize="12"
                                                TextWrapping="Wrap" IsVisible="{Binding HasNoSearchableText}" />
-                                    <Grid ColumnDefinitions="Auto,*,Auto" ColumnSpacing="8">
-                                        <Button x:Name="MovePdfButton" Classes="secondary" Content="Move to folder…"
-                                                Command="{Binding MovePdfCommand}" IsEnabled="{Binding CanWork}" />
-                                        <Button Grid.Column="2" x:Name="CreateSearchableCopyButton" Classes="secondary"
+                                    <Grid ColumnDefinitions="*,Auto" ColumnSpacing="8">
+                                        <WrapPanel Orientation="Horizontal">
+                                            <Button x:Name="MovePdfButton" Classes="secondary" Content="Move to folder…"
+                                                    Command="{Binding MovePdfCommand}" IsEnabled="{Binding CanWork}" Margin="0,0,6,4" />
+                                            <Button x:Name="ExtractPdfPagesButton" Classes="secondary" Content="Extract pages…"
+                                                    Command="{Binding ExtractPdfPagesCommand}" IsEnabled="{Binding CanWork}"
+                                                    IsVisible="{Binding HasMultiplePages}" />
+                                        </WrapPanel>
+                                        <Button Grid.Column="1" x:Name="CreateSearchableCopyButton" Classes="secondary"
                                                 Content="{Binding SearchableCopyAction}" Command="{Binding CreateSearchableCopyCommand}"
                                                 ToolTip.Tip="Create a separate PDF using the selected OCR language"
-                                                IsEnabled="{Binding CanWork}" />
+                                                IsEnabled="{Binding CanWork}" VerticalAlignment="Top" />
                                     </Grid>
                                     <ItemsControl ItemsSource="{Binding SelectedDocument.Tags}" MaxHeight="67">
                                         <ItemsControl.ItemsPanel><ItemsPanelTemplate><WrapPanel /></ItemsPanelTemplate></ItemsControl.ItemsPanel>

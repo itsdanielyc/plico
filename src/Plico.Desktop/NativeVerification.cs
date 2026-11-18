@@ -78,10 +78,11 @@ internal static class NativeVerification
             await VerifyOrientedJpegAsync(window, model, dialogs, fixture, evidenceDirectory);
             await VerifyCombinedPdfsAsync(window, model, dialogs, evidenceDirectory);
             await VerifyBatchMoveAsync(window, model, dialogs, evidenceDirectory);
+            await VerifyExtractPagesAsync(window, model, dialogs, evidenceDirectory);
             await VerifyScannerDialogAsync(window, evidenceDirectory);
 
             File.WriteAllText(Path.Combine(evidenceDirectory, "passed.txt"),
-                $"Verified {runtime}. Native window completed multilingual OCR and correction, oriented JPEG and multi-page TIFF import, ordered PDF combination, phrase and tag search, result sorting, fit-width preview, match navigation, tag merging and suggestions, duplicate drop, folder watch, title edit, single and batch PDF moves, external relocation, selected PDF export, library backup, text copy, searchable PDF copy, and import retry.");
+                $"Verified {runtime}. Native window completed multilingual OCR and correction, oriented JPEG and multi-page TIFF import, PDF combination and page extraction, phrase and tag search, result sorting, fit-width preview, match navigation, tag merging and suggestions, duplicate drop, folder watch, title edit, single and batch PDF moves, external relocation, selected PDF export, library backup, text copy, searchable PDF copy, and import retry.");
             desktop.Shutdown(0);
         }
         catch (Exception error)
@@ -390,6 +391,58 @@ internal static class NativeVerification
         Control<TextBox>(window, "SearchBox").SetCurrentValue(TextBox.TextProperty, $"{ReceiptKeyword} folder:Filed/Packets");
         await UntilAsync(() => model.ResultCount == "2 documents" && model.Preview is not null, () => model.Status);
         await CaptureAsync(window, directory, "batch-move-result.png");
+    }
+
+    private static async Task VerifyExtractPagesAsync(MainWindow window, InboxViewModel model, FixtureDialogs dialogs, string directory)
+    {
+        const string excerptTitle = "Receipt excerpt";
+        var packet = model.Documents.Single(document => document.Title == "Paperwork packet");
+        Control<ListBox>(window, "DocumentList").SetCurrentValue(ListBox.SelectedItemProperty, packet);
+        await UntilAsync(() => model.SelectedDocument?.Id == packet.Id && model.Preview is not null, () => model.Status);
+        var action = Control<Button>(window, "ExtractPdfPagesButton");
+        Require(action.IsEffectivelyVisible && action.IsEnabled, "The six-page packet did not offer page extraction.");
+        dialogs.ExtractChoice = (source, page) => ConfirmExtractPagesAsync(window, source, page, excerptTitle, directory);
+        try
+        {
+            await ((IAsyncRelayCommand)action.Command!).ExecuteAsync(action.CommandParameter);
+        }
+        finally
+        {
+            dialogs.ExtractChoice = null;
+        }
+        var excerpt = model.SelectedDocument;
+        Require(excerpt is { Title: excerptTitle, PageCount: 3, HasText: true, Reviewed: false } &&
+            excerpt.Id != packet.Id && excerpt.Tags.Contains("Packet") &&
+            File.Exists(Path.Combine(model.LibraryPath, "PDFs", packet.RelativePath)), model.Status);
+
+        Control<TextBox>(window, "SearchBox").SetCurrentValue(TextBox.TextProperty, ReceiptKeyword);
+        var jump = Control<Button>(window, "GoToMatchButton");
+        await UntilAsync(() => model.SelectedDocument?.Id == excerpt!.Id && jump.IsVisible && jump.IsEnabled, () => model.Status);
+        await ((IAsyncRelayCommand)jump.Command!).ExecuteAsync(jump.CommandParameter);
+        await UntilAsync(() => model.PageLabel == "3 / 3" && model.Preview is not null, () => model.Status);
+        await CaptureAsync(window, directory, "extracted-pdf.png");
+    }
+
+    private static async Task<ExtractPdfPagesRequest?> ConfirmExtractPagesAsync(Window owner, DocumentSummary source, int currentPage,
+        string title, string directory)
+    {
+        var dialog = new ExtractPdfPagesDialog(source.PageCount, currentPage);
+        var response = dialog.ShowDialog<ExtractPdfPagesRequest?>(owner);
+        try
+        {
+            var pages = Control<TextBox>(dialog, "PagesBox");
+            Require(pages.Text == "1" && source.PageCount == 6, "The extraction dialog did not start at the open page.");
+            pages.Text = "6,2-3,3";
+            Control<TextBox>(dialog, "TitleBox").Text = title;
+            await CaptureAsync(dialog, directory, "extract-pages-dialog.png");
+            Control<Button>(dialog, "ConfirmExtractButton").RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
+            return await response;
+        }
+        finally
+        {
+            if (dialog.IsVisible) dialog.Close();
+            await response;
+        }
     }
 
     private static async Task VerifyTagSuggestionAsync(MainWindow window, InboxViewModel model, string directory)
@@ -872,6 +925,7 @@ internal sealed class FixtureDialogs(params string[] documents) : IWorkspaceDial
     internal string? EditedTitle { get; init; }
     internal TagRenameRequest? TagRenameChoice { get; set; }
     internal Func<IReadOnlyList<DocumentSummary>, Task<CombinePdfsRequest?>>? CombineChoice { get; set; }
+    internal Func<DocumentSummary, int, Task<ExtractPdfPagesRequest?>>? ExtractChoice { get; set; }
     internal string? LastOpenedPath { get; private set; }
     internal string? LastCopiedText { get; private set; }
     internal ImportErrorsAction ImportErrorsChoice { get; set; }
@@ -889,6 +943,8 @@ internal sealed class FixtureDialogs(params string[] documents) : IWorkspaceDial
     public Task<TagRenameRequest?> RenameTagAsync(string currentName, IReadOnlyList<string> catalogNames) => Task.FromResult(TagRenameChoice);
     public Task<CombinePdfsRequest?> OrderPdfCombinationAsync(IReadOnlyList<DocumentSummary> selectedDocuments) =>
         CombineChoice?.Invoke(selectedDocuments) ?? Task.FromResult<CombinePdfsRequest?>(null);
+    public Task<ExtractPdfPagesRequest?> ChoosePdfPagesAsync(DocumentSummary document, int currentPage) =>
+        ExtractChoice?.Invoke(document, currentPage) ?? Task.FromResult<ExtractPdfPagesRequest?>(null);
     public Task<ImportErrorsAction> ShowImportErrorsAsync(IReadOnlyList<ImportFailure> failures)
     {
         InspectedImportFailures = failures;

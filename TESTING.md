@@ -40,6 +40,7 @@
 27. Use **Move to folder…** to file a PDF while retaining its search and preview. Exercise a collision, a reserved catalog path, picker cancellation, and an interrupted catalog write. Reopen to verify correct recovery among identical PDFs and rejection of unrelated destination bytes (L3, L4 and L6).
 28. Search a folder with descendants and a similarly named sibling. Check quoted paths, literal wildcard characters, exact case, top-level files, and a combination with tag, date, and text clauses. Confirm that page matching still uses the document text (L3, L4 and L6).
 29. Use **Move PDFs…** with several selected files and one destination. Check filename collisions, reserved paths, already-filed PDFs, picker cancellation, and a missing source. Cancel or change the next source after a completed move and verify the reported counts (L3, L4 and L6).
+30. Extract nonconsecutive and overlapping ranges from a PDF. Verify original order, selected embedded text, source bytes and tags, validation of the title and ranges, cancellation, and a stale page count. Find an extracted page by its OCR match in the native app (L1, L3, L4 and L6).
 
 Run `dotnet test Plico.slnx -c Release` for the fast suite. Run the native harness from `keel.json` for installed-platform evidence. Visual review starts with per-OS captures and geometry checks. Add pixel baselines when repeatable runner captures justify the maintenance.
 
