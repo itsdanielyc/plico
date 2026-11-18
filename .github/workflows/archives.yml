@@ -19,9 +19,9 @@ jobs:
     steps:
       - uses: actions/checkout@v6
         with:
-          ref: a278ef56200f243a79a2a641a684acd327b2b4c5
+          ref: 93ce497dd01e379779b9880528862166b56a7498
       - name: Confirm the integrated candidate
-        run: test "$(git rev-parse HEAD)" = a278ef56200f243a79a2a641a684acd327b2b4c5
+        run: test "$(git rev-parse HEAD)" = 93ce497dd01e379779b9880528862166b56a7498
       - uses: actions/setup-dotnet@v5
         with:
           global-json-file: global.json
