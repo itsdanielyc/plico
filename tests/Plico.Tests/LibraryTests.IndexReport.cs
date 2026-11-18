@@ -42,6 +42,9 @@ public sealed partial class LibraryTests
         var repeated = library.Refresh(token);
         Assert.Empty(repeated.UnavailablePaths);
         Assert.Equal(2, repeated.Warnings.Count);
+        Assert.Equal(2, library.CountUnavailableDocuments());
+        Assert.Equal(new[] { Letter, receipt }, library.ReadUnavailablePaths(token));
+        Assert.Throws<OperationCanceledException>(() => library.ReadUnavailablePaths(new CancellationToken(canceled: true)));
 
         File.Move(heldLetter, letterPath);
         File.Copy(Fixture(receipt), receiptPath, overwrite: true);
@@ -49,6 +52,8 @@ public sealed partial class LibraryTests
         var recovered = library.Refresh(token);
         Assert.Empty(recovered.UnavailablePaths);
         Assert.Empty(recovered.Warnings);
+        Assert.Equal(0, library.CountUnavailableDocuments());
+        Assert.Empty(library.ReadUnavailablePaths(token));
         var restoredLetter = Assert.Single(library.Find(new DocumentFilter(Tag: "Housing"), token).Items);
         Assert.Equal(letter.Id, restoredLetter.Id);
         Assert.Equal(date, restoredLetter.DocumentDate);

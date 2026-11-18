@@ -162,6 +162,13 @@ public sealed partial class InboxLibrary : IDisposable
     /// <summary>Counts present PDFs that are awaiting review in the library.</summary>
     public long CountUnreviewedDocuments() => _catalog.CountUnreviewedDocuments();
 
+    /// <summary>Counts catalog records whose PDFs were unavailable at the last refresh.</summary>
+    public long CountUnavailableDocuments() => _catalog.CountUnavailableDocuments();
+
+    /// <summary>Returns the cataloged paths of unavailable PDFs, relative to the library's PDF directory.</summary>
+    public IReadOnlyList<string> ReadUnavailablePaths(CancellationToken cancellationToken = default) =>
+        _catalog.ReadUnavailablePaths(cancellationToken);
+
     /// <summary>Lists tag names held by the catalog, including tags on missing documents.</summary>
     public IReadOnlyList<string> GetCatalogTagNames() => _catalog.Tags(includeUnused: true);
 

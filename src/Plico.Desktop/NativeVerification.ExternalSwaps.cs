@@ -5,7 +5,7 @@ namespace Plico.Desktop;
 
 internal static partial class NativeVerification
 {
-    private static async Task VerifyExternalSwapAsync(Window window, InboxViewModel model, string fixture, string directory)
+    private static async Task VerifyExternalSwapAsync(Window window, InboxViewModel model, FixtureDialogs dialogs, string fixture, string directory)
     {
         const string folderName = "Exchange check";
         const string firstName = "Alpha exchange.pdf";
@@ -49,6 +49,6 @@ internal static partial class NativeVerification
                     !document.HasText && !document.Tags.Contains(tag)),
             $"The catalog did not follow both PDFs through their exchanged names. {model.Status}");
         await CaptureAsync(window, directory, "swapped-pdf-paths.png");
-        await VerifyIndexReportAsync(window, model, directory, secondPath, model.SelectedDocument!);
+        await VerifyIndexReportAsync(window, model, dialogs, directory, secondPath, model.SelectedDocument!);
     }
 }

@@ -43,6 +43,7 @@
 - Find PDFs without searchable text from the sidebar and combine text availability with other search filters.
 - Refresh the index after external filename swaps and keep tags, dates, and review state with the uniquely matched PDFs.
 - See which PDFs became unavailable and read all refresh notices in the index report.
+- Keep unresolved PDF paths in the index report after another refresh or restart.
 
 ## [0.15.0] - 2026-11-18
 

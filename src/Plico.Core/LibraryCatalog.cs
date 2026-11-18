@@ -282,6 +282,33 @@ internal sealed partial class LibraryCatalog
         return (long)command.ExecuteScalar()!;
     }
 
+    // O(log n + m) for m unavailable entries among n catalog rows, with constant application space.
+    internal long CountUnavailableDocuments()
+    {
+        using var connection = Connect();
+        using var command = connection.CreateCommand();
+        command.CommandText = "SELECT count(*) FROM documents WHERE is_present = 0;";
+        return (long)command.ExecuteScalar()!;
+    }
+
+    // O(log n + m log m) time and O(m) output space for m unavailable paths among n rows.
+    internal IReadOnlyList<string> ReadUnavailablePaths(CancellationToken cancellationToken)
+    {
+        cancellationToken.ThrowIfCancellationRequested();
+        using var connection = Connect();
+        using var command = connection.CreateCommand();
+        command.CommandText = "SELECT relative_path FROM documents WHERE is_present = 0 ORDER BY relative_path;";
+        using var rows = command.ExecuteReader();
+        var paths = new List<string>();
+        while (rows.Read())
+        {
+            cancellationToken.ThrowIfCancellationRequested();
+            paths.Add(rows.GetString(0));
+        }
+        cancellationToken.ThrowIfCancellationRequested();
+        return paths;
+    }
+
     private DocumentPage Query(DocumentFilter filter, long? documentId = null, CancellationToken cancellationToken = default)
     {
         cancellationToken.ThrowIfCancellationRequested();

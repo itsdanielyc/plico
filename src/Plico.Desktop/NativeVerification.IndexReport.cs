@@ -1,12 +1,13 @@
 using Avalonia.Controls;
+using CommunityToolkit.Mvvm.Input;
 using Plico.Core;
 
 namespace Plico.Desktop;
 
 internal static partial class NativeVerification
 {
-    private static async Task VerifyIndexReportAsync(Window window, InboxViewModel model, string directory, string sourcePath,
-        DocumentSummary source)
+    private static async Task VerifyIndexReportAsync(Window window, InboxViewModel model, FixtureDialogs dialogs,
+        string directory, string sourcePath, DocumentSummary source)
     {
         string folder = Path.GetDirectoryName(sourcePath)!;
         string holdingPath = Path.Combine(model.LibraryPath, "held-for-index-report.pdf");
@@ -21,27 +22,44 @@ internal static partial class NativeVerification
         Require(show.IsVisible && show.IsEnabled && model.Status.Contains("1 document unavailable.", StringComparison.Ordinal) &&
                 model.Status.Contains("2 index notices.", StringComparison.Ordinal),
             $"The index status omitted an unavailable file or notice. {model.Status}");
-        var result = model.LatestIndexRefresh;
-        Require(result is { Warnings.Count: 2 } && result.UnavailablePaths.SequenceEqual([source.RelativePath]),
+        var command = (IAsyncRelayCommand)show.Command!;
+        await command.ExecuteAsync(null);
+        var report = dialogs.InspectedIndexReport;
+        Require(report is { Notices.Count: 2 } && report.UnavailablePaths.SequenceEqual([source.RelativePath]),
             "The report did not record the affected path and both notices.");
-        var dialog = new IndexReportDialog(result!);
+        await CaptureIndexReportAsync(window, report!, directory, "index-report.png");
+
+        File.Delete(firstDamaged);
+        File.Delete(secondDamaged);
+        await model.RefreshIndexCommand.ExecuteAsync(null);
+        Require(show.IsVisible && model.LatestIndexRefresh is { UnavailablePaths.Count: 0, Warnings.Count: 0 },
+            "The index report disappeared while a cataloged PDF was still unavailable.");
+        await command.ExecuteAsync(null);
+        report = dialogs.InspectedIndexReport;
+        Require(report is { Notices.Count: 0 } && report.UnavailablePaths.SequenceEqual([source.RelativePath]),
+            "The latest report did not distinguish the remaining path from the completed refresh notices.");
+        await CaptureIndexReportAsync(window, report!, directory, "unavailable-index-report.png");
+
+        File.Move(holdingPath, sourcePath);
+        await model.RefreshIndexCommand.ExecuteAsync(null);
+        Require(!show.IsVisible && model.Documents.Any(document => document.Id == source.Id && document.Tags.SequenceEqual(source.Tags)),
+            "Returning the PDF did not restore its record and clear the report.");
+    }
+
+    private static async Task CaptureIndexReportAsync(Window window, IndexReport report, string directory, string filename)
+    {
+        var dialog = new IndexReportDialog(report);
         var closed = dialog.ShowDialog(window);
         try
         {
-            Require(Control<ListBox>(dialog, "IndexReportList").ItemCount == 3, "The report did not display all three rows.");
-            await CaptureAsync(dialog, directory, "index-report.png");
+            Require(Control<ListBox>(dialog, "IndexReportList").ItemCount == report.UnavailablePaths.Count + report.Notices.Count,
+                "The report did not display all its paths and notices.");
+            await CaptureAsync(dialog, directory, filename);
         }
         finally
         {
             dialog.Close();
             await closed;
         }
-
-        File.Move(holdingPath, sourcePath);
-        File.Delete(firstDamaged);
-        File.Delete(secondDamaged);
-        await model.RefreshIndexCommand.ExecuteAsync(null);
-        Require(!show.IsVisible && model.Documents.Any(document => document.Id == source.Id && document.Tags.SequenceEqual(source.Tags)),
-            "Returning the PDF did not restore its record and clear the report.");
     }
 }

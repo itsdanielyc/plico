@@ -98,7 +98,7 @@ To make a copy while Plico is open, choose **Back up library…** and select a d
 
 Refresh also follows a uniquely identifiable PDF that you move or rename inside `PDFs/`, including when two files exchange names. Its title, tags, date, and review state travel with its catalog record. For libraries from older Plico versions, run **Refresh index** once while the original paths are present to prepare them for moves.
 
-After **Refresh index**, the status shows how many PDFs became unavailable. Open **Index report** to see their paths and every notice from the refresh. Restore the files in the library and refresh again to bring their records back into view.
+After **Refresh index**, the status shows how many PDFs are unavailable. **Index report** keeps their paths available across launches and displays the latest notices in the current session. Restore the files in the library and refresh again to bring their records back into view.
 
 Plico recognizes exact source files already in the library and reports that it reused the existing document. Existing libraries upgrade automatically. For older entries, repeat detection can also compare an unchanged digital PDF to the file you import.
 

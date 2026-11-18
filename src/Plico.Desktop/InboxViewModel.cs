@@ -282,6 +282,7 @@ internal sealed partial class InboxViewModel : ObservableObject, IDisposable
         Tags = replacement.GetTags();
         SavedSearches = replacement.GetSavedSearches();
         RefreshInboxCount();
+        RefreshUnavailableCount();
         Navigate(inboxOnly: true);
         Status = watchNotice is null ? "Library ready." : $"Library ready. {watchNotice}";
         if (importNotice is not null) Status += $" {importNotice}";

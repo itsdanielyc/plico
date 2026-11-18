@@ -87,7 +87,7 @@ internal static partial class NativeVerification
             await VerifySavedSearchAsync(window, model, dialogs, evidenceDirectory);
             await VerifyDocumentDateAsync(window, model, dialogs, evidenceDirectory);
             await VerifyBatchOcrAsync(window, model, fixture, evidenceDirectory, priorOcrSource);
-            await VerifyExternalSwapAsync(window, model, fixture, evidenceDirectory);
+            await VerifyExternalSwapAsync(window, model, dialogs, fixture, evidenceDirectory);
 
             File.WriteAllText(Path.Combine(evidenceDirectory, "passed.txt"),
                 $"Verified {runtime}. Native window completed multilingual OCR and correction, oriented JPEG and multi-page TIFF import, PDF combination, page extraction and rotation, phrase, tag, review-status, and text-availability search, query correction, saved search restoration, document-date editing, filtering, and inheritance, result sorting, fit-width and selectable page text previews, match navigation, tag merging and suggestions, duplicate drop, folder watch and inbox counting, title edit, single and batch PDF moves, external relocation and PDF swaps, index reporting and recovery, selected PDF export, library backup, text copy, single and batch OCR copies, and saved import error recovery and retry. {scanRecoveryEvidence}");
@@ -1028,7 +1028,7 @@ internal sealed class FixtureDialogs(params string[] documents) : IWorkspaceDial
     internal ImportErrorsAction ImportErrorsChoice { get; set; }
     internal IReadOnlyList<ImportFailure> InspectedImportFailures { get; private set; } = [];
     internal IReadOnlyList<OcrCopyBatchItem> InspectedOcrCopyResults { get; private set; } = [];
-    internal RefreshResult? InspectedIndexReport { get; private set; }
+    internal IndexReport? InspectedIndexReport { get; private set; }
     internal IReadOnlyList<string> SelectedFiles { get; set; } = documents;
     public Task<IReadOnlyList<string>> PickDocumentsAsync() => Task.FromResult(SelectedFiles);
     public Task<string?> PickFolderAsync(string title, string? startFolder = null)
@@ -1060,9 +1060,9 @@ internal sealed class FixtureDialogs(params string[] documents) : IWorkspaceDial
         InspectedOcrCopyResults = results;
         return Task.CompletedTask;
     }
-    public Task ShowIndexRefreshReportAsync(RefreshResult result)
+    public Task ShowIndexRefreshReportAsync(IndexReport report)
     {
-        InspectedIndexReport = result;
+        InspectedIndexReport = report;
         return Task.CompletedTask;
     }
     public void OpenPath(string path) => LastOpenedPath = path;
