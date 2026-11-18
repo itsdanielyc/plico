@@ -1,4 +1,4 @@
-name: Verify release candidate
+name: Verify integrated packages on macOS 15
 on:
   workflow_dispatch:
 
@@ -14,14 +14,14 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          - {runner: windows-2025, rid: win-x64}
-          - {runner: windows-11-arm, rid: win-arm64}
-          - {runner: macos-26, rid: osx-arm64}
-          - {runner: macos-26-intel, rid: osx-x64}
-          - {runner: ubuntu-24.04, rid: linux-x64}
-          - {runner: ubuntu-24.04-arm, rid: linux-arm64}
+          - {runner: macos-15, rid: osx-arm64}
+          - {runner: macos-15-intel, rid: osx-x64}
     steps:
       - uses: actions/checkout@v6
+        with:
+          ref: a278ef56200f243a79a2a641a684acd327b2b4c5
+      - name: Confirm the integrated candidate
+        run: test "$(git rev-parse HEAD)" = a278ef56200f243a79a2a641a684acd327b2b4c5
       - uses: actions/setup-dotnet@v5
         with:
           global-json-file: global.json
@@ -34,12 +34,7 @@ jobs:
           PLICO_RUNTIME: ${{ matrix.rid }}
           PLICO_EXPECTED_NATIVE_RID: ${{ matrix.rid }}
         run: |
-          if ($IsWindows) {
-              $compiler = ./scripts/Get-Nsis.ps1 -DestinationDirectory (Join-Path $env:RUNNER_TEMP 'plico-nsis')
-              ./scripts/Package.ps1 -Runtime $env:PLICO_RUNTIME -WindowsInstallerCompiler $compiler
-          } else {
-              ./scripts/Package.ps1 -Runtime $env:PLICO_RUNTIME
-          }
+          ./scripts/Package.ps1 -Runtime $env:PLICO_RUNTIME
           ./scripts/Test-Distribution.ps1 -Directory artifacts/archives -EvidenceDirectory artifacts/install
       - uses: actions/upload-artifact@v7
         with:
