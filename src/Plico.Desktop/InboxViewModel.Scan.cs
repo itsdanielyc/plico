@@ -11,7 +11,7 @@ internal sealed partial class InboxViewModel
     {
         var library = RequireLibrary();
         var language = RecognitionLanguage;
-        string? destinationFolder = ManualIntakeDestination(library);
+        string? destinationFolder = IntakeDestination(library);
         var request = await _dialogs.PickScannerAsync();
         if (request is null)
         {

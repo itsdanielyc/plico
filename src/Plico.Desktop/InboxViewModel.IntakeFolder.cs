@@ -8,6 +8,7 @@ internal sealed partial class InboxViewModel
 {
     private const string RootIntakeFolder = ".";
     private readonly IntakeFolderPreference? _intakeFolderPreference;
+    private bool _includeWatchedScans;
 
     [ObservableProperty]
     [NotifyPropertyChangedFor(nameof(HasCustomIntakeFolder))]
@@ -17,7 +18,32 @@ internal sealed partial class InboxViewModel
     public bool HasCustomIntakeFolder => IntakeFolder != RootIntakeFolder;
     public string IntakeFolderLabel => HasCustomIntakeFolder ? $"PDFs/{IntakeFolder}" : "PDFs";
 
-    private string? ManualIntakeDestination(InboxLibrary library) =>
+    public bool IncludeWatchedScans
+    {
+        get => _includeWatchedScans;
+        set
+        {
+            if (value == _includeWatchedScans) return;
+            if (IsBusy || !HasCustomIntakeFolder || _library is not { } library)
+            {
+                OnPropertyChanged(nameof(IncludeWatchedScans));
+                return;
+            }
+
+            try
+            {
+                _intakeFolderPreference?.SaveIncludeWatchedScans(library.RootPath, value);
+                SetProperty(ref _includeWatchedScans, value);
+            }
+            catch (Exception error) when (error is IOException or UnauthorizedAccessException)
+            {
+                Status = $"Could not save the watched-scan choice. {error.Message}";
+                OnPropertyChanged(nameof(IncludeWatchedScans));
+            }
+        }
+    }
+
+    private string? IntakeDestination(InboxLibrary library) =>
         HasCustomIntakeFolder ? Path.Combine(library.PdfDirectory, IntakeFolder) : null;
 
     [RelayCommand]
@@ -41,14 +67,18 @@ internal sealed partial class InboxViewModel
     private string? RestoreIntakeFolder(string libraryRoot)
     {
         IntakeFolder = RootIntakeFolder;
+        SetProperty(ref _includeWatchedScans, false, nameof(IncludeWatchedScans));
+        if (_intakeFolderPreference is not { } preference) return null;
+
         try
         {
-            IntakeFolder = _intakeFolderPreference?.Load(libraryRoot) ?? RootIntakeFolder;
+            IntakeFolder = preference.Load(libraryRoot) ?? RootIntakeFolder;
+            SetProperty(ref _includeWatchedScans, preference.LoadIncludeWatchedScans(libraryRoot), nameof(IncludeWatchedScans));
             return null;
         }
         catch (Exception error) when (error is IOException or UnauthorizedAccessException or InvalidDataException)
         {
-            return $"Could not load the intake folder. {error.Message}";
+            return $"Could not load the intake settings. {error.Message}";
         }
     }
 }

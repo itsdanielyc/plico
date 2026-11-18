@@ -128,7 +128,7 @@ internal sealed partial class InboxViewModel : ObservableObject, IDisposable
             Status = "No files selected.";
             return;
         }
-        await ImportFilesAsync(files, token, destinationFolder: ManualIntakeDestination(RequireLibrary()));
+        await ImportFilesAsync(files, token, destinationFolder: IntakeDestination(RequireLibrary()));
     });
 
     internal Task ImportDroppedFilesAsync(IReadOnlyList<string> files, bool hasSupportedFile)
@@ -139,7 +139,7 @@ internal sealed partial class InboxViewModel : ObservableObject, IDisposable
             return Task.CompletedTask;
         }
         return RunOperationAsync("Importing dropped files…",
-            token => ImportFilesAsync(files, token, destinationFolder: ManualIntakeDestination(RequireLibrary())));
+            token => ImportFilesAsync(files, token, destinationFolder: IntakeDestination(RequireLibrary())));
     }
 
     [RelayCommand]

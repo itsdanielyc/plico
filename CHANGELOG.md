@@ -56,6 +56,7 @@
 - Keep separate paper and resolution settings for each scanner and reselect the last scanner you started with.
 - Resume a saved folder watch and check existing scans in one action.
 - Opt in to automatic watch catch-up when opening a library on this computer.
+- Include watched scans and catch-up scans in a library's custom intake folder.
 
 ## [0.15.0] - 2026-11-18
 

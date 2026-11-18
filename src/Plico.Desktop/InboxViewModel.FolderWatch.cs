@@ -182,8 +182,9 @@ internal sealed partial class InboxViewModel
                 await active.Task.WaitAsync(cancellationToken);
             }
             cancellationToken.ThrowIfCancellationRequested();
+            string? destinationFolder = IncludeWatchedScans ? IntakeDestination(RequireLibrary()) : null;
             await RunOperationAsync("Importing from the watched folder…",
-                token => ImportFilesAsync(files, token, revealAdded: false), cancellationToken);
+                token => ImportFilesAsync(files, token, revealAdded: false, destinationFolder: destinationFolder), cancellationToken);
         });
 
     private async Task ObserveWatchAsync(FolderWatch watch)

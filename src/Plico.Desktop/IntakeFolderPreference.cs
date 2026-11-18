@@ -1,29 +1,44 @@
 namespace Plico.Desktop;
 
-/// <summary>Remembers the manual intake destination for each library.</summary>
+/// <summary>Remembers the intake destination and watched-scan choice for each library.</summary>
 internal sealed class IntakeFolderPreference(string directory)
 {
+    private const string FolderSetting = "intake-folder";
+    private const string WatchedScansSetting = "intake-folder-watched-scans";
     private const char RelativePathSeparator = '/';
     private readonly string _directory = Path.GetFullPath(directory);
 
     internal string? Load(string libraryRoot)
     {
-        try
-        {
-            string relative = File.ReadAllText(PathFor(libraryRoot));
-            Validate(relative);
-            return relative;
-        }
-        catch (Exception error) when (error is FileNotFoundException or DirectoryNotFoundException)
-        {
-            return null;
-        }
+        string? relative = ReadSetting(libraryRoot, FolderSetting);
+        if (relative is not null) Validate(relative);
+        return relative;
     }
 
     internal void Save(string libraryRoot, string relative)
     {
         Validate(relative);
-        ApplicationSettings.WriteAtomically(PathFor(libraryRoot), relative);
+        ApplicationSettings.WriteAtomically(PathFor(libraryRoot, FolderSetting), relative);
+    }
+
+    /// <summary>Reads the optional routing choice. Libraries with only a saved destination use the default.</summary>
+    internal bool LoadIncludeWatchedScans(string libraryRoot) =>
+        bool.TryParse(ReadSetting(libraryRoot, WatchedScansSetting), out bool include) && include;
+
+    /// <summary>Persists the watched-scan choice without rewriting the existing destination.</summary>
+    internal void SaveIncludeWatchedScans(string libraryRoot, bool include) =>
+        ApplicationSettings.WriteAtomically(PathFor(libraryRoot, WatchedScansSetting), include.ToString());
+
+    private string? ReadSetting(string libraryRoot, string setting)
+    {
+        try
+        {
+            return File.ReadAllText(PathFor(libraryRoot, setting));
+        }
+        catch (Exception error) when (error is FileNotFoundException or DirectoryNotFoundException)
+        {
+            return null;
+        }
     }
 
     private static void Validate(string relative)
@@ -37,5 +52,6 @@ internal sealed class IntakeFolderPreference(string directory)
         }
     }
 
-    private string PathFor(string libraryRoot) => Path.Combine(_directory, $"intake-folder-{ApplicationSettings.LibraryKey(libraryRoot)}.txt");
+    private string PathFor(string libraryRoot, string setting) =>
+        Path.Combine(_directory, $"{setting}-{ApplicationSettings.LibraryKey(libraryRoot)}.txt");
 }

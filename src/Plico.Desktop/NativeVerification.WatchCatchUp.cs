@@ -15,8 +15,13 @@ internal static partial class NativeVerification
         var check = Control<CheckBox>(window, "CatchUpOnOpenCheckBox");
         Require(check.IsEffectivelyVisible && check.IsEnabled && check.IsChecked == false && !model.IsWatchingFolder,
             "The paused watch did not offer the opt-in startup choice.");
+        var include = Control<CheckBox>(window, "IncludeWatchedScansCheckBox");
+        Require(include.IsEffectivelyVisible && include.IsEnabled && include.IsChecked == false,
+            "The intake folder did not offer the watched-scan choice.");
+        include.SetCurrentValue(ToggleButton.IsCheckedProperty, true);
         check.SetCurrentValue(ToggleButton.IsCheckedProperty, true);
-        Require(model.CatchUpOnOpen && !model.IsWatchingFolder, "The startup preference did not save for the current library.");
+        Require(model.CatchUpOnOpen && model.IncludeWatchedScans && !model.IsWatchingFolder,
+            "The watch preferences did not save for the current library.");
 
         long inboxCount = model.InboxCount;
         string? originalFolder = dialogs.FolderPath;
@@ -25,8 +30,9 @@ internal static partial class NativeVerification
             string otherLibrary = Directory.CreateDirectory(Path.Combine(library, "Other library")).FullName;
             dialogs.FolderPath = otherLibrary;
             await model.ChooseLibraryCommand.ExecuteAsync(null);
-            Require(model.LibraryPath == otherLibrary && !model.IsWatchingFolder && !model.CatchUpOnOpen,
-                "The startup setting followed the window to another library.");
+            Require(model.LibraryPath == otherLibrary && !model.IsWatchingFolder && !model.CatchUpOnOpen &&
+                    !model.IncludeWatchedScans && !include.IsEffectivelyVisible,
+                "The watch settings followed the window to another library.");
 
             string missed = Path.Combine(source, missedName);
             File.Copy(Path.Combine(Path.GetDirectoryName(fixture)!, "Match Ledger.pdf"), missed);
@@ -36,8 +42,13 @@ internal static partial class NativeVerification
             await model.ChooseLibraryCommand.ExecuteAsync(null);
             await UntilAsync(() => !model.IsBusy && model.IsWatchingFolder && model.InboxCount == inboxCount + 1 &&
                 model.Status == "1 document added. 2 documents already in the library.", () => model.Status);
-            Require(model.LibraryPath == library && check.IsChecked == true && File.Exists(missed) &&
-                    File.Exists(Path.Combine(library, "PDFs", missedName)), "Opening the enabled library did not import the saved scan.");
+            string filedPath = $"{model.IntakeFolder}/{missedName}";
+            Require(model.LibraryPath == library && check.IsChecked == true && include.IsChecked == true && File.Exists(missed) &&
+                    File.Exists(Path.Combine(library, "PDFs", filedPath)) && !File.Exists(Path.Combine(library, "PDFs", missedName)),
+                "Opening the enabled library did not file the scan in its intake folder.");
+            await UntilAsync(() => model.Documents.Any(document => document.RelativePath == filedPath && document.HasText),
+                () => "The filed scan did not appear in the inbox with searchable text.");
+            model.SelectedDocument = model.Documents.First(document => document.RelativePath == filedPath);
             await UntilAsync(() => model.Preview is not null, () => model.PreviewMessage);
             await CaptureAsync(window, directory, "watch-catch-up-on-open.png");
         }

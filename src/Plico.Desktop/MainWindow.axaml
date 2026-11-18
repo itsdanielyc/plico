@@ -80,7 +80,7 @@
 
     <Grid ColumnDefinitions="204,*">
         <Border Background="#1B302B" Padding="17,21,17,16">
-            <Grid RowDefinitions="Auto,Auto,*,Auto" RowSpacing="25">
+            <Grid RowDefinitions="Auto,Auto,*,Auto" RowSpacing="10">
                 <StackPanel Orientation="Horizontal" Spacing="11" Margin="5,0">
                     <Border Width="34" Height="34" Background="#CBDFA9" CornerRadius="9">
                         <PathIcon Width="20" Height="20" Foreground="#254333"
@@ -157,6 +157,10 @@
                                        Foreground="#CADDCA" FontSize="12" MaxWidth="142" TextTrimming="CharacterEllipsis" />
                         </StackPanel>
                     </Button>
+                    <CheckBox x:Name="IncludeWatchedScansCheckBox" Content="Include watched scans" FontSize="13"
+                              Foreground="#E3EFE4" Margin="12,0,0,0" IsVisible="{Binding HasCustomIntakeFolder}"
+                              IsEnabled="{Binding CanWork}" IsChecked="{Binding IncludeWatchedScans, Mode=TwoWay}"
+                              ToolTip.Tip="File scans from the watched folder in this intake folder" />
                     <Button Classes="rail" Content="Refresh index" Command="{Binding RefreshIndexCommand}" IsEnabled="{Binding CanWork}" />
                     <Button x:Name="BackUpLibraryButton" Classes="rail" Content="Back up library…"
                             Command="{Binding BackUpLibraryCommand}" IsEnabled="{Binding CanWork}" />

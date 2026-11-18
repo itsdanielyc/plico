@@ -29,7 +29,7 @@ internal sealed partial class InboxViewModel
             {
                 case ImportErrorsAction.Retry:
                     await ImportFilesAsync(failures.Select(failure => failure.SourcePath).ToArray(), token,
-                        destinationFolder: ManualIntakeDestination(RequireLibrary()));
+                        destinationFolder: IntakeDestination(RequireLibrary()));
                     break;
                 case ImportErrorsAction.Clear:
                     if (PersistImportFailures(RequireLibrary().RootPath, []) is { } warning)

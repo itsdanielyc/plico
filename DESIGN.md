@@ -92,4 +92,6 @@ The preview shows the whole page by default. **Fit width** fills the available r
 
 **Create searchable copy** appears beneath the preview of a PDF without searchable text. **Create OCR copy** runs recognition again on a PDF with text. The header’s OCR selector supplies the language. A new copy appears in the inbox with the source tags.
 
+With a custom **Intake folder**, **Include watched scans** appears under the destination label. The sidebar spacing keeps the watch actions within the minimum window height.
+
 Keep labels present on actions. Use a polite live region for processing status. Keep the PDF accessible by keyboard and show a visible response for unavailable previews.
