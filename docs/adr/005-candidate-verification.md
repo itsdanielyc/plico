@@ -6,4 +6,4 @@ Each candidate runs locked restore, solution tests, and both portable and instal
 
 The v0.15.0 candidate took 578 seconds of accumulated job time in the source matrix and 873 seconds in the archive matrix. The source matrix spent 214 seconds in solution tests. Combining the matrices shares checkout, SDK setup, and locked restore. The candidate’s portable and installed apps exercise the complete native journey. [Source matrix](https://github.com/itsdanielyc/plico/actions/runs/44228219708) · [Archive matrix](https://github.com/itsdanielyc/plico/actions/runs/44228219765)
 
-Pushes to main and pull requests use the source CI workflow. After publishing, fresh runners download the released packages and repeat the checksum, portable, and installed checks.
+Source and configuration changes pushed to main or submitted in a pull request run source CI. The workflow supports manual dispatch. After publishing, fresh runners download the released packages and repeat the checksum, portable, and installed checks. [Source CI](../../.github/workflows/ci.yml) · [Release workflow](../../.github/workflows/release.yml)

@@ -13,7 +13,7 @@ Desktop uses the Core library API. Core owns no UI controls or file pickers. The
 
 A library is a user-selected directory. `PDFs/` holds ordinary PDFs. `.plico/catalog.sqlite3` holds tags, reviewed state, paths relative to `PDFs/`, and indexed text. SQLite schema changes carry an explicit user version. Close the app before copying the library so the files and catalog represent the same point in time.
 
-Import renders into private staging and checks the processed PDF before moving it into `PDFs/` without overwriting existing files. An interrupted index write leaves a readable PDF that can be picked up on refresh. Plico preserves the selected source files. Catalog updates and full-text index triggers run together in SQLite transactions.
+Import renders into private staging and checks the processed PDF before moving it into `PDFs/` with `File.Move` and overwrite disabled. An interrupted index write leaves a readable PDF that can be picked up on refresh. Plico preserves the selected source files. Catalog updates and full-text index triggers run together in SQLite transactions.
 
 Creating a searchable copy reads an indexed PDF into private staging under the file-operation lease. For a PDF with existing text, NAPS2 renders its visible pages for fresh OCR. A new copy must contain text and have the indexed PDF’s page count. Inserting the copy, its source and language, and its metadata uses one catalog transaction. [NAPS2 PDF exporter](https://github.com/cyanfish/naps2/blob/c6c762214293097c522fc1b7656f106fbb66a7f2/NAPS2.Sdk/Pdf/PdfExporter.cs)
 
@@ -105,15 +105,13 @@ Typed search uses a single background reader for results. Editing the query canc
 
 Match navigation reads the selected PDF in the background. A scratch FTS5 index uses the catalog’s query compiler and tokenizer and holds the text index for one page. A matching-page step starts beside the current preview page and stops at the closest hit in the requested direction. Changing the search, selection, or preview page cancels a pending jump. [FTS5 contentless indexes](https://sqlite.org/fts5.html#the_delete_all_command)
 
-The runtime carries English, French, German, and Spanish Tesseract models. The app captures the selected language for each import batch or scan. PDFium renders previews and PdfPig extracts embedded text. Scanner discovery uses the supported local OS driver and eSCL on the local network. Platform requirements and support are versioned in the release notes.
+The runtime carries English, French, German, and Spanish Tesseract models. The app captures the selected language for each import batch or scan. PDFium renders previews and PdfPig extracts embedded text. Scanner discovery uses WIA on Windows, SANE on Linux, and network eSCL on all three desktop platforms. [Supported platforms and scanner requirements](README.md#scanner-compatibility)
 
 Direct scanner addresses are stored in per-user settings. A short write lease and atomic replacement preserve entries when separate Plico instances save them. The scanner picker reconstructs saved entries locally and checks the device when it starts a scan.
 
-Capture options use separate local files keyed by a hash of the driver and device identifier. A missing or invalid device entry uses the existing shared options or the regional defaults. Submitting a scan saves that device's capture options and updates the most recently started scanner key.
+Paper source, paper size, and resolution are stored together for each scanner in a local file keyed by a hash of the driver and device identifier. A missing or invalid device entry uses the shared options when valid, then the regional defaults. Submitting a scan saves that device's capture options and updates the most recently started scanner key.
 
 The desktop records unresolved import errors by source path, including whether the latest attempt came from the folder watch. After each completed or cancelled batch with changes, it atomically replaces the snapshot in the user’s settings folder. The normalized library path supplies the key, so each library reopens with its own local source paths. A mixed retry uses the current manual and watched intake destinations in one batch with the regular snapshot, OCR, and duplicate checks. Older reports use the manual route. A successful or duplicate import clears that source’s error. The settings write completes before an explicit clear removes the list from view.
-
-The picker saves the three typed capture choices together as one local settings file. A read with invalid values uses the regional defaults until the user selects a valid configuration.
 
 When a scanner fails after delivering pages, the capture pipeline keeps those pages in staging. The desktop asks whether to save them before running OCR. Saving verifies the exported page count and publishes a clearly titled partial PDF. Discarding or cancelling releases the staged files. [NAPS2 capture and error handling](https://www.naps2.com/sdk/doc/api/NAPS2.Scan.ScanController.html)
 

@@ -1,6 +1,6 @@
 # Third-party software in Plico
 
-Release archives carry package notices under `licenses/`, in `Contents/Resources/` on macOS. The application ships the .NET runtime, Avalonia, SQLite, and the document components below. The complete resolved package versions are recorded in the repository's NuGet lock files.
+Release archives carry package notices in `licenses/` on Windows and Linux and in `Contents/Resources/licenses/` on macOS. The application ships the .NET runtime, Avalonia, SQLite, and the document components below. The complete resolved package versions are recorded in the repository's NuGet lock files.
 
 | Component | License or notices | Sources |
 | --- | --- | --- |
@@ -10,7 +10,7 @@ Release archives carry package notices under `licenses/`, in `Contents/Resources
 | PDFium and Tesseract binaries | See each redistributed package's license and upstream component notices | [PDFium build](https://github.com/cyanfish/naps2-pdfium/tree/2b189e0edae6c0b4f9bdd97681bde8eea8b44661), [Tesseract build](https://github.com/cyanfish/naps2-tesseract/tree/638c2e40b54eb2b30b00898e12a514448462da63) |
 | English, French, German, and Spanish OCR models | Apache 2.0 | [tessdata_fast 4.1.0](https://github.com/tesseract-ocr/tessdata_fast/tree/65727574dfcd264acbb0c3e07860e4e9e9b22185), `tessdata/LICENSE` |
 | PdfPig | Apache 2.0 | [PdfPig](https://github.com/UglyToad/PdfPig/tree/a7bb35662bbbf405efddad50aedc9bcdcf515afc) |
-| LibTiff.Net 2.4.660 | LibTiff.Net license and component notices. Copyright © 2008–2024 Bit Miracle | [Package](https://www.nuget.org/packages/BitMiracle.LibTiff.NET/2.4.660), [included notice](assets/notices/BitMiracle.LibTiff.NET-2.4.660.txt), [upstream notice](https://github.com/BitMiracle/libtiff.net/blob/cc084734b8fdceff0c32b62fd74cf3a93c384fed/license.txt) |
+| LibTiff.Net 2.4.660 | LibTiff.Net license and component notices. Copyright © 2008–2024 Bit Miracle | [Package](https://www.nuget.org/packages/BitMiracle.LibTiff.NET/2.4.660), [repository notice](https://github.com/itsdanielyc/plico/blob/v0.16.1/assets/notices/BitMiracle.LibTiff.NET-2.4.660.txt), [upstream notice](https://github.com/BitMiracle/libtiff.net/blob/cc084734b8fdceff0c32b62fd74cf3a93c384fed/license.txt) |
 | SQLite | Public domain | [SQLite copyright](https://sqlite.org/copyright.html) |
 | .NET runtime | MIT and component notices | [.NET Runtime](https://github.com/dotnet/runtime) |
 | NSIS 3.13 Windows setup | NSIS license | [NSIS license](https://nsis.sourceforge.io/License), [compiler release](https://nsis.sourceforge.io/Download) |

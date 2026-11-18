@@ -54,7 +54,7 @@
 41. Read the text on a digital page and jump to a match on an OCR page. Select text and switch to the page image. Check a blank page, cancellation, a PDF replaced with a shorter file, and preview controls at the minimum window size (L3, L4 and L6).
 42. Reopen a library with manual and watched import failures. Repair a source, retry, reopen, and clear the remaining list. Switch libraries, handle an unavailable source, and verify the response to malformed settings and a blocked clear (L3, L4 and L6).
 43. Select a changed PDF, a source with an existing copy in the chosen language, and a new scan. Compare the per-file results, verify the copied tags and date, and repeat the batch. Cancel at the second file and check the first copy and the remaining source (L3, L4 and L6).
-44. Open **Without text** and use batch OCR. Find the new PDFs with `text:present` and a term from a scan. Check a mixed-page PDF, compound and conflicting clauses, a changed file after refresh, and a version 9 catalog upgrade (L3, L4 and L6).
+44. Open **Without text** and use batch OCR. Find the new PDFs with `text:present` and a term from a scan. Check a mixed-page PDF, compound and conflicting clauses, a changed file after refresh, and a catalog upgrade from version 9 to version 10 (L3, L4 and L6).
 45. Exchange two indexed filenames and refresh. Check the IDs, tags, review state, date, and preview. Move the PDFs in a chain and fill the vacated path with another PDF. Exercise a blocked chain and force the catalog transaction to fail before retrying (L3 and L6).
 46. Remove a cataloged PDF, damage another, and add an unreadable file. Verify the newly unavailable paths and all notices in the report. Repeat the refresh, then restore the originals and check their IDs and metadata (L3, L4 and L6).
 47. Close and reopen a library with an unavailable PDF. Open the index report, refresh again with the path still missing, and confirm that the path remains visible when no new notices appear. Return the PDF and check that its record is back and the report closes (L3, L4 and L6).
@@ -73,7 +73,7 @@
 60. Select a custom intake folder and enable **Include watched scans**. Reopen the library and check the destination of a waiting scan, an exact repeat already filed at the PDF root, and the sidebar at minimum height. Remove the destination and confirm the source stays available for retry from the import error list (L4 and L6).
 61. Save one failed added file and one failed watched scan. Retry them after reopening and changing the watched intake choice, including an unsuccessful retry before the sources are repaired. Check both resulting paths, the combined count, and an older report with only path and reason (L4 and L6).
 
-Run `dotnet test Plico.slnx -c Release` for the fast suite. Run the native harness from `keel.json` for installed-platform evidence. Visual review starts with per-OS captures and geometry checks. Add pixel baselines when repeatable runner captures justify the maintenance.
+Run `dotnet test Plico.slnx -c Release` for the fast suite. Use the native harness for an executable and `scripts/Test-Distribution.ps1` for both package formats. Visual review starts with per-OS captures and geometry checks. Add pixel baselines when repeatable runner captures justify the maintenance. [Verification commands](keel.json)
 
 The native harness records each completed screenshot in `progress.txt`. Its process guard allows up to one minute between captures and three minutes per launch. Individual state assertions keep their own deadlines.
 
@@ -83,4 +83,4 @@ For an emulated Linux `--verify` run, `PLICO_VERIFY_UI_THREAD_RENDERING=1` keeps
 
 Use **Verify release candidate** (`archives.yml`) on the exact release commit. Each runtime runs the solution tests before packaging, then verifies the portable and installed copies. The publisher requires a successful run and all package files for that commit. Its smoke matrix downloads the newly published assets and runs the distribution checks again.
 
-Budget three minutes for the local suite and 20 minutes for the normal matrix. Apply the Keel flaky-test policy and record evidence in VERIFICATION.md.
+Budget three minutes for the local suite. Hosted jobs allow 15 minutes for source CI, 20 minutes for archive verification, and 10 minutes each for publication and published-download checks. Apply the Keel flaky-test policy and record evidence in [VERIFICATION.md](VERIFICATION.md).

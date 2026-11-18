@@ -12,7 +12,7 @@ Plico is a desktop paperwork inbox for people who need to collect receipts, lett
 
 ## Surfaces
 
-Windows, macOS, and desktop Linux ship in the first release. The desktop app owns file import, scanner discovery, review, search, and access to the underlying folder. Its core workflow runs offline.
+Plico ships for Windows x64 and ARM64, macOS Intel and Apple silicon, and Ubuntu x64 and ARM64. The desktop app owns file import, scanner discovery, review, search, and access to the underlying folder. Its core workflow runs offline. [Release targets](keel.json)
 
 ## Experience
 
@@ -26,10 +26,10 @@ New pages land in the Inbox after processing. A person can select a result, see 
 4. Add a multipage scan from a compatible local driver or network scanner. Exercise capture options against a real device when one is available.
 5. Launch the extracted release and complete the import/search journey on clean runners for Windows, macOS, and Linux.
 
-## First-release boundaries
+## Product boundaries
 
 - A personal library on one machine at a time. Shared editing, synchronization, and hosted access need a separate design.
-- Bundled English OCR. Additional languages can follow without changing the library format.
+- Bundled English, French, German, and Spanish OCR.
 - PDF and common document images. Office conversion needs a separate import adapter.
 
 ## Risks and decisions to validate
@@ -44,7 +44,7 @@ New pages land in the Inbox after processing. A person can select a result, see 
 ## Assumptions
 
 - Ruling. Plico's GitHub repository is public at the owner's request.
-- Ruling. Start with Windows x64, macOS Apple silicon, and Linux x64. Additional architectures incur native-package and verification work.
+- Ruling. Additional architectures enter Tier 1 once their OCR, scanner dependencies, and package launches can be verified on native runners. [Platform decisions](docs/adr/002-platform-support.md)
 
 ## Provenance
 

@@ -16,7 +16,7 @@ The Windows executable and setup are unsigned. Microsoft Defender SmartScreen ma
 
 Windows setup installs for your user and adds **Plico** to the Start menu and **Installed apps**. Uninstall preserves the library folder and its contents.
 
-On Linux, Plico uses X11 or XWayland. The Debian package declares its runtime libraries. A minimal Ubuntu installation using the portable tar.gz may need `libx11-6`, `libice6`, `libsm6`, `libfontconfig1`, and `libicu74`. [.NET on Ubuntu](https://learn.microsoft.com/en-us/dotnet/core/install/linux-ubuntu-install)
+On Linux, Plico uses X11 or XWayland. The Debian package declares its runtime libraries. On a minimal Ubuntu installation, install the same libraries to use the portable tar.gz. [Package dependencies](https://github.com/itsdanielyc/plico/blob/main/scripts/linux/control.in) · [.NET on Ubuntu](https://learn.microsoft.com/en-us/dotnet/core/install/linux-ubuntu-install)
 
 ## Use Plico
 
@@ -24,7 +24,7 @@ On Linux, Plico uses X11 or XWayland. The Debian package declares its runtime li
 2. Select a document to preview it and add tags. **Mark reviewed** takes it out of the Inbox.
 3. Search by name or document text, including documents you already reviewed. Choose a tag to narrow the results.
 
-Use **Intake folder…** in the Library sidebar to send added files, dropped files, manual retries, and scans to an existing folder inside `PDFs/`. With a custom folder selected, turn on **Include watched scans** to file new arrivals and catch-up scans there too. Plico remembers both choices for each library on this computer. New PDFs still appear in the Inbox for review. Choose `PDFs/` to file at the top level again. If the folder has moved or been deleted, choose an available folder before retrying.
+Use **Intake folder…** in the Library sidebar to send added files, dropped files, and direct scans to an existing folder inside `PDFs/`. With a custom folder selected, turn on **Include watched scans** to file new arrivals and catch-up scans there too. Plico remembers both choices for each library on this computer. New PDFs still appear in the Inbox for review. Choose `PDFs/` to file at the top level again. If the folder has moved or been deleted, choose an available folder before retrying.
 
 Select a language in **OCR** for scans, imports, and searchable copies. Plico remembers the choice and uses that bundled model for recognition.
 
@@ -64,7 +64,7 @@ Start typing in either tag field to reuse a tag from the current library. Use th
 
 Use **Sort** to browse by newest added, title A–Z, or document date. **Document date** puts the newest recorded dates first, followed by undated documents. **Automatic** puts the best matches first during a text search and the most recent documents first while browsing.
 
-Use Ctrl or Shift when selecting rows, or choose **Select shown** to select the loaded results. Use **Tag selected** to apply a tag to the whole selection. The batch control can mark the selection reviewed or return reviewed documents to the inbox.
+Ctrl-click (Command-click on macOS) toggles individual rows, and Shift-click selects a range. Choose **Select shown** to select the loaded results. Use **Tag selected** to apply a tag to the whole selection. The batch control can mark the selection reviewed or return reviewed documents to the inbox.
 
 Choose **Remove tag…** to remove one tag from the selected PDFs. The chooser shows how many of the selected PDFs carry each tag.
 
@@ -104,7 +104,7 @@ To correct a PDF’s OCR, choose the language in **OCR** and select **Create OCR
 
 Select several PDFs and choose **Create OCR copies** to process them in the current OCR language. **OCR results** shows which copies were added or reused, which inputs failed, and which remain after cancellation. New copies appear in Inbox.
 
-Plico v0.16.0 upgrades the library catalog to version 9. Use a build with version 9 support to open an upgraded library.
+Plico v0.16.0 introduced library catalog version 10. A library upgraded to version 10 needs a build that supports that version.
 
 To make a copy while Plico is open, choose **Back up library…** and select a destination outside the current library. Plico creates a dated folder with the PDFs and their catalog. **Open backup** shows that folder in the file manager. Choose the folder as a library to reopen it in Plico.
 
@@ -141,20 +141,19 @@ Plico remembers the chosen folder for the current library. **Resume folder watch
 
 Enable **Catch up on open** to resume the saved watch and check existing scans whenever you open that library on this computer. **Stop watching** pauses the current session. Use the checkbox to control future opens.
 
-Choose **Import existing files** while a watch is active to check its current files again. Exact copies already in the library are skipped.
+Choose **Import existing files** while a watch is active to check its current files, including unchanged scans. Exact copies already in the library are skipped.
 
-If the operating system reports lost notifications, Plico checks the folder again and queues scans that appeared or changed during the watch. **Import existing files** is still available for older files.
+Automatic intake compares a settled scan’s size and modification time with its last known version. If the operating system reports lost notifications, Plico checks the folder again and queues scans that appeared or changed during the watch.
 
 ## Development
 
-Use the .NET SDK in [global.json](global.json).
+Use the pinned .NET SDK version. [global.json](https://github.com/itsdanielyc/plico/blob/main/global.json)
 
 ```sh
 dotnet run --project src/Plico.Desktop
 dotnet test Plico.slnx -c Release
 ```
 
-Native verification commands are in [keel.json](keel.json).
-See [the product brief](PRODUCT.md), [roadmap](PLAN.md), and [verification ledger](VERIFICATION.md).
+Native verification commands and project records are available in the repository. [keel.json](https://github.com/itsdanielyc/plico/blob/main/keel.json) · [Product brief](https://github.com/itsdanielyc/plico/blob/main/PRODUCT.md) · [Roadmap](https://github.com/itsdanielyc/plico/blob/main/PLAN.md) · [Verification ledger](https://github.com/itsdanielyc/plico/blob/main/VERIFICATION.md)
 
 Use `gh workflow run archives.yml --ref <release-branch>` to verify a release candidate. Wait for the solution tests and package checks on all six runtimes before tagging that commit.

@@ -6,6 +6,6 @@ Add Windows ARM64 to Tier 1 using the `windows-11-arm` runner. Both its ZIP and 
 
 The NSIS setup stub runs through Windows 11's x86 emulation. It checks the host before installing the ARM64 payload. Installed-app verification checks the runtime identifier from inside Plico, which also proves the architecture when the build shell uses an emulated runtime.
 
-The release gate requires the ordinary CI and both package journeys for this target. Its portable and setup assets are included in the published-download checks.
+Archive verification runs the solution tests and both Windows ARM64 package journeys. The release gate requires a successful archive run on the exact tagged commit. Fresh runners verify the checksums and both package formats after publication. [Archive workflow](../../.github/workflows/archives.yml) · [Release workflow](../../.github/workflows/release.yml)
 
 [Windows 11 ARM64 runner](https://github.com/actions/partner-runner-images/blob/main/README.md) · [Windows on Arm emulation](https://learn.microsoft.com/en-us/windows/arm/apps-on-arm-x86-emulation)

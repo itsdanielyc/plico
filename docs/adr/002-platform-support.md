@@ -2,6 +2,8 @@
 
 Accepted 2026-11-18
 
+The first release used the tiers below. Later decisions added Intel macOS, ARM64 Ubuntu, and Windows ARM64. [ADR 003](003-desktop-architectures.md) · [ADR 004](004-windows-arm64.md) · [Current tiers](../../keel.json)
+
 | Keel tier | Targets | Promise |
 | --- | --- | --- |
 | 1 | Windows x64, macOS Apple silicon, Linux x64 | Every mainline change passes native startup and library verification on its hosted runner. Release archives pass the same workflow after extraction. |
@@ -10,6 +12,6 @@ Accepted 2026-11-18
 
 Runner baseline is Windows Server 2025, macOS 26, and Ubuntu 24.04. Advertise Windows 11 x64, macOS 26 Apple silicon, and Ubuntu 24.04 x64 initially. Record claims for earlier OS versions or extra distributions after direct testing.
 
-Each check costs one hosted job per platform. Release smoke checks run an additional three-job matrix against the assets. Physical scanner support is exercised separately from hosted GUI coverage. Initial capture targets Windows WIA, Linux SANE, and network eSCL on all three platforms.
+The initial release plan assigned one hosted job per platform and three additional published-download smoke checks. Physical scanner support is exercised separately from hosted GUI coverage. Initial capture targeted Windows WIA, Linux SANE, and network eSCL on all three platforms.
 
 [GitHub-hosted runner reference](https://docs.github.com/en/actions/reference/runners/github-hosted-runners)
