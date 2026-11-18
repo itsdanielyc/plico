@@ -178,6 +178,15 @@ internal sealed class DocumentProcessor(string dataDirectory)
 
     internal static string ReadPageText(ReadablePage page) => ContentOrderTextExtractor.GetText(page).Trim();
 
+    internal static string ReadPageText(string path, int pageNumber, CancellationToken cancellationToken) =>
+        WithReadablePdf(path, pdf =>
+        {
+            cancellationToken.ThrowIfCancellationRequested();
+            if (pageNumber > pdf.NumberOfPages)
+                throw new InvalidDataException("The PDF’s page count changed. Refresh the index and try again.");
+            return ReadPageText(pdf.GetPage(pageNumber));
+        });
+
     internal static TResult WithReadablePdf<TResult>(string path, Func<ReadablePdf, TResult> read)
     {
         try

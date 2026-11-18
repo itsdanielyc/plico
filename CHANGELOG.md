@@ -37,6 +37,7 @@
 - See the pending review count beside Inbox. Watched imports keep the current preview and loaded pages in view and offer a results refresh when needed.
 - Search and save review queues with `status:inbox` and find completed reviews with `status:reviewed`.
 - See how to fix incomplete, malformed, or conflicting search filters in the results pane.
+- Read and select the current page’s text directly in the preview, including after jumping to a search match.
 
 ## [0.15.0] - 2026-11-18
 

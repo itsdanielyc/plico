@@ -95,6 +95,20 @@ public sealed partial class InboxLibrary : IDisposable
     /// <exception cref="InvalidOperationException">The document is unavailable in the catalog.</exception>
     public string ReadIndexedText(long documentId) => _catalog.ReadIndexedText(documentId);
 
+    /// <summary>Reads the embedded text on one page of the library PDF, or an empty string for a page without text.</summary>
+    /// <param name="document">The current library record for the PDF.</param>
+    /// <param name="pageNumber">The one-based page number.</param>
+    /// <param name="cancellationToken">Cancels the request before its text is returned.</param>
+    /// <exception cref="ArgumentOutOfRangeException">The page falls outside the catalog record.</exception>
+    /// <exception cref="InvalidDataException">The PDF cannot be read or its page count no longer includes the page.</exception>
+    public string ReadPageText(DocumentSummary document, int pageNumber, CancellationToken cancellationToken = default)
+    {
+        ArgumentNullException.ThrowIfNull(document);
+        ArgumentOutOfRangeException.ThrowIfLessThan(pageNumber, 1);
+        ArgumentOutOfRangeException.ThrowIfGreaterThan(pageNumber, document.PageCount);
+        return ReadStablePdf(document, path => DocumentProcessor.ReadPageText(path, pageNumber, cancellationToken), cancellationToken);
+    }
+
     /// <summary>Returns the first one-based page whose embedded text matches the text terms in the query, or null.</summary>
     public int? FindFirstMatchingPage(DocumentSummary document, string query, CancellationToken cancellationToken = default) =>
         FindMatchingPage(document, query, 0, PageMatchDirection.Forward, cancellationToken);
@@ -120,15 +134,21 @@ public sealed partial class InboxLibrary : IDisposable
         var search = SearchTerms.Compile(query);
         if (!search.IsValid || search.FullTextExpression.Length == 0) return null;
 
+        return ReadStablePdf(document,
+            path => PdfPageSearch.FindMatch(path, search.FullTextExpression, anchorPage, direction, cancellationToken), cancellationToken);
+    }
+
+    private TResult ReadStablePdf<TResult>(DocumentSummary document, Func<string, TResult> read, CancellationToken cancellationToken)
+    {
         _pdfFileAccess.Wait(cancellationToken);
         try
         {
             string path = ResolvePdf(document);
             var version = FileVersion.Read(path);
-            int? page = PdfPageSearch.FindMatch(path, search.FullTextExpression, anchorPage, direction, cancellationToken);
+            TResult result = read(path);
             cancellationToken.ThrowIfCancellationRequested();
             EnsureCurrentFile(path, version);
-            return page;
+            return result;
         }
         finally
         {

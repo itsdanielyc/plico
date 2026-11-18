@@ -56,6 +56,8 @@ The preview shows the whole page by default. **Fit width** fills the available r
 
 **Copy text** sits beside the page controls when the selected PDF has searchable text. The status bar confirms a successful copy.
 
+**Read text** displays the current page as scrollable, selectable text beside the same navigation controls. **Show page** returns to the image at the current page. A new selection opens in page view. An image-only page in a searchable PDF shows a message and keeps the navigation available.
+
 **Create searchable copy** appears beneath the preview of a PDF without searchable text. **Create OCR copy** runs recognition again on a PDF with text. The header’s OCR selector supplies the language. A new copy appears in the inbox with the source tags.
 
 Keep labels present on actions. Use a polite live region for processing status. Keep the PDF accessible by keyboard and show a visible response for unavailable previews.

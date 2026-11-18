@@ -67,6 +67,8 @@ Result ordering runs in SQLite before the page limit. Newest added follows catal
 
 Copy text reads the body from the selected catalog record and passes plain text to the operating system clipboard. The catalog checks that the record is present.
 
+The page text view reads the library PDF through the file gate shared with matching-page navigation. It extracts the requested page using the same text reader as the index, then checks the file stamp. Changing page, document, or view mode cancels the previous request. The desktop displays a single page using a selectable, read-only text control. [Avalonia selectable text](https://docs.avaloniaui.net/controls/data-display/text-display/selectabletextblock)
+
 Search input is compiled into a parameterized FTS5 expression. Ordinary words are prefix terms, and completed quoted phrases use adjacent whole tokens. [SQLite FTS5 query syntax](https://www.sqlite.org/fts5.html#full_text_query_syntax)
 
 The query compiler extracts tag clauses and normalizes their keys with the same rule as catalog tags. SQLite joins the requested keys through the tag index and returns documents containing every key. Page matching uses the text expression from that same compiler.

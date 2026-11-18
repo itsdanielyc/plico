@@ -42,6 +42,12 @@ internal sealed partial class InboxViewModel : ObservableObject, IDisposable
     [NotifyPropertyChangedFor(nameof(HasPreview))]
     private Bitmap? _preview;
     [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(HasPageText))]
+    private string _pageText = "";
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(PageTextAction))]
+    private bool _isPageTextView;
+    [ObservableProperty]
     [NotifyPropertyChangedFor(nameof(PreviewFitAction))]
     private bool _fitPreviewWidth;
     [ObservableProperty] private bool _isBusy;
@@ -82,6 +88,8 @@ internal sealed partial class InboxViewModel : ObservableObject, IDisposable
     public bool CanGoForward => _pageNumber < SelectedDocument?.PageCount;
     public bool HasPreviewMessage => PreviewMessage.Length > 0;
     public bool HasPreview => Preview is not null;
+    public bool HasPageText => PageText.Length > 0;
+    public string PageTextAction => IsPageTextView ? "Show page" : "Read text";
     public string PreviewFitAction => FitPreviewWidth ? "Fit page" : "Fit width";
     public bool HasNoSearchableText => SelectedDocument is { HasText: false };
 
@@ -167,6 +175,14 @@ internal sealed partial class InboxViewModel : ObservableObject, IDisposable
         if (HasMore) LoadResults(append: true);
     }
     [RelayCommand] private void TogglePreviewFit() => FitPreviewWidth = !FitPreviewWidth;
+
+    [RelayCommand]
+    private void TogglePageText()
+    {
+        if (SelectedDocument is not { HasText: true }) return;
+        IsPageTextView = !IsPageTextView;
+        RequestPreview();
+    }
     [RelayCommand] private void OpenPdfFolder() => OpenPath(() => RequireLibrary().PdfDirectory);
 
     [RelayCommand]
@@ -457,7 +473,13 @@ internal sealed partial class InboxViewModel : ObservableObject, IDisposable
 
     private void UpdateSelection(DocumentSummary? oldValue, DocumentSummary? newValue, bool reloadPreview = false)
     {
-        if (oldValue?.Id != newValue?.Id || (newValue is not null && _pageNumber > newValue.PageCount))
+        bool changedDocument = oldValue?.Id != newValue?.Id;
+        if (IsPageTextView && (changedDocument || newValue is not { HasText: true }))
+        {
+            IsPageTextView = false;
+            reloadPreview = true;
+        }
+        if (changedDocument || (newValue is not null && _pageNumber > newValue.PageCount))
         {
             _pageNumber = 1;
             reloadPreview = true;
@@ -501,20 +523,34 @@ internal sealed partial class InboxViewModel : ObservableObject, IDisposable
         if (_library is not { } library || SelectedDocument is not { } document) return;
         var request = new CancellationTokenSource();
         _previewCancellation = request;
-        _ = RenderPreviewAsync(library, document, _pageNumber, request);
+        if (IsPageTextView) PreviewMessage = "Reading page text…";
+        _ = LoadPreviewAsync(library, document, _pageNumber, IsPageTextView, request);
     }
 
-    private async Task RenderPreviewAsync(InboxLibrary library, DocumentSummary document, int page, CancellationTokenSource request)
+    private async Task LoadPreviewAsync(InboxLibrary library, DocumentSummary document, int page, bool readText,
+        CancellationTokenSource request)
     {
         try
         {
-            using var rendered = await Task.Run(() => library.RenderPageAsync(document, page, request.Token), request.Token);
-            if (!request.IsCancellationRequested) Preview = new Bitmap(rendered);
+            var token = request.Token;
+            if (readText)
+            {
+                string text = await Task.Run(() => library.ReadPageText(document, page, token), token);
+                if (token.IsCancellationRequested) return;
+                PageText = text;
+                PreviewMessage = text.Length == 0 ? "This page has no searchable text." : "";
+                return;
+            }
+
+            using var rendered = await Task.Run(() => library.RenderPageAsync(document, page, token), token);
+            if (!token.IsCancellationRequested) Preview = new Bitmap(rendered);
         }
         catch (OperationCanceledException) when (request.IsCancellationRequested) { }
         catch (Exception)
         {
-            if (!request.IsCancellationRequested) PreviewMessage = "Preview unavailable. Try opening the PDF.";
+            if (!request.IsCancellationRequested) PreviewMessage = readText
+                ? "Page text unavailable. Try refreshing the index."
+                : "Preview unavailable. Try opening the PDF.";
         }
         finally
         {
@@ -526,6 +562,7 @@ internal sealed partial class InboxViewModel : ObservableObject, IDisposable
     private void CancelPreview()
     {
         _previewCancellation?.Cancel();
+        PageText = "";
         var previous = Preview;
         Preview = null;
         previous?.Dispose();

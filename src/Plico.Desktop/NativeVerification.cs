@@ -55,6 +55,7 @@ internal static partial class NativeVerification
                     document.Match.Contains(ReceiptKeyword, StringComparison.OrdinalIgnoreCase),
                 "The reviewed and tagged PDF was not found by OCR text.");
             await CaptureAsync(window, evidenceDirectory, "search.png");
+            await VerifyPageTextViewAsync(window, model, evidenceDirectory);
             await VerifySearchQueryFeedbackAsync(window, model, evidenceDirectory);
             await VerifyDropAsync(window, model, fixture, evidenceDirectory);
             await VerifyWatchedFolderAsync(window, model, fixture, evidenceDirectory);
@@ -87,7 +88,7 @@ internal static partial class NativeVerification
             await VerifyDocumentDateAsync(window, model, dialogs, evidenceDirectory);
 
             File.WriteAllText(Path.Combine(evidenceDirectory, "passed.txt"),
-                $"Verified {runtime}. Native window completed multilingual OCR and correction, oriented JPEG and multi-page TIFF import, PDF combination, page extraction and rotation, phrase, tag, and review-status search, query correction, saved search restoration, document-date editing, filtering, and inheritance, result sorting, fit-width preview, match navigation, tag merging and suggestions, duplicate drop, folder watch and inbox counting, title edit, single and batch PDF moves, external relocation, selected PDF export, library backup, text copy, searchable PDF copy, and import retry. {scanRecoveryEvidence}");
+                $"Verified {runtime}. Native window completed multilingual OCR and correction, oriented JPEG and multi-page TIFF import, PDF combination, page extraction and rotation, phrase, tag, and review-status search, query correction, saved search restoration, document-date editing, filtering, and inheritance, result sorting, fit-width and selectable page text previews, match navigation, tag merging and suggestions, duplicate drop, folder watch and inbox counting, title edit, single and batch PDF moves, external relocation, selected PDF export, library backup, text copy, searchable PDF copy, and import retry. {scanRecoveryEvidence}");
             desktop.Shutdown(0);
         }
         catch (Exception error)
@@ -160,7 +161,17 @@ internal static partial class NativeVerification
         Require(model.SelectedDocument?.Id == document.Id && jump.Command is IAsyncRelayCommand,
             "The mixed PDF’s search result did not offer a matching page.");
 
+        var read = Control<Button>(window, "ReadPageTextButton");
+        read.Command!.Execute(null);
+        await UntilAsync(() => model.PageText.Contains(LetterKeyword, StringComparison.OrdinalIgnoreCase), () => model.PreviewMessage);
         await ((IAsyncRelayCommand)jump.Command!).ExecuteAsync(jump.CommandParameter);
+        await UntilAsync(() => model.PageLabel == "2 / 2" &&
+            model.PageText.Contains(ReceiptKeyword, StringComparison.OrdinalIgnoreCase), () => model.PreviewMessage);
+        Require(!model.PageText.Contains(LetterKeyword, StringComparison.OrdinalIgnoreCase),
+            "The matching-page text still contained words from the previous page.");
+        await CaptureAsync(window, directory, "page-text-match.png");
+
+        read.Command.Execute(null);
         await UntilAsync(() => model.PageLabel == "2 / 2" && model.Preview is not null, () => model.Status);
         await CaptureAsync(window, directory, "matching-page.png");
     }

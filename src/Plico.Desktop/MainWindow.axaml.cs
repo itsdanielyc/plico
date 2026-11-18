@@ -19,6 +19,13 @@ public sealed partial class MainWindow : Window
         {
             if (change.Property == Image.SourceProperty) PreviewScroll.Offset = default;
         };
+        PageTextContent.PropertyChanged += (_, change) =>
+        {
+            if (change.Property != TextBlock.TextProperty) return;
+            PageTextContent.SelectionStart = 0;
+            PageTextContent.SelectionEnd = 0;
+            PageTextScroll.Offset = default;
+        };
     }
 
     protected override void OnKeyDown(KeyEventArgs e)

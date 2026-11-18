@@ -335,26 +335,38 @@
                                 <Border Grid.Row="1" Background="#EAEFE6" CornerRadius="8" Padding="12" ClipToBounds="True">
                                     <Grid RowDefinitions="*,Auto" RowSpacing="7">
                                         <ScrollViewer x:Name="PreviewScroll" Classes="pdf-preview" Classes.fitWidth="{Binding FitPreviewWidth}"
-                                                      Focusable="{Binding FitPreviewWidth}" AutomationProperties.Name="PDF page preview">
+                                                      Focusable="{Binding FitPreviewWidth}" IsVisible="{Binding !IsPageTextView}"
+                                                      AutomationProperties.Name="PDF page preview">
                                             <Image x:Name="PreviewPage" Source="{Binding Preview}" Stretch="Uniform" />
                                         </ScrollViewer>
+                                        <ScrollViewer x:Name="PageTextScroll" IsVisible="{Binding HasPageText}"
+                                                      HorizontalScrollBarVisibility="Disabled" VerticalScrollBarVisibility="Auto">
+                                            <SelectableTextBlock x:Name="PageTextContent" Text="{Binding PageText}" TextWrapping="Wrap"
+                                                                 Padding="12,8" FontSize="15" LineHeight="22" Focusable="True" />
+                                        </ScrollViewer>
                                         <TextBlock Text="{Binding PreviewMessage}" IsVisible="{Binding HasPreviewMessage}"
-                                                   HorizontalAlignment="Center" VerticalAlignment="Center" TextWrapping="Wrap" />
-                                        <Grid Grid.Row="1" ColumnDefinitions="*,Auto,*" ColumnSpacing="4">
+                                                   HorizontalAlignment="Center" VerticalAlignment="Center" TextWrapping="Wrap"
+                                                   AutomationProperties.LiveSetting="Polite" />
+                                        <Grid Grid.Row="1" ColumnDefinitions="Auto,*,Auto" ColumnSpacing="4">
                                             <Button x:Name="CopyDocumentTextButton" Classes="secondary" HorizontalAlignment="Left"
                                                     Content="Copy text" Command="{Binding CopyDocumentTextCommand}"
                                                     IsVisible="{Binding !HasNoSearchableText}" IsEnabled="{Binding CanWork}" Padding="8,3"
                                                     AutomationProperties.Name="Copy document text" ToolTip.Tip="Copy the searchable text from all pages" />
-                                            <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="8">
+                                            <StackPanel Grid.Column="1" x:Name="PreviewPageNavigation" Orientation="Horizontal"
+                                                        HorizontalAlignment="Center" Spacing="8">
                                                 <Button Content="‹" Command="{Binding PreviousPageCommand}" IsEnabled="{Binding CanGoBack}"
                                                         AutomationProperties.Name="Previous page" Padding="9,3" />
                                                 <TextBlock Text="{Binding PageLabel}" Classes="muted" VerticalAlignment="Center" />
                                                 <Button Content="›" Command="{Binding NextPageCommand}" IsEnabled="{Binding CanGoForward}"
                                                         AutomationProperties.Name="Next page" Padding="9,3" />
                                             </StackPanel>
-                                            <Button Grid.Column="2" x:Name="PreviewFitButton" Classes="secondary" HorizontalAlignment="Right"
-                                                    Content="{Binding PreviewFitAction}" Command="{Binding TogglePreviewFitCommand}"
-                                                    IsEnabled="{Binding HasPreview}" Padding="8,3" />
+                                            <StackPanel Grid.Column="2" Orientation="Horizontal" HorizontalAlignment="Right" Spacing="4">
+                                                <Button x:Name="ReadPageTextButton" Classes="secondary" Content="{Binding PageTextAction}"
+                                                        Command="{Binding TogglePageTextCommand}" IsVisible="{Binding !HasNoSearchableText}" Padding="8,3" />
+                                                <Button x:Name="PreviewFitButton" Classes="secondary"
+                                                        Content="{Binding PreviewFitAction}" Command="{Binding TogglePreviewFitCommand}"
+                                                        IsEnabled="{Binding HasPreview}" IsVisible="{Binding !IsPageTextView}" Padding="8,3" />
+                                            </StackPanel>
                                         </Grid>
                                     </Grid>
                                 </Border>

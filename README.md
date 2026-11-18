@@ -80,6 +80,8 @@ After the first jump, use **Previous match** and **Next match** to move through 
 
 Choose **Copy text** to copy the searchable text from all pages of the selected PDF.
 
+Choose **Read text** to read and select the text on the current page. It follows the page controls and search jumps. Choose **Show page** to return to the PDF image.
+
 The library starts under Documents/Plico. Select the library name in the sidebar to choose another folder. **Show PDF folder** opens the `PDFs/` directory. **Refresh index** picks up PDFs that you add, edit, or remove on disk. To move or back up a library with its tags, close Plico and copy the entire directory, including `.plico/`. Digital PDFs with text on every page are copied unchanged.
 
 When a scan copied into `PDFs/` needs OCR, choose **Create searchable copy** in its preview. Plico adds a searchable PDF to the inbox with the scan’s tags.
