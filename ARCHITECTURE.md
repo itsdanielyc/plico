@@ -25,7 +25,7 @@ JPEG intake reads the image origin with Skia. For a rotation or reflection, Plic
 
 Batch review and tagging update the selected IDs in one SQLite transaction. A row-count check preserves the selection's previous state if a document became unavailable. The desktop restores matching selections after the tag update.
 
-Batch tag removal counts labels from the current selection. The catalog validates the selected IDs and deletes the chosen tag's matching document links in the same transaction. It reports how many assignments changed. Other links and the catalog label remain available for future use.
+Batch tag removal counts labels from the current selection. The catalog validates the selected IDs and deletes the chosen tag's matching document links in the same transaction. It reports how many assignments changed.
 
 Tag renaming updates the label for a capitalization change or moves the catalog links to the destination key. The transaction includes links on missing PDFs so they follow the new tag when the file returns. A merge keeps the destination’s label and uses its existing document links once.
 
