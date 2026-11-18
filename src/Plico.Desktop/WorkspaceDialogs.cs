@@ -23,9 +23,9 @@ internal sealed class WorkspaceDialogs(Window owner) : IWorkspaceDialogs
 {
     private static readonly FilePickerFileType SupportedDocuments = new("PDF and images")
     {
-        Patterns = ["*.pdf", "*.png", "*.jpg", "*.jpeg", "*.PDF", "*.PNG", "*.JPG", "*.JPEG"],
-        MimeTypes = ["application/pdf", "image/png", "image/jpeg"],
-        AppleUniformTypeIdentifiers = ["com.adobe.pdf", "public.png", "public.jpeg"]
+        Patterns = ["*.pdf", "*.png", "*.jpg", "*.jpeg", "*.tif", "*.tiff", "*.PDF", "*.PNG", "*.JPG", "*.JPEG", "*.TIF", "*.TIFF"],
+        MimeTypes = ["application/pdf", "image/png", "image/jpeg", "image/tiff"],
+        AppleUniformTypeIdentifiers = ["com.adobe.pdf", "public.png", "public.jpeg", "public.tiff"]
     };
 
     public async Task<IReadOnlyList<string>> PickDocumentsAsync()

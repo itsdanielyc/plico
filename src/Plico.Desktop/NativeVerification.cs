@@ -69,10 +69,11 @@ internal static class NativeVerification
             await VerifyGoToMatchAsync(window, model, evidenceDirectory);
             await VerifyTagMergeAsync(window, model, dialogs, evidenceDirectory);
             await VerifySearchableCopyAsync(window, model, fixture, evidenceDirectory);
+            await VerifyTiffImportAsync(window, model, dialogs, fixture, evidenceDirectory);
             await VerifyScannerDialogAsync(window, evidenceDirectory);
 
             File.WriteAllText(Path.Combine(evidenceDirectory, "passed.txt"),
-                $"Verified {runtime}. Native window completed multilingual OCR, phrase and tag search, result sorting, fit-width preview, match navigation, tag merging, duplicate drop, folder watch, title edit, relocation, batch actions, selected PDF export, library backup, text copy, searchable PDF copy, and import retry.");
+                $"Verified {runtime}. Native window completed multilingual OCR, multi-page TIFF import, phrase and tag search, result sorting, fit-width preview, match navigation, tag merging, duplicate drop, folder watch, title edit, relocation, batch actions, selected PDF export, library backup, text copy, searchable PDF copy, and import retry.");
             desktop.Shutdown(0);
         }
         catch (Exception error)
@@ -222,6 +223,23 @@ internal static class NativeVerification
         {
             dialogs.TagRenameChoice = null;
         }
+    }
+
+    private static async Task VerifyTiffImportAsync(MainWindow window, InboxViewModel model, FixtureDialogs dialogs,
+        string fixture, string directory)
+    {
+        string tiff = Path.Combine(Path.GetDirectoryName(fixture)!, "Scanner pages.TIFF");
+        dialogs.SelectedFiles = [tiff];
+        await ((IAsyncRelayCommand)Control<Button>(window, "AddFilesButton").Command!).ExecuteAsync(null);
+        var imported = model.SelectedDocument ?? throw new InvalidOperationException("The TIFF import did not select a document.");
+        Require(imported is { Title: "Scanner pages", PageCount: 2, HasText: true } && Path.GetExtension(imported.RelativePath) == ".pdf",
+            $"The TIFF scan did not become one searchable PDF containing both pages. {model.Status}");
+        Control<TextBox>(window, "SearchBox").SetCurrentValue(TextBox.TextProperty, ReceiptKeyword);
+        var jump = Control<Button>(window, "GoToMatchButton");
+        await UntilAsync(() => model.SelectedDocument?.Id == imported.Id && jump.IsVisible && jump.IsEnabled, () => model.Status);
+        await ((IAsyncRelayCommand)jump.Command!).ExecuteAsync(jump.CommandParameter);
+        await UntilAsync(() => model.PageLabel == "2 / 2" && model.Preview is not null, () => model.Status);
+        await CaptureAsync(window, directory, "tiff-import.png");
     }
 
     private static async Task VerifyImportErrorsAsync(MainWindow window, InboxViewModel model, FixtureDialogs dialogs,

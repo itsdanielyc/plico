@@ -39,5 +39,6 @@
 | 34 | Combine candidate verification | A release candidate runs solution tests and both package formats in one matrix. Publication requires a successful run for the tag’s exact commit and the complete set of tested packages. | L0, L3, L6, L7 | Gate and x64 package sequence tested locally (L0, L3, L6). Hosted matrix pending. |
 | 35 | Search by several tags | Typed tag clauses match every requested tag and combine with the sidebar filter and text terms. The preview jumps to the page that matches the text portion. | L3, L4, L6 | Tested locally on Windows x64 and Ubuntu x64 (L3, L4, L6) |
 | 36 | Rename and merge tags | A sidebar tag can be renamed across all catalog records. Merging requires an explicit action and preserves one link per document. A failed transaction leaves both sets of links available. | L3, L4, L6 | Tested locally on Windows x64 and Ubuntu x64 (L3, L4, L6) |
+| 37 | Import multi-page TIFF scans | TIFF intake creates one searchable PDF with all pages in order and honors their orientation and resolution. A damaged page stops publication, and the packages include the decoder notices. | L0, L3, L6, L7 | In progress |
 
 The initial release is followed by focused improvements and fresh evidence.

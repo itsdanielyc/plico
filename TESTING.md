@@ -29,6 +29,7 @@
 16. Export selected PDFs and open the resulting folder. Compare bytes, include case-insensitive filename collisions, and exercise cancellation and stale source paths (L3, L4 and L6).
 17. Combine two tag clauses and OCR text. Check exact tag matching, quoted labels, duplicate keys, incomplete input, and the matching-page jump (L3, L4 and L6).
 18. Change a tag’s capitalization, rename one that belongs to a temporarily missing PDF, and merge into an existing tag. Check that a forced database error rolls back all links and that the dialog requires an explicit merge action (L3, L4 and L6).
+19. Import `Scanner pages.TIFF`, which contains a Group 4 page and a rotated LZW page. Search both pages by embedded OCR text, check the second page’s physical size, and verify that a truncated source publishes no PDF. Check the decoder notices in the archives (L3, L6 and L7).
 
 Run `dotnet test Plico.slnx -c Release` for the fast suite. Run the native harness from `keel.json` for installed-platform evidence. Visual review starts with per-OS captures and geometry checks. Add pixel baselines when repeatable runner captures justify the maintenance.
 

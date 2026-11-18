@@ -55,7 +55,7 @@ public sealed partial class InboxLibrary
         var extension = Path.GetExtension(sourcePath).ToLowerInvariant();
         if (!DocumentProcessor.SupportsExtension(extension))
         {
-            return Task.FromException<FileImportResult>(new InvalidDataException("Choose a PDF, PNG, or JPEG file."));
+            return Task.FromException<FileImportResult>(new InvalidDataException("Choose a PDF, PNG, JPEG, or TIFF file."));
         }
 
         string title = Path.GetFileNameWithoutExtension(sourcePath);

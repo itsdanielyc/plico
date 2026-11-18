@@ -17,6 +17,7 @@ namespace Plico.Core;
 internal sealed class DocumentProcessor(string dataDirectory)
 {
     internal const string PdfExtension = ".pdf";
+    private const string NormalizedTiffPdf = "tiff-pages.pdf";
     private const int OcrTimeoutSecondsPerPage = 90;
     private const int PreviewPixelLimit = 900;
     private static readonly HashSet<string> ImageExtensions = new(StringComparer.OrdinalIgnoreCase)
@@ -26,13 +27,17 @@ internal sealed class DocumentProcessor(string dataDirectory)
 
     internal static bool IsPdf(string extension) => string.Equals(extension, PdfExtension, StringComparison.OrdinalIgnoreCase);
 
-    internal static bool SupportsExtension(string extension) => IsPdf(extension) || ImageExtensions.Contains(extension);
+    internal static bool SupportsExtension(string extension) => IsPdf(extension) || IsTiff(extension) || ImageExtensions.Contains(extension);
+
+    private static bool IsTiff(string extension) => string.Equals(extension, ".tif", StringComparison.OrdinalIgnoreCase) ||
+        string.Equals(extension, ".tiff", StringComparison.OrdinalIgnoreCase);
 
     internal async Task<PreparedPdf> PrepareAsync(string stagedSource, string outputPath,
         OcrLanguage language, CancellationToken cancellationToken)
     {
         string stagingDirectory = Path.GetDirectoryName(outputPath)!;
-        bool isPdf = IsPdf(Path.GetExtension(stagedSource));
+        string extension = Path.GetExtension(stagedSource);
+        bool isPdf = IsPdf(extension);
         if (isPdf)
         {
             var existing = ReadPdf(stagedSource, cancellationToken);
@@ -43,11 +48,24 @@ internal sealed class DocumentProcessor(string dataDirectory)
             }
         }
 
+        int? tiffPageCount = null;
+        if (IsTiff(extension))
+        {
+            string normalizedPdf = Path.Combine(stagingDirectory, NormalizedTiffPdf);
+            tiffPageCount = TiffPdfConverter.Convert(stagedSource, normalizedPdf, cancellationToken);
+            stagedSource = normalizedPdf;
+            isPdf = true;
+        }
+
         using var context = CreateCaptureContext(stagingDirectory);
         var pages = isPdf
             ? new PdfImporter(context).Import(stagedSource, progress: cancellationToken)
             : new ImageImporter(context).Import(stagedSource, progress: cancellationToken);
         var text = await ExportAsync(context, pages, outputPath, language, cancellationToken).ConfigureAwait(false);
+        if (tiffPageCount is int expected && text.PageCount != expected)
+        {
+            throw new InvalidDataException("The searchable PDF is missing pages from the TIFF scan.");
+        }
         return new(text, CopiedSource: false);
     }
 

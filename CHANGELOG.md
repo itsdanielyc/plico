@@ -14,6 +14,7 @@
 - Choose **Export PDFs…** to copy the current multi-selection into a dated folder.
 - Type `tag:` filters in the search box to require multiple tags alongside text terms.
 - Select a sidebar tag to rename it or merge its documents into an existing tag.
+- Import TIFF scans as searchable PDFs, including multi-page files.
 
 ## [0.15.0] - 2026-11-18
 

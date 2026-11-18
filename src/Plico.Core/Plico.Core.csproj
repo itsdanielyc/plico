@@ -1,9 +1,11 @@
 <Project Sdk="Microsoft.NET.Sdk">
   <ItemGroup>
+    <PackageReference Include="BitMiracle.LibTiff.NET" />
     <PackageReference Include="Microsoft.Data.Sqlite" />
     <PackageReference Include="NAPS2.Images.Skia" />
     <PackageReference Include="NAPS2.Sdk" />
     <PackageReference Include="PdfPig" />
+    <PackageReference Include="SkiaSharp" />
     <PackageReference Include="SkiaSharp.NativeAssets.Linux" />
     <InternalsVisibleTo Include="Plico.Tests" />
   </ItemGroup>

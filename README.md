@@ -20,11 +20,13 @@ On Linux, Plico uses X11 or XWayland. The Debian package declares its runtime li
 
 ## Use Plico
 
-1. Drop PDFs, PNGs, or JPEGs into Plico or select **Add files**. Select **Scan** to capture a new document.
+1. Drop PDFs, PNGs, JPEGs, or TIFF scans into Plico or select **Add files**. Select **Scan** to capture a new document.
 2. Select a document to preview it and add tags. **Mark reviewed** takes it out of the Inbox.
 3. Search by name or document text, including documents you already reviewed. Choose a tag to narrow the results.
 
 Select a language in **OCR** for scans, imports, and searchable copies. Plico remembers the choice and uses that bundled model for recognition.
+
+Plico imports a multi-page TIFF as one searchable PDF. The pages follow the scan’s order, orientation, and resolution.
 
 When an import fails, **Import errors** lists the source files and reasons. Fix the files and choose **Retry files** to process those inputs again.
 

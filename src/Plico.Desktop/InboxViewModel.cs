@@ -119,7 +119,7 @@ internal sealed partial class InboxViewModel : ObservableObject, IDisposable
     {
         if (!hasSupportedFile)
         {
-            Status = "Drop a PDF, PNG, or JPEG document.";
+            Status = "Drop a PDF, PNG, JPEG, or TIFF document.";
             return Task.CompletedTask;
         }
         return RunOperationAsync("Importing dropped files…", token => ImportFilesAsync(files, token));

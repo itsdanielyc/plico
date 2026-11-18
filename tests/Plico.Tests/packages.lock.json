@@ -238,19 +238,6 @@
           "SQLitePCLRaw.core": "2.1.13"
         }
       },
-      "Microsoft.Extensions.DependencyInjection.Abstractions": {
-        "type": "Transitive",
-        "resolved": "10.0.10",
-        "contentHash": "z/2xXlFw2aLGjHyEm6E0tQ+In6VfzQzTrtArbQ2c0TQE16ZbyDCMGPvaUT9I0s8rgy9sRWlU2P9waW37qV04qA=="
-      },
-      "Microsoft.Extensions.Logging.Abstractions": {
-        "type": "Transitive",
-        "resolved": "10.0.10",
-        "contentHash": "zkFxGYUvdxAvIKTyXHrmW+Sux53D4SezD9dMyZ6hrwwzPQJNuwCRy1f5W7AvYTqacEGhWF2XderRQG1OvbV8og==",
-        "dependencies": {
-          "Microsoft.Extensions.DependencyInjection.Abstractions": "10.0.10"
-        }
-      },
       "Microsoft.Testing.Extensions.Telemetry": {
         "type": "Transitive",
         "resolved": "1.9.1",
@@ -304,7 +291,6 @@
         "resolved": "1.6.1",
         "contentHash": "RAktGsVPL4sj08oxkgGte10BlesU76LmhScBzksei+kpx77zg4zXIWT1GUj8csUArVcLzbsZDS1fDPnDWSe50w==",
         "dependencies": {
-          "Microsoft.Extensions.Logging.Abstractions": "10.0.10",
           "NAPS2.Mdns": "1.0.1",
           "StandardSocketsHttpHandler": "2.2.0.10",
           "System.ValueTuple": "4.6.2"
@@ -370,15 +356,6 @@
         "type": "Transitive",
         "resolved": "1.0.1",
         "contentHash": "ljezRHWc7N0azdQViib7Aa5v+DagRVkKI2/93kEbtjVczLs+yTkSq6gtGmvOcx4IqyNbO3GjLt7SAQTpLkySNw=="
-      },
-      "SkiaSharp": {
-        "type": "Transitive",
-        "resolved": "4.156.0",
-        "contentHash": "bdBfG346spQvqwvdz7w8yoqquN7MmU89O+TJ9TwnwyFuqhHkBOQnLJ57euu+4XWi99a5uXikDMZmcM4q58HUXw==",
-        "dependencies": {
-          "SkiaSharp.NativeAssets.Win32": "4.156.0",
-          "SkiaSharp.NativeAssets.macOS": "4.156.0"
-        }
       },
       "SkiaSharp.NativeAssets.macOS": {
         "type": "Transitive",
@@ -531,17 +508,19 @@
           "CommunityToolkit.Mvvm": "[8.4.2, )",
           "NAPS2.Pdfium.Binaries": "[1.3.0, )",
           "NAPS2.Tesseract.Binaries": "[1.5.0, )",
-          "Plico.Core": "[0.1.0, )",
+          "Plico.Core": "[0.16.0, )",
           "SkiaSharp.NativeAssets.Linux": "[4.156.0, )"
         }
       },
       "plico.core": {
         "type": "Project",
         "dependencies": {
+          "BitMiracle.LibTiff.NET": "[2.4.660, )",
           "Microsoft.Data.Sqlite": "[10.0.15, )",
           "NAPS2.Images.Skia": "[1.6.1, )",
           "NAPS2.Sdk": "[1.6.1, )",
           "PdfPig": "[0.1.16, )",
+          "SkiaSharp": "[4.156.0, )",
           "SkiaSharp.NativeAssets.Linux": "[4.156.0, )"
         }
       },
@@ -577,6 +556,12 @@
           "Avalonia": "12.1.6"
         }
       },
+      "BitMiracle.LibTiff.NET": {
+        "type": "CentralTransitive",
+        "requested": "[2.4.660, )",
+        "resolved": "2.4.660",
+        "contentHash": "Drd0fDFVrR3v19IJtqiDVnjgcVZoGlzFw/CYni1OQ5/xVYvjPNp18E9eu+dH/RmpIUw6Pn/JhE/H+Yc3kHI89A=="
+      },
       "CommunityToolkit.Mvvm": {
         "type": "CentralTransitive",
         "requested": "[8.4.2, )",
@@ -611,7 +596,6 @@
         "contentHash": "fuHk4mtqBvdPlGUyI3/7iqyGeWf/6SIGon9nTHDfSQFXg3q0HBYwSijFIpttUOsMKsSIBP/ZnMB6NEt3+W/cfA==",
         "dependencies": {
           "GrpcDotNetNamedPipes": "3.1.0",
-          "Microsoft.Extensions.Logging.Abstractions": "10.0.10",
           "NAPS2.Escl": "1.6.1",
           "NAPS2.Images": "1.6.1",
           "NAPS2.Internals": "1.6.1",
@@ -629,6 +613,16 @@
         "requested": "[0.1.16, )",
         "resolved": "0.1.16",
         "contentHash": "qQcbsNMYVY+K5ELptax2S8thNMk0+rSQq3H/KdYj3LLcko8yTCz8y5KIvsKxIyAuTN0ZYNnfsZkM+0EvxTwHVA=="
+      },
+      "SkiaSharp": {
+        "type": "CentralTransitive",
+        "requested": "[4.156.0, )",
+        "resolved": "4.156.0",
+        "contentHash": "bdBfG346spQvqwvdz7w8yoqquN7MmU89O+TJ9TwnwyFuqhHkBOQnLJ57euu+4XWi99a5uXikDMZmcM4q58HUXw==",
+        "dependencies": {
+          "SkiaSharp.NativeAssets.Win32": "4.156.0",
+          "SkiaSharp.NativeAssets.macOS": "4.156.0"
+        }
       },
       "SkiaSharp.NativeAssets.Linux": {
         "type": "CentralTransitive",
