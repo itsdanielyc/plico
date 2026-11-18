@@ -37,6 +37,6 @@
 | 32 | OCR an indexed scan | A scan copied into the library can produce a searchable PDF with the same pages and tags. The source bytes are preserved. A repeat reuses the copy, and blank or cancelled work leaves the source as the only PDF. | L3, L4, L6 | Tested locally on Windows x64 and Ubuntu x64 (L3, L4, L6) |
 | 33 | Export selected PDFs | A batch selection produces a dated folder of byte-identical PDFs with distinct filenames. Cancellation, a changed source, or a missing file leaves the destination clear of that export. | L3, L4, L6 | Tested locally on Windows x64 and Ubuntu x64 (L3, L4, L6) |
 | 34 | Combine candidate verification | A release candidate runs solution tests and both package formats in one matrix. Publication requires a successful run for the tag’s exact commit and the complete set of tested packages. | L0, L3, L6, L7 | Gate and x64 package sequence tested locally (L0, L3, L6). Hosted matrix pending. |
-| 35 | Search by several tags | Typed tag clauses match every requested tag and combine with the sidebar filter and text terms. The preview jumps to the page that matches the text portion. | L3, L4, L6 | In progress |
+| 35 | Search by several tags | Typed tag clauses match every requested tag and combine with the sidebar filter and text terms. The preview jumps to the page that matches the text portion. | L3, L4, L6 | Tested locally on Windows x64 and Ubuntu x64 (L3, L4, L6) |
 
 The initial release is followed by focused improvements and fresh evidence.
