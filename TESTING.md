@@ -28,6 +28,7 @@
 15. Refresh a library containing `Scanned Receipt.pdf`, the image-only page from the mixed PDF fixture. Make a searchable copy, search for its OCR text and tag, and compare the source bytes. Exercise repeat requests, a blank scan, a changed file, and cancellation (L3, L4 and L6).
 16. Export selected PDFs and open the resulting folder. Compare bytes, include case-insensitive filename collisions, and exercise cancellation and stale source paths (L3, L4 and L6).
 17. Combine two tag clauses and OCR text. Check exact tag matching, quoted labels, duplicate keys, incomplete input, and the matching-page jump (L3, L4 and L6).
+18. Change a tag’s capitalization, rename one that belongs to a temporarily missing PDF, and merge into an existing tag. Check that a forced database error rolls back all links and that the dialog requires an explicit merge action (L3, L4 and L6).
 
 Run `dotnet test Plico.slnx -c Release` for the fast suite. Run the native harness from `keel.json` for installed-platform evidence. Visual review starts with per-OS captures and geometry checks. Add pixel baselines when repeatable runner captures justify the maintenance.
 

@@ -32,6 +32,8 @@ Put a phrase in quotation marks to search its adjacent whole words. For example,
 
 Use `tag:tax` to require an exact tag. Use `tag:tax tag:"Home insurance" renewal` to require both tags and match renewal in the document. Tags ignore case. Use a backslash to include the closing quote or a backslash inside a quoted tag.
 
+Select a sidebar tag and choose **Rename…** to change its label across the library. Enter an existing tag name and choose **Merge tags** to put their documents under that tag.
+
 Use **Sort** to browse by newest added or title A–Z. **Automatic** puts the best matches first during a text search and the most recent documents first while browsing.
 
 Use Ctrl or Shift when selecting rows, or choose **Select shown** to select the loaded results. Use **Tag selected** to apply a tag to the whole selection. The batch control can mark the selection reviewed or return reviewed documents to the inbox.

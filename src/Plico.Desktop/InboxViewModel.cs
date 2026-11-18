@@ -358,6 +358,7 @@ internal sealed partial class InboxViewModel : ObservableObject, IDisposable
     {
         _inboxOnly = inboxOnly;
         _activeTag = tag;
+        OnPropertyChanged(nameof(HasActiveTag));
         Query = "";
         LoadResults(preferredId);
     }

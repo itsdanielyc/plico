@@ -13,6 +13,7 @@
 - Choose **Create searchable copy** to run OCR on a scanned PDF in the library and add a new PDF with the source tags.
 - Choose **Export PDFs…** to copy the current multi-selection into a dated folder.
 - Type `tag:` filters in the search box to require multiple tags alongside text terms.
+- Select a sidebar tag to rename it or merge its documents into an existing tag.
 
 ## [0.15.0] - 2026-11-18
 

@@ -16,6 +16,9 @@ public sealed partial class InboxLibrary : IDisposable
     /// <summary>The maximum user-supplied catalog title length.</summary>
     public const int MaximumTitleLength = 160;
 
+    /// <summary>The maximum length of a tag label in the catalog.</summary>
+    public const int MaximumTagNameLength = SearchTerms.MaximumTagLength;
+
     private static readonly HashSet<string> ReservedWindowsFileNames = new(StringComparer.OrdinalIgnoreCase)
     {
         "CON", "PRN", "AUX", "NUL",
@@ -126,6 +129,21 @@ public sealed partial class InboxLibrary : IDisposable
 
     /// <summary>Lists the tags used by PDFs currently in the library.</summary>
     public IReadOnlyList<string> GetTags() => _catalog.Tags();
+
+    /// <summary>Lists tag names held by the catalog, including tags on missing documents.</summary>
+    public IReadOnlyList<string> GetCatalogTagNames() => _catalog.Tags(includeUnused: true);
+
+    /// <summary>Validates a label and returns its case-insensitive catalog key.</summary>
+    public static string GetTagKey(string label) => SearchTerms.TagKey(label);
+
+    /// <summary>Renames a tag across the catalog and returns the resulting label.</summary>
+    /// <param name="currentName">The source tag's name.</param>
+    /// <param name="newName">The proposed label or the name of an existing destination tag.</param>
+    /// <param name="mergeIntoExisting">Permits merging into a different tag with the destination key.</param>
+    /// <param name="cancellationToken">Cancels the change before the transaction commits.</param>
+    public string RenameTag(string currentName, string newName, bool mergeIntoExisting = false,
+        CancellationToken cancellationToken = default) =>
+        _catalog.RenameTag(currentName, newName, mergeIntoExisting, cancellationToken);
 
     /// <summary>Assigns a tag once, treating equivalent case and Unicode forms as one tag.</summary>
     public void AddTag(long documentId, string tag) => _catalog.AddTag(documentId, tag);

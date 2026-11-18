@@ -86,7 +86,13 @@
                             Command="{Binding ShowAllCommand}" Content="All documents" />
                 </StackPanel>
                 <Grid Grid.Row="2" RowDefinitions="Auto,*" RowSpacing="6" IsVisible="{Binding HasTags}">
-                    <TextBlock Text="Tags" Foreground="#ACC2B4" FontSize="12" FontWeight="SemiBold" Margin="12,0,0,0" />
+                    <Grid ColumnDefinitions="*,Auto">
+                        <TextBlock Text="Tags" Foreground="#ACC2B4" FontSize="12" FontWeight="SemiBold"
+                                   VerticalAlignment="Center" Margin="12,0,0,0" />
+                        <Button Grid.Column="1" x:Name="RenameActiveTagButton" Classes="rail" Content="Rename…"
+                                Padding="7,3" IsVisible="{Binding HasActiveTag}" IsEnabled="{Binding CanWork}"
+                                Command="{Binding RenameActiveTagCommand}" AutomationProperties.Name="Rename selected tag" />
+                    </Grid>
                     <ScrollViewer Grid.Row="1" HorizontalScrollBarVisibility="Disabled">
                         <ItemsControl ItemsSource="{Binding Tags}">
                             <ItemsControl.ItemTemplate>

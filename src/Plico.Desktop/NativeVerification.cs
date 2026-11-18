@@ -67,11 +67,12 @@ internal static class NativeVerification
             await VerifyImportErrorsAsync(window, model, dialogs, fixture, evidenceDirectory);
             await VerifyPreviewFitAsync(window, model, evidenceDirectory);
             await VerifyGoToMatchAsync(window, model, evidenceDirectory);
+            await VerifyTagMergeAsync(window, model, dialogs, evidenceDirectory);
             await VerifySearchableCopyAsync(window, model, fixture, evidenceDirectory);
             await VerifyScannerDialogAsync(window, evidenceDirectory);
 
             File.WriteAllText(Path.Combine(evidenceDirectory, "passed.txt"),
-                $"Verified {runtime}. Native window completed multilingual OCR, phrase and tag search, result sorting, fit-width preview, match navigation, duplicate drop, folder watch, title edit, relocation, batch actions, selected PDF export, library backup, text copy, searchable PDF copy, and import retry.");
+                $"Verified {runtime}. Native window completed multilingual OCR, phrase and tag search, result sorting, fit-width preview, match navigation, tag merging, duplicate drop, folder watch, title edit, relocation, batch actions, selected PDF export, library backup, text copy, searchable PDF copy, and import retry.");
             desktop.Shutdown(0);
         }
         catch (Exception error)
@@ -177,6 +178,50 @@ internal static class NativeVerification
         await UntilAsync(() => model.SelectedDocument is { } current && current.Id == searchable!.Id &&
             model.Preview is not null && current.Match.Contains(ReceiptKeyword, StringComparison.OrdinalIgnoreCase), () => model.Status);
         await CaptureAsync(window, directory, "searchable-copy.png");
+    }
+
+    private static async Task VerifyTagMergeAsync(MainWindow window, InboxViewModel model, FixtureDialogs dialogs, string directory)
+    {
+        const string source = "Scan review";
+        model.FilterByTag(source);
+        long sourceDocumentId = model.Documents.Single().Id;
+        var dialog = new TagRenameDialog(source, model.Tags);
+        var closed = dialog.ShowDialog<TagRenameRequest?>(window);
+        TagRenameRequest? request;
+        try
+        {
+            Control<TextBox>(dialog, "TagNameBox").SetCurrentValue(TextBox.TextProperty, TestTag.ToLowerInvariant());
+            var merge = Control<Button>(dialog, "SaveTagButton");
+            await UntilAsync(() => Equals(merge.Content, "Merge tags"), () => "The rename dialog did not offer a merge.");
+            Require(!merge.IsDefault, "The merge action was set as the default submit button.");
+            await CaptureAsync(dialog, directory, "tag-merge-dialog.png");
+            merge.RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
+            request = await closed;
+        }
+        finally
+        {
+            if (dialog.IsVisible) dialog.Close();
+            await closed;
+        }
+
+        Require(request is { MergeIntoExisting: true }, "The explicit merge action did not return a merge request.");
+        dialogs.TagRenameChoice = request;
+        try
+        {
+            var rename = Control<Button>(window, "RenameActiveTagButton");
+            Require(rename.IsVisible && rename.IsEnabled && rename.Command is IAsyncRelayCommand,
+                "The active tag did not offer a rename action.");
+            await ((IAsyncRelayCommand)rename.Command!).ExecuteAsync(rename.CommandParameter);
+            Require(model.Heading == TestTag && model.Documents.Count == 2 && model.SelectedDocument?.Id == sourceDocumentId &&
+                    !model.Tags.Contains(source) && model.Documents.All(document => document.Tags.Contains(TestTag)),
+                $"The merged tag did not open with the combined documents. {model.Status}");
+            await UntilAsync(() => model.Preview is not null, () => model.PreviewMessage);
+            await CaptureAsync(window, directory, "tag-merged.png");
+        }
+        finally
+        {
+            dialogs.TagRenameChoice = null;
+        }
     }
 
     private static async Task VerifyImportErrorsAsync(MainWindow window, InboxViewModel model, FixtureDialogs dialogs,
@@ -570,6 +615,7 @@ internal sealed class FixtureDialogs(params string[] documents) : IWorkspaceDial
 {
     internal string? FolderPath { get; set; }
     internal string? EditedTitle { get; init; }
+    internal TagRenameRequest? TagRenameChoice { get; set; }
     internal string? LastOpenedPath { get; private set; }
     internal string? LastCopiedText { get; private set; }
     internal ImportErrorsAction ImportErrorsChoice { get; set; }
@@ -579,6 +625,7 @@ internal sealed class FixtureDialogs(params string[] documents) : IWorkspaceDial
     public Task<string?> PickFolderAsync(string title) => Task.FromResult(FolderPath);
     public Task<ScanRequest?> PickScannerAsync() => Task.FromResult<ScanRequest?>(null);
     public Task<string?> EditTitleAsync(string currentTitle) => Task.FromResult(EditedTitle);
+    public Task<TagRenameRequest?> RenameTagAsync(string currentName, IReadOnlyList<string> catalogNames) => Task.FromResult(TagRenameChoice);
     public Task<ImportErrorsAction> ShowImportErrorsAsync(IReadOnlyList<ImportFailure> failures)
     {
         InspectedImportFailures = failures;

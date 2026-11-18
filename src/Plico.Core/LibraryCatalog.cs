@@ -5,7 +5,7 @@ using SQLitePCL;
 namespace Plico.Core;
 
 /// <summary>Maintains the transactionally updated local catalog and FTS index.</summary>
-internal sealed class LibraryCatalog
+internal sealed partial class LibraryCatalog
 {
     private const int ConnectionTimeoutSeconds = 5;
     private const int SearchCancellationInstructions = 1_000;
@@ -371,11 +371,11 @@ internal sealed class LibraryCatalog
         return "… " + excerpt[start..].Replace(marker.ToString(), "").Trim();
     }
 
-    internal IReadOnlyList<string> Tags()
+    internal IReadOnlyList<string> Tags(bool includeUnused = false)
     {
         using var connection = Connect();
         using var command = connection.CreateCommand();
-        command.CommandText = """
+        command.CommandText = includeUnused ? "SELECT label FROM tags ORDER BY tag_key;" : """
             SELECT t.label FROM tags t
             WHERE EXISTS (SELECT 1 FROM document_tags dt JOIN documents d ON dt.document_id = d.id
                           WHERE dt.tag_key = t.tag_key AND d.is_present = 1)
