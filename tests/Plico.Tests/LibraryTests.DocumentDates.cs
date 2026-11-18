@@ -94,8 +94,11 @@ public sealed partial class LibraryTests
         var filed = await reopened.MovePdfAsync(documentId, folder, token);
         Assert.Equal(date, filed.DocumentDate);
         string path = reopened.ResolvePdf(filed);
-        File.SetLastWriteTimeUtc(path, File.GetLastWriteTimeUtc(path).AddMinutes(2));
-        reopened.Refresh(token);
+        Assert.Equal(File.ReadAllBytes(Fixture(Letter)), File.ReadAllBytes(path));
+        // Replace the file stamp and fingerprint so refresh reindexes the document content.
+        File.AppendAllText(path, "\n");
+        byte[] editedPdf = File.ReadAllBytes(path);
+        Assert.Equal(1, reopened.Refresh(token).Indexed);
         var backup = await reopened.BackupAsync(backupFolder.Path, cancellationToken: token);
         using var restored = InboxLibrary.Open(backup.Location);
         var record = Assert.Single(restored.Find(new DocumentFilter(Query: "dated:2024-02 tag:property folder:Filed"), token).Items);
@@ -103,7 +106,7 @@ public sealed partial class LibraryTests
         Assert.True(record.Reviewed);
         Assert.Equal(original.AddedAt, record.AddedAt);
         Assert.Equal(date, record.DocumentDate);
-        Assert.Equal(File.ReadAllBytes(Fixture(Letter)), File.ReadAllBytes(restored.ResolvePdf(record)));
+        Assert.Equal(editedPdf, File.ReadAllBytes(restored.ResolvePdf(record)));
         Assert.Throws<InvalidOperationException>(() => restored.SetDocumentDate(long.MaxValue, date));
     }
 }

@@ -86,7 +86,7 @@ internal static partial class NativeVerification
             await VerifyDocumentDateAsync(window, model, dialogs, evidenceDirectory);
 
             File.WriteAllText(Path.Combine(evidenceDirectory, "passed.txt"),
-                $"Verified {runtime}. Native window completed multilingual OCR and correction, oriented JPEG and multi-page TIFF import, PDF combination, page extraction and rotation, phrase and tag search, saved search restoration, document-date editing and filtering, result sorting, fit-width preview, match navigation, tag merging and suggestions, duplicate drop, folder watch, title edit, single and batch PDF moves, external relocation, selected PDF export, library backup, text copy, searchable PDF copy, and import retry. {scanRecoveryEvidence}");
+                $"Verified {runtime}. Native window completed multilingual OCR and correction, oriented JPEG and multi-page TIFF import, PDF combination, page extraction and rotation, phrase and tag search, saved search restoration, document-date editing, filtering, and inheritance, result sorting, fit-width preview, match navigation, tag merging and suggestions, duplicate drop, folder watch, title edit, single and batch PDF moves, external relocation, selected PDF export, library backup, text copy, searchable PDF copy, and import retry. {scanRecoveryEvidence}");
             desktop.Shutdown(0);
         }
         catch (Exception error)
@@ -436,9 +436,23 @@ internal static partial class NativeVerification
     private static async Task VerifyRotatePagesAsync(MainWindow window, InboxViewModel model, FixtureDialogs dialogs, string directory)
     {
         const string title = "Rotated receipt excerpt";
+        const string documentDateInput = "2024-02-29";
+        var documentDate = new DateOnly(2024, 2, 29);
         var original = model.SelectedDocument ?? throw new InvalidOperationException("Open the excerpt before rotating it.");
         Require(original.PageCount == 3 && model.PageLabel == "3 / 3" && model.Preview!.PixelSize.Width < model.Preview.PixelSize.Height,
             "The receipt page was unavailable for rotation.");
+        var dateAction = Control<Button>(window, "EditDocumentDateButton");
+        dialogs.DocumentDateChoice = current => ConfirmDocumentDateAsync(window, current, documentDateInput, directory: null);
+        try
+        {
+            await ((IAsyncRelayCommand)dateAction.Command!).ExecuteAsync(dateAction.CommandParameter);
+        }
+        finally
+        {
+            dialogs.DocumentDateChoice = null;
+        }
+        Require(model.SelectedDocument?.DocumentDate == documentDate && model.PageLabel == "3 / 3", model.Status);
+
         var action = Control<Button>(window, "RotatePdfPagesButton");
         Require(action.IsEffectivelyVisible && action.IsEnabled, "The opened PDF did not offer page rotation.");
         dialogs.PageCopyChoice = (source, page, actionKind) =>
@@ -457,11 +471,11 @@ internal static partial class NativeVerification
             dialogs.PageCopyChoice = null;
         }
         var rotated = model.SelectedDocument;
-        Require(rotated is { Title: title, PageCount: 3, HasText: true, Reviewed: false } &&
+        Require(rotated is { Title: title, PageCount: 3, HasText: true, Reviewed: false } && rotated.DocumentDate == documentDate &&
             rotated.Id != original.Id && rotated.Tags.Contains("Packet") &&
             File.Exists(Path.Combine(model.LibraryPath, "PDFs", original.RelativePath)), model.Status);
 
-        Control<TextBox>(window, "SearchBox").SetCurrentValue(TextBox.TextProperty, ReceiptKeyword);
+        Control<TextBox>(window, "SearchBox").SetCurrentValue(TextBox.TextProperty, $"{ReceiptKeyword} dated:{documentDateInput}");
         var jump = Control<Button>(window, "GoToMatchButton");
         await UntilAsync(() => model.SelectedDocument?.Id == rotated!.Id && jump.IsVisible && jump.IsEnabled, () => model.Status);
         await ((IAsyncRelayCommand)jump.Command!).ExecuteAsync(jump.CommandParameter);

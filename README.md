@@ -62,6 +62,8 @@ Choose **Extract pages…** in a multi-page preview and enter a selection such a
 
 Choose **Rotate pages…** for sideways or upside-down scans. Select pages, choose a direction, and title the new PDF. The copy keeps every page, its searchable text, and the source tags.
 
+New OCR, rotated, and extracted copies carry the source’s document date. A combined PDF carries the date when every source has the same recorded day. You can edit a copy’s date in its preview.
+
 Use **Edit title** in the preview to change the document's catalog title. Search covers both the title and filename. Select the PDF's filename to open its containing folder.
 
 Choose **Move to folder…** in the preview to file the PDF within the library’s `PDFs/` directory. Plico keeps its title, tags, and review state with the file. A filename collision gets a numbered name.

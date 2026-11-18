@@ -33,6 +33,8 @@ public sealed partial class LibraryTests
         var source = await library.CombinePdfsAsync([spanish.Id, mixed.Id], "Source packet", cancellationToken: token);
         library.AddTag(source.Id, "Archive");
         library.SetReviewed(source.Id, reviewed: true);
+        var sourceDate = new DateOnly(2024, 2, 29);
+        library.SetDocumentDate(source.Id, sourceDate);
         string sourcePath = library.ResolvePdf(source);
         byte[] originalBytes = File.ReadAllBytes(sourcePath);
         var selection = PdfPageSelection.Parse("3,1,3", source.PageCount);
@@ -43,6 +45,7 @@ public sealed partial class LibraryTests
         Assert.Equal("Receipt pages", excerpt.Title);
         Assert.False(excerpt.Reviewed);
         Assert.Equal("Archive", Assert.Single(excerpt.Tags));
+        Assert.Equal(sourceDate, excerpt.DocumentDate);
         Assert.Equal(2, excerpt.PageCount);
         using (var pdf = PdfDocument.Open(library.ResolvePdf(excerpt)))
         {
@@ -52,7 +55,7 @@ public sealed partial class LibraryTests
         }
         Assert.DoesNotContain(LetterKeyword, library.ReadIndexedText(excerpt.Id), StringComparison.OrdinalIgnoreCase);
         Assert.Equal(2, library.FindFirstMatchingPage(excerpt, ReceiptKeyword, token));
-        Assert.Contains(library.Find(new DocumentFilter(Query: "pequeño wrench tag:Archive"), token).Items, item => item.Id == excerpt.Id);
+        Assert.Contains(library.Find(new DocumentFilter(Query: "pequeño wrench tag:Archive dated:2024-02"), token).Items, item => item.Id == excerpt.Id);
         Assert.Equal(originalBytes, File.ReadAllBytes(sourcePath));
         Assert.True(library.Find(new DocumentFilter(Tag: "Archive"), token).Items.Single(item => item.Id == source.Id).Reviewed);
     }

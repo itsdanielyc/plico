@@ -15,7 +15,7 @@ A library is a user-selected directory. `PDFs/` holds ordinary PDFs. `.plico/cat
 
 Import renders into private staging and checks the processed PDF before moving it into `PDFs/` without overwriting existing files. An interrupted index write leaves a readable PDF that can be picked up on refresh. Plico preserves the selected source files. Catalog updates and full-text index triggers run together in SQLite transactions.
 
-Creating a searchable copy reads an indexed PDF into private staging under the file-operation lease. For a PDF with existing text, NAPS2 renders its visible pages for fresh OCR. A new copy must contain text and have the indexed PDF’s page count. Inserting the copy, its source and language, and its source tags uses one catalog transaction. [NAPS2 PDF exporter](https://github.com/cyanfish/naps2/blob/c6c762214293097c522fc1b7656f106fbb66a7f2/NAPS2.Sdk/Pdf/PdfExporter.cs)
+Creating a searchable copy reads an indexed PDF into private staging under the file-operation lease. For a PDF with existing text, NAPS2 renders its visible pages for fresh OCR. A new copy must contain text and have the indexed PDF’s page count. Inserting the copy, its source and language, and its metadata uses one catalog transaction. [NAPS2 PDF exporter](https://github.com/cyanfish/naps2/blob/c6c762214293097c522fc1b7656f106fbb66a7f2/NAPS2.Sdk/Pdf/PdfExporter.cs)
 
 TIFF intake decodes each directory with LibTiff.Net and draws its orientation and resolution into a staged image-only PDF. The existing PDF import and OCR pipeline processes that intermediate file. Page counts must agree before the final PDF is published. The converter limits each decoded raster to 160 million pixels and releases page buffers as it proceeds. [LibTiff.Net decoder API](https://bitmiracle.github.io/libtiff.net/help/api/BitMiracle.LibTiff.Classic.Tiff.html)
 
@@ -42,6 +42,8 @@ Schema v7 records a pending move with the catalog ID, two relative paths, and th
 Schema v8 stores saved query text, the selected sidebar tag key, and the result order. A normalized name index keeps names unique. Each shortcut reruns its query against current documents. The sidebar tag follows a rename or merge through the same transaction as the document links. The catalog snapshot carries saved searches into a backup.
 
 Schema v9 stores the user-entered document date as a nullable day number on the catalog record. The present-document index supports the `dated:` bounds and document-date ordering. The date follows the record through filing and refresh and travels in a catalog backup. `added:` continues to match the local day of the intake timestamp.
+
+Publishing a PDF copy reads its initial document date in the same catalog transaction that copies its tags. The date comes from a single source or a date shared by every source in a packet. The inserted copy has its own date field for future edits.
 
 Batch filing checks the selected paths and file stamps before the first move. Under one library lease it commits each move through the same journal and retains the next numbered filename for each colliding name. Cancellation or an error stops the batch and reports completed moves and remaining work.
 

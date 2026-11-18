@@ -117,17 +117,24 @@ internal sealed partial class LibraryCatalog
 
     internal long Upsert(string relativePath, string title, PdfText text, FileVersion version,
         byte[] pdfFingerprint, byte[]? sourceFingerprint = null, OcrCopySource? ocrCopySource = null,
-        IReadOnlyList<long>? tagSourceIds = null)
+        IReadOnlyList<long>? metadataSourceIds = null)
     {
-        tagSourceIds ??= ocrCopySource is { } origin ? [origin.DocumentId] : null;
+        metadataSourceIds ??= ocrCopySource is { } origin ? [origin.DocumentId] : null;
         using var connection = Connect();
-        using var transaction = tagSourceIds is { Count: > 0 } ? connection.BeginTransaction() : null;
+        using var transaction = metadataSourceIds is { Count: > 0 } ? connection.BeginTransaction() : null;
         using var command = connection.CreateCommand();
         command.Transaction = transaction;
-        command.CommandText = """
+        string initialDocumentDay = "NULL";
+        if (metadataSourceIds is { Count: > 0 })
+        {
+            BindSelection(command, metadataSourceIds);
+            initialDocumentDay = SharedSourceDocumentDay;
+        }
+        command.CommandText = $$"""
             INSERT INTO documents (title, relative_path, added_at, modified_ticks, file_bytes, page_count, has_text, body,
-                                   source_sha256, pdf_sha256, ocr_copy_source_id, ocr_copy_language)
-            VALUES ($title, $path, $added, $modified, $bytes, $pages, $hasText, $text, $source, $pdf, $ocrSource, $ocrLanguage)
+                                   source_sha256, pdf_sha256, ocr_copy_source_id, ocr_copy_language, document_day)
+            VALUES ($title, $path, $added, $modified, $bytes, $pages, $hasText, $text, $source, $pdf, $ocrSource, $ocrLanguage,
+                    {{initialDocumentDay}})
             ON CONFLICT(relative_path) DO UPDATE SET
                 title = CASE WHEN documents.display_title IS NULL THEN excluded.title
                              ELSE documents.display_title || char(10) || excluded.title END,
@@ -150,18 +157,16 @@ internal sealed partial class LibraryCatalog
         command.Parameters.Add("$ocrSource", SqliteType.Integer).Value = (object?)ocrCopySource?.DocumentId ?? DBNull.Value;
         command.Parameters.Add("$ocrLanguage", SqliteType.Text).Value = (object?)ocrCopySource?.Language.ToString() ?? DBNull.Value;
         long documentId = (long)command.ExecuteScalar()!;
-        if (tagSourceIds is { Count: > 0 })
+        if (transaction is not null)
         {
             command.CommandText = """
                 INSERT OR IGNORE INTO document_tags (document_id, tag_key)
                 SELECT $copy, dt.tag_key FROM json_each($ids) source
                 JOIN document_tags dt ON dt.document_id = source.value;
                 """;
-            command.Parameters.Clear();
             command.Parameters.AddWithValue("$copy", documentId);
-            BindSelection(command, tagSourceIds);
             command.ExecuteNonQuery();
-            transaction!.Commit();
+            transaction.Commit();
         }
         return documentId;
     }

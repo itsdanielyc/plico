@@ -9,7 +9,7 @@ public sealed partial class InboxLibrary
     private const int PdfPageCopyVersion = 17;
     private const string CombineSourceChanged = "A selected PDF changed while it was being copied. Refresh the index and combine the PDFs again.";
 
-    /// <summary>Publishes a new PDF in the specified order and links each tag present on the source documents.</summary>
+    /// <summary>Publishes a PDF with the selected pages, source tags, and a shared document date when present on every source.</summary>
     /// <param name="documentIds">The ordered source IDs. Each document contributes its pages once.</param>
     /// <param name="title">The title of the combined document.</param>
     /// <param name="progress">Receives the number of PDFs whose pages have been appended.</param>
@@ -47,7 +47,7 @@ public sealed partial class InboxLibrary
                 token.ThrowIfCancellationRequested();
                 VerifySelectedPdfSource(source);
             }
-            return CommitPdf(output, displayTitle, text, token, tagSourceIds: files.Select(file => file.Id).ToArray());
+            return CommitPdf(output, displayTitle, text, token, metadataSourceIds: files.Select(file => file.Id).ToArray());
         }, cancellationToken);
     }
 

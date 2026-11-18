@@ -8,7 +8,7 @@ public sealed partial class InboxLibrary
     private const string PageCopySourceChanged = "The PDF changed while it was being copied. Refresh the index and choose the pages again.";
     private const int FullTurn = 360;
 
-    /// <summary>Publishes selected page content and embedded text into a new tagged PDF.</summary>
+    /// <summary>Publishes selected pages with their embedded text, source tags, and document date.</summary>
     /// <param name="documentId">The source catalog ID.</param>
     /// <param name="selection">The validated page ranges for the source.</param>
     /// <param name="title">The title of the extracted document.</param>
@@ -17,7 +17,7 @@ public sealed partial class InboxLibrary
     public Task<DocumentSummary> ExtractPdfPagesAsync(long documentId, PdfPageSelection selection, string title,
         CancellationToken cancellationToken = default) => CopyPdfPagesAsync(documentId, selection, title, null, cancellationToken);
 
-    /// <summary>Publishes a complete PDF copy with the selected pages turned and the source tags linked.</summary>
+    /// <summary>Publishes a PDF copy with selected pages turned and the source tags and document date carried over.</summary>
     /// <param name="documentId">The source catalog ID.</param>
     /// <param name="selection">The validated pages to turn within the copy.</param>
     /// <param name="rotation">The turn relative to each selected page’s existing rotation.</param>
@@ -46,7 +46,7 @@ public sealed partial class InboxLibrary
                 ? SaveRotatedPdf(snapshot, output, selection, turn, token)
                 : SaveExtractedPdf(snapshot, Path.GetFileName(source.Path), output, selection, token);
             VerifySelectedPdfSource(source);
-            return CommitPdf(output, displayTitle, text, token, tagSourceIds: [documentId]);
+            return CommitPdf(output, displayTitle, text, token, metadataSourceIds: [documentId]);
         }, cancellationToken);
     }
 

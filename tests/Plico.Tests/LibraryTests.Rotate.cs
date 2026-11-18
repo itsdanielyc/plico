@@ -21,6 +21,8 @@ public sealed partial class LibraryTests
         var source = await library.ImportAsync(Fixture(Mixed), token);
         library.AddTag(source.Id, "Workshop");
         library.SetReviewed(source.Id, reviewed: true);
+        var sourceDate = new DateOnly(2024, 2, 29);
+        library.SetDocumentDate(source.Id, sourceDate);
         string path = library.ResolvePdf(source);
         byte[] originalBytes = File.ReadAllBytes(path);
         using var original = ReadablePdf.Open(originalBytes);
@@ -32,6 +34,7 @@ public sealed partial class LibraryTests
         Assert.Equal("Turned receipt", rotated.Title);
         Assert.Equal(source.PageCount, rotated.PageCount);
         Assert.Equal("Workshop", Assert.Single(rotated.Tags));
+        Assert.Equal(sourceDate, rotated.DocumentDate);
         Assert.False(rotated.Reviewed);
         using (var turned = ReadablePdf.Open(library.ResolvePdf(rotated)))
         {
@@ -41,9 +44,10 @@ public sealed partial class LibraryTests
             Assert.Contains(ReceiptKeyword, ContentOrderTextExtractor.GetText(turned.GetPage(2)), StringComparison.OrdinalIgnoreCase);
         }
         Assert.Equal(2, library.FindFirstMatchingPage(rotated, ReceiptKeyword, token));
-        Assert.Contains(library.Find(new DocumentFilter(Query: "wrench tag:Workshop"), token).Items, document => document.Id == rotated.Id);
+        Assert.Contains(library.Find(new DocumentFilter(Query: "wrench tag:Workshop dated:2024-02"), token).Items, document => document.Id == rotated.Id);
 
         var restored = await library.RotatePdfPagesAsync(rotated.Id, pages, PdfPageRotation.Counterclockwise, "Restored receipt", token);
+        Assert.Equal(sourceDate, restored.DocumentDate);
         using var upright = ReadablePdf.Open(library.ResolvePdf(restored));
         Assert.Equal(original.GetPage(2).Rotation.Value, upright.GetPage(2).Rotation.Value);
         Assert.Equal(originalBytes, File.ReadAllBytes(path));

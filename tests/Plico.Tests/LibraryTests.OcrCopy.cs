@@ -115,6 +115,8 @@ public sealed partial class LibraryTests
         library.AddTag(original.Id, "Workshop");
         library.SetTitle(original.Id, "October receipt");
         library.SetReviewed(original.Id, reviewed: true);
+        var sourceDate = new DateOnly(2024, 2, 29);
+        library.SetDocumentDate(original.Id, sourceDate);
 
         var copy = await library.CreateSearchableCopyAsync(original.Id, token);
 
@@ -124,18 +126,22 @@ public sealed partial class LibraryTests
         Assert.True(copy.Document.HasText);
         Assert.False(copy.Document.Reviewed);
         Assert.Equal("Workshop", Assert.Single(copy.Document.Tags));
+        Assert.Equal(sourceDate, copy.Document.DocumentDate);
         using (var pdf = PdfDocument.Open(library.ResolvePdf(copy.Document)))
         {
             Assert.Equal(original.PageCount, pdf.NumberOfPages);
             Assert.Contains(ReceiptKeyword, ContentOrderTextExtractor.GetText(pdf.GetPage(1)), StringComparison.OrdinalIgnoreCase);
         }
-        var found = Assert.Single(library.Find(new DocumentFilter(Query: ReceiptKeyword, Tag: "Workshop"), token).Items);
+        var found = Assert.Single(library.Find(new DocumentFilter(Query: $"{ReceiptKeyword} dated:2024-02-29", Tag: "Workshop"), token).Items);
         Assert.Equal(copy.Document.Id, found.Id);
 
+        library.SetDocumentDate(copy.Document.Id, null);
+        library.SetDocumentDate(original.Id, sourceDate.AddDays(1));
         var repeat = await library.CreateSearchableCopyAsync(original.Id, token);
 
         Assert.False(repeat.Added);
         Assert.Equal(copy.Document.Id, repeat.Document.Id);
+        Assert.Null(repeat.Document.DocumentDate);
         Assert.Equal(2, Directory.EnumerateFiles(library.PdfDirectory, "*.pdf", SearchOption.AllDirectories).Count());
         Assert.Equal(originalBytes, File.ReadAllBytes(path));
         Assert.True(library.Find(new DocumentFilter(Tag: "Workshop"), token).Items.Single(item => item.Id == original.Id).Reviewed);

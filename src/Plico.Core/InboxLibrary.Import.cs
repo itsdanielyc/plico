@@ -14,7 +14,7 @@ public sealed partial class InboxLibrary
     /// <summary>Checks whether a filename is one of the types accepted by the import pipeline.</summary>
     public static bool SupportsImport(string path) => DocumentProcessor.SupportsExtension(Path.GetExtension(path));
 
-    /// <summary>Makes a tagged copy with fresh OCR, or reuses a copy of the same source version in the selected language.</summary>
+    /// <summary>Makes a fresh OCR copy with the source’s date and tags, or reuses its copy in the chosen language.</summary>
     /// <exception cref="InvalidDataException">OCR produced no text or changed the page count.</exception>
     public Task<FileImportResult> CreateSearchableCopyAsync(long documentId, CancellationToken cancellationToken = default,
         OcrLanguage language = OcrLanguage.English) => InStageAsync(async (stage, token) =>

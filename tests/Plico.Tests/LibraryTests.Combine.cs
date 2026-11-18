@@ -20,6 +20,9 @@ public sealed partial class LibraryTests
         library.AddTag(spanish.Id, "Repairs");
         library.AddTag(spanish.Id, "Workshop");
         library.SetReviewed(mixed.Id, reviewed: true);
+        var sourceDate = new DateOnly(2024, 2, 29);
+        library.SetDocumentDate(mixed.Id, sourceDate);
+        library.SetDocumentDate(spanish.Id, sourceDate);
         string mixedPath = library.ResolvePdf(mixed);
         string spanishPath = library.ResolvePdf(spanish);
         byte[] mixedSource = File.ReadAllBytes(mixedPath);
@@ -30,6 +33,7 @@ public sealed partial class LibraryTests
         Assert.Equal("Records packet", combined.Title);
         Assert.False(combined.Reviewed);
         Assert.Equal(new[] { "Housing", "Repairs", "Workshop" }, combined.Tags);
+        Assert.Equal(sourceDate, combined.DocumentDate);
         Assert.True(combined.HasText);
         Assert.Equal(3, combined.PageCount);
         using (var pdf = PdfDocument.Open(library.ResolvePdf(combined)))
@@ -40,11 +44,30 @@ public sealed partial class LibraryTests
             Assert.Contains(ReceiptKeyword, ContentOrderTextExtractor.GetText(pdf.GetPage(3)), StringComparison.OrdinalIgnoreCase);
         }
         Assert.Equal(3, library.FindFirstMatchingPage(combined, ReceiptKeyword, token));
-        var results = library.Find(new DocumentFilter(Query: "pequeño norths tag:Housing"), token).Items;
+        var results = library.Find(new DocumentFilter(Query: "pequeño norths tag:Housing dated:2024-02"), token).Items;
         Assert.Equal(combined.Id, Assert.Single(results).Id);
         Assert.Equal(mixedSource, File.ReadAllBytes(mixedPath));
         Assert.Equal(spanishSource, File.ReadAllBytes(spanishPath));
         Assert.True(library.Find(new DocumentFilter(Tag: "Housing"), token).Items.Single(document => document.Id == mixed.Id).Reviewed);
+    }
+
+    [Fact]
+    public async Task CombinedPdfUsesTheSharedDateOnlyWhenEverySourceMatches()
+    {
+        var token = TestContext.Current.CancellationToken;
+        using var temporary = new TemporaryLibrary();
+        using var library = InboxLibrary.Open(temporary.Path);
+        BatchFixtures.AddTwoDocuments(library, token);
+        var sources = library.Find(new DocumentFilter(), token).Items.Select(document => document.Id).ToArray();
+        var leapDay = new DateOnly(2024, 2, 29);
+        library.SetDocumentDate(sources[0], leapDay);
+
+        var withUndatedSource = await library.CombinePdfsAsync(sources, "Packet with an undated PDF", cancellationToken: token);
+        Assert.Null(withUndatedSource.DocumentDate);
+
+        library.SetDocumentDate(sources[1], leapDay.AddDays(1));
+        var withDifferentDates = await library.CombinePdfsAsync(sources, "Packet from different days", cancellationToken: token);
+        Assert.Null(withDifferentDates.DocumentDate);
     }
 
     [Fact]
