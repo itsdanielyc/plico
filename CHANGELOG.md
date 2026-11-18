@@ -38,6 +38,7 @@
 - Search and save review queues with `status:inbox` and find completed reviews with `status:reviewed`.
 - See how to fix incomplete, malformed, or conflicting search filters in the results pane.
 - Read and select the current page’s text directly in the preview, including after jumping to a search match.
+- Reopen a library on the same computer to find unresolved import errors and retry the files.
 
 ## [0.15.0] - 2026-11-18
 

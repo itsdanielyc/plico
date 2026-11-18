@@ -52,6 +52,7 @@
 39. Combine review status with text, a tag, a date, and a folder. Try conflicting clauses and a quoted phrase containing `status:`. Review a PDF from a saved Inbox search and find it in the reviewed results (L3, L4 and L6).
 40. Try an unfinished tag, invalid or conflicting date and folder filters, and conflicting review statuses. Compare a malformed query with a valid search that returns zero PDFs. Correct the query in the search box and check that the result and preview return (L3, L4 and L6).
 41. Read the text on a digital page and jump to a match on an OCR page. Select text and switch to the page image. Check a blank page, cancellation, a PDF replaced with a shorter file, and preview controls at the minimum window size (L3, L4 and L6).
+42. Reopen a library with manual and watched import failures. Repair a source, retry, reopen, and clear the remaining list. Switch libraries, handle an unavailable source, and verify the response to malformed settings and a blocked clear (L3, L4 and L6).
 
 Run `dotnet test Plico.slnx -c Release` for the fast suite. Run the native harness from `keel.json` for installed-platform evidence. Visual review starts with per-OS captures and geometry checks. Add pixel baselines when repeatable runner captures justify the maintenance.
 

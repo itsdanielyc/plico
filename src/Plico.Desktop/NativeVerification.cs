@@ -88,7 +88,7 @@ internal static partial class NativeVerification
             await VerifyDocumentDateAsync(window, model, dialogs, evidenceDirectory);
 
             File.WriteAllText(Path.Combine(evidenceDirectory, "passed.txt"),
-                $"Verified {runtime}. Native window completed multilingual OCR and correction, oriented JPEG and multi-page TIFF import, PDF combination, page extraction and rotation, phrase, tag, and review-status search, query correction, saved search restoration, document-date editing, filtering, and inheritance, result sorting, fit-width and selectable page text previews, match navigation, tag merging and suggestions, duplicate drop, folder watch and inbox counting, title edit, single and batch PDF moves, external relocation, selected PDF export, library backup, text copy, searchable PDF copy, and import retry. {scanRecoveryEvidence}");
+                $"Verified {runtime}. Native window completed multilingual OCR and correction, oriented JPEG and multi-page TIFF import, PDF combination, page extraction and rotation, phrase, tag, and review-status search, query correction, saved search restoration, document-date editing, filtering, and inheritance, result sorting, fit-width and selectable page text previews, match navigation, tag merging and suggestions, duplicate drop, folder watch and inbox counting, title edit, single and batch PDF moves, external relocation, selected PDF export, library backup, text copy, searchable PDF copy, and saved import error recovery and retry. {scanRecoveryEvidence}");
             desktop.Shutdown(0);
         }
         catch (Exception error)
@@ -544,6 +544,8 @@ internal static partial class NativeVerification
         string fixture, string directory)
     {
         var input = Directory.CreateTempSubdirectory("plico-verify-retry-");
+        string libraryRoot = model.LibraryPath;
+        string? rememberedFolder = dialogs.FolderPath;
         try
         {
             string damaged = Path.Combine(input.FullName, "Check import.pdf");
@@ -553,6 +555,16 @@ internal static partial class NativeVerification
             var errors = Control<Button>(window, "ImportErrorsButton");
             Require(errors.IsVisible && model.ImportFailures.Single().SourcePath == damaged,
                 "The native window did not report the damaged input.");
+
+            string otherLibrary = Path.Combine(libraryRoot, "Verification library");
+            dialogs.FolderPath = otherLibrary;
+            await model.ChooseLibraryCommand.ExecuteAsync(null);
+            Require(model.LibraryPath == otherLibrary && model.ImportFailures.Count == 0 && !errors.IsVisible,
+                "Import errors appeared in another library.");
+            dialogs.FolderPath = libraryRoot;
+            await model.ChooseLibraryCommand.ExecuteAsync(null);
+            Require(model.LibraryPath == libraryRoot && errors.IsVisible && model.ImportFailures.Single().SourcePath == damaged,
+                "Reopening the library did not restore its import error.");
 
             var dialog = new ImportErrorsDialog(model.ImportFailures);
             var closed = dialog.ShowDialog<ImportErrorsAction>(window);
@@ -576,6 +588,7 @@ internal static partial class NativeVerification
         }
         finally
         {
+            dialogs.FolderPath = rememberedFolder;
             input.Delete(recursive: true);
         }
     }

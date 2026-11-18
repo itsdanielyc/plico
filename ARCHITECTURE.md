@@ -83,7 +83,7 @@ The runtime carries English, French, German, and Spanish Tesseract models. The a
 
 Direct scanner addresses are stored in per-user settings. A short write lease and atomic replacement preserve entries when separate Plico instances save them. The scanner picker reconstructs saved entries locally and checks the device when it starts a scan.
 
-The desktop holds unresolved import errors by source path for the active library. A successful retry clears that entry. Retry passes those paths through the same snapshot, OCR, and duplicate checks as regular intake.
+The desktop records unresolved import errors by source path. After each completed or cancelled batch with changes, it atomically replaces the snapshot in the user’s settings folder. The normalized library path supplies the key, so each library reopens with its own local source paths. Retrying uses the regular snapshot, OCR, and duplicate checks. A successful or duplicate import clears that source’s error. The settings write completes before an explicit clear removes the list from view.
 
 The picker saves the three typed capture choices together as one local settings file. A read with invalid values uses the regional defaults until the user selects a valid configuration.
 

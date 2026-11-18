@@ -1,3 +1,4 @@
+using System.Text.Json;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 
@@ -7,6 +8,7 @@ internal sealed partial class InboxViewModel
 {
     private readonly SortedDictionary<string, ImportFailure> _unresolvedImports = new(
         OperatingSystem.IsWindows() ? StringComparer.OrdinalIgnoreCase : StringComparer.Ordinal);
+    private readonly ImportFailureStore? _importFailureStore;
 
     [ObservableProperty] private IReadOnlyList<ImportFailure> _importFailures = [];
 
@@ -29,6 +31,11 @@ internal sealed partial class InboxViewModel
                     await ImportFilesAsync(failures.Select(failure => failure.SourcePath).ToArray(), token);
                     break;
                 case ImportErrorsAction.Clear:
+                    if (PersistImportFailures(RequireLibrary().RootPath, []) is { } warning)
+                    {
+                        Status = warning;
+                        break;
+                    }
                     ClearImportErrors();
                     Status = "Import errors cleared.";
                     break;
@@ -43,5 +50,37 @@ internal sealed partial class InboxViewModel
     {
         _unresolvedImports.Clear();
         ImportFailures = [];
+    }
+
+    private string? RestoreImportFailures(string libraryRoot)
+    {
+        ClearImportErrors();
+        if (_importFailureStore is not { } store) return null;
+        try
+        {
+            foreach (var failure in store.Load(libraryRoot))
+            {
+                _unresolvedImports[failure.SourcePath] = failure;
+            }
+            if (_unresolvedImports.Count > 0) ImportFailures = _unresolvedImports.Values.ToArray();
+            return null;
+        }
+        catch (Exception error) when (error is IOException or UnauthorizedAccessException or JsonException)
+        {
+            return $"Could not load saved import errors. {error.Message}";
+        }
+    }
+
+    private string? PersistImportFailures(string libraryRoot, IReadOnlyList<ImportFailure> failures)
+    {
+        try
+        {
+            _importFailureStore?.Save(libraryRoot, failures);
+            return null;
+        }
+        catch (Exception error) when (error is IOException or UnauthorizedAccessException)
+        {
+            return $"Could not save import errors. {error.Message}";
+        }
     }
 }

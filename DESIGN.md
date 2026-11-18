@@ -6,6 +6,8 @@ The two panes let people browse while recognizing a page by sight. The preview u
 
 During a file drag, the reading area displays a copy target. On drop, the existing import status reports each batch outcome, including files already in the library.
 
+**Import errors** reappears when the active library has unresolved errors. The dialog shows the latest reason for each source. **Retry files** updates the list as files succeed or fail again. **Clear list** dismisses the saved entries.
+
 Folder watch uses the Library rail and shows the selected folder beside the stop action. The Inbox count reflects new imports while you review another PDF. Automatic refresh preserves the open selection and the pages you have loaded. When a refresh would replace that view, **Refresh results** appears below the list.
 
 An active watch offers **Import existing files** under the folder name. The status bar reports how many files were queued and shows the import outcome when the watch processes them.

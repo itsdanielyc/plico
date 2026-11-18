@@ -55,11 +55,13 @@ internal sealed partial class InboxViewModel : ObservableObject, IDisposable
 
     internal InboxViewModel(IWorkspaceDialogs dialogs, Action<string>? rememberLocation = null,
         WatchFolderPreference? watchPreference = null,
-        Func<InboxLibrary, DocumentFilter, CancellationToken, DocumentPage>? searchDocuments = null)
+        Func<InboxLibrary, DocumentFilter, CancellationToken, DocumentPage>? searchDocuments = null,
+        ImportFailureStore? importFailureStore = null)
     {
         _dialogs = dialogs;
         _rememberLocation = rememberLocation;
         _watchPreference = watchPreference;
+        _importFailureStore = importFailureStore;
         _searchDocuments = searchDocuments ?? (static (library, filter, token) => library.Find(filter, token));
         _searchTimer.Tick += (_, _) => _ = LoadTypedSearchAsync();
     }
@@ -273,7 +275,7 @@ internal sealed partial class InboxViewModel : ObservableObject, IDisposable
         _library = replacement;
         CancelPreview();
         previous?.Dispose();
-        ClearImportErrors();
+        var importNotice = RestoreImportFailures(replacement.RootPath);
         LatestBackupLocation = null;
         LatestExportLocation = null;
         TagInput = "";
@@ -290,6 +292,7 @@ internal sealed partial class InboxViewModel : ObservableObject, IDisposable
         RefreshInboxCount();
         Navigate(inboxOnly: true);
         Status = watchNotice is null ? "Library ready." : $"Library ready. {watchNotice}";
+        if (importNotice is not null) Status += $" {importNotice}";
         if (replacement.MoveRecoveryNotice is { } moveNotice) Status += $" {moveNotice}";
     }
 
@@ -299,6 +302,7 @@ internal sealed partial class InboxViewModel : ObservableObject, IDisposable
         var language = RecognitionLanguage;
         var failures = new List<ImportFailure>();
         bool reportChanged = false;
+        string? saveWarning = null;
         DocumentSummary? lastAdded = null;
         int added = 0;
         int alreadyPresent = 0;
@@ -334,7 +338,16 @@ internal sealed partial class InboxViewModel : ObservableObject, IDisposable
         }
         finally
         {
-            if (reportChanged) ImportFailures = _unresolvedImports.Values.ToArray();
+            if (reportChanged)
+            {
+                var report = _unresolvedImports.Values.ToArray();
+                ImportFailures = report;
+                if (_importFailureStore is not null)
+                {
+                    // Record completed attempts even when the rest of the batch was cancelled.
+                    saveWarning = await Task.Run(() => PersistImportFailures(library.RootPath, report));
+                }
+            }
             if (lastAdded is not null)
             {
                 if (revealAdded) RevealNewInboxDocument(lastAdded.Id);
@@ -351,6 +364,7 @@ internal sealed partial class InboxViewModel : ObservableObject, IDisposable
         if (alreadyPresent > 0) outcomes.Add($"{DocumentCount(alreadyPresent)} already in the library.");
         if (unreadable > 0) outcomes.Add($"No text recognized in {DocumentCount(unreadable)}.");
         if (failures.Count > 0) outcomes.Add($"{failures.Count} failed. {failures[0].Filename} — {failures[0].Reason}");
+        if (saveWarning is not null) outcomes.Add(saveWarning);
         Status = string.Join(" ", outcomes);
     }
 

@@ -30,7 +30,7 @@ Plico imports a multi-page TIFF as one searchable PDF. The pages follow the scan
 
 Plico uses a JPEG photo’s orientation metadata to turn it upright before making a searchable PDF.
 
-When an import fails, **Import errors** lists the source files and reasons. Fix the files and choose **Retry files** to process those inputs again.
+When an import fails, **Import errors** lists the source files and reasons. The list reopens with that library on this computer. Fix the files and choose **Retry files** to process them again. Choose **Clear list** to dismiss the errors.
 
 Put a phrase in quotation marks to search its adjacent whole words. For example, "lease renewal" north searches for the phrase together with a word beginning with north.
 
