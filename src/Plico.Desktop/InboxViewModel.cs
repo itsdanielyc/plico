@@ -36,10 +36,12 @@ internal sealed partial class InboxViewModel : ObservableObject, IDisposable
     [ObservableProperty] private bool _isBusy;
     [ObservableProperty] private bool _hasMore;
 
-    internal InboxViewModel(IWorkspaceDialogs dialogs, Action<string>? rememberLocation = null)
+    internal InboxViewModel(IWorkspaceDialogs dialogs, Action<string>? rememberLocation = null,
+        WatchFolderPreference? watchPreference = null)
     {
         _dialogs = dialogs;
         _rememberLocation = rememberLocation;
+        _watchPreference = watchPreference;
         _searchTimer.Tick += (_, _) => LoadResults();
     }
 
@@ -211,13 +213,14 @@ internal sealed partial class InboxViewModel : ObservableObject, IDisposable
         ClearImportErrors();
         SelectedDocument = null;
         LibraryPath = replacement.RootPath;
+        var watchNotice = RestoreWatchFolder(replacement.RootPath);
         OnPropertyChanged(nameof(HasLibrary));
         OnPropertyChanged(nameof(CanWork));
         OnPropertyChanged(nameof(CanStartFolderWatch));
         OnPropertyChanged(nameof(LibraryName));
         Tags = replacement.GetTags();
         Navigate(inboxOnly: true);
-        Status = "Library ready.";
+        Status = watchNotice is null ? "Library ready." : $"Library ready. {watchNotice}";
     }
 
     private async Task ImportFilesAsync(IReadOnlyList<string> files, CancellationToken token, bool revealAdded = true)

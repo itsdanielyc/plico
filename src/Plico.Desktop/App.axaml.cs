@@ -27,7 +27,8 @@ public sealed class App : Application
                     FolderPath = incoming.FullName,
                     EditedTitle = NativeVerification.EditedDocumentTitle
                 };
-                var model = new InboxViewModel(dialogs);
+                var watchPreference = new WatchFolderPreference(Path.Combine(testLibrary.FullName, "Settings"));
+                var model = new InboxViewModel(dialogs, watchPreference: watchPreference);
                 model.InitializeLibrary(() => testLibrary.FullName);
                 window.DataContext = model;
                 desktop.Exit += (_, _) =>
@@ -41,7 +42,8 @@ public sealed class App : Application
             }
             else
             {
-                var model = new InboxViewModel(new WorkspaceDialogs(window), LibraryPreference.Save);
+                var model = new InboxViewModel(new WorkspaceDialogs(window), LibraryPreference.Save,
+                    new WatchFolderPreference(ApplicationSettings.DirectoryPath));
                 model.InitializeLibrary(LibraryPreference.LoadOrCreateDefault);
                 var recognition = new OcrLanguagePreference(ApplicationSettings.DirectoryPath);
                 model.InitializeRecognitionLanguage(recognition.Load, recognition.Save);

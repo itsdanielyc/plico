@@ -16,7 +16,7 @@
 3. Tag and filter a document. Tag a selection and mark it reviewed or return it to the inbox. An unavailable document cancels the batch (L3, L4 and L6).
 4. Start each published bundle and make a portable backup. Reopen it with its metadata and verify cancellation clears staging (L3, L6 and L7).
 5. Discover scanners from the real shell. Physical feed, duplex and flatbed checks require a compatible device (manual).
-6. Start watching a folder from the native window. Import a newly completed file, find it by text, preserve the previous search until the user changes it, and stop the watch (L3 and L6).
+6. Start watching a folder from the native window. Import a completed file while preserving the current search. Stop and explicitly resume the watch from its saved library setting (L3, L4 and L6).
 7. Capture and search pages from a loopback eSCL scanner at the selectable resolutions. Verify address validation, saved scanner addresses and capture choices, and defaults when settings are unreadable (L1, L3, L4 and L6 layout).
 8. Edit a catalog title and find it by title and filename. Move a PDF on disk, refresh, and check its metadata and containing folder. Confirm ambiguous copies have distinct records (L3, L4 and L6).
 

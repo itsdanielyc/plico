@@ -1,4 +1,5 @@
 using Avalonia.Threading;
+using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using Plico.Core;
 
@@ -7,9 +8,12 @@ namespace Plico.Desktop;
 internal sealed partial class InboxViewModel
 {
     private FolderWatch? _folderWatch;
+    private readonly WatchFolderPreference? _watchPreference;
+    [ObservableProperty] private string? _rememberedWatchFolder;
 
     public bool IsWatchingFolder => _folderWatch is not null;
     public bool CanStartFolderWatch => CanWork && !IsWatchingFolder;
+    public bool CanOfferResumeFolderWatch => RememberedWatchFolder is not null && !IsWatchingFolder;
     public string WatchedFolderPath => _folderWatch?.Folder ?? "";
     public string WatchedFolderName => IsWatchingFolder
         ? new DirectoryInfo(WatchedFolderPath).Name
@@ -19,7 +23,6 @@ internal sealed partial class InboxViewModel
     private Task StartFolderWatchAsync() => RunOperationAsync("Choose a scanner output folder…", async token =>
     {
         if (IsWatchingFolder) return;
-        var library = RequireLibrary();
         var folder = await _dialogs.PickFolderAsync("Choose a scanner output folder");
         if (folder is null)
         {
@@ -27,12 +30,54 @@ internal sealed partial class InboxViewModel
             return;
         }
         token.ThrowIfCancellationRequested();
+        StartWatch(folder);
+    });
+
+    [RelayCommand]
+    private Task ResumeFolderWatchAsync()
+    {
+        if (RememberedWatchFolder is not { } folder || IsWatchingFolder) return Task.CompletedTask;
+        return RunOperationAsync("Resuming folder watch…", _ =>
+        {
+            StartWatch(folder);
+            return Task.CompletedTask;
+        });
+    }
+
+    private void StartWatch(string folder)
+    {
+        var library = RequireLibrary();
         var watch = FolderWatch.Start(folder, library.PdfDirectory, ImportWatchedFilesAsync);
         _folderWatch = watch;
+        RememberedWatchFolder = watch.Folder;
         NotifyWatchChanged();
         Status = $"Watching for new or updated files in {WatchedFolderName}.";
         _ = ObserveWatchAsync(watch);
-    });
+        try
+        {
+            _watchPreference?.Save(library.RootPath, watch.Folder);
+        }
+        catch (Exception error) when (error is IOException or UnauthorizedAccessException)
+        {
+            Status += $" {error.Message}";
+        }
+    }
+
+    private string? RestoreWatchFolder(string libraryRoot)
+    {
+        RememberedWatchFolder = null;
+        try
+        {
+            RememberedWatchFolder = _watchPreference?.Load(libraryRoot);
+            return null;
+        }
+        catch (Exception error) when (error is IOException or UnauthorizedAccessException)
+        {
+            return error.Message;
+        }
+    }
+
+    partial void OnRememberedWatchFolderChanged(string? value) => OnPropertyChanged(nameof(CanOfferResumeFolderWatch));
 
     [RelayCommand]
     private async Task StopFolderWatchAsync()
@@ -79,6 +124,7 @@ internal sealed partial class InboxViewModel
     {
         OnPropertyChanged(nameof(IsWatchingFolder));
         OnPropertyChanged(nameof(CanStartFolderWatch));
+        OnPropertyChanged(nameof(CanOfferResumeFolderWatch));
         OnPropertyChanged(nameof(WatchedFolderPath));
         OnPropertyChanged(nameof(WatchedFolderName));
     }

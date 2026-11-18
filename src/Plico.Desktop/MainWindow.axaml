@@ -108,6 +108,9 @@
                     <Button x:Name="StartFolderWatchButton" Classes="rail" Content="Watch a folder…"
                             Command="{Binding StartFolderWatchCommand}" IsVisible="{Binding !IsWatchingFolder}"
                             IsEnabled="{Binding CanStartFolderWatch}" />
+                    <Button x:Name="ResumeFolderWatchButton" Classes="rail" Content="Resume folder watch"
+                            Command="{Binding ResumeFolderWatchCommand}" IsVisible="{Binding CanOfferResumeFolderWatch}"
+                            IsEnabled="{Binding CanWork}" ToolTip.Tip="{Binding RememberedWatchFolder}" />
                     <TextBlock IsVisible="{Binding IsWatchingFolder}" Text="{Binding WatchedFolderName, StringFormat='Watching {0}'}"
                                ToolTip.Tip="{Binding WatchedFolderPath}" TextTrimming="CharacterEllipsis"
                                Foreground="#CADDCA" FontSize="12" Margin="12,7,0,0" />

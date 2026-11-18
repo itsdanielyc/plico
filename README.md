@@ -57,6 +57,8 @@ The scan picker remembers the paper source, size, and resolution you choose.
 
 If your scanner software saves to a folder, choose **Watch a folder…** under **Library** and select its output folder. Plico imports new or updated PDFs and images after they settle. The watch covers files directly inside that folder and lasts while Plico is open. **Stop watching** ends intake. Your scanner's source files remain in the output folder.
 
+Plico remembers the chosen folder for the current library. **Resume folder watch** starts watching it again when you are ready.
+
 ## Development
 
 Use the .NET SDK in [global.json](global.json).

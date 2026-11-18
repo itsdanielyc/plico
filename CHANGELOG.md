@@ -1,5 +1,10 @@
 # Changelog
 
+## [0.15.0] - 2026-11-18
+
+- Plico remembers the watch folder for each library on this computer.
+- Choose **Resume folder watch** after reopening or stopping a watch to start watching that folder again.
+
 ## [0.14.0] - 2026-11-18
 
 - Open **Import errors** to see each unresolved file and its reason.

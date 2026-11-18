@@ -306,8 +306,15 @@ internal static class NativeVerification
         Control<TextBox>(window, "SearchBox").SetCurrentValue(TextBox.TextProperty, LetterKeyword);
         await UntilAsync(() => model.SelectedDocument?.Title == "Scanner output" && model.Preview is not null, () => model.Status);
         await CaptureAsync(window, directory, "watched-folder.png");
+        string originalFolder = model.WatchedFolderPath;
         await ((IAsyncRelayCommand)stop.Command!).ExecuteAsync(null);
         Require(!model.IsWatchingFolder, "The folder watch did not stop.");
+        var resume = Control<Button>(window, "ResumeFolderWatchButton");
+        Require(resume.IsVisible && resume.Command is IAsyncRelayCommand, "The native window did not offer the remembered folder.");
+        await CaptureAsync(window, directory, "resume-watch.png");
+        await ((IAsyncRelayCommand)resume.Command!).ExecuteAsync(null);
+        Require(model.IsWatchingFolder && model.WatchedFolderPath == originalFolder, "The watch did not resume its previous folder.");
+        await ((IAsyncRelayCommand)stop.Command!).ExecuteAsync(null);
     }
 
     private static async Task VerifyDropAsync(MainWindow window, InboxViewModel model, string fixture, string directory)
