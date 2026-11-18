@@ -24,7 +24,7 @@ On Linux, Plico uses X11 or XWayland. The Debian package declares its runtime li
 2. Select a document to preview it and add tags. **Mark reviewed** takes it out of the Inbox.
 3. Search by name or document text, including documents you already reviewed. Choose a tag to narrow the results.
 
-Select a language in **OCR** before scanning or importing. Plico remembers the choice and uses that bundled model for new documents.
+Select a language in **OCR** for scans, imports, and searchable copies. Plico remembers the choice and uses that bundled model for recognition.
 
 When an import fails, **Import errors** lists the source files and reasons. Fix the files and choose **Retry files** to process those inputs again.
 
@@ -43,6 +43,8 @@ Choose **Go to match** on a multi-page text result to open the first page that m
 Choose **Copy text** to copy the searchable text from all pages of the selected PDF.
 
 The library starts under Documents/Plico. Select the library name in the sidebar to choose another folder. **Show PDF folder** opens the `PDFs/` directory. **Refresh index** picks up PDFs that you add, edit, or remove on disk. To move or back up a library with its tags, close Plico and copy the entire directory, including `.plico/`. Digital PDFs with text on every page are copied unchanged.
+
+When a scan copied into `PDFs/` needs OCR, choose **Create searchable copy** in its preview. Plico adds a searchable PDF to the inbox with the scan’s tags.
 
 To make a copy while Plico is open, choose **Back up library…** and select a destination outside the current library. Plico creates a dated folder with the PDFs and their catalog. **Open backup** shows that folder in the file manager. Choose the folder as a library to reopen it in Plico.
 

@@ -107,10 +107,12 @@ internal sealed class LibraryCatalog
     }
 
     internal long Upsert(string relativePath, string title, PdfText text, FileVersion version,
-        byte[] pdfFingerprint, byte[]? sourceFingerprint = null)
+        byte[] pdfFingerprint, byte[]? sourceFingerprint = null, long? copyTagsFromDocumentId = null)
     {
         using var connection = Connect();
+        using var transaction = copyTagsFromDocumentId.HasValue ? connection.BeginTransaction() : null;
         using var command = connection.CreateCommand();
+        command.Transaction = transaction;
         command.CommandText = """
             INSERT INTO documents (title, relative_path, added_at, modified_ticks, file_bytes, page_count, has_text, body, source_sha256, pdf_sha256)
             VALUES ($title, $path, $added, $modified, $bytes, $pages, $hasText, $text, $source, $pdf)
@@ -132,7 +134,20 @@ internal sealed class LibraryCatalog
         command.Parameters.AddWithValue("$text", text.Body);
         command.Parameters.AddWithValue("$source", sourceFingerprint is null ? DBNull.Value : sourceFingerprint);
         command.Parameters.AddWithValue("$pdf", pdfFingerprint);
-        return (long)command.ExecuteScalar()!;
+        long documentId = (long)command.ExecuteScalar()!;
+        if (copyTagsFromDocumentId is long sourceId)
+        {
+            command.CommandText = """
+                INSERT OR IGNORE INTO document_tags (document_id, tag_key)
+                SELECT $copy, tag_key FROM document_tags WHERE document_id = $original;
+                """;
+            command.Parameters.Clear();
+            command.Parameters.AddWithValue("$copy", documentId);
+            command.Parameters.AddWithValue("$original", sourceId);
+            command.ExecuteNonQuery();
+            transaction!.Commit();
+        }
+        return documentId;
     }
 
     internal bool ReservesPath(string relativePath)
@@ -144,8 +159,8 @@ internal sealed class LibraryCatalog
         return (long)command.ExecuteScalar()! == 1;
     }
 
-    internal IReadOnlyList<ImportCandidate> FindSource(byte[] fingerprint) =>
-        ReadImportCandidates("source_sha256 = $value", fingerprint);
+    internal IReadOnlyList<ImportCandidate> FindSource(byte[] fingerprint, bool searchableOnly = false) =>
+        ReadImportCandidates(searchableOnly ? "source_sha256 = $value AND has_text = 1" : "source_sha256 = $value", fingerprint);
 
     internal IReadOnlyList<ImportCandidate> FindLegacyPdfs(long fileBytes) =>
         ReadImportCandidates("source_sha256 IS NULL AND file_bytes = $value", fileBytes);
@@ -181,6 +196,17 @@ internal sealed class LibraryCatalog
 
     internal DocumentSummary Get(long documentId) => Query(new DocumentFilter(), documentId).Items.SingleOrDefault() ??
         throw new InvalidOperationException(DocumentUnavailableMessage);
+
+    internal FileVersion GetFileVersion(long documentId)
+    {
+        using var connection = Connect();
+        using var command = connection.CreateCommand();
+        command.CommandText = "SELECT modified_ticks, file_bytes FROM documents WHERE id = $id AND is_present = 1;";
+        command.Parameters.AddWithValue("$id", documentId);
+        using var result = command.ExecuteReader();
+        if (!result.Read()) throw new InvalidOperationException(DocumentUnavailableMessage);
+        return new FileVersion(result.GetInt64(0), result.GetInt64(1), Present: true);
+    }
 
     internal DocumentPage Find(DocumentFilter filter, CancellationToken cancellationToken = default) =>
         Query(filter, cancellationToken: cancellationToken);

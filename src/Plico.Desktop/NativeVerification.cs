@@ -67,10 +67,11 @@ internal static class NativeVerification
             await VerifyImportErrorsAsync(window, model, dialogs, fixture, evidenceDirectory);
             await VerifyPreviewFitAsync(window, model, evidenceDirectory);
             await VerifyGoToMatchAsync(window, model, evidenceDirectory);
+            await VerifySearchableCopyAsync(window, model, fixture, evidenceDirectory);
             await VerifyScannerDialogAsync(window, evidenceDirectory);
 
             File.WriteAllText(Path.Combine(evidenceDirectory, "passed.txt"),
-                $"Verified {runtime}. Native window completed multilingual OCR, phrase search, result sorting, fit-width preview, match navigation, duplicate drop, folder watch, title edit, relocation, batch actions, library backup, text copy, and import retry.");
+                $"Verified {runtime}. Native window completed multilingual OCR, phrase search, result sorting, fit-width preview, match navigation, duplicate drop, folder watch, title edit, relocation, batch actions, library backup, text copy, searchable PDF copy, and import retry.");
             desktop.Shutdown(0);
         }
         catch (Exception error)
@@ -131,6 +132,37 @@ internal static class NativeVerification
         await ((IAsyncRelayCommand)jump.Command!).ExecuteAsync(jump.CommandParameter);
         await UntilAsync(() => model.PageLabel == "2 / 2" && model.Preview is not null, () => model.Status);
         await CaptureAsync(window, directory, "matching-page.png");
+    }
+
+    private static async Task VerifySearchableCopyAsync(MainWindow window, InboxViewModel model, string fixture, string directory)
+    {
+        const string scanName = "Pending OCR.pdf";
+        string scanPath = Path.Combine(model.LibraryPath, "PDFs", scanName);
+        string scannedFixture = Path.Combine(Path.GetDirectoryName(fixture)!, "Scanned Receipt.pdf");
+        byte[] sourceBytes = File.ReadAllBytes(scannedFixture);
+        File.WriteAllBytes(scanPath, sourceBytes);
+        model.ShowInboxCommand.Execute(null);
+        await model.RefreshIndexCommand.ExecuteAsync(null);
+        var original = model.Documents.Single(document => document.RelativePath == scanName);
+        Control<ListBox>(window, "DocumentList").SetCurrentValue(ListBox.SelectedItemProperty, original);
+        await UntilAsync(() => model.SelectedDocument?.Id == original.Id && model.Preview is not null, () => model.Status);
+        Control<TextBox>(window, "TagBox").SetCurrentValue(TextBox.TextProperty, TestTag);
+        Control<Button>(window, "AddTagButton").Command!.Execute(null);
+        var copy = Control<Button>(window, "CreateSearchableCopyButton");
+        Require(!original.HasText && copy.IsEffectivelyVisible && copy.IsEnabled && copy.Command is IAsyncRelayCommand,
+            "The indexed scan did not offer an OCR copy.");
+        await CaptureAsync(window, directory, "indexed-scan.png");
+
+        await ((IAsyncRelayCommand)copy.Command!).ExecuteAsync(copy.CommandParameter);
+        var searchable = model.SelectedDocument;
+        Require(searchable is { HasText: true, Reviewed: false } && searchable.Id != original.Id && searchable.Tags.Contains(TestTag),
+            $"The searchable PDF did not open with the source tags. {model.Status}");
+        Require(sourceBytes.AsSpan().SequenceEqual(File.ReadAllBytes(scanPath)), "OCR copied over the source scan.");
+
+        Control<TextBox>(window, "SearchBox").SetCurrentValue(TextBox.TextProperty, ReceiptKeyword);
+        await UntilAsync(() => model.SelectedDocument is { } current && current.Id == searchable!.Id &&
+            model.Preview is not null && current.Match.Contains(ReceiptKeyword, StringComparison.OrdinalIgnoreCase), () => model.Status);
+        await CaptureAsync(window, directory, "searchable-copy.png");
     }
 
     private static async Task VerifyImportErrorsAsync(MainWindow window, InboxViewModel model, FixtureDialogs dialogs,

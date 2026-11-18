@@ -146,7 +146,7 @@
                         <TextBlock Text="OCR" Classes="muted" VerticalAlignment="Center" />
                         <ComboBox x:Name="OcrLanguageBox" ItemsSource="{Binding RecognitionLanguages}"
                                   SelectedItem="{Binding RecognitionLanguage, Mode=TwoWay}" MinWidth="96" MinHeight="38"
-                                  IsEnabled="{Binding IsIdle}" AutomationProperties.Name="OCR language for new documents" />
+                                  IsEnabled="{Binding IsIdle}" AutomationProperties.Name="OCR language" />
                     </StackPanel>
                     <Button Grid.Column="2" x:Name="ScanButton" Classes="secondary" Command="{Binding ScanCommand}"
                             Content="Scan" IsEnabled="{Binding CanWork}" MinHeight="38" />
@@ -284,8 +284,13 @@
                                     </Grid>
                                 </Border>
                                 <StackPanel Grid.Row="2" Spacing="8">
-                                    <TextBlock Text="No searchable text found" Foreground="#795327" FontSize="12"
-                                               IsVisible="{Binding HasNoSearchableText}" />
+                                    <Grid ColumnDefinitions="*,Auto" ColumnSpacing="8" IsVisible="{Binding HasNoSearchableText}">
+                                        <TextBlock Text="No searchable text found" Foreground="#795327" FontSize="12"
+                                                   VerticalAlignment="Center" TextWrapping="Wrap" />
+                                        <Button Grid.Column="1" x:Name="CreateSearchableCopyButton" Classes="secondary"
+                                                Content="Create searchable copy" Command="{Binding CreateSearchableCopyCommand}"
+                                                IsEnabled="{Binding CanWork}" />
+                                    </Grid>
                                     <ItemsControl ItemsSource="{Binding SelectedDocument.Tags}" MaxHeight="67">
                                         <ItemsControl.ItemsPanel><ItemsPanelTemplate><WrapPanel /></ItemsPanelTemplate></ItemsControl.ItemsPanel>
                                         <ItemsControl.ItemTemplate>

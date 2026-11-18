@@ -1,4 +1,5 @@
 using CommunityToolkit.Mvvm.ComponentModel;
+using CommunityToolkit.Mvvm.Input;
 using Plico.Core;
 
 namespace Plico.Desktop;
@@ -11,6 +12,20 @@ internal sealed partial class InboxViewModel
     [ObservableProperty] private OcrLanguage _recognitionLanguage = OcrLanguage.English;
 
     public IReadOnlyList<OcrLanguage> RecognitionLanguages => AvailableRecognitionLanguages;
+
+    [RelayCommand]
+    private Task CreateSearchableCopyAsync()
+    {
+        if (SelectedDocument is not { HasText: false } scan) return Task.CompletedTask;
+        var language = RecognitionLanguage;
+        return RunOperationAsync("Creating a searchable copy…", async token =>
+        {
+            var library = RequireLibrary();
+            var result = await Task.Run(() => library.CreateSearchableCopyAsync(scan.Id, token, language), token);
+            Navigate(inboxOnly: !result.Document.Reviewed, preferredId: result.Document.Id);
+            Status = result.Added ? "Searchable copy added to inbox." : "Searchable copy already in the library.";
+        });
+    }
 
     internal void InitializeRecognitionLanguage(Func<OcrLanguage> load, Action<OcrLanguage> save)
     {

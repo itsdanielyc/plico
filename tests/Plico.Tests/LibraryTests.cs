@@ -10,7 +10,7 @@ using Xunit;
 
 namespace Plico.Tests;
 
-public sealed class LibraryTests
+public sealed partial class LibraryTests
 {
     private const string Receipt = "Hardware Store Receipt.png";
     private const string Letter = "Lease Renewal.pdf";
