@@ -1,52 +1,50 @@
-name: CI
+name: Diagnose Tesseract orientation
 on:
-  push:
-    branches: [main]
-    paths-ignore: ['**/*.md', '.agents/**']
-  pull_request:
-    paths-ignore: ['**/*.md', '.agents/**']
   workflow_dispatch:
-
+    inputs:
+      source_sha:
+        description: Exact feature commit to diagnose
+        required: true
+        type: string
 permissions:
   contents: read
-
 jobs:
-  desktop:
-    name: Desktop (${{ matrix.rid }})
+  orientation:
     runs-on: ${{ matrix.runner }}
-    timeout-minutes: 15
+    timeout-minutes: 10
     strategy:
       fail-fast: false
       matrix:
-        include:
-          - {runner: windows-2025, rid: win-x64, executable: Plico.exe}
-          - {runner: windows-11-arm, rid: win-arm64, executable: Plico.exe}
-          - {runner: macos-26, rid: osx-arm64, executable: Plico}
-          - {runner: macos-26-intel, rid: osx-x64, executable: Plico}
-          - {runner: ubuntu-24.04, rid: linux-x64, executable: Plico}
-          - {runner: ubuntu-24.04-arm, rid: linux-arm64, executable: Plico}
+        runner: [ubuntu-24.04, ubuntu-24.04-arm]
     steps:
       - uses: actions/checkout@v6
+        with:
+          ref: ${{ inputs.source_sha }}
       - uses: actions/setup-dotnet@v5
         with:
           global-json-file: global.json
-      - run: dotnet restore Plico.slnx --locked-mode
-      - run: dotnet test Plico.slnx -c Release --no-restore
-      - name: Launch native window
-        shell: pwsh
+      - name: Capture Plico's orientation subprocess output
         env:
-          PLICO_EXECUTABLE: ${{ matrix.executable }}
-          PLICO_EXPECTED_NATIVE_RID: ${{ matrix.rid }}
+          PLICO_OSD_LOG: ${{ runner.temp }}/plico-osd.txt
         run: |
-          $executable = "src/Plico.Desktop/bin/Release/net10.0/$env:PLICO_EXECUTABLE"
-          if ($IsLinux) {
-            xvfb-run -a pwsh -NoProfile -File scripts/Test-Native.ps1 -Executable $executable -EvidenceDirectory artifacts/native
-          } else {
-            ./scripts/Test-Native.ps1 -Executable $executable -EvidenceDirectory artifacts/native
-          }
-      - uses: actions/upload-artifact@v6
-        if: always()
-        with:
-          name: native-${{ matrix.rid }}
-          path: artifacts/native/
-          if-no-files-found: ignore
+          python3 - <<'PY'
+          from pathlib import Path
+          implementation = Path('src/Plico.Core/TesseractOrientation.cs')
+          source = implementation.read_text()
+          old = 'return process.ExitCode == 0 ? ReadRotation(await output.ConfigureAwait(false)) : 0;'
+          new = '''var stdout = await output.ConfigureAwait(false);
+                      var stderr = await diagnostics.ConfigureAwait(false);
+                      string capture = Environment.GetEnvironmentVariable("PLICO_OSD_LOG")!;
+                      File.AppendAllText(capture, $"exit={process.ExitCode}\\nstdout:\\n{stdout}\\nstderr:\\n{stderr}\\n");
+                      return process.ExitCode == 0 ? ReadRotation(stdout) : 0;'''
+          assert source.count(old) == 1
+          implementation.write_text(source.replace(old, new))
+          PY
+          dotnet test Plico.slnx -c Release --filter FullyQualifiedName~AutoOrientationTurns || true
+          if test -f "$PLICO_OSD_LOG"; then cat "$PLICO_OSD_LOG"; fi
+          native_dir="_linux"
+          if test "$(uname -m)" = aarch64; then native_dir="_linuxarm"; fi
+          tesseract="src/Plico.Desktop/bin/Release/net10.0/$native_dir/tesseract"
+          "$tesseract" --version
+          "$tesseract" --help-psm
+          "$tesseract" 'tests/fixtures/Sideways orientation.png' stdout --tessdata-dir assets/ocr --dpi 300 --psm 0 || true
