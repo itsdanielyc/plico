@@ -256,6 +256,7 @@ public sealed partial class LibraryTests
             connection.Open();
             using var command = connection.CreateCommand();
             command.CommandText = """
+                DROP INDEX documents_text_presence;
                 DROP INDEX documents_document_day;
                 ALTER TABLE documents DROP COLUMN document_day;
                 DROP TABLE saved_searches;

@@ -249,6 +249,7 @@ public sealed class LibraryMoveTests
             database.Open();
             using var command = database.CreateCommand();
             command.CommandText = """
+                DROP INDEX documents_text_presence;
                 DROP INDEX documents_document_day;
                 ALTER TABLE documents DROP COLUMN document_day;
                 DROP TABLE saved_searches;
