@@ -53,7 +53,7 @@ public sealed partial class MainWindow : Window
     protected override async void OnClosing(WindowClosingEventArgs e)
     {
         base.OnClosing(e);
-        if (ViewModel is not { } model || (!model.IsBusy && !model.IsWatchingFolder)) return;
+        if (ViewModel is not { } model || (!model.IsBusy && !model.HasActiveWatches)) return;
         e.Cancel = true;
         if (_closeWhenIdle) return;
         _closeWhenIdle = true;

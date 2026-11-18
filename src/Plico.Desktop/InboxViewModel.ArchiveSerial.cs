@@ -1,5 +1,6 @@
 using CommunityToolkit.Mvvm.Input;
 using Plico.Core;
+using System.Globalization;
 
 namespace Plico.Desktop;
 
@@ -14,6 +15,7 @@ internal sealed partial class InboxViewModel
         if (input is null) return;
         token.ThrowIfCancellationRequested();
         await Task.Run(() => library.SetArchiveSerialNumber(selected.Id, input.Number), token);
+        LoadResults(preferredId: selected.Id, retainLoadedResults: true);
         Status = input.Number is long number ? $"Assigned archive serial {number}." : "Archive serial removed.";
     });
 
@@ -29,13 +31,7 @@ internal sealed partial class InboxViewModel
             Status = $"No available document has archive serial {serial}.";
             return;
         }
-        Navigate(inboxOnly: false, preferredId: document.Id);
-        if (SelectedDocument?.Id != document.Id)
-        {
-            ReplaceResults([document], document.Id, reloadPreview: true);
-            HasMore = false;
-            ResultCount = "1 document";
-        }
+        Navigate(inboxOnly: false, preferredId: document.Id, query: $"asn:{serial.ToString(CultureInfo.InvariantCulture)}");
         Status = $"Found archive serial {serial}.";
     });
 

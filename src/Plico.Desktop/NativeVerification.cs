@@ -1077,6 +1077,7 @@ internal sealed partial class FixtureDialogs(params string[] documents) : IWorks
     internal string? LastFolderStart { get; private set; }
     internal int FolderPickerCalls { get; private set; }
     internal string? EditedTitle { get; init; }
+    internal ArchiveSerialInput? ArchiveSerialChoice { get; set; }
     internal Func<DateOnly?, Task<DocumentDateEdit?>>? DocumentDateChoice { get; set; }
     internal Func<DateOnly?, int, Task<DocumentDateEdit?>>? BatchDocumentDateChoice { get; set; }
     internal Func<SavedSearchDraft, string?, bool, Task<SavedSearchDecision?>>? SavedSearchChoice { get; set; }
@@ -1120,7 +1121,7 @@ internal sealed partial class FixtureDialogs(params string[] documents) : IWorks
     public Task<ManualDuplexDecision> ChooseDuplexActionAsync(ManualDuplexPrompt prompt, CancellationToken cancellationToken) =>
         Task.FromResult(ManualDuplexDecision.SaveForLater);
     public Task<ArchiveSerialInput?> PickArchiveSerialAsync(ArchiveSerialAction action, long? current = null) =>
-        Task.FromResult<ArchiveSerialInput?>(null);
+        Task.FromResult(ArchiveSerialChoice);
     public Task<string?> PickArchiveSheetPathAsync(string filename) => Task.FromResult<string?>(null);
     public Task<string?> EditTitleAsync(string currentTitle) => Task.FromResult(EditedTitle);
     public Task<DocumentDateEdit?> EditDocumentDateAsync(DateOnly? currentDate) =>

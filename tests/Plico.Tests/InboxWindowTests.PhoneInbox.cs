@@ -1,6 +1,7 @@
 using Avalonia.Controls;
 using Avalonia.Headless.XUnit;
 using CommunityToolkit.Mvvm.Input;
+using Plico.Core;
 using Plico.Desktop;
 using Xunit;
 
@@ -8,6 +9,31 @@ namespace Plico.Tests;
 
 public sealed partial class InboxWindowTests
 {
+    [AvaloniaFact]
+    public async Task ClosingAWindowStopsItsPhoneInboxBeforeTheWindowCloses()
+    {
+        using var library = new TemporaryLibrary();
+        using var phoneInbox = new TemporaryLibrary();
+        using var model = new InboxViewModel(new FixtureDialogs { FolderPath = phoneInbox.Path });
+        model.InitializeLibrary(() => library.Path);
+        var window = new MainWindow { DataContext = model };
+        window.Show();
+        try
+        {
+            await model.ChoosePhoneInboxFolderCommand.ExecuteAsync(null);
+            Assert.True(model.IsWatchingPhoneInbox);
+            var closed = new TaskCompletionSource<bool>(TaskCreationOptions.RunContinuationsAsynchronously);
+            window.Closed += (_, _) => closed.TrySetResult(model.IsWatchingPhoneInbox);
+            window.Close();
+            Assert.False(await closed.Task.WaitAsync(TestContext.Current.CancellationToken));
+        }
+        finally
+        {
+            await model.PrepareCloseAsync();
+            if (window.IsVisible) window.Close();
+        }
+    }
+
     [AvaloniaFact]
     public async Task PhoneInboxKeepsItsOwnWatchAndLibraryPreference()
     {
@@ -42,6 +68,14 @@ public sealed partial class InboxWindowTests
             dialogs.FolderPath = phoneInbox.Path;
             await chooseCommand.ExecuteAsync(null);
             Assert.True(model.IsWatchingFolder && model.IsWatchingPhoneInbox);
+
+            using (var lockedLibrary = InboxLibrary.Open(otherLibrary.Path))
+            {
+                dialogs.FolderPath = otherLibrary.Path;
+                await model.ChooseLibraryCommand.ExecuteAsync(null);
+                Assert.Equal(library.Path, model.LibraryPath);
+                Assert.True(model.IsWatchingFolder && model.IsWatchingPhoneInbox);
+            }
 
             string fixtures = Path.Combine(AppContext.BaseDirectory, "fixtures");
             File.Copy(Path.Combine(fixtures, "Lease Renewal.pdf"), Path.Combine(scannerOutput.Path, "Scanner scan.pdf"));

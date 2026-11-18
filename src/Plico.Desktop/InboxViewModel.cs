@@ -104,7 +104,7 @@ internal sealed partial class InboxViewModel : ObservableObject, IDisposable
     {
         try
         {
-            OpenLibrary(locate());
+            if (OpenDifferentLibrary(locate()) is { } library) ActivateLibrary(library);
         }
         catch (Exception error)
         {
@@ -155,14 +155,15 @@ internal sealed partial class InboxViewModel : ObservableObject, IDisposable
             return;
         }
         token.ThrowIfCancellationRequested();
-        if (_library is { } library && Path.GetRelativePath(library.RootPath, selected) != ".")
+        var replacement = OpenDifferentLibrary(selected);
+        if (replacement is not null)
         {
+            // Acquire the new library's lease before stopping intake for the current one.
             await StopAllWatchesAsync();
+            ActivateLibrary(replacement);
         }
-        token.ThrowIfCancellationRequested();
-        bool opened = OpenLibrary(selected);
         _rememberLocation?.Invoke(LibraryPath);
-        if (opened) await CatchUpSavedWatchesAsync(token);
+        if (replacement is not null) await CatchUpSavedWatchesAsync(token);
     });
 
     [RelayCommand] private void Cancel() => _operationCancellation?.Cancel();
@@ -259,16 +260,19 @@ internal sealed partial class InboxViewModel : ObservableObject, IDisposable
     internal void RemoveTag(string tag) =>
         UpdateDocument((library, document) => library.RemoveTag(document.Id, tag), DesktopText.Translate("Tag removed."));
 
-    private bool OpenLibrary(string directory)
+    private InboxLibrary? OpenDifferentLibrary(string directory)
     {
         string target = Path.GetFullPath(directory);
         if (_library is not null && Path.GetRelativePath(_library.RootPath, target) == ".")
         {
             Status = DesktopText.Translate("Library already open.");
-            return false;
+            return null;
         }
+        return InboxLibrary.Open(target);
+    }
 
-        var replacement = InboxLibrary.Open(target);
+    private void ActivateLibrary(InboxLibrary replacement)
+    {
         var previous = _library;
         CancelTypedSearch();
         _library = replacement;
@@ -301,7 +305,6 @@ internal sealed partial class InboxViewModel : ObservableObject, IDisposable
         if (importNotice is not null) Status += $" {importNotice}";
         if (intakeNotice is not null) Status += $" {intakeNotice}";
         if (replacement.MoveRecoveryNotice is { } moveNotice) Status += $" {moveNotice}";
-        return true;
     }
 
     private Task ImportFilesAsync(IReadOnlyList<string> files, CancellationToken token,
