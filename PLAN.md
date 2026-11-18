@@ -105,4 +105,4 @@ Ruling for v0.17.0. Implement the brief’s first nine ranked items together on 
 
 | Slice | Done when | Levels | Status |
 |---|---|---|---|
-| #14 Windows TWAIN and macOS USB scanners | Local TWAIN and Image Capture entries appear beside the current sources. The native macOS helper can discover scanners from both builds and packages. Physical scans require a device. | L0, L1, L6, L7 | Hosted verification pending |
+| #14 Windows TWAIN and macOS USB scanners | Local TWAIN and Image Capture entries appear beside the current sources. The native macOS helper can discover scanners from both builds and packages. Physical scans require a device. | L0, L1, L6, L7 | Local driver checks passed. Hosted source and package reruns are pending. |
