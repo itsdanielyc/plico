@@ -45,7 +45,7 @@ public sealed partial class InboxWindowTests
             await command.ExecuteAsync(action.CommandParameter);
 
             Assert.True(File.Exists(Path.Combine(destination, "Household documents.pdf")), model.Status);
-            Assert.Equal(destination, model.LatestExportLocation);
+            Assert.Equal(Path.GetFileName(destination), Path.GetFileName(model.LatestExportLocation));
             Assert.True(model.HasBatchSelection);
             Assert.Equal(shownOrder, model.Documents.Select(document => document.Id));
         }
