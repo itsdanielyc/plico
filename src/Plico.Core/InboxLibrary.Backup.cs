@@ -7,7 +7,7 @@ public sealed partial class InboxLibrary
     private const string BackupStagePrefix = ".plico-backup-";
     private const string BackupFolderLabel = "Plico backup";
     private const string CopyTimestampFormat = "yyyy-MM-dd HH-mm-ss";
-    private const string BackupInventoryChanged = "The PDF folder changed during backup. Try again once the files are saved.";
+    private const string BackupInventoryChanged = "The library files changed during backup. Try again once the files are saved.";
 
     /// <summary>Publishes a portable copy of the PDFs and a SQLite snapshot in an existing destination directory.</summary>
     // O(files + copied bytes) time and O(files + one copy buffer) application space.
@@ -26,24 +26,27 @@ public sealed partial class InboxLibrary
             var trash = _catalog.ReadTrashFiles();
             var history = _catalog.ReadPdfVersions();
             var trashVersions = new List<(string Path, FileVersion Version)>(trash.Count);
-            int total = checked(inventory.Count + trash.Count + history.Count);
+            int total = checked(inventory.Keys.Count(IsBackupPdf) + trash.Count + history.Count);
             stage = CreateCopyStage(target, BackupStagePrefix);
-            var pdfDestination = Directory.CreateDirectory(Path.Combine(stage, PdfFolderName)).FullName;
+            Directory.CreateDirectory(Path.Combine(stage, PdfFolderName));
             var catalogDestination = Directory.CreateDirectory(Path.Combine(stage, MetadataFolderName)).FullName;
 
             int copied = 0;
             foreach (var entry in inventory)
             {
                 cancellationToken.ThrowIfCancellationRequested();
-                await CopyPdfAsync(ResolvePdfPath(entry.Key), Path.Combine(pdfDestination, entry.Key),
+                await CopyFileSnapshotAsync(Path.Combine(RootPath, entry.Key), Path.Combine(stage, entry.Key),
                     entry.Value, BackupInventoryChanged, cancellationToken).ConfigureAwait(false);
-                copied++;
-                progress?.Report(new BackupProgress(copied, total));
+                if (IsBackupPdf(entry.Key))
+                {
+                    copied++;
+                    progress?.Report(new BackupProgress(copied, total));
+                }
             }
             foreach (var item in trash)
             {
                 var source = VerifyTrashFile(item, cancellationToken);
-                await CopyPdfAsync(source.Path, Path.Combine(catalogDestination, TrashFolderName, TrashFilename(item.DocumentId)),
+                await CopyFileSnapshotAsync(source.Path, Path.Combine(catalogDestination, TrashFolderName, TrashFilename(item.DocumentId)),
                     source.Version, BackupInventoryChanged, cancellationToken).ConfigureAwait(false);
                 trashVersions.Add((source.Path, source.Version));
                 progress?.Report(new BackupProgress(++copied, total));
@@ -75,10 +78,10 @@ public sealed partial class InboxLibrary
     private Dictionary<string, FileVersion> CaptureBackupInventory(CancellationToken cancellationToken)
     {
         var inventory = new Dictionary<string, FileVersion>(StringComparer.Ordinal);
-        foreach (var path in EnumeratePdfPaths())
+        foreach (var path in EnumerateBackupFiles())
         {
             cancellationToken.ThrowIfCancellationRequested();
-            inventory.Add(RelativePdfPath(path), FileVersion.Read(path));
+            inventory.Add(Path.GetRelativePath(RootPath, path), FileVersion.Read(path));
         }
         return inventory;
     }
@@ -86,10 +89,10 @@ public sealed partial class InboxLibrary
     private void VerifyBackupInventory(IReadOnlyDictionary<string, FileVersion> expected, CancellationToken cancellationToken)
     {
         int count = 0;
-        foreach (var path in EnumeratePdfPaths())
+        foreach (var path in EnumerateBackupFiles())
         {
             cancellationToken.ThrowIfCancellationRequested();
-            if (!expected.TryGetValue(RelativePdfPath(path), out var version) || FileVersion.Read(path) != version)
+            if (!expected.TryGetValue(Path.GetRelativePath(RootPath, path), out var version) || FileVersion.Read(path) != version)
             {
                 throw new IOException(BackupInventoryChanged);
             }
@@ -98,7 +101,26 @@ public sealed partial class InboxLibrary
         if (count != expected.Count) throw new IOException(BackupInventoryChanged);
     }
 
-    private static async Task CopyPdfAsync(string source, string destination, FileVersion version,
+    private static bool IsBackupPdf(string path) => path.EndsWith(DocumentProcessor.PdfExtension, StringComparison.OrdinalIgnoreCase);
+
+    private IEnumerable<string> EnumerateBackupFiles()
+    {
+        foreach (string pdf in EnumeratePdfPaths()) yield return pdf;
+        string pending = Path.Combine(_metadataDirectory, PendingDuplexFolder);
+        if (ReadExistingAttributes(pending) is not { } directoryAttributes) yield break;
+        RequireRestoreDirectory(directoryAttributes);
+        foreach (string filename in new[] { DuplexSettingsFile, FrontSidesFile, BackSidesFile })
+        {
+            string path = Path.Combine(pending, filename);
+            var attributes = ReadExistingAttributes(path);
+            if (attributes is null && filename == BackSidesFile) continue;
+            if (attributes is not { } value || (value & (FileAttributes.Directory | FileAttributes.ReparsePoint)) != 0)
+                throw new IOException($"The saved manual duplex file is unavailable. {path}");
+            yield return path;
+        }
+    }
+
+    private static async Task CopyFileSnapshotAsync(string source, string destination, FileVersion version,
         string changedMessage, CancellationToken cancellationToken)
     {
         Directory.CreateDirectory(Path.GetDirectoryName(destination)!);

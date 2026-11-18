@@ -148,6 +148,37 @@ public sealed partial class LibraryTests
     }
 
     [Fact]
+    public async Task RepeatedOcrUsesOnlyCopiesWhoseActiveVersionStillContainsTheOcrOutput()
+    {
+        using var temporary = new TemporaryLibrary();
+        var token = TestContext.Current.CancellationToken;
+        long sourceId;
+        long copyId;
+        Guid originalVersion;
+        using (var library = InboxLibrary.Open(temporary.Path))
+        {
+            File.Copy(Fixture("Scanned Receipt.pdf"), Path.Combine(library.PdfDirectory, "Scan.pdf"));
+            library.Refresh(token);
+            sourceId = Assert.Single(library.Find(new(), token).Items).Id;
+            copyId = (await library.CreateSearchableCopyAsync(sourceId, token)).Document.Id;
+            await library.ReplacePdfVersionAsync(copyId, Fixture(Letter), cancellationToken: token);
+            originalVersion = Assert.Single(library.GetPdfVersions(copyId)).Key;
+        }
+
+        using var reopened = InboxLibrary.Open(temporary.Path);
+        var fresh = await reopened.CreateSearchableCopyAsync(sourceId, token);
+        Assert.True(fresh.Added);
+        Assert.Contains(ReceiptKeyword, reopened.ReadIndexedText(fresh.Document.Id), StringComparison.OrdinalIgnoreCase);
+        Assert.Contains(LetterKeyword, reopened.ReadIndexedText(copyId), StringComparison.OrdinalIgnoreCase);
+
+        await reopened.TrashPdfAsync(fresh.Document.Id, token);
+        await reopened.RestorePdfVersionAsync(copyId, originalVersion, token);
+        var restored = await reopened.CreateSearchableCopyAsync(sourceId, token);
+        Assert.False(restored.Added);
+        Assert.Equal(copyId, restored.Document.Id);
+    }
+
+    [Fact]
     public async Task SearchableCopyPublishesNothingForABlankChangedOrCancelledScan()
     {
         using var temporary = new TemporaryLibrary();

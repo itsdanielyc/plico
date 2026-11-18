@@ -76,6 +76,40 @@ public sealed partial class LibraryTests
 
     private sealed record CapturedPage(string File, string? Barcode = null);
 
+    [Theory]
+    [InlineData(false)]
+    [InlineData(true)]
+    public async Task BackupResumesManualDuplexWithEverySavedPass(bool savedBacks)
+    {
+        using var original = new TemporaryLibrary();
+        using var destination = new TemporaryLibrary();
+        var token = TestContext.Current.CancellationToken;
+        using var library = InboxLibrary.Open(original.Path, (_, _, _) => throw new IOException("Interrupted publication."));
+        int captures = 0;
+        var capture = library.StoreScanBatchAsync("Saved duplex",
+            (context, cancellation) => CapturedFixturePages(context, [new(++captures == 1 ? LeaseFixture : LedgerFixture)], cancellation),
+            (_, _) => Task.FromResult(false), (_, _) => Task.FromResult(savedBacks
+                ? ManualDuplexDecision.ScanBacks : ManualDuplexDecision.SaveForLater), null, false, token);
+        if (savedBacks) await Assert.ThrowsAsync<IOException>(() => capture);
+        else Assert.True((await capture).HasPendingDuplex);
+
+        var backup = await library.BackupAsync(destination.Path, cancellationToken: token);
+        using var reopened = InboxLibrary.Open(backup.Location);
+        int resumedCaptures = 0;
+        var resumed = await reopened.StoreScanBatchAsync("New capture", (context, cancellation) =>
+        {
+            resumedCaptures++;
+            return CapturedFixturePages(context, [new(LedgerFixture)], cancellation);
+        }, (_, _) => Task.FromResult(false), (_, _) => Task.FromResult(ManualDuplexDecision.ScanBacks), null, false, token);
+        var document = Assert.Single(resumed.Documents);
+        Assert.Equal("Saved duplex", document.Title);
+        Assert.Equal(savedBacks ? 0 : 1, resumedCaptures);
+        string pdf = reopened.ResolvePdf(document);
+        Assert.Contains("NORTHSTAR", DocumentProcessor.ReadPageText(pdf, 1, token));
+        Assert.Contains("LEDGER", DocumentProcessor.ReadPageText(pdf, 2, token), StringComparison.OrdinalIgnoreCase);
+        Assert.Equal(savedBacks ? 2 : 1, backup.PdfCount);
+    }
+
     [Fact]
     public async Task ASerialLabelKeepsItsFirstPageAndAConflictKeepsTheCapture()
     {

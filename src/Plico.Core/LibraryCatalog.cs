@@ -204,9 +204,14 @@ internal sealed partial class LibraryCatalog
     internal IReadOnlyList<CatalogFileReference> FindSource(byte[] fingerprint) =>
         ReadImportCandidates("source_sha256 = $value AND ocr_copy_language IS NULL", fingerprint);
 
+    // The first edit archives the generated OCR bytes. An edited copy is reusable again if those bytes are restored.
     internal IReadOnlyList<CatalogFileReference> FindOcrCopies(byte[] fingerprint, OcrCopySource source) =>
-        ReadImportCandidates("source_sha256 = $value AND ocr_copy_source_id = $ocrSource AND ocr_copy_language = $ocrLanguage AND has_text = 1",
-            fingerprint, source);
+        ReadImportCandidates("""
+            source_sha256 = $value AND ocr_copy_source_id = $ocrSource AND ocr_copy_language = $ocrLanguage AND has_text = 1
+            AND pdf_sha256 = COALESCE(
+                (SELECT v.sha256 FROM pdf_versions v WHERE v.document_id = documents.id ORDER BY v.sequence LIMIT 1),
+                pdf_sha256)
+            """, fingerprint, source);
 
     internal IReadOnlyList<CatalogFileReference> FindLegacyPdfs(long fileBytes) =>
         ReadImportCandidates("source_sha256 IS NULL AND file_bytes = $value", fileBytes);

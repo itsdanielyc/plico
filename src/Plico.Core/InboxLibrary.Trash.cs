@@ -50,18 +50,21 @@ public sealed partial class InboxLibrary
         }, cancellationToken);
 
     /// <summary>Permanently removes a PDF and its catalog record from Trash.</summary>
-    // O(file bytes) time for hashing and constant file-buffer space.
+    // O(active + archived bytes) time and O(archived versions) records plus one hash buffer.
     public Task PurgeTrashedPdfAsync(long documentId, CancellationToken cancellationToken = default) =>
         WithTrashLeaseAsync(() =>
         {
             var file = _catalog.ReadTrashFile(documentId);
             string path = ResolveTrashFile(documentId);
+            var history = _catalog.ReadPdfVersions(documentId);
+            // Discover conflicts while the user can still restore the entire document.
+            foreach (var version in history) VerifyPurgeVersion(version, cancellationToken);
             bool present = ReadExistingAttributes(path) is not null;
             if (present) VerifyTrashFile(file, cancellationToken);
             cancellationToken.ThrowIfCancellationRequested();
             _catalog.RecordPdfMove(new(documentId, TrashCatalogPath(documentId), "", file.Fingerprint));
             if (present) File.Delete(path);
-            PurgePdfVersionFiles(documentId, CancellationToken.None);
+            PurgePdfVersionFiles(history, CancellationToken.None);
             _catalog.CompletePurge(documentId);
             return true;
         }, cancellationToken);
@@ -140,7 +143,7 @@ public sealed partial class InboxLibrary
                 if (ReadExistingAttributes(trashFile) is not null) _catalog.ClearPendingPdfMove();
                 else
                 {
-                    PurgePdfVersionFiles(move.DocumentId, token);
+                    PurgePdfVersionFiles(_catalog.ReadPdfVersions(move.DocumentId), token);
                     _catalog.CompletePurge(move.DocumentId);
                 }
                 return (null, null);

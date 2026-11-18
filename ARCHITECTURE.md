@@ -71,7 +71,7 @@ Batch filing checks the selected paths and file stamps before the first move. Un
 
 Plico waits for its preview and matching-page readers to release their file handles before journaling and moving a PDF. The preview consumes the rendering stream through completion so PDFium closes its input file. The move checks the source stamp again after waiting.
 
-Backup copies the PDF tree and takes an online SQLite snapshot under the library's file-operation lease. It validates the file inventory and publishes the staged backup by an atomic directory move inside the selected destination. [Microsoft.Data.Sqlite online backup](https://learn.microsoft.com/en-us/dotnet/standard/data/sqlite/backup)
+Backup copies the PDF tree and takes an online SQLite snapshot under the library's file-operation lease. Its inventory includes the settings, front pages, and any saved back pages of a pending manual duplex scan. Backup checks the inventory again before publishing the staged folder by an atomic directory move inside the selected destination. [Microsoft.Data.Sqlite online backup](https://learn.microsoft.com/en-us/dotnet/standard/data/sqlite/backup)
 
 Selected export reads the chosen catalog paths and file stamps under the same lease. It stages the PDF bytes under the chosen destination, assigns distinct portable filenames, and checks the sources again before publishing the folder. [Directory.Move](https://learn.microsoft.com/en-us/dotnet/api/system.io.directory.move?view=net-10.0)
 

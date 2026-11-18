@@ -33,7 +33,7 @@ public sealed partial class InboxLibrary
         {
             string replacement = Path.Combine(Path.GetDirectoryName(output)!, "replacement.pdf");
             var initialVersion = FileVersion.Read(sourcePath);
-            await CopyPdfAsync(sourcePath, replacement, initialVersion, VersionSourceChanged, token).ConfigureAwait(false);
+            await CopyFileSnapshotAsync(sourcePath, replacement, initialVersion, VersionSourceChanged, token).ConfigureAwait(false);
             EnsureCurrentFile(sourcePath, initialVersion);
             return (await _processor.PrepareAsync(replacement, output, language, token).ConfigureAwait(false)).Text;
         }, cancellationToken);
@@ -154,21 +154,23 @@ public sealed partial class InboxLibrary
     {
         string active = PrepareRestoreDestination(ResolvePdfPath(pending.RelativePath), token);
         string archived = ResolvePdfVersionPath(pending.Archived);
-        var archiveAttributes = ReadExistingAttributes(archived);
-        if (archiveAttributes is null && CheckMovedPdf(active, pending.Archived.Fingerprint, token) is not null)
+        var originalHash = pending.Archived.Fingerprint;
+        if (ReadExistingAttributes(archived) is null && CheckMovedPdf(active, originalHash, token) is { } original)
         {
-            _catalog.ClearPendingPdfRevision();
+            FinishPdfRollback(pending.Archived, original);
             return "Kept the original PDF after an interrupted edit.";
         }
-        if (archiveAttributes is { } attributes && (attributes & (FileAttributes.Directory | FileAttributes.ReparsePoint)) == 0)
+        if (CheckMovedPdf(archived, originalHash, token, PdfVersionsDirectory) is not null)
         {
             if (ReadExistingAttributes(active) is null && _claimPdfPath(archived, active, allowHardLink: false))
             {
-                _catalog.ClearPendingPdfRevision();
-                return "Restored the original PDF after an interrupted edit.";
+                if (CheckMovedPdf(active, originalHash, CancellationToken.None) is { } restored)
+                {
+                    FinishPdfRollback(pending.Archived, restored);
+                    return "Restored the original PDF after an interrupted edit.";
+                }
             }
-            if (CheckMovedPdf(archived, pending.Archived.Fingerprint, token, PdfVersionsDirectory) is not null &&
-                CheckMovedPdf(active, pending.ActiveFingerprint, token) is { } installed)
+            else if (CheckMovedPdf(active, pending.ActiveFingerprint, token) is { } installed)
             {
                 PdfText text = DocumentProcessor.ReadPdf(active, token);
                 EnsureCurrentFile(active, installed);
@@ -177,6 +179,13 @@ public sealed partial class InboxLibrary
             }
         }
         throw new IOException($"Plico could not recover the PDF edit at {active}. Keep the files at this path and {archived} until the conflict is resolved.");
+    }
+
+    private void FinishPdfRollback(PdfVersionFile original, FileVersion restored)
+    {
+        // A repaired archive can have a new timestamp. Keep the journal until the restored stamp is durable.
+        _catalog.UpdateFileStamp(original.DocumentId, restored, original.Fingerprint);
+        _catalog.ClearPendingPdfRevision();
     }
 
     private string ResolvePdfVersionPath(PdfVersionFile file, bool create = false)
@@ -210,16 +219,21 @@ public sealed partial class InboxLibrary
         if (!fingerprint.AsSpan().SequenceEqual(file.Fingerprint)) throw new IOException("An archived PDF differs from the library record.");
     }
 
-    private void PurgePdfVersionFiles(long documentId, CancellationToken token)
+    private string? VerifyPurgeVersion(PdfVersionFile file, CancellationToken token)
     {
-        var files = _catalog.ReadPdfVersions(documentId);
+        token.ThrowIfCancellationRequested();
+        string path = ResolvePdfVersionPath(file);
+        if (ReadExistingAttributes(path) is null) return null;
+        if (CheckMovedPdf(path, file.Fingerprint, token, PdfVersionsDirectory) is null)
+            throw new IOException($"The archived PDF at {path} has changed. Plico kept it for review.");
+        return path;
+    }
+
+    private void PurgePdfVersionFiles(IReadOnlyList<PdfVersionFile> files, CancellationToken token)
+    {
         foreach (var file in files)
         {
-            string path = ResolvePdfVersionPath(file);
-            if (ReadExistingAttributes(path) is null) continue;
-            if (CheckMovedPdf(path, file.Fingerprint, token, PdfVersionsDirectory) is null)
-                throw new IOException($"The archived PDF at {path} has changed. Plico kept it for review.");
-            File.Delete(path);
+            if (VerifyPurgeVersion(file, token) is { } path) File.Delete(path);
         }
         if (files.Count == 0) return;
         string directory = Path.GetDirectoryName(ResolvePdfVersionPath(files[0]))!;

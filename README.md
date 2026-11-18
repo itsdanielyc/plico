@@ -144,7 +144,7 @@ Select several PDFs and choose **Create OCR copies** to process them in the curr
 
 Plico v0.16.0 introduced library catalog version 10. A library upgraded to version 10 needs a build that supports that version.
 
-To make a copy while Plico is open, choose **Back up library…** and select a destination outside the current library. Plico creates a dated folder with the PDFs and their catalog. **Open backup** shows that folder in the file manager. Choose the folder as a library to reopen it in Plico.
+To make a copy while Plico is open, choose **Back up library…** and select a destination outside the current library. The dated backup folder includes the catalog, PDFs, Trash, version history, and any saved manual duplex scan. **Open backup** shows that folder in the file manager. Open it as a library to use the backup or finish a paused scan.
 
 Refresh also follows a uniquely identifiable PDF that you move or rename inside `PDFs/`, including when two files exchange names. Its title, tags, date, and review state travel with its catalog record. For libraries from older Plico versions, run **Refresh index** once while the original paths are present to prepare them for moves.
 

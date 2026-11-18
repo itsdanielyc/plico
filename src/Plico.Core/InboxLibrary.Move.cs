@@ -124,7 +124,8 @@ public sealed partial class InboxLibrary
             _catalog.ClearPendingPdfMove();
             return false;
         }
-        if (ReadExistingAttributes(source.Path) is not null && (!InvolvesTrash(move) || FileVersion.Read(source.Path) == source.Version))
+        if (ReadExistingAttributes(source.Path) is not null && CheckMovedPdf(source.Path, move.Fingerprint, CancellationToken.None,
+                move.SourceRelativePath == TrashCatalogPath(move.DocumentId) ? TrashDirectory : PdfDirectory) is not null)
         {
             throw new IOException("The source PDF is still at its original location. Close any viewer and try the move again.");
         }
@@ -179,12 +180,14 @@ public sealed partial class InboxLibrary
         FileVersion? version;
         try
         {
-            if (ReadExistingAttributes(ResolvePdfPath(move.SourceRelativePath)) is not null)
+            string source = ResolvePdfPath(move.SourceRelativePath);
+            version = CheckMovedPdf(target, move.Fingerprint, cancellationToken);
+            if (ReadExistingAttributes(source) is not null &&
+                (version is null || CheckMovedPdf(source, move.Fingerprint, cancellationToken) is not null))
             {
                 _catalog.ClearPendingPdfMove();
                 return (null, null);
             }
-            version = CheckMovedPdf(target, move.Fingerprint, cancellationToken);
         }
         catch (Exception error) when (IsFileError(error))
         {
