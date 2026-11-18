@@ -124,7 +124,7 @@ public sealed partial class InboxLibrary
             _catalog.ClearPendingPdfMove();
             return false;
         }
-        if (ReadExistingAttributes(source.Path) is not null)
+        if (ReadExistingAttributes(source.Path) is not null && (!InvolvesTrash(move) || FileVersion.Read(source.Path) == source.Version))
         {
             throw new IOException("The source PDF is still at its original location. Close any viewer and try the move again.");
         }
@@ -134,7 +134,7 @@ public sealed partial class InboxLibrary
         {
             throw new IOException("The PDF changed during the move. Refresh the index after saving finishes.");
         }
-        _catalog.Relocate(move.DocumentId, move.DestinationRelativePath, Path.GetFileNameWithoutExtension(destination), movedVersion, move);
+        CompleteJournaledPdfMove(move, destination, movedVersion);
         return true;
     }
 
@@ -174,6 +174,7 @@ public sealed partial class InboxLibrary
     private (string? Notice, string? PendingDestination) RecoverPendingPdfMove(CancellationToken cancellationToken)
     {
         if (_catalog.ReadPendingPdfMove() is not { } move) return (null, null);
+        if (InvolvesTrash(move)) return RecoverTrashOperation(move, cancellationToken);
         string target = ResolvePdfPath(move.DestinationRelativePath);
         FileVersion? version;
         try
@@ -199,12 +200,12 @@ public sealed partial class InboxLibrary
         return ("Finished the previous PDF move.", null);
     }
 
-    private FileVersion? CheckMovedPdf(string path, byte[] expectedFingerprint, CancellationToken cancellationToken)
+    private FileVersion? CheckMovedPdf(string path, byte[] expectedFingerprint, CancellationToken cancellationToken, string? allowedRoot = null)
     {
         if (ReadExistingAttributes(path) is not { } attributes ||
             (attributes & (FileAttributes.Directory | FileAttributes.ReparsePoint)) != 0) return null;
         string parent = ResolveDirectoryLinks(Path.GetDirectoryName(path)!);
-        if (!IsAtOrWithinFolder(ResolveDirectoryLinks(PdfDirectory), parent)) return null;
+        if (!IsAtOrWithinFolder(ResolveDirectoryLinks(allowedRoot ?? PdfDirectory), parent)) return null;
         string target = Path.Combine(parent, Path.GetFileName(path));
         var version = FileVersion.Read(target);
         var actualFingerprint = FingerprintPdf(target, cancellationToken);

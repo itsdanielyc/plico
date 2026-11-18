@@ -1,0 +1,21 @@
+<Window xmlns="https://github.com/avaloniaui" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        x:Class="Plico.Desktop.PdfExportDialog" Title="Export PDF" Width="460" SizeToContent="Height"
+        CanResize="False" WindowStartupLocation="CenterOwner" FontFamily="{StaticResource InterFont}" Background="#F4F5EF">
+    <StackPanel Margin="24" Spacing="10">
+        <TextBlock Text="Export PDF" FontSize="19" FontWeight="SemiBold" />
+        <ComboBox x:Name="PdfExportFormatBox" HorizontalAlignment="Stretch" AutomationProperties.Name="PDF export format"
+                  SelectionChanged="Format_Changed" />
+        <TextBlock x:Name="PdfExportHint" TextWrapping="Wrap" />
+        <StackPanel x:Name="PdfPasswordFields" Spacing="6" IsVisible="False">
+            <TextBox x:Name="PdfPassword" PlaceholderText="Password" PasswordChar="●" MaxLength="127"
+                     TextChanged="Password_Changed" AutomationProperties.Name="PDF password" />
+            <TextBox x:Name="ConfirmPdfPassword" PlaceholderText="Repeat password" PasswordChar="●" MaxLength="127"
+                     TextChanged="Password_Changed" AutomationProperties.Name="Repeat PDF password" />
+        </StackPanel>
+        <TextBlock x:Name="PdfExportError" TextWrapping="Wrap" Foreground="#8A2E25" AutomationProperties.LiveSetting="Polite" />
+        <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" Spacing="8">
+            <Button Content="Cancel" IsCancel="True" Click="Cancel_Click" />
+            <Button x:Name="ConfirmPdfExportButton" Content="Choose folder…" IsDefault="True" Click="Export_Click" />
+        </StackPanel>
+    </StackPanel>
+</Window>

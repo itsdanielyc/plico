@@ -6,8 +6,10 @@
     <PackageReference Include="NAPS2.PdfSharp" />
     <PackageReference Include="NAPS2.Sdk" />
     <PackageReference Include="PdfPig" />
+    <PackageReference Include="PDFsharp" />
     <PackageReference Include="SkiaSharp" />
     <PackageReference Include="SkiaSharp.NativeAssets.Linux" />
+    <PackageReference Include="System.Security.Cryptography.Pkcs" />
     <InternalsVisibleTo Include="Plico.Tests" />
   </ItemGroup>
   <ItemGroup>

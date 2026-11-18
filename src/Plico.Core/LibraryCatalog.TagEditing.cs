@@ -23,6 +23,10 @@ internal sealed partial class LibraryCatalog
         string result = sourceKey == destinationKey
             ? UpdateTagLabel(command, label)
             : MoveTagLinks(command, destinationKey, label, mergeIntoExisting);
+        command.CommandText = "UPDATE tag_rules SET tag = $finalLabel, tag_key = $finalKey WHERE tag_key = $sourceKey;";
+        command.Parameters.AddWithValue("$finalLabel", result);
+        command.Parameters.AddWithValue("$finalKey", destinationKey);
+        command.ExecuteNonQuery();
         cancellationToken.ThrowIfCancellationRequested();
         transaction.Commit();
         return result;

@@ -118,6 +118,6 @@ public sealed partial class LibraryTests
         migrated.Open();
         using var version = migrated.CreateCommand();
         version.CommandText = "PRAGMA user_version;";
-        Assert.Equal(10L, version.ExecuteScalar());
+        Assert.Equal(12L, version.ExecuteScalar());
     }
 }

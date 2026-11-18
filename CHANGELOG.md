@@ -1,5 +1,17 @@
 # Changelog
 
+## [0.17.0] - 2026-11-18
+
+The Windows executable and setup are unsigned. The macOS app is ad-hoc signed and has no Apple notarization. [First-launch instructions](https://github.com/itsdanielyc/plico/blob/main/README.md#download)
+
+- Move a PDF to Trash and continue reviewing. Restore it to its original location or confirm permanent deletion. Library backups include Trash.
+- Search with uppercase AND, OR and NOT, groups and exclusions such as `-tag:archive`. Titles carry more weight in relevance order. Search highlights matching passages in the results and on PDF pages.
+- Use R to review, T to enter a tag, X to trash, and J or K to move through the results when the document list has focus.
+- Save named scanner profiles with blank-page removal, deskew, crop, colour, brightness, contrast, and duplex back-side rotation.
+- Export a searchable archival PDF/A-2b copy, an AES-256 password-protected PDF, or a PDF with the library title and tags embedded in XMP.
+- Review suggested document dates, due dates, amounts and IBANs from searchable text. Suggest tags using library rules and reviewed examples, and apply selected dates and tags to one PDF or a selection.
+- Check the library for unindexed, missing, changed, unreadable or unsearchable PDFs. Export the catalog metadata as JSON or the current search results as CSV.
+
 ## [0.16.1] - 2026-11-18
 
 The Windows executable and setup are unsigned. The macOS app is ad-hoc signed and has no Apple notarization. [First-launch instructions](https://github.com/itsdanielyc/plico/blob/main/README.md#download)

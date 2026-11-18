@@ -20,10 +20,7 @@ internal sealed partial class LibraryCatalog
         int lastDay = period.LastDay.DayNumber;
         long nominalStart = (firstDay - UnixEpochDay) * SecondsPerDay;
         long nominalEnd = (lastDay + 1 - UnixEpochDay) * SecondsPerDay;
-        var localZone = _addedDateTimeZone ?? TimeZoneInfo.Local;
-        connection.CreateFunction<long, int>("plico_local_added_day", timestamp =>
-            DateOnly.FromDateTime(TimeZoneInfo.ConvertTime(DateTimeOffset.FromUnixTimeSeconds(timestamp), localZone).DateTime)
-                .DayNumber, isDeterministic: true);
+        RegisterLocalAddedDay(connection);
 
         // Keep the timestamp range indexable. Only candidates near the calendar edges need exact time-zone conversion.
         conditions.Add("""
@@ -37,5 +34,13 @@ internal sealed partial class LibraryCatalog
         command.Parameters.AddWithValue("$certainEnd", nominalEnd - MaximumLocalOffsetSeconds);
         command.Parameters.AddWithValue("$firstDay", firstDay);
         command.Parameters.AddWithValue("$lastDay", lastDay);
+    }
+
+    private void RegisterLocalAddedDay(SqliteConnection connection)
+    {
+        var localZone = _addedDateTimeZone ?? TimeZoneInfo.Local;
+        connection.CreateFunction<long, int>("plico_local_added_day", timestamp =>
+            DateOnly.FromDateTime(TimeZoneInfo.ConvertTime(DateTimeOffset.FromUnixTimeSeconds(timestamp), localZone).DateTime)
+                .DayNumber, isDeterministic: true);
     }
 }

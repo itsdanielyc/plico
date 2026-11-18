@@ -143,7 +143,12 @@
                     </StackPanel>
                 </ScrollViewer>
                 <StackPanel Grid.Row="3" Spacing="3">
-                    <TextBlock Text="Library" Foreground="#ACC2B4" FontSize="12" FontWeight="SemiBold" Margin="12,0,0,3" />
+                    <Grid ColumnDefinitions="*,Auto" Margin="0,0,0,3">
+                        <TextBlock Text="Library" Foreground="#ACC2B4" FontSize="12" FontWeight="SemiBold"
+                                   Margin="12,0,0,0" VerticalAlignment="Center" />
+                        <Button Grid.Column="1" x:Name="OpenTrashButton" Classes="rail" Content="Trash…" Command="{Binding OpenTrashCommand}"
+                                IsEnabled="{Binding CanWork}" Padding="6,0" FontSize="12" MinHeight="0" />
+                    </Grid>
                     <Button Classes="rail" Command="{Binding ChooseLibraryCommand}" IsEnabled="{Binding IsIdle}"
                             ToolTip.Tip="{Binding LibraryPath}" AutomationProperties.Name="Choose library folder">
                         <TextBlock Text="{Binding LibraryName}" MaxWidth="142" TextTrimming="CharacterEllipsis" FontWeight="SemiBold" />
@@ -161,7 +166,18 @@
                               Foreground="#E3EFE4" Margin="12,0,0,0" IsVisible="{Binding HasCustomIntakeFolder}"
                               IsEnabled="{Binding CanWork}" IsChecked="{Binding IncludeWatchedScans, Mode=TwoWay}"
                               ToolTip.Tip="File scans from the watched folder in this intake folder" />
-                    <Button Classes="rail" Content="Refresh index" Command="{Binding RefreshIndexCommand}" IsEnabled="{Binding CanWork}" />
+                    <Button x:Name="LibraryToolsButton" Classes="rail" Content="Library tools…" IsEnabled="{Binding CanWork}">
+                        <Button.Flyout>
+                            <MenuFlyout Placement="RightEdgeAlignedTop">
+                                <MenuItem Header="Tag rules…" Command="{Binding ManageFilingRulesCommand}" />
+                                <MenuItem Header="Check library integrity…" Command="{Binding CheckIntegrityCommand}" />
+                                <MenuItem Header="Export library metadata (JSON)…" Command="{Binding ExportMetadataCommand}" />
+                                <MenuItem Header="Export search results (CSV)…" Command="{Binding ExportSearchCsvCommand}" />
+                                <Separator />
+                                <MenuItem Header="Refresh index" Command="{Binding RefreshIndexCommand}" />
+                            </MenuFlyout>
+                        </Button.Flyout>
+                    </Button>
                     <Button x:Name="BackUpLibraryButton" Classes="rail" Content="Back up library…"
                             Command="{Binding BackUpLibraryCommand}" IsEnabled="{Binding CanWork}" />
                     <Button x:Name="StartFolderWatchButton" Classes="rail" Content="Watch a folder…"
@@ -191,7 +207,7 @@
                 <Grid ColumnDefinitions="*,Auto,Auto,Auto,Auto" ColumnSpacing="10">
                     <TextBox x:Name="SearchBox" Text="{Binding Query, Mode=TwoWay}" MaxLength="256"
                              PlaceholderText="Search text, status:…, tag:…, dated:…" AutomationProperties.Name="Search documents"
-                             ToolTip.Tip="Use status:inbox for the review queue or status:reviewed for reviewed PDFs.&#10;Use text:missing or text:present to filter by searchable text.&#10;dated:2024-02 matches the document date. added:2026-11 matches the date added.&#10;Use tag:tax, folder:&quot;Filed/Property&quot;, and quoted phrases in the same query."
+                             ToolTip.Tip="Try (receipt OR invoice) -tag:archive. Use uppercase AND, OR, NOT, and quotes for phrases.&#10;Use status:inbox or status:reviewed for review status.&#10;Use text:missing or text:present for searchable text.&#10;dated:2024-02 matches the document date. added:2026-11 matches the date added.&#10;Use folder:&quot;Filed/Property&quot; for a folder branch."
                              VerticalContentAlignment="Center" CornerRadius="8" MinHeight="38">
                         <TextBox.InnerLeftContent>
                             <PathIcon Width="15" Height="15" Margin="11,0,1,0" Foreground="#536459"
@@ -241,6 +257,8 @@
                                        HorizontalAlignment="Center" VerticalAlignment="Center" Margin="12"
                                        AutomationProperties.LiveSetting="Polite" />
                             <ListBox x:Name="DocumentList" ItemsSource="{Binding Documents}" SelectedItem="{Binding SelectedDocument, Mode=TwoWay}"
+                                     KeyUp="DocumentList_KeyUp"
+                                     ToolTip.Tip="Review shortcuts in this list: R review, T tag, X trash, J next, K previous."
                                      IsVisible="{Binding HasDocuments}" Background="Transparent" Padding="4"
                                      SelectionMode="Multiple" SelectionChanged="Documents_SelectionChanged"
                                      ScrollViewer.HorizontalScrollBarVisibility="Disabled" AutomationProperties.Name="Documents">
@@ -269,7 +287,7 @@
                                                                IsVisible="{Binding HasDocumentDate}" Margin="0,0,10,0" />
                                                     <TextBlock Text="{Binding AddedAt.LocalDateTime, StringFormat='Added {0:dd MMM yyyy}'}" Classes="muted" />
                                                 </WrapPanel>
-                                                <TextBlock Text="{Binding Match}" Classes="muted" TextWrapping="Wrap"
+                                                <local:SearchExcerpt Document="{Binding}" Classes="muted" TextWrapping="Wrap"
                                                            MaxLines="2" TextTrimming="CharacterEllipsis" />
                                             </StackPanel>
                                         </Grid>
@@ -308,6 +326,9 @@
                                             <Button x:Name="EditBatchDocumentDateButton" Classes="secondary" Content="Document date…"
                                                     Click="EditBatchDocumentDate_Click" IsEnabled="{Binding CanWork}"
                                                     AutomationProperties.Name="Edit the document date of the selected PDFs" Margin="6,0,0,4" Padding="10,7" />
+                                            <Button x:Name="SuggestSelectedFilingButton" Classes="secondary" Content="Filing suggestions…"
+                                                    Click="SuggestSelectedFiling_Click" IsEnabled="{Binding CanWork}"
+                                                    AutomationProperties.Name="Filing suggestions for selected PDFs" Margin="6,0,0,4" Padding="10,7" />
                                             <Button x:Name="CreateSelectedOcrCopiesButton" Classes="secondary" Content="Create OCR copies"
                                                     Command="{Binding CreateSelectedOcrCopiesCommand}" IsEnabled="{Binding CanWork}"
                                                     AutomationProperties.Name="Create OCR copies of the selected PDFs" Margin="6,0,0,4" Padding="10,7" />
@@ -370,7 +391,11 @@
                                         <ScrollViewer x:Name="PreviewScroll" Classes="pdf-preview" Classes.fitWidth="{Binding FitPreviewWidth}"
                                                       Focusable="{Binding FitPreviewWidth}" IsVisible="{Binding !IsPageTextView}"
                                                       AutomationProperties.Name="PDF page preview">
-                                            <Image x:Name="PreviewPage" Source="{Binding Preview}" Stretch="Uniform" />
+                                            <Grid>
+                                                <Image x:Name="PreviewPage" Source="{Binding Preview}" Stretch="Uniform" />
+                                                <local:PdfPageHighlightLayer Source="{Binding Preview}" Highlights="{Binding PreviewHighlights}"
+                                                                              IsHitTestVisible="False" />
+                                            </Grid>
                                         </ScrollViewer>
                                         <ScrollViewer x:Name="PageTextScroll" IsVisible="{Binding HasPageText}"
                                                       HorizontalScrollBarVisibility="Disabled" VerticalScrollBarVisibility="Auto">
@@ -417,7 +442,12 @@
                                                     Command="{Binding ExtractPdfPagesCommand}" IsEnabled="{Binding CanWork}"
                                                     IsVisible="{Binding HasMultiplePages}" Margin="0,0,6,4" />
                                             <Button x:Name="RotatePdfPagesButton" Classes="secondary" Content="Rotate pages…"
-                                                    Command="{Binding RotatePdfPagesCommand}" IsEnabled="{Binding CanWork}" />
+                                                    Command="{Binding RotatePdfPagesCommand}" IsEnabled="{Binding CanWork}" Margin="0,0,6,4" />
+                                            <Button x:Name="TrashDocumentButton" Classes="secondary" Content="Trash &amp; next"
+                                                    Command="{Binding TrashDocumentCommand}" IsEnabled="{Binding CanWork}"
+                                                    ToolTip.Tip="Move the open PDF to Trash (X in the results list)" Margin="0,0,6,4" />
+                                            <Button x:Name="SuggestFilingButton" Classes="secondary" Content="Filing suggestions…"
+                                                    Command="{Binding SuggestFilingCommand}" IsEnabled="{Binding CanWork}" Margin="0,0,6,4" />
                                         </WrapPanel>
                                         <Button Grid.Column="1" x:Name="CreateSearchableCopyButton" Classes="secondary"
                                                 Content="{Binding SearchableCopyAction}" Command="{Binding CreateSearchableCopyCommand}"

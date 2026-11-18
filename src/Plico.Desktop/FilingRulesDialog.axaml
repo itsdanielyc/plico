@@ -1,0 +1,30 @@
+<Window xmlns="https://github.com/avaloniaui" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:core="using:Plico.Core" x:Class="Plico.Desktop.FilingRulesDialog"
+        Title="Tag rules" Width="520" SizeToContent="Height" CanResize="False"
+        WindowStartupLocation="CenterOwner" FontFamily="{StaticResource InterFont}" Background="#F4F5EF">
+    <StackPanel Margin="24" Spacing="10">
+        <TextBlock Text="Tag rules" FontSize="19" FontWeight="SemiBold" />
+        <TextBlock Text="Suggest a tag when the title or searchable text matches." TextWrapping="Wrap" />
+        <ListBox x:Name="FilingRuleList" AutomationProperties.Name="Saved tag rules" MaxHeight="150"
+                 SelectionChanged="Rule_Changed" ScrollViewer.HorizontalScrollBarVisibility="Disabled">
+            <ListBox.ItemTemplate>
+                <DataTemplate x:DataType="core:FilingRule">
+                    <StackPanel>
+                        <TextBlock Text="{Binding Tag}" FontWeight="SemiBold" />
+                        <TextBlock Text="{Binding Pattern}" TextTrimming="CharacterEllipsis" />
+                    </StackPanel>
+                </DataTemplate>
+            </ListBox.ItemTemplate>
+        </ListBox>
+        <TextBox x:Name="RuleTag" PlaceholderText="Tag name" MaxLength="48" AutomationProperties.Name="Tag name" />
+        <ComboBox x:Name="RuleMatchMode" HorizontalAlignment="Stretch" AutomationProperties.Name="Rule matching mode" />
+        <TextBox x:Name="RulePattern" PlaceholderText="Matching words" MaxLength="256" AutomationProperties.Name="Matching words" />
+        <TextBlock x:Name="FilingRuleStatus" TextWrapping="Wrap" AutomationProperties.LiveSetting="Polite" />
+        <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" Spacing="8">
+            <Button Content="New rule" Click="New_Click" />
+            <Button x:Name="RemoveRuleButton" Content="Remove" IsEnabled="False" Click="Remove_Click" />
+            <Button x:Name="SaveFilingRuleButton" Content="Save rule" Click="Save_Click" Background="#254C37" Foreground="White" />
+            <Button Content="Done" IsCancel="True" Click="Cancel_Click" />
+        </StackPanel>
+    </StackPanel>
+</Window>

@@ -561,7 +561,11 @@ internal sealed partial class InboxViewModel : ObservableObject, IDisposable
             }
 
             using var rendered = await Task.Run(() => library.RenderPageAsync(document, page, token), token);
-            if (!token.IsCancellationRequested) Preview = new Bitmap(rendered);
+            if (!token.IsCancellationRequested)
+            {
+                Preview = new Bitmap(rendered);
+                UpdatePreviewHighlights();
+            }
         }
         catch (OperationCanceledException) when (request.IsCancellationRequested) { }
         catch (Exception)
@@ -580,6 +584,7 @@ internal sealed partial class InboxViewModel : ObservableObject, IDisposable
     private void CancelPreview()
     {
         _previewCancellation?.Cancel();
+        CancelPreviewHighlights();
         PageText = "";
         var previous = Preview;
         Preview = null;

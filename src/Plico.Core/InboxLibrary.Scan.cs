@@ -74,7 +74,8 @@ public sealed partial class InboxLibrary
             var text = await _processor.ExportCapturedAsync(context, captured, output, language, token).ConfigureAwait(false);
             if (text.PageCount != captured.Count) throw new InvalidDataException("The scan PDF is missing captured pages.");
             string documentTitle = interruption is null ? title : $"{title} (partial)";
-            return new ScanOutcome(CommitPdf(output, documentTitle, text, token, destinationFolder: target), interruption);
+            return new ScanOutcome(CommitPdf(output, documentTitle, text, token,
+                destinationFolder: target, recognizedLanguage: language), interruption);
         }, cancellationToken);
 
     // O(pages) references in memory. The scanning context owns the page files until the job exits.

@@ -37,6 +37,45 @@
                           SelectionChanged="CaptureOptions_Changed" />
             </StackPanel>
         </Grid>
+        <Expander x:Name="ScanCleanupExpander" Header="Cleanup and profiles" HorizontalAlignment="Stretch"
+                  HorizontalContentAlignment="Stretch">
+            <StackPanel Spacing="10">
+                <Grid ColumnDefinitions="*,*,*" ColumnSpacing="8">
+                    <StackPanel Spacing="4">
+                        <TextBlock Text="Colour mode" FontSize="12" />
+                        <ComboBox x:Name="ScanColourBox" HorizontalAlignment="Stretch" AutomationProperties.Name="Colour mode"
+                                  SelectionChanged="CaptureOptions_Changed" />
+                    </StackPanel>
+                    <StackPanel Grid.Column="1" Spacing="4">
+                        <TextBlock Text="Brightness" FontSize="12" />
+                        <NumericUpDown x:Name="ScanBrightness" Value="0" Minimum="-100" Maximum="100" Increment="5" FormatString="0"
+                                       AutomationProperties.Name="Brightness adjustment" ValueChanged="CaptureOptions_Changed" />
+                    </StackPanel>
+                    <StackPanel Grid.Column="2" Spacing="4">
+                        <TextBlock Text="Contrast" FontSize="12" />
+                        <NumericUpDown x:Name="ScanContrast" Value="0" Minimum="-100" Maximum="100" Increment="5" FormatString="0"
+                                       AutomationProperties.Name="Contrast adjustment" ValueChanged="CaptureOptions_Changed" />
+                    </StackPanel>
+                </Grid>
+                <UniformGrid Columns="2">
+                    <CheckBox x:Name="SkipBlankPages" Content="Skip blank pages" IsCheckedChanged="CaptureOptions_Changed" />
+                    <CheckBox x:Name="DeskewScan" Content="Straighten pages" IsCheckedChanged="CaptureOptions_Changed" />
+                    <CheckBox x:Name="CropScan" Content="Crop to page edges" IsCheckedChanged="CaptureOptions_Changed" />
+                    <CheckBox x:Name="FlipScanBacks" Content="Flip duplex backs" IsCheckedChanged="CaptureOptions_Changed" />
+                </UniformGrid>
+                <StackPanel x:Name="ProfileControls" Spacing="6">
+                    <Grid ColumnDefinitions="*,Auto" ColumnSpacing="8">
+                        <ComboBox x:Name="ScanProfileBox" PlaceholderText="Choose a saved profile" HorizontalAlignment="Stretch"
+                                  AutomationProperties.Name="Scan profile" SelectionChanged="ScanProfile_Changed" />
+                        <Button Grid.Column="1" x:Name="RemoveScanProfile" Content="Remove" Click="RemoveProfile_Click" IsEnabled="False" />
+                    </Grid>
+                    <Grid ColumnDefinitions="*,Auto" ColumnSpacing="8">
+                        <TextBox x:Name="ScanProfileName" PlaceholderText="Profile name" MaxLength="48" AutomationProperties.Name="Profile name" />
+                        <Button Grid.Column="1" x:Name="SaveScanProfile" Content="Save profile" Click="SaveProfile_Click" />
+                    </Grid>
+                </StackPanel>
+            </StackPanel>
+        </Expander>
         <TextBlock x:Name="ScannerStatus" TextWrapping="Wrap" Foreground="#526358" FontSize="12"
                    AutomationProperties.LiveSetting="Polite" />
         <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" Spacing="8">

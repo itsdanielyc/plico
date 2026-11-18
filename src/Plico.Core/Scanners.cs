@@ -45,9 +45,32 @@ public enum ScanPaper { A4, Letter }
 /// <summary>The requested capture resolution in dots per inch.</summary>
 public enum ScanResolution { Quick = 150, Standard = 300, Detailed = 600 }
 
+/// <summary>The scanner's requested pixel mode.</summary>
+public enum ScanColour { Colour, Greyscale, BlackAndWhite }
+
+/// <summary>Optional image adjustments applied before the captured pages are saved.</summary>
+/// <param name="Colour">The requested colour mode, with colour as the existing default.</param>
+/// <param name="ExcludeBlankPages">Drops pages below the scanner adapter's ink coverage threshold.</param>
+/// <param name="Deskew">Straightens slightly rotated pages.</param>
+/// <param name="Crop">Trims empty space outside the scanned page.</param>
+/// <param name="FlipBackSides">Turns the back sides of an explicitly duplex scan by 180 degrees.</param>
+/// <param name="Brightness">An adjustment from -1000 to 1000, with zero neutral.</param>
+/// <param name="Contrast">An adjustment from -1000 to 1000, with zero neutral.</param>
+public sealed record ScanCleanup(ScanColour Colour = ScanColour.Colour, bool ExcludeBlankPages = false,
+    bool Deskew = false, bool Crop = false, bool FlipBackSides = false, int Brightness = 0, int Contrast = 0)
+{
+    internal const int AdjustmentLimit = 1000;
+    /// <summary>Capture with the scanner's usual colour mode and no additional adjustments.</summary>
+    public static ScanCleanup Default { get; } = new();
+
+    /// <summary>Whether the colour mode and both adjustments can be sent to the scanner.</summary>
+    public bool IsValid() => Enum.IsDefined(Colour) && Brightness is >= -AdjustmentLimit and <= AdjustmentLimit &&
+        Contrast is >= -AdjustmentLimit and <= AdjustmentLimit;
+}
+
 /// <summary>Capture parameters chosen by the user in the native desktop window.</summary>
 public sealed record ScanRequest(ScannerDevice Device, ScanFeed Feed, ScanPaper Paper,
-    ScanResolution Resolution = ScanResolution.Standard);
+    ScanResolution Resolution = ScanResolution.Standard, ScanCleanup? Cleanup = null);
 
 /// <summary>Discovered scanners and actionable messages from unavailable drivers.</summary>
 public sealed record ScanDiscovery(IReadOnlyList<ScannerDevice> Devices, IReadOnlyList<string> Warnings);
@@ -121,26 +144,44 @@ public static class Scanners
         _ => driver.ToString()
     };
 
-    internal static ScanOptions CaptureOptions(ScanRequest request) => new()
+    internal static ScanOptions CaptureOptions(ScanRequest request)
     {
-        Device = request.Device.NativeDevice,
-        Dpi = Enum.IsDefined(request.Resolution) ? (int)request.Resolution
-            : throw new ArgumentOutOfRangeException(nameof(request), "Unknown scan resolution."),
-        PageSize = request.Paper switch
+        var cleanup = request.Cleanup ?? ScanCleanup.Default;
+        if (!cleanup.IsValid()) throw new ArgumentOutOfRangeException(nameof(request), "The scan cleanup settings are out of range.");
+        return new ScanOptions
         {
-            ScanPaper.A4 => PageSize.A4,
-            ScanPaper.Letter => PageSize.Letter,
-            _ => throw new ArgumentOutOfRangeException(nameof(request), "Unknown page format.")
-        },
-        PaperSource = request.Feed switch
-        {
-            ScanFeed.Automatic => PaperSource.Auto,
-            ScanFeed.Flatbed => PaperSource.Flatbed,
-            ScanFeed.Feeder => PaperSource.Feeder,
-            ScanFeed.Duplex => PaperSource.Duplex,
-            _ => throw new ArgumentOutOfRangeException(nameof(request), "Unknown paper source.")
-        }
-    };
+            Device = request.Device.NativeDevice,
+            Dpi = Enum.IsDefined(request.Resolution) ? (int)request.Resolution
+                : throw new ArgumentOutOfRangeException(nameof(request), "Unknown scan resolution."),
+            PageSize = request.Paper switch
+            {
+                ScanPaper.A4 => PageSize.A4,
+                ScanPaper.Letter => PageSize.Letter,
+                _ => throw new ArgumentOutOfRangeException(nameof(request), "Unknown page format.")
+            },
+            PaperSource = request.Feed switch
+            {
+                ScanFeed.Automatic => PaperSource.Auto,
+                ScanFeed.Flatbed => PaperSource.Flatbed,
+                ScanFeed.Feeder => PaperSource.Feeder,
+                ScanFeed.Duplex => PaperSource.Duplex,
+                _ => throw new ArgumentOutOfRangeException(nameof(request), "Unknown paper source.")
+            },
+            BitDepth = cleanup.Colour switch
+            {
+                ScanColour.Greyscale => BitDepth.Grayscale,
+                ScanColour.BlackAndWhite => BitDepth.BlackAndWhite,
+                _ => BitDepth.Color
+            },
+            ExcludeBlankPages = cleanup.ExcludeBlankPages,
+            AutoDeskew = cleanup.Deskew,
+            AutoCrop = cleanup.Crop,
+            FlipDuplexedPages = request.Feed == ScanFeed.Duplex && cleanup.FlipBackSides,
+            Brightness = cleanup.Brightness,
+            Contrast = cleanup.Contrast,
+            BrightnessContrastAfterScan = cleanup.Brightness != 0 || cleanup.Contrast != 0
+        };
+    }
 
     internal static string ScanTitle() =>
         $"Scan {DateTimeOffset.Now.ToString("yyyy-MM-dd HHmmss", CultureInfo.InvariantCulture)}";

@@ -10,6 +10,34 @@ namespace Plico.Tests;
 public sealed class ScanOptionsTests
 {
     [Fact]
+    public void ScanProfileRoundTripsCleanupAndKeepsLegacyCaptureDefaults()
+    {
+        using var directory = new TemporaryLibrary();
+        File.WriteAllText(Path.Combine(directory.Path, "scan-options.json"),
+            """{"Feed":"Automatic","Paper":"A4","Resolution":"Standard"}""");
+        var preference = new ScanOptionsPreference(directory.Path);
+        var scanner = Scanners.FromAddress("scanner.test", "Fixture scanner");
+        var original = preference.Load();
+        Assert.Null(original.Cleanup);
+        var legacy = Scanners.CaptureOptions(new ScanRequest(scanner, original.Feed, original.Paper, original.Resolution));
+        Assert.False(legacy.ExcludeBlankPages);
+        Assert.False(legacy.AutoDeskew);
+
+        var cleanup = new ScanCleanup(ScanColour.Greyscale, ExcludeBlankPages: true, Deskew: true, Crop: true,
+            FlipBackSides: true, Brightness: -200, Contrast: 300);
+        preference.SaveProfile("Receipts", original with { Feed = ScanFeed.Duplex, Cleanup = cleanup });
+        var profile = Assert.Single(new ScanOptionsPreference(directory.Path).LoadProfiles());
+        Assert.Equal(cleanup, profile.Options.Cleanup);
+        var options = Scanners.CaptureOptions(new ScanRequest(scanner, profile.Options.Feed, profile.Options.Paper,
+            profile.Options.Resolution, profile.Options.Cleanup));
+        Assert.True(options.ExcludeBlankPages && options.AutoDeskew && options.AutoCrop && options.FlipDuplexedPages);
+        Assert.True(options.BrightnessContrastAfterScan);
+        Assert.Equal(NAPS2.Images.BitDepth.Grayscale, options.BitDepth);
+        Assert.Equal(-200, options.Brightness);
+        Assert.Equal(300, options.Contrast);
+    }
+
+    [Fact]
     public void InvalidDeviceOptionsFallBackToTheExistingDefaults()
     {
         using var directory = new TemporaryLibrary();

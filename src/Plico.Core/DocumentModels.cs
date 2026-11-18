@@ -33,10 +33,19 @@ public sealed record DocumentSummary(
 
     /// <summary>Whether a document date has been recorded.</summary>
     public bool HasDocumentDate => DocumentDate.HasValue;
+
+    /// <summary>The matched ranges within the search excerpt.</summary>
+    public IReadOnlyList<SearchMatchSpan> MatchHighlights { get; init; } = [];
 }
 
+/// <summary>A UTF-16 range within display text.</summary>
+public readonly record struct SearchMatchSpan(int Start, int Length);
+
+/// <summary>A match rectangle in fractional page coordinates, measured from the top left.</summary>
+public readonly record struct PdfPageHighlight(double X, double Y, double Width, double Height);
+
 /// <summary>The part of a search query that needs correction before it can run.</summary>
-public enum SearchQueryIssue { NoSearchTerms, Tag, AddedDate, DocumentDate, Folder, ReviewStatus, TextAvailability }
+public enum SearchQueryIssue { NoSearchTerms, Tag, AddedDate, DocumentDate, Folder, ReviewStatus, TextAvailability, BooleanSyntax }
 
 /// <summary>Results in display order and whether there are more at the next offset.</summary>
 public sealed record DocumentPage(IReadOnlyList<DocumentSummary> Items, bool HasMore)
@@ -85,7 +94,7 @@ internal readonly record struct PreparedPdf(PdfText Text, bool CopiedSource);
 internal readonly record struct OcrCopySource(long DocumentId, OcrLanguage Language);
 
 internal readonly record struct CatalogFileReference(long Id, string RelativePath, FileVersion Version);
-internal sealed record IndexedPdf(long Id, string RelativePath, FileVersion Version, byte[]? Fingerprint);
+internal sealed record IndexedPdf(long Id, string RelativePath, FileVersion Version, byte[]? Fingerprint, bool HasText = true);
 
 internal readonly record struct CatalogRelocation(long DocumentId, string SourceRelativePath, string DestinationRelativePath,
     string Filename, FileVersion Version);

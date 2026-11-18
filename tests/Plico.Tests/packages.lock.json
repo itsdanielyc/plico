@@ -499,7 +499,7 @@
           "CommunityToolkit.Mvvm": "[8.4.2, )",
           "NAPS2.Pdfium.Binaries": "[1.3.0, )",
           "NAPS2.Tesseract.Binaries": "[1.5.0, )",
-          "Plico.Core": "[0.16.0, )",
+          "Plico.Core": "[0.16.1, )",
           "SkiaSharp.NativeAssets.Linux": "[4.156.0, )"
         }
       },
@@ -511,9 +511,11 @@
           "NAPS2.Images.Skia": "[1.6.1, )",
           "NAPS2.PdfSharp": "[1.0.2, )",
           "NAPS2.Sdk": "[1.6.1, )",
+          "PDFsharp": "[6.2.4, )",
           "PdfPig": "[0.1.16, )",
           "SkiaSharp": "[4.156.0, )",
-          "SkiaSharp.NativeAssets.Linux": "[4.156.0, )"
+          "SkiaSharp.NativeAssets.Linux": "[4.156.0, )",
+          "System.Security.Cryptography.Pkcs": "[10.0.15, )"
         }
       },
       "Avalonia.Desktop": {
@@ -616,6 +618,15 @@
         "resolved": "0.1.16",
         "contentHash": "qQcbsNMYVY+K5ELptax2S8thNMk0+rSQq3H/KdYj3LLcko8yTCz8y5KIvsKxIyAuTN0ZYNnfsZkM+0EvxTwHVA=="
       },
+      "PDFsharp": {
+        "type": "CentralTransitive",
+        "requested": "[6.2.4, )",
+        "resolved": "6.2.4",
+        "contentHash": "GhTr9F1uOYXHCIEOB5PXIgqn5a8WLsJL2m0eewTA0IvY1j6N4HGXHKKmEyB90/N6vrjmYamf41V9zbmdW2HY3g==",
+        "dependencies": {
+          "System.Security.Cryptography.Pkcs": "8.0.1"
+        }
+      },
       "SkiaSharp": {
         "type": "CentralTransitive",
         "requested": "[4.156.0, )",
@@ -631,6 +642,12 @@
         "requested": "[4.156.0, )",
         "resolved": "4.156.0",
         "contentHash": "H+s60e8mNUO8jiRuQQpMXQjcPnFTYb168t59mB/UAewSHNv5hXLfP8xiKeSDc4jAF/aMusjamXx9Di2FIurl/w=="
+      },
+      "System.Security.Cryptography.Pkcs": {
+        "type": "CentralTransitive",
+        "requested": "[10.0.15, )",
+        "resolved": "10.0.15",
+        "contentHash": "4jEv/lXDuQkh60lPU3hlwASErXdv1ZMKmsxVuBfZWiVKT5Q2QGo58kTa6rN519+PU+m4Hsj1m3yT8fN+Xw0XZw=="
       }
     }
   }

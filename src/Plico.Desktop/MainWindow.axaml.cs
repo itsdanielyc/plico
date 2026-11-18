@@ -95,6 +95,22 @@ public sealed partial class MainWindow : Window
         e.Handled = true;
     }
 
+    private void DocumentList_KeyUp(object? sender, KeyEventArgs e)
+    {
+        if (e.KeyModifiers != KeyModifiers.None || ViewModel is not { CanWork: true, HasSelection: true } model) return;
+        switch (e.Key)
+        {
+            case Key.R: model.ToggleReviewCommand.Execute(null); break;
+            case Key.T: TagBox.Focus(); break;
+            case Key.X: model.TrashDocumentCommand.Execute(null); break;
+            case Key.J: model.SelectReviewNeighbour(1); break;
+            case Key.K: model.SelectReviewNeighbour(-1); break;
+            default: return;
+        }
+        e.Handled = true;
+        if (model.SelectedDocument is { } selected) DocumentList.ScrollIntoView(selected);
+    }
+
     private void Documents_SelectionChanged(object? sender, SelectionChangedEventArgs e)
     {
         if (ViewModel is { } model && sender is ListBox list)
@@ -122,6 +138,9 @@ public sealed partial class MainWindow : Window
 
     private async void EditBatchDocumentDate_Click(object? sender, RoutedEventArgs e) =>
         await UpdateSelectedDocumentsAsync(static model => model.EditBatchDocumentDatesAsync());
+
+    private async void SuggestSelectedFiling_Click(object? sender, RoutedEventArgs e) =>
+        await UpdateSelectedDocumentsAsync(static model => model.SuggestSelectedFilingAsync());
 
     private async void BatchTag_KeyDown(object? sender, KeyEventArgs e)
     {

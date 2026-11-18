@@ -9,8 +9,6 @@ internal sealed partial class LibraryCatalog
 {
     private const int ConnectionTimeoutSeconds = 5;
     private const int SearchCancellationInstructions = 1_000;
-    private const int SnippetMarker = 30;
-    private const int SnippetLeadingCharacters = 20;
     internal const int PageSize = 60;
     private const string NewestCatalogEntry = "d.id DESC";
     private const string TitleCollation = "plico_title";
@@ -75,7 +73,7 @@ internal sealed partial class LibraryCatalog
         """;
     private static readonly string[] Migrations =
         [Schema, FingerprintMigration, DisplayTitleMigration, PdfFingerprintMigration, OcrCopyMigration, AddedDateIndexMigration,
-            PdfMoveMigration, SavedSearchMigration, DocumentDateMigration, TextPresenceMigration];
+            PdfMoveMigration, SavedSearchMigration, DocumentDateMigration, TextPresenceMigration, TrashMigration, FilingMigration];
 
     private readonly string _connectionString;
 
@@ -120,11 +118,11 @@ internal sealed partial class LibraryCatalog
 
     internal long Upsert(string relativePath, string title, PdfText text, FileVersion version,
         byte[] pdfFingerprint, byte[]? sourceFingerprint = null, OcrCopySource? ocrCopySource = null,
-        IReadOnlyList<long>? metadataSourceIds = null)
+        IReadOnlyList<long>? metadataSourceIds = null, OcrLanguage? recognizedLanguage = null)
     {
         metadataSourceIds ??= ocrCopySource is { } origin ? [origin.DocumentId] : null;
         using var connection = Connect();
-        using var transaction = metadataSourceIds is { Count: > 0 } ? connection.BeginTransaction() : null;
+        using var transaction = metadataSourceIds is { Count: > 0 } || recognizedLanguage.HasValue ? connection.BeginTransaction() : null;
         using var command = connection.CreateCommand();
         command.Transaction = transaction;
         string initialDocumentDay = "NULL";
@@ -134,9 +132,9 @@ internal sealed partial class LibraryCatalog
             initialDocumentDay = SharedSourceDocumentDay;
         }
         command.CommandText = $$"""
-            INSERT INTO documents (title, relative_path, added_at, modified_ticks, file_bytes, page_count, has_text, body,
+            INSERT INTO documents (id, title, relative_path, added_at, modified_ticks, file_bytes, page_count, has_text, body,
                                    source_sha256, pdf_sha256, ocr_copy_source_id, ocr_copy_language, document_day)
-            VALUES ($title, $path, $added, $modified, $bytes, $pages, $hasText, $text, $source, $pdf, $ocrSource, $ocrLanguage,
+            VALUES ((SELECT last_id + 1 FROM document_identity), $title, $path, $added, $modified, $bytes, $pages, $hasText, $text, $source, $pdf, $ocrSource, $ocrLanguage,
                     {{initialDocumentDay}})
             ON CONFLICT(relative_path) DO UPDATE SET
                 title = CASE WHEN documents.display_title IS NULL THEN excluded.title
@@ -160,7 +158,7 @@ internal sealed partial class LibraryCatalog
         command.Parameters.Add("$ocrSource", SqliteType.Integer).Value = (object?)ocrCopySource?.DocumentId ?? DBNull.Value;
         command.Parameters.Add("$ocrLanguage", SqliteType.Text).Value = (object?)ocrCopySource?.Language.ToString() ?? DBNull.Value;
         long documentId = (long)command.ExecuteScalar()!;
-        if (transaction is not null)
+        if (metadataSourceIds is { Count: > 0 })
         {
             command.CommandText = """
                 INSERT OR IGNORE INTO document_tags (document_id, tag_key)
@@ -169,8 +167,19 @@ internal sealed partial class LibraryCatalog
                 """;
             command.Parameters.AddWithValue("$copy", documentId);
             command.ExecuteNonQuery();
-            transaction.Commit();
         }
+        if (recognizedLanguage is { } language)
+        {
+            command.Parameters.Clear();
+            command.CommandText = """
+                INSERT INTO document_ocr_languages (document_id, language) VALUES ($id, $language)
+                ON CONFLICT(document_id) DO UPDATE SET language = excluded.language;
+                """;
+            command.Parameters.AddWithValue("$id", documentId);
+            command.Parameters.AddWithValue("$language", language.ToString());
+            command.ExecuteNonQuery();
+        }
+        transaction?.Commit();
         return documentId;
     }
 
@@ -349,7 +358,7 @@ internal sealed partial class LibraryCatalog
     }
 
     private DocumentPage Query(DocumentFilter filter, long? documentId = null,
-        CancellationToken cancellationToken = default, int maximumResults = PageSize)
+        CancellationToken cancellationToken = default, int maximumResults = PageSize, Action<DocumentSummary>? visit = null)
     {
         cancellationToken.ThrowIfCancellationRequested();
         ArgumentOutOfRangeException.ThrowIfNegative(filter.Offset);
@@ -372,13 +381,23 @@ internal sealed partial class LibraryCatalog
         string join = "";
         string match = "''";
         bool hasSearch = search.FullTextExpression.Length > 0;
+        bool mixedSearch = search.Advanced is { NativeText: null };
         if (hasSearch)
         {
-            join = "JOIN documents_search ON documents_search.rowid = d.id";
-            match = $"replace(replace(snippet(documents_search, 1, char({SnippetMarker}), char({SnippetMarker}), ' … ', 18), char(13), ''), char(10), ' ')";
-            conditions.Add("documents_search MATCH $expression");
+            join = mixedSearch
+                ? $"LEFT JOIN documents_search($expression, '{SearchRank}') ON documents_search.rowid = d.id"
+                : "JOIN documents_search ON documents_search.rowid = d.id";
+            if (visit is null)
+                match = mixedSearch ? $"CASE WHEN documents_search.rowid IS NULL THEN '' ELSE {SearchSnippet} END" : SearchSnippet;
+            if (!mixedSearch)
+            {
+                conditions.Add("documents_search MATCH $expression");
+                conditions.Add($"documents_search.rank MATCH '{SearchRank}'");
+            }
             command.Parameters.AddWithValue("$expression", search.FullTextExpression);
         }
+        if (mixedSearch && search.Advanced is { } advanced)
+            conditions.Add(BooleanCondition(connection, command, advanced.Root));
         if (filter.InboxOnly || search.Reviewed.HasValue)
         {
             conditions.Add("d.reviewed = $reviewed");
@@ -420,7 +439,7 @@ internal sealed partial class LibraryCatalog
             command.Parameters.AddWithValue("$id", documentId.Value);
         }
 
-        string order = SortOrder(connection, filter.Sort, hasSearch);
+        string order = SortOrder(connection, filter.Sort, hasSearch, mixedSearch);
         command.CommandText = $"""
             SELECT d.id, COALESCE(d.display_title, d.title) AS display_name, d.relative_path, d.added_at, d.reviewed, d.page_count, d.has_text,
                    (SELECT json_group_array(t.label ORDER BY t.tag_key)
@@ -435,7 +454,7 @@ internal sealed partial class LibraryCatalog
         command.Parameters.AddWithValue("$offset", filter.Offset);
         try
         {
-            return ReadResultPage(command, maximumResults, cancellationToken);
+            return ReadResultPage(command, maximumResults, cancellationToken, visit);
         }
         catch (SqliteException error) when (error.SqliteErrorCode == raw.SQLITE_INTERRUPT && cancellationToken.IsCancellationRequested)
         {
@@ -443,7 +462,8 @@ internal sealed partial class LibraryCatalog
         }
     }
 
-    private static DocumentPage ReadResultPage(SqliteCommand command, int maximumResults, CancellationToken cancellationToken)
+    private static DocumentPage ReadResultPage(SqliteCommand command, int maximumResults, CancellationToken cancellationToken,
+        Action<DocumentSummary>? visit)
     {
         cancellationToken.ThrowIfCancellationRequested();
         using var results = command.ExecuteReader();
@@ -455,26 +475,31 @@ internal sealed partial class LibraryCatalog
             {
                 return new(documents, HasMore: true);
             }
-            documents.Add(new DocumentSummary(
+            var (excerpt, highlights) = ReadSnippet(results.GetString(8));
+            var document = new DocumentSummary(
                 results.GetInt64(0), results.GetString(1), results.GetString(2),
                 DateTimeOffset.FromUnixTimeSeconds(results.GetInt64(3)), results.GetBoolean(4),
                 results.GetInt32(5), results.GetBoolean(6),
                 JsonSerializer.Deserialize<string[]>(results.GetString(7)) ?? [],
-                TrimSnippet(results.GetString(8)))
+                excerpt)
             {
-                DocumentDate = results.IsDBNull(9) ? null : DateOnly.FromDayNumber(results.GetInt32(9))
-            });
+                DocumentDate = results.IsDBNull(9) ? null : DateOnly.FromDayNumber(results.GetInt32(9)),
+                MatchHighlights = highlights
+            };
+            if (visit is null) documents.Add(document);
+            else visit(document);
         }
         cancellationToken.ThrowIfCancellationRequested();
         return new(documents, HasMore: false);
     }
 
-    private static string SortOrder(SqliteConnection connection, DocumentSort sort, bool hasSearch)
+    private static string SortOrder(SqliteConnection connection, DocumentSort sort, bool hasSearch, bool mixedSearch)
     {
         switch (sort)
         {
             case DocumentSort.Automatic:
-                return hasSearch ? $"documents_search.rank, {NewestCatalogEntry}" : NewestCatalogEntry;
+                if (!hasSearch) return NewestCatalogEntry;
+                return mixedSearch ? $"documents_search.rank NULLS LAST, {NewestCatalogEntry}" : $"documents_search.rank, {NewestCatalogEntry}";
             case DocumentSort.Newest:
                 return NewestCatalogEntry;
             case DocumentSort.DocumentDate:
@@ -486,18 +511,6 @@ internal sealed partial class LibraryCatalog
             default:
                 throw new ArgumentOutOfRangeException(nameof(sort), sort, "Unknown document sort order.");
         }
-    }
-
-    private static string TrimSnippet(string excerpt)
-    {
-        const char marker = (char)SnippetMarker;
-        int matchStart = excerpt.IndexOf(marker);
-        if (matchStart < 0) return "";
-        if (matchStart <= SnippetLeadingCharacters) return excerpt.Replace(marker.ToString(), "").Trim();
-
-        int wordBreak = excerpt.IndexOf(' ', matchStart - SnippetLeadingCharacters);
-        int start = wordBreak >= 0 && wordBreak < matchStart ? wordBreak + 1 : matchStart;
-        return "… " + excerpt[start..].Replace(marker.ToString(), "").Trim();
     }
 
     internal IReadOnlyList<string> Tags(bool includeUnused = false)
@@ -665,7 +678,7 @@ internal sealed partial class LibraryCatalog
     {
         using var connection = Connect();
         using var command = connection.CreateCommand();
-        command.CommandText = "SELECT id, relative_path, modified_ticks, file_bytes, is_present, pdf_sha256 FROM documents;";
+        command.CommandText = "SELECT id, relative_path, modified_ticks, file_bytes, is_present, pdf_sha256, has_text FROM documents WHERE is_present >= 0;";
         using var results = command.ExecuteReader();
         var versions = new Dictionary<string, IndexedPdf>(StringComparer.Ordinal);
         while (results.Read())
@@ -673,7 +686,7 @@ internal sealed partial class LibraryCatalog
             string path = results.GetString(1);
             var version = new FileVersion(results.GetInt64(2), results.GetInt64(3), results.GetBoolean(4));
             var fingerprint = results.IsDBNull(5) ? null : results.GetFieldValue<byte[]>(5);
-            versions.Add(path, new IndexedPdf(results.GetInt64(0), path, version, fingerprint));
+            versions.Add(path, new IndexedPdf(results.GetInt64(0), path, version, fingerprint, results.GetBoolean(6)));
         }
         return versions;
     }

@@ -130,6 +130,20 @@ public sealed partial class InboxLibrary : IDisposable
         return ReadStablePdf(document, path => DocumentProcessor.ReadPageText(path, pageNumber, cancellationToken), cancellationToken);
     }
 
+    /// <summary>Locates the visible words from the positive search terms on a PDF page.</summary>
+    public IReadOnlyList<PdfPageHighlight> FindPageHighlights(DocumentSummary document, string query, int pageNumber,
+        CancellationToken cancellationToken = default)
+    {
+        ArgumentNullException.ThrowIfNull(document);
+        ArgumentOutOfRangeException.ThrowIfLessThan(pageNumber, 1);
+        ArgumentOutOfRangeException.ThrowIfGreaterThan(pageNumber, document.PageCount);
+        var search = SearchTerms.Compile(query);
+        string expression = search.HighlightExpression;
+        if (!search.IsValid || expression.Length == 0) return [];
+        return ReadStablePdf(document, path => PdfPageSearch.HighlightPage(path, pageNumber, expression, cancellationToken),
+            cancellationToken);
+    }
+
     /// <summary>Returns the first one-based page whose embedded text matches the text terms in the query, or null.</summary>
     public int? FindFirstMatchingPage(DocumentSummary document, string query, CancellationToken cancellationToken = default) =>
         FindMatchingPage(document, query, 0, PageMatchDirection.Forward, cancellationToken);
@@ -354,7 +368,7 @@ public sealed partial class InboxLibrary : IDisposable
 
     private DocumentSummary CommitPdf(string stagedPdf, string title, PdfText text, CancellationToken cancellationToken,
         byte[]? sourceFingerprint = null, byte[]? pdfFingerprint = null, OcrCopySource? ocrCopySource = null,
-        IReadOnlyList<long>? metadataSourceIds = null, string? destinationFolder = null)
+        IReadOnlyList<long>? metadataSourceIds = null, string? destinationFolder = null, OcrLanguage? recognizedLanguage = null)
     {
         var version = FileVersion.Read(stagedPdf);
         var fingerprint = pdfFingerprint ?? FingerprintPdf(stagedPdf, cancellationToken);
@@ -365,7 +379,8 @@ public sealed partial class InboxLibrary : IDisposable
         }
         cancellationToken.ThrowIfCancellationRequested();
         string publishedPdf = PublishPdf(stagedPdf, title, target, cancellationToken);
-        long id = _catalog.Upsert(RelativePdfPath(publishedPdf), title, text, version, fingerprint, sourceFingerprint, ocrCopySource, metadataSourceIds);
+        long id = _catalog.Upsert(RelativePdfPath(publishedPdf), title, text, version, fingerprint, sourceFingerprint,
+            ocrCopySource, metadataSourceIds, recognizedLanguage);
         return _catalog.Get(id);
     }
 

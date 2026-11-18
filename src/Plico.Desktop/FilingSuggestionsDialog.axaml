@@ -1,0 +1,35 @@
+<Window xmlns="https://github.com/avaloniaui" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:local="using:Plico.Desktop" x:Class="Plico.Desktop.FilingSuggestionsDialog"
+        Title="Filing suggestions" Width="510" SizeToContent="Height" CanResize="False"
+        WindowStartupLocation="CenterOwner" FontFamily="{StaticResource InterFont}" Background="#F4F5EF">
+    <StackPanel Margin="24" Spacing="10">
+        <TextBlock Text="Filing suggestions" FontSize="19" FontWeight="SemiBold" />
+        <ComboBox x:Name="SuggestionDocumentBox" HorizontalAlignment="Stretch" AutomationProperties.Name="Document to review"
+                  SelectionChanged="Document_Changed" />
+        <TextBlock x:Name="SuggestionTitle" FontWeight="SemiBold" TextTrimming="CharacterEllipsis" />
+        <StackPanel x:Name="SuggestedDates" Spacing="4">
+            <TextBlock Text="Document date" />
+            <ComboBox x:Name="SuggestedDateBox" HorizontalAlignment="Stretch" AutomationProperties.Name="Suggested document date"
+                      SelectionChanged="Date_Changed" />
+        </StackPanel>
+        <SelectableTextBlock x:Name="RecognizedFields" TextWrapping="Wrap" AutomationProperties.Name="Detected payment details" />
+        <StackPanel x:Name="SuggestedTags" Spacing="4">
+            <TextBlock Text="Tags" />
+            <ScrollViewer MaxHeight="152" HorizontalScrollBarVisibility="Disabled">
+                <ItemsControl x:Name="SuggestedTagList">
+                    <ItemsControl.ItemTemplate>
+                        <DataTemplate x:DataType="local:FilingTagChoice">
+                            <CheckBox Content="{Binding Label}" IsChecked="{Binding Selected, Mode=TwoWay}" />
+                        </DataTemplate>
+                    </ItemsControl.ItemTemplate>
+                </ItemsControl>
+            </ScrollViewer>
+        </StackPanel>
+        <TextBlock x:Name="NoFilingSuggestions" Text="No filing suggestions for this document." TextWrapping="Wrap" />
+        <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" Spacing="8">
+            <Button Content="Close" IsCancel="True" Click="Cancel_Click" />
+            <Button x:Name="ApplyFilingSuggestionsButton" Content="Apply chosen fields" Click="Apply_Click"
+                    Background="#254C37" Foreground="White" />
+        </StackPanel>
+    </StackPanel>
+</Window>

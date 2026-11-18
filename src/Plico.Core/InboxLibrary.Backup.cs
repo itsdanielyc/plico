@@ -19,7 +19,12 @@ public sealed partial class InboxLibrary
         string? stage = null;
         try
         {
+            var recovery = RecoverPendingPdfMove(cancellationToken);
+            if (recovery.PendingDestination is not null) throw new IOException(recovery.Notice);
             var inventory = CaptureBackupInventory(cancellationToken);
+            var trash = _catalog.ReadTrashFiles();
+            var trashVersions = new List<(string Path, FileVersion Version)>(trash.Count);
+            int total = inventory.Count + trash.Count;
             stage = CreateCopyStage(target, BackupStagePrefix);
             var pdfDestination = Directory.CreateDirectory(Path.Combine(stage, PdfFolderName)).FullName;
             var catalogDestination = Directory.CreateDirectory(Path.Combine(stage, MetadataFolderName)).FullName;
@@ -31,14 +36,23 @@ public sealed partial class InboxLibrary
                 await CopyPdfAsync(ResolvePdfPath(entry.Key), Path.Combine(pdfDestination, entry.Key),
                     entry.Value, BackupInventoryChanged, cancellationToken).ConfigureAwait(false);
                 copied++;
-                progress?.Report(new BackupProgress(copied, inventory.Count));
+                progress?.Report(new BackupProgress(copied, total));
+            }
+            foreach (var item in trash)
+            {
+                var source = VerifyTrashFile(item, cancellationToken);
+                await CopyPdfAsync(source.Path, Path.Combine(catalogDestination, TrashFolderName, TrashFilename(item.DocumentId)),
+                    source.Version, BackupInventoryChanged, cancellationToken).ConfigureAwait(false);
+                trashVersions.Add((source.Path, source.Version));
+                progress?.Report(new BackupProgress(++copied, total));
             }
 
             cancellationToken.ThrowIfCancellationRequested();
             _catalog.BackupTo(Path.Combine(catalogDestination, CatalogFilename));
             VerifyBackupInventory(inventory, cancellationToken);
+            foreach (var (path, version) in trashVersions) EnsureCurrentFile(path, version);
             cancellationToken.ThrowIfCancellationRequested();
-            return new BackupResult(PublishCopyFolder(stage, target, BackupFolderLabel, cancellationToken), inventory.Count);
+            return new BackupResult(PublishCopyFolder(stage, target, BackupFolderLabel, cancellationToken), total);
         }
         finally
         {

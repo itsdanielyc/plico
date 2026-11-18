@@ -77,11 +77,11 @@ internal sealed class DocumentProcessor(string dataDirectory)
 
     /// <summary>Creates fresh OCR from the visible PDF pages, including pages that already contain text.</summary>
     internal async Task<PdfText> ReprocessPdfAsync(string sourcePath, string outputPath, OcrLanguage language,
-        CancellationToken cancellationToken)
+        CancellationToken cancellationToken, PdfExportParams? exportSettings = null)
     {
         using var context = CreateCaptureContext(Path.GetDirectoryName(outputPath)!);
         var pages = new PdfImporter(context).Import(sourcePath, progress: cancellationToken);
-        return await ExportAsync(context, RenderedPages(pages, cancellationToken), outputPath, language, cancellationToken)
+        return await ExportAsync(context, RenderedPages(pages, cancellationToken), outputPath, language, cancellationToken, exportSettings)
             .ConfigureAwait(false);
     }
 
@@ -100,11 +100,13 @@ internal sealed class DocumentProcessor(string dataDirectory)
         IAsyncEnumerable<ProcessedImage> pages,
         string outputPath,
         OcrLanguage language,
-        CancellationToken cancellationToken)
+        CancellationToken cancellationToken,
+        PdfExportParams? exportSettings = null)
     {
         var captured = new List<ProcessedImage>();
         await CollectPagesAsync(pages, captured, cancellationToken).ConfigureAwait(false);
-        return await ExportCapturedAsync(context, captured, outputPath, language, cancellationToken).ConfigureAwait(false);
+        return await ExportCapturedAsync(context, captured, outputPath, language, cancellationToken, exportSettings)
+            .ConfigureAwait(false);
     }
 
     internal static async Task CollectPagesAsync(IAsyncEnumerable<ProcessedImage> pages, List<ProcessedImage> captured,
@@ -117,7 +119,7 @@ internal sealed class DocumentProcessor(string dataDirectory)
     }
 
     internal async Task<PdfText> ExportCapturedAsync(ScanningContext context, ICollection<ProcessedImage> captured,
-        string outputPath, OcrLanguage language, CancellationToken cancellationToken)
+        string outputPath, OcrLanguage language, CancellationToken cancellationToken, PdfExportParams? exportSettings = null)
     {
         cancellationToken.ThrowIfCancellationRequested();
         if (captured.Count == 0)
@@ -140,7 +142,7 @@ internal sealed class DocumentProcessor(string dataDirectory)
         }
         context.OcrEngine = TesseractOcrEngine.Bundled(dataDirectory);
         if (!await new PdfExporter(context).Export(
-            outputPath, captured, new PdfExportParams { Metadata = new PdfMetadata { Creator = "Plico" } },
+            outputPath, captured, exportSettings ?? new PdfExportParams { Metadata = new PdfMetadata { Creator = "Plico" } },
             new OcrParams(languageCode, TimeoutInSeconds: OcrTimeoutSecondsPerPage),
             cancellationToken).ConfigureAwait(false))
         {

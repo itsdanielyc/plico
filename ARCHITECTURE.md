@@ -135,4 +135,6 @@ Catch-up on open uses a separate machine-local preference keyed by library path.
 
 ## Scope decisions
 
+Catalog v11 preserves trashed files and their metadata using the move journal and a monotonic document identity. Catalog v12 stores tag rules and OCR language provenance for filing suggestions. The library’s integrity check reads its hashes and portable metadata exports include catalog fields and relative paths. [Offline filing and portable exports](docs/adr/007-offline-filing-and-portable-exports.md)
+
 Keep one catalog per library. An additional database or search daemon would add setup and duplicate state. Each installer uses the same published application files as its portable archive. Windows setup generates an uninstall list from those files and removes directories only when empty. The macOS disk image carries the signed app and an Applications link. The Ubuntu package owns the application, launcher, and desktop entry. The library belongs to the user.

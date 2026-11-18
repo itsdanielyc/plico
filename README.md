@@ -36,11 +36,17 @@ When an import fails, **Import errors** lists the source files and reasons. The 
 
 Put a phrase in quotation marks to search its adjacent whole words. For example, "lease renewal" north searches for the phrase together with a word beginning with north.
 
+Use uppercase AND, OR and NOT to combine words, phrases and filters. `(invoice OR receipt) -tag:archive` finds either word and excludes the Archive tag. `NOT status:reviewed` finds the review queue. Search results highlight matching text, and the preview marks hits on the displayed PDF page. Automatic sort gives title hits more weight.
+
 Use `tag:tax` to require an exact tag. Use `tag:tax tag:"Home insurance" renewal` to require both tags and match renewal in the document. Tags ignore case. Use a backslash to include the closing quote or a backslash inside a quoted tag.
 
 Use `status:inbox` to find PDFs waiting for review and `status:reviewed` to find reviewed PDFs. Save a query such as `renewal tag:property status:inbox` to return to a review queue that updates as you mark documents reviewed.
 
 When a review removes the open PDF from the current results, Plico opens the next match or the previous one at the end. Single and batch review keep the loaded result pages in view.
+
+Choose **Trash & next** to remove a PDF from the results and continue reviewing. Use **Trash…** in the sidebar to restore it to its original path or confirm permanent deletion. If another file occupies the path, move that file before restoring. Library backups include Trash. When the results list has focus, press **R** to review, **T** to enter a tag, **X** to trash, **J** for next and **K** for previous.
+
+Open **Filing suggestions…** for the previewed PDF or a selection. Choose a suggested document date and any suggested tags to apply. Payment details are selectable for copying. Dates are interpreted using the document’s OCR language when available and the current locale. Use **Library tools… → Tag rules…** to add rules that suggest tags from a phrase, any word, or all words. Suggestions also learn from reviewed PDFs in the library.
 
 Choose **Without text** to find PDFs with no searchable text. Use `text:missing` or `text:present` with other filters. A query such as `text:missing tag:tax folder:Filed` finds scans you can select together for OCR.
 
@@ -73,6 +79,10 @@ Batch tagging keeps the result pages you loaded and the selected PDFs that still
 Choose **Move PDFs…** on a selection to file all of them in one library folder. Plico checks the selection before starting and reports what finished if you cancel or it encounters a file error.
 
 Choose **Export PDF…** from the preview to copy one PDF directly into a folder outside the library. Plico adds a number when the filename is occupied. With multiple PDFs selected, **Export PDFs…** creates a dated folder. Use **Open export** to see the result in your file manager.
+
+Choose **Archival PDF/A-2b** to render a copy and rebuild its searchable text in the selected OCR language. Choose **Password-protected PDF** for a copy that opens with your password, or **PDF with library metadata** to include the catalog title and tags. For portable metadata files, use **Library tools…** to export the entire catalog as JSON or the current search results as CSV.
+
+Use **Library tools… → Check library integrity…** to compare file checksums with the catalog and see missing, changed or unindexed PDFs. The check reads the library so you can decide whether to refresh the index or recover files from a backup.
 
 Choose **Combine PDFs…** to make a single document from the selection. Set the title and use **Move up** or **Move down** to set the order. The new PDF opens in the inbox with the source pages, embedded text, and tags.
 
@@ -128,6 +138,8 @@ If discovery misses an eSCL scanner, enter its hostname, IP address, or full eSC
 Plico remembers connected addresses in settings on this computer. Select a saved device in **Scan** to use it again, or select **Forget** to remove its saved address.
 
 Scanning supports automatic source selection, flatbed, feeder, and duplex when the selected device provides them. Choose 150, 300, or 600 dpi. An eSCL scanner uses its nearest supported resolution when needed. OCR and search run locally. Scan discovery contacts the local network when you open the scanner picker.
+
+Expand **Cleanup and profiles** in the scanner picker to drop blank pages, straighten, crop, choose colour mode or adjust brightness and contrast. Explicit duplex jobs can turn the back sides by 180 degrees. Save the settings as a named profile to reuse them with compatible scanners.
 
 The scan picker opens on the last scanner you started with when it is available. Plico remembers the paper source, size, and resolution for each scanner on this computer. Existing shared settings supply the defaults for scanners with no saved choices.
 

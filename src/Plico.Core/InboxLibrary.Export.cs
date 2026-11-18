@@ -16,8 +16,15 @@ public sealed partial class InboxLibrary
     /// <param name="destination">An existing directory outside the current library.</param>
     /// <param name="cancellationToken">Cancels the copy before publication.</param>
     /// <returns>The path of the exported file, with a numeric suffix if needed.</returns>
-    public async Task<string> ExportPdfAsync(long documentId, string destination, CancellationToken cancellationToken = default)
+    public Task<string> ExportPdfAsync(long documentId, string destination, CancellationToken cancellationToken = default) =>
+        ExportPdfAsync(documentId, destination, new PdfExportOptions(PdfExportFormat.Original), cancellationToken);
+
+    /// <summary>Publishes a copy in the requested format without modifying the library PDF.</summary>
+    public async Task<string> ExportPdfAsync(long documentId, string destination, PdfExportOptions options,
+        CancellationToken cancellationToken = default)
     {
+        ArgumentNullException.ThrowIfNull(options);
+        options.Validate();
         await _fileOperations.WaitAsync(cancellationToken).ConfigureAwait(false);
         string? stage = null;
         try
@@ -26,13 +33,20 @@ public sealed partial class InboxLibrary
             var source = ResolveSelectedPdfSources(_catalog.ReadSelectedFiles([documentId]), cancellationToken).Single();
             stage = CreateCopyStage(target, ExportStagePrefix);
             string stagedPdf = Path.Combine(stage, StagedPdfName);
-            await CopyPdfAsync(source.Path, stagedPdf, source.Version, ExportSourceChanged, cancellationToken).ConfigureAwait(false);
+            if (options.Format == PdfExportFormat.Original)
+            {
+                await CopyPdfAsync(source.Path, stagedPdf, source.Version, ExportSourceChanged, cancellationToken).ConfigureAwait(false);
+            }
+            else
+            {
+                await WritePdfExportAsync(source.Path, stagedPdf, _catalog.Get(documentId), options, cancellationToken).ConfigureAwait(false);
+            }
             VerifySelectedPdfSource(source);
             if (Path.GetRelativePath(target, ResolveExternalTarget(target)) != ".")
             {
                 throw new IOException("The export folder changed during the copy. Choose it again.");
             }
-            return PublishExportedPdf(stagedPdf, target, ExportStem(source.Path), cancellationToken);
+            return PublishExportFile(stagedPdf, target, ExportStem(source.Path), DocumentProcessor.PdfExtension, cancellationToken);
         }
         finally
         {
@@ -135,14 +149,14 @@ public sealed partial class InboxLibrary
         PortableStem(Path.GetFileNameWithoutExtension(source).Normalize(NormalizationForm.FormC));
 
     // O(k) path checks and constant space for k occupied names.
-    private string PublishExportedPdf(string stagedPdf, string target, string stem, CancellationToken cancellationToken)
+    private string PublishExportFile(string stagedFile, string target, string stem, string extension, CancellationToken cancellationToken)
     {
         for (int sequence = 1; ; sequence++)
         {
             cancellationToken.ThrowIfCancellationRequested();
-            string path = Path.Combine(target, NumberedName(stem, sequence) + DocumentProcessor.PdfExtension);
+            string path = Path.Combine(target, NumberedName(stem, sequence) + extension);
             if (Path.Exists(path)) continue;
-            if (_claimPdfPath(stagedPdf, path, allowHardLink: true)) return path;
+            if (_claimPdfPath(stagedFile, path, allowHardLink: true)) return path;
         }
     }
 }

@@ -25,6 +25,11 @@ internal interface IWorkspaceDialogs
     Task ShowOcrCopyBatchResultsAsync(IReadOnlyList<OcrCopyBatchItem> results);
     Task<IndexReportDecision?> ShowIndexRefreshReportAsync(IndexReport report);
     Task<string?> PickRestorePdfAsync();
+    Task<TrashDecision?> ShowTrashAsync(IReadOnlyList<TrashedDocument> documents);
+    Task<PdfExportOptions?> ChoosePdfExportAsync(OcrLanguage language);
+    Task<IReadOnlyList<FilingSelection>?> ShowFilingSuggestionsAsync(IReadOnlyList<FilingSuggestion> suggestions);
+    Task ShowFilingRulesAsync(IReadOnlyList<FilingRule> rules, Func<FilingRule, FilingRule> save, Action<long> remove);
+    Task ShowIntegrityReportAsync(IntegrityReport report);
     Task CopyTextAsync(string text);
     void OpenPath(string path);
 }
@@ -110,6 +115,20 @@ internal sealed class WorkspaceDialogs(Window owner) : IWorkspaceDialogs
 
     public Task<IndexReportDecision?> ShowIndexRefreshReportAsync(IndexReport report) =>
         new IndexReportDialog(report).ShowDialog<IndexReportDecision?>(owner);
+
+    public Task<TrashDecision?> ShowTrashAsync(IReadOnlyList<TrashedDocument> documents) =>
+        new TrashDialog(documents).ShowDialog<TrashDecision?>(owner);
+
+    public Task<PdfExportOptions?> ChoosePdfExportAsync(OcrLanguage language) =>
+        new PdfExportDialog(language).ShowDialog<PdfExportOptions?>(owner);
+
+    public Task<IReadOnlyList<FilingSelection>?> ShowFilingSuggestionsAsync(IReadOnlyList<FilingSuggestion> suggestions) =>
+        new FilingSuggestionsDialog(suggestions).ShowDialog<IReadOnlyList<FilingSelection>?>(owner);
+
+    public Task ShowFilingRulesAsync(IReadOnlyList<FilingRule> rules, Func<FilingRule, FilingRule> save, Action<long> remove) =>
+        new FilingRulesDialog(rules, save, remove).ShowDialog(owner);
+
+    public Task ShowIntegrityReportAsync(IntegrityReport report) => new IntegrityReportDialog(report).ShowDialog(owner);
 
     public async Task<string?> PickRestorePdfAsync()
     {

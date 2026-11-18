@@ -43,6 +43,7 @@ internal static partial class NativeVerification
                 $"The receipt did not import with embedded text. {model.Status}");
             await UntilAsync(() => model.Preview is not null, () => model.PreviewMessage);
             await VerifySingleExportAsync(window, model, dialogs, evidenceDirectory);
+            await VerifyArchivalExportAsync(window, model, dialogs, evidenceDirectory);
 
             Control<AutoCompleteBox>(window, "TagBox").SetCurrentValue(AutoCompleteBox.TextProperty, TestTag);
             Control<Button>(window, "AddTagButton").Command!.Execute(null);
@@ -57,6 +58,7 @@ internal static partial class NativeVerification
                     document.Match.Contains(ReceiptKeyword, StringComparison.OrdinalIgnoreCase),
                 "The reviewed and tagged PDF was not found by OCR text.");
             await CaptureAsync(window, evidenceDirectory, "search.png");
+            await VerifyBooleanSearchAsync(window, model, evidenceDirectory);
             await VerifyPageTextViewAsync(window, model, evidenceDirectory);
             await VerifySearchQueryFeedbackAsync(window, model, evidenceDirectory);
             await VerifyDropAsync(window, model, fixture, evidenceDirectory);
@@ -98,6 +100,9 @@ internal static partial class NativeVerification
             await VerifyWatchCatchUpAsync(window, model, fixture, evidenceDirectory);
             await VerifyWatchCatchUpOnOpenAsync(window, model, dialogs, fixture, evidenceDirectory);
             await VerifyRetryFilingAsync(window, model, dialogs, fixture, evidenceDirectory);
+            await VerifyTrashAsync(window, model, dialogs, evidenceDirectory);
+            await VerifyFilingSuggestionsAsync(window, model, dialogs, evidenceDirectory);
+            await VerifyPortabilityAsync(window, model, dialogs, evidenceDirectory);
 
             File.WriteAllText(Path.Combine(evidenceDirectory, "passed.txt"),
                 $"Verified {runtime}. Native window completed multilingual OCR and correction, oriented JPEG and multi-page TIFF import, PDF combination, page extraction and rotation, phrase, tag, review-status, folder, and text-availability search, query correction, saved search restoration, single and batch document-date editing, date filtering and inheritance, result sorting, continued review across loaded results, fit-width and selectable page text previews, match navigation, tag merging, suggestions, and edits across loaded result pages, duplicate drop, folder watch with catch-up on open and intake routing, inbox counting, title edit, single and batch PDF moves, external relocation and PDF swaps, index reporting and PDF restoration from files and folders, single and batch PDF export, library backup, text copy, single and batch OCR copies, saved import error recovery and retry destinations, per-scanner capture option restoration, and filing through the chosen intake folder. {scanRecoveryEvidence}");
@@ -880,6 +885,8 @@ internal static partial class NativeVerification
             var options = new ScanOptionsPreference(settingsDirectory.FullName);
             options.Save(new CaptureSettings(ScanFeed.Flatbed, ScanPaper.A4, ScanResolution.Quick), flatbed);
             options.Save(new CaptureSettings(ScanFeed.Feeder, ScanPaper.Letter, ScanResolution.Detailed), feeder);
+            options.SaveProfile("Duplex receipts", new(ScanFeed.Duplex, ScanPaper.Letter, ScanResolution.Standard,
+                new ScanCleanup(ScanColour.Greyscale, ExcludeBlankPages: true, Deskew: true)));
             options.RememberLastScanner(feeder);
             await CaptureScanDialogAsync(owner, directory, "saved-scanner.png", settings, options, feeder, flatbed);
         }
@@ -922,6 +929,16 @@ internal static partial class NativeVerification
                     "The native scanner dialog did not restore the saved paper options.");
             }
             await CaptureAsync(dialog, directory, filename);
+            if (captureOptions is not null)
+            {
+                Control<Expander>(dialog, "ScanCleanupExpander").IsExpanded = true;
+                Control<ComboBox>(dialog, "ScanProfileBox").SelectedIndex = 0;
+                Require(Control<CheckBox>(dialog, "SkipBlankPages").IsChecked == true &&
+                    Control<ComboBox>(dialog, "ScanColourBox").SelectedItem?.ToString() == "Greyscale" &&
+                    Control<ComboBox>(dialog, "SourceBox").SelectedItem?.ToString() == "Feeder · two-sided",
+                    "Choosing the saved scan profile did not restore its cleanup settings.");
+                await CaptureAsync(dialog, directory, "scan-profile.png");
+            }
         }
         finally
         {
@@ -1061,6 +1078,11 @@ internal sealed class FixtureDialogs(params string[] documents) : IWorkspaceDial
     internal IndexReport? InspectedIndexReport { get; private set; }
     internal IndexReportDecision? IndexReportChoice { get; set; }
     internal string? RestoreCandidate { get; set; }
+    internal Func<IReadOnlyList<TrashedDocument>, Task<TrashDecision?>>? TrashChoice { get; set; }
+    internal Func<OcrLanguage, Task<PdfExportOptions?>>? PdfExportChoice { get; set; }
+    internal Func<IReadOnlyList<FilingSuggestion>, Task<IReadOnlyList<FilingSelection>?>>? FilingChoice { get; set; }
+    internal Func<IReadOnlyList<FilingRule>, Func<FilingRule, FilingRule>, Action<long>, Task>? RuleChoice { get; set; }
+    internal Func<IntegrityReport, Task>? IntegrityChoice { get; set; }
     internal IReadOnlyList<string> SelectedFiles { get; set; } = documents;
     public Task<IReadOnlyList<string>> PickDocumentsAsync() => Task.FromResult(SelectedFiles);
     public Task<string?> PickFolderAsync(string title, string? startFolder = null)
@@ -1102,6 +1124,15 @@ internal sealed class FixtureDialogs(params string[] documents) : IWorkspaceDial
         return Task.FromResult(IndexReportChoice);
     }
     public Task<string?> PickRestorePdfAsync() => Task.FromResult(RestoreCandidate);
+    public Task<TrashDecision?> ShowTrashAsync(IReadOnlyList<TrashedDocument> documents) =>
+        TrashChoice?.Invoke(documents) ?? Task.FromResult<TrashDecision?>(null);
+    public Task<PdfExportOptions?> ChoosePdfExportAsync(OcrLanguage language) =>
+        PdfExportChoice?.Invoke(language) ?? Task.FromResult<PdfExportOptions?>(new(PdfExportFormat.Original));
+    public Task<IReadOnlyList<FilingSelection>?> ShowFilingSuggestionsAsync(IReadOnlyList<FilingSuggestion> suggestions) =>
+        FilingChoice?.Invoke(suggestions) ?? Task.FromResult<IReadOnlyList<FilingSelection>?>(null);
+    public Task ShowFilingRulesAsync(IReadOnlyList<FilingRule> rules, Func<FilingRule, FilingRule> save, Action<long> remove) =>
+        RuleChoice?.Invoke(rules, save, remove) ?? Task.CompletedTask;
+    public Task ShowIntegrityReportAsync(IntegrityReport report) => IntegrityChoice?.Invoke(report) ?? Task.CompletedTask;
     public void OpenPath(string path) => LastOpenedPath = path;
 
     public Task CopyTextAsync(string text)

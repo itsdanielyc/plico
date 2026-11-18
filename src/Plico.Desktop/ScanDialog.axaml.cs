@@ -8,6 +8,7 @@ namespace Plico.Desktop;
 /// <summary>Lets the user pick a scanner and paper settings before capture begins.</summary>
 internal sealed partial class ScanDialog : Window
 {
+    private const int SdkAdjustmentUnitsPerPercent = 10;
     private sealed record SourceOption(string Label, ScanFeed Value)
     {
         public override string ToString() => Label;
@@ -17,6 +18,16 @@ internal sealed partial class ScanDialog : Window
     {
         public override string ToString() => $"{(int)Value} dpi";
     }
+
+    private sealed record ColourOption(string Label, ScanColour Value)
+    {
+        public override string ToString() => Label;
+    }
+
+    private static readonly ColourOption[] Colours =
+    [
+        new("Colour", ScanColour.Colour), new("Greyscale", ScanColour.Greyscale), new("Black & white", ScanColour.BlackAndWhite)
+    ];
 
     private static readonly SourceOption[] Sources =
     [
@@ -52,6 +63,9 @@ internal sealed partial class ScanDialog : Window
         SourceBox.ItemsSource = Sources;
         PaperBox.ItemsSource = Enum.GetValues<ScanPaper>();
         ResolutionBox.ItemsSource = Resolutions;
+        ScanColourBox.ItemsSource = Colours;
+        ProfileControls.IsVisible = captureOptions is not null;
+        TrySettingsChange(() => LoadProfiles());
         ApplyCaptureSettings(CaptureSettings.RegionalDefaults);
         TrySettingsChange(() =>
         {
@@ -230,6 +244,14 @@ internal sealed partial class ScanDialog : Window
             SourceBox.SelectedItem = Sources.Single(option => option.Value == options.Feed);
             PaperBox.SelectedItem = options.Paper;
             ResolutionBox.SelectedItem = Resolutions.Single(option => option.Value == options.Resolution);
+            var cleanup = options.Cleanup ?? ScanCleanup.Default;
+            ScanColourBox.SelectedItem = Colours.Single(option => option.Value == cleanup.Colour);
+            SkipBlankPages.IsChecked = cleanup.ExcludeBlankPages;
+            DeskewScan.IsChecked = cleanup.Deskew;
+            CropScan.IsChecked = cleanup.Crop;
+            FlipScanBacks.IsChecked = cleanup.FlipBackSides;
+            ScanBrightness.Value = cleanup.Brightness / (decimal)SdkAdjustmentUnitsPerPercent;
+            ScanContrast.Value = cleanup.Contrast / (decimal)SdkAdjustmentUnitsPerPercent;
         }
         finally
         {
@@ -237,15 +259,63 @@ internal sealed partial class ScanDialog : Window
         }
     }
 
-    private void CaptureOptions_Changed(object? sender, SelectionChangedEventArgs e)
+    private void CaptureOptions_Changed(object? sender, RoutedEventArgs e)
     {
         if (_updatingPicker || _captureOptions is null || ReadCaptureSettings() is not { } options) return;
         if (!TrySettingsChange(() => _captureOptions.Save(options, SelectedScanner))) ScannerStatus.Text = _settingsError;
     }
 
-    private CaptureSettings? ReadCaptureSettings() =>
-        SourceBox.SelectedItem is SourceOption source && PaperBox.SelectedItem is ScanPaper paper &&
-        ResolutionBox.SelectedItem is ResolutionOption resolution ? new(source.Value, paper, resolution.Value) : null;
+    private CaptureSettings? ReadCaptureSettings()
+    {
+        if (SourceBox.SelectedItem is not SourceOption source || PaperBox.SelectedItem is not ScanPaper paper ||
+            ResolutionBox.SelectedItem is not ResolutionOption resolution || ScanColourBox.SelectedItem is not ColourOption colour)
+            return null;
+        var cleanup = new ScanCleanup(colour.Value, SkipBlankPages.IsChecked == true, DeskewScan.IsChecked == true,
+            CropScan.IsChecked == true, FlipScanBacks.IsChecked == true,
+            (int)((ScanBrightness.Value ?? 0) * SdkAdjustmentUnitsPerPercent),
+            (int)((ScanContrast.Value ?? 0) * SdkAdjustmentUnitsPerPercent));
+        return new(source.Value, paper, resolution.Value, cleanup == ScanCleanup.Default ? null : cleanup);
+    }
+
+    private void LoadProfiles(string? selectedName = null)
+    {
+        var profiles = _captureOptions?.LoadProfiles() ?? [];
+        ScanProfileBox.ItemsSource = profiles;
+        ScanProfileBox.SelectedItem = profiles.FirstOrDefault(profile => StringComparer.OrdinalIgnoreCase.Equals(profile.Name, selectedName));
+    }
+
+    private void ScanProfile_Changed(object? sender, SelectionChangedEventArgs e)
+    {
+        var profile = ScanProfileBox.SelectedItem as ScanProfile;
+        RemoveScanProfile.IsEnabled = profile is not null;
+        if (profile is null) return;
+        ApplyCaptureSettings(profile.Options);
+        ScanProfileName.Text = profile.Name;
+    }
+
+    private void SaveProfile_Click(object? sender, RoutedEventArgs e)
+    {
+        if (_captureOptions is not { } preferences || ReadCaptureSettings() is not { } options) return;
+        string name = ScanProfileName.Text?.Trim() ?? "";
+        bool saved = TrySettingsChange(() =>
+        {
+            preferences.SaveProfile(name, options);
+            LoadProfiles(name);
+        });
+        ScannerStatus.Text = saved ? $"Saved profile “{name}”." : _settingsError;
+    }
+
+    private void RemoveProfile_Click(object? sender, RoutedEventArgs e)
+    {
+        if (_captureOptions is not { } preferences || ScanProfileBox.SelectedItem is not ScanProfile profile) return;
+        bool removed = TrySettingsChange(() =>
+        {
+            preferences.RemoveProfile(profile.Name);
+            LoadProfiles();
+            ScanProfileName.Text = "";
+        });
+        ScannerStatus.Text = removed ? $"Removed profile “{profile.Name}”." : _settingsError;
+    }
 
     private void UpdateStartButton()
     {
@@ -275,7 +345,7 @@ internal sealed partial class ScanDialog : Window
                     preferences.RememberLastScanner(scanner);
                 });
             }
-            Close(new ScanRequest(scanner, options.Feed, options.Paper, options.Resolution));
+            Close(new ScanRequest(scanner, options.Feed, options.Paper, options.Resolution, options.Cleanup));
         }
     }
 }

@@ -1,5 +1,6 @@
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
+using Plico.Core;
 
 namespace Plico.Desktop;
 
@@ -18,6 +19,12 @@ internal sealed partial class InboxViewModel
         return RunOperationAsync("Choose an export destination…", async token =>
         {
             var library = RequireLibrary();
+            var options = await _dialogs.ChoosePdfExportAsync(RecognitionLanguage);
+            if (options is null)
+            {
+                Status = "Export cancelled.";
+                return;
+            }
             string? destination = await _dialogs.PickFolderAsync("Choose where to export the PDF");
             if (destination is null)
             {
@@ -25,8 +32,8 @@ internal sealed partial class InboxViewModel
                 return;
             }
 
-            Status = "Copying PDF…";
-            string export = await Task.Run(() => library.ExportPdfAsync(document.Id, destination, token), token);
+            Status = options.Format == PdfExportFormat.PdfA ? "Creating an archival PDF…" : "Copying PDF…";
+            string export = await Task.Run(() => library.ExportPdfAsync(document.Id, destination, options, token), token);
             LatestExportLocation = Path.GetDirectoryName(export)!;
             Status = $"Exported {Path.GetFileName(export)} to {LatestExportLocation}.";
         });

@@ -95,3 +95,9 @@ The preview shows the whole page by default. **Fit width** fills the available r
 With a custom **Intake folder**, **Include watched scans** appears under the destination label. The sidebar spacing keeps the watch actions within the minimum window height.
 
 Keep labels present on actions. Use a polite live region for processing status. Keep the PDF accessible by keyboard and show a visible response for unavailable previews.
+
+**Trash & next** and **Filing suggestions…** sit with the preview actions. Restore and permanent deletion live in **Trash…** on the Library header. Single-key shortcuts apply while the results list has focus.
+
+**Library tools…** gives access to tag rules, integrity and metadata exports. Keep date and tag changes reviewable in one dialog, including when moving between documents in a selection. PDF/A, password protection and embedded metadata have explicit export choices.
+
+Search uses the same amber highlight in the result excerpt and on the displayed page. The preview scrolls and fits with the highlight layer attached to the image.

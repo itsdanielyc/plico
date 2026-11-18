@@ -34,6 +34,9 @@ internal static partial class SearchTerms
         SearchQueryIssue? QueryIssue)
     {
         internal bool IsValid => QueryIssue is null;
+        internal BooleanSearch? Advanced { get; init; }
+        internal string HighlightExpression => Advanced?.PositiveText ?? string.Join(" OR ", FtsPhrases()
+            .Matches(FullTextExpression).Select(match => match.Value));
     }
 
     internal readonly record struct DatePeriod(DateOnly FirstDay, DateOnly LastDay)
@@ -43,16 +46,17 @@ internal static partial class SearchTerms
             LastDay < other.LastDay ? LastDay : other.LastDay);
     }
 
-    internal static CompiledSearch Compile(string query) => Compile(query, folderClauses: null);
+    internal static CompiledSearch Compile(string query)
+    {
+        ArgumentOutOfRangeException.ThrowIfGreaterThan(query.Length, MaximumQueryLength);
+        return CompileBoolean(query) ?? CompileLegacy(query, folderClauses: null);
+    }
 
     // O(n + p) time and space for query length n and selected path length p.
     internal static string WithFolderScope(string query, string folder)
     {
         ArgumentNullException.ThrowIfNull(query);
         ArgumentException.ThrowIfNullOrEmpty(folder);
-        var folderClauses = new List<(int Start, int End)>();
-        if (!Compile(query, folderClauses).IsValid) throw new ArgumentException(CompleteSearchForFolder, nameof(query));
-
         string quoted = folder == RootFolderScope ? folder :
             $"\"{folder.Replace("\\", "\\\\", StringComparison.Ordinal).Replace("\"", "\\\"", StringComparison.Ordinal)}\"";
         string clause = FolderPrefix + quoted;
@@ -61,6 +65,17 @@ internal static partial class SearchTerms
             throw new ArgumentException("The selected folder path contains characters that search cannot use.", nameof(folder));
         }
 
+        if (CompileBoolean(query) is { } boolean)
+        {
+            if (boolean.Advanced is not { } advanced) throw new ArgumentException(CompleteSearchForFolder, nameof(query));
+            string scoped = advanced.WithFolder(clause);
+            if (scoped.Length > MaximumQueryLength)
+                throw new ArgumentException("Shorten the search or choose a folder with a shorter path.", nameof(query));
+            return scoped;
+        }
+
+        var folderClauses = new List<(int Start, int End)>();
+        if (!CompileLegacy(query, folderClauses).IsValid) throw new ArgumentException(CompleteSearchForFolder, nameof(query));
         var updated = new StringBuilder();
         int preservedFrom = 0;
         foreach (var (start, end) in folderClauses)
@@ -94,7 +109,7 @@ internal static partial class SearchTerms
     }
 
     // O(n) time and space in the bounded query length. Quoted text is scanned once.
-    private static CompiledSearch Compile(string query, List<(int Start, int End)>? folderClauses)
+    internal static CompiledSearch CompileLegacy(string query, List<(int Start, int End)>? folderClauses = null)
     {
         ArgumentOutOfRangeException.ThrowIfGreaterThan(query.Length, MaximumQueryLength);
         if (!query.Contains(TagPrefix, StringComparison.OrdinalIgnoreCase) &&
@@ -339,8 +354,11 @@ internal static partial class SearchTerms
     internal static string TagKey(string label) => CleanLabel(label).ToUpperInvariant();
 
     [GeneratedRegex(WordPattern, RegexOptions.CultureInvariant | RegexOptions.NonBacktracking)]
-    private static partial Regex WordTokens();
+    internal static partial Regex WordTokens();
 
     [GeneratedRegex(QueryPattern, RegexOptions.CultureInvariant | RegexOptions.NonBacktracking)]
     private static partial Regex QueryParts();
+
+    [GeneratedRegex("\"[^\"]+\"\\*?", RegexOptions.CultureInvariant | RegexOptions.NonBacktracking)]
+    private static partial Regex FtsPhrases();
 }

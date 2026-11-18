@@ -14,6 +14,8 @@ internal sealed partial class InboxViewModel
     private readonly Func<InboxLibrary, DocumentFilter, CancellationToken, DocumentPage> _searchDocuments;
     private CancellationTokenSource? _searchCancellation;
     private CancellationTokenSource? _pageMatchCancellation;
+    private CancellationTokenSource? _highlightCancellation;
+    [ObservableProperty] private IReadOnlyList<PdfPageHighlight> _previewHighlights = [];
     private string? _appliedQuery;
     private bool HasExpandedResults => Documents.Count > InboxLibrary.DefaultResultPageSize;
 
@@ -113,6 +115,7 @@ internal sealed partial class InboxViewModel
 
     partial void OnQueryChanged(string value)
     {
+        CancelPreviewHighlights();
         OnPropertyChanged(nameof(ShowSaveSearch));
         if (_restoringSavedSearch) return;
         ActiveSavedSearch = null;
@@ -246,8 +249,10 @@ internal sealed partial class InboxViewModel
     private void ApplyResultPage(DocumentFilter filter, DocumentPage page, long? preferredId = null, bool reloadPreview = false)
     {
         long? selection = preferredId ?? SelectedDocument?.Id;
+        bool queryChanged = _appliedQuery != filter.Query;
         _appliedQuery = filter.Query;
         ReplaceResults(filter.Offset > 0 ? [.. Documents, .. page.Items] : page.Items, selection, reloadPreview);
+        if (queryChanged && Preview is not null) UpdatePreviewHighlights();
         HasMore = page.HasMore;
 
         if (page.QueryIssue is { } issue)
@@ -270,6 +275,7 @@ internal sealed partial class InboxViewModel
         SearchQueryIssue.Folder => "Use a folder such as folder:\"Filed/Tax\". Use one folder or nested folders.",
         SearchQueryIssue.ReviewStatus => "Use one review status. Try status:inbox or status:reviewed.",
         SearchQueryIssue.TextAvailability => "Use one text filter. Try text:missing or text:present.",
+        SearchQueryIssue.BooleanSyntax => "Complete the expression. Try (receipt OR invoice) -tag:archive.",
         _ => "Enter a word, number, or search filter."
     };
 
@@ -281,5 +287,42 @@ internal sealed partial class InboxViewModel
         HasMore = false;
         ResultCount = "Results unavailable";
         Status = error.Message;
+    }
+
+    private void UpdatePreviewHighlights()
+    {
+        CancelPreviewHighlights();
+        if (_library is not { } library || Query != _appliedQuery ||
+            SelectedDocument is not { MatchHighlights.Count: > 0, HasText: true } document) return;
+        var request = new CancellationTokenSource();
+        _highlightCancellation = request;
+        _ = LoadPreviewHighlightsAsync(library, document, Query, _pageNumber, request);
+    }
+
+    private async Task LoadPreviewHighlightsAsync(InboxLibrary library, DocumentSummary document, string query, int page,
+        CancellationTokenSource request)
+    {
+        try
+        {
+            var token = request.Token;
+            var highlights = await Task.Run(() => library.FindPageHighlights(document, query, page, token), token);
+            if (!token.IsCancellationRequested) PreviewHighlights = highlights;
+        }
+        catch (OperationCanceledException) when (request.IsCancellationRequested) { }
+        catch (Exception error) when (error is IOException or InvalidDataException or UnauthorizedAccessException or ArgumentException)
+        {
+            // The rendered page can remain available while a changed file prevents text positioning.
+        }
+        finally
+        {
+            if (_highlightCancellation == request) _highlightCancellation = null;
+            request.Dispose();
+        }
+    }
+
+    private void CancelPreviewHighlights()
+    {
+        _highlightCancellation?.Cancel();
+        if (PreviewHighlights.Count > 0) PreviewHighlights = [];
     }
 }

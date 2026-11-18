@@ -88,7 +88,7 @@ public sealed partial class InboxLibrary
             string pdf = Path.Combine(stage, StagedPdfName);
             var prepared = await _processor.PrepareAsync(snapshot, pdf, language, token).ConfigureAwait(false);
             var document = CommitPdf(pdf, title, prepared.Text, token, fingerprint, prepared.CopiedSource ? fingerprint : null,
-                destinationFolder: target);
+                destinationFolder: target, recognizedLanguage: prepared.CopiedSource ? null : language);
             return new FileImportResult(document, Added: true);
         }, cancellationToken);
     }
