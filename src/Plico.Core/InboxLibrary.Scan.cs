@@ -45,6 +45,8 @@ public sealed partial class InboxLibrary
             throw new ArgumentException("Use the scan batch operation for separators or manual duplex.", nameof(request));
         }
         var options = Scanners.CaptureOptions(request);
+        if (request.Device.NativeDevice.Driver == Driver.Apple)
+            return (context, token) => MacScannerBridge.CaptureAsync(context, options, token);
         return (context, token) => new ScanController(context).Scan(options, token);
     }
 

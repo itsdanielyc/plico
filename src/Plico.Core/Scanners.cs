@@ -1,4 +1,5 @@
 using System.Globalization;
+using System.Runtime.InteropServices;
 using System.Security.Cryptography;
 using System.Text;
 using NAPS2.Images;
@@ -99,13 +100,21 @@ public static class Scanners
     /// <summary>Queries each supported driver independently so a missing driver cannot hide other scanners.</summary>
     public static async Task<ScanDiscovery> DiscoverAsync(CancellationToken cancellationToken = default)
     {
-        Driver[] drivers = OperatingSystem.IsWindows() ? [Driver.Wia, Driver.Escl] :
-            OperatingSystem.IsLinux() ? [Driver.Sane, Driver.Escl] : [Driver.Escl];
+        OSPlatform platform = OperatingSystem.IsWindows() ? OSPlatform.Windows :
+            OperatingSystem.IsMacOS() ? OSPlatform.OSX : OSPlatform.Linux;
+        var drivers = LocalAndNetworkDrivers(platform);
         var results = await Task.WhenAll(drivers.Select(driver =>
             Task.Run(() => DiscoverDriverAsync(driver, cancellationToken), cancellationToken))).ConfigureAwait(false);
         return new ScanDiscovery(
             results.SelectMany(result => result.Devices).OrderBy(device => device.Name, StringComparer.CurrentCultureIgnoreCase).ToArray(),
             results.SelectMany(result => result.Warnings).ToArray());
+    }
+
+    internal static IReadOnlyList<Driver> LocalAndNetworkDrivers(OSPlatform platform)
+    {
+        if (platform == OSPlatform.Windows) return [Driver.Wia, Driver.Twain, Driver.Escl];
+        if (platform == OSPlatform.OSX) return [Driver.Apple, Driver.Escl];
+        return [Driver.Sane, Driver.Escl];
     }
 
     /// <summary>Checks an explicitly supplied eSCL address and reads the scanner's reported model.</summary>
@@ -144,6 +153,8 @@ public static class Scanners
     internal static string DriverLabel(Driver driver) => driver switch
     {
         Driver.Wia => "Windows WIA",
+        Driver.Twain => "Windows TWAIN",
+        Driver.Apple => "macOS Image Capture",
         Driver.Sane => "SANE",
         Driver.Escl => "Network eSCL",
         _ => driver.ToString()
@@ -216,11 +227,15 @@ public static class Scanners
 
     private static async Task<ScanDiscovery> DiscoverDriverAsync(Driver driver, CancellationToken cancellationToken)
     {
-        using var context = new ScanningContext(new SkiaImageContext());
         var devices = new List<ScannerDevice>();
         var seen = new HashSet<string>(StringComparer.Ordinal);
         try
         {
+            if (driver == Driver.Apple)
+            {
+                return new ScanDiscovery(await MacScannerBridge.ListAsync(cancellationToken).ConfigureAwait(false), []);
+            }
+            using var context = new ScanningContext(new SkiaImageContext());
             await foreach (var device in new ScanController(context).GetDevices(driver, cancellationToken).ConfigureAwait(false))
             {
                 if (seen.Add(device.ID)) devices.Add(new ScannerDevice(device));

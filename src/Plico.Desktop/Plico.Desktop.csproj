@@ -18,4 +18,20 @@
     <ProjectReference Include="../Plico.Core/Plico.Core.csproj" />
     <InternalsVisibleTo Include="Plico.Tests" />
   </ItemGroup>
+  <PropertyGroup Condition="$([MSBuild]::IsOSPlatform('OSX'))">
+    <MacScannerHelper>plico-mac-scanner</MacScannerHelper>
+    <MacScannerArchitecture Condition="'$(RuntimeIdentifier)' == 'osx-x64'">x86_64</MacScannerArchitecture>
+    <MacScannerArchitecture Condition="'$(RuntimeIdentifier)' == 'osx-arm64'">arm64</MacScannerArchitecture>
+    <MacScannerTarget Condition="'$(MacScannerArchitecture)' != ''">-target $(MacScannerArchitecture)-apple-macos12</MacScannerTarget>
+  </PropertyGroup>
+  <Target Name="BuildMacScannerHelper" AfterTargets="Build" Condition="$([MSBuild]::IsOSPlatform('OSX'))"
+          Inputs="$(MSBuildProjectDirectory)/Native/MacScanner.swift;$(MSBuildProjectFullPath)"
+          Outputs="$(TargetDir)$(MacScannerHelper)">
+    <Exec Command="xcrun swiftc -O $(MacScannerTarget) -framework ImageCaptureCore &quot;$(MSBuildProjectDirectory)/Native/MacScanner.swift&quot; -o &quot;$(TargetDir)$(MacScannerHelper)&quot;"
+          EnvironmentVariables="MACOSX_DEPLOYMENT_TARGET=12.0" />
+  </Target>
+  <Target Name="PublishMacScannerHelper" AfterTargets="Publish" DependsOnTargets="BuildMacScannerHelper"
+          Condition="$([MSBuild]::IsOSPlatform('OSX')) and $(RuntimeIdentifier.StartsWith('osx-'))">
+    <Copy SourceFiles="$(TargetDir)$(MacScannerHelper)" DestinationFolder="$(PublishDir)" />
+  </Target>
 </Project>
