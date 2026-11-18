@@ -21,6 +21,7 @@ private final class ScannerSession: NSObject, ICDeviceBrowserDelegate, ICScanner
     private var selectingUnit = false
     private var deliveredPages = 0
     private var finishing = false
+    private var exitStatus: Int32?
 
     init(request: ScanRequest?) {
         self.request = request
@@ -70,6 +71,12 @@ private final class ScannerSession: NSObject, ICDeviceBrowserDelegate, ICScanner
         }
         sessionOpen = true
         selectUnitIfReady()
+    }
+
+    func device(_ device: ICDevice, didCloseSessionWithError error: Error?) {
+        sessionOpen = false
+        if let exitStatus { exit(exitStatus) }
+        finish(error?.localizedDescription ?? "The scanner closed its session before the scan finished.")
     }
 
     func deviceDidBecomeReady(_ device: ICDevice) {
@@ -166,6 +173,7 @@ private final class ScannerSession: NSObject, ICDeviceBrowserDelegate, ICScanner
         guard !finishing else { return }
         finishing = true
         let status: Int32 = message == nil ? EXIT_SUCCESS : EXIT_FAILURE
+        exitStatus = status
         if let message {
             FileHandle.standardError.write(Data((message + "\n").utf8))
         }
