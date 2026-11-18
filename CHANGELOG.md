@@ -1,5 +1,11 @@
 # Changelog
 
+## [0.7.0] - 2026-11-18
+
+- Added Intel macOS downloads and ARM64 Ubuntu downloads.
+- Intel Macs receive an app ZIP and a disk image. ARM64 Ubuntu receives a tar.gz and a Debian package.
+- Both architectures run the same native paperwork and installed-package checks as the existing targets.
+
 ## [0.6.0] - 2026-11-18
 
 - Select several documents and mark them reviewed together. A selection of reviewed documents can return to the inbox in one action.

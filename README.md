@@ -9,8 +9,8 @@ Get Plico from [GitHub Releases](https://github.com/itsdanielyc/plico/releases).
 | Platform | Launch |
 | --- | --- |
 | Windows 11 x64 | Run the setup executable and open **Plico** from Start. For the portable ZIP, open `Plico/Plico.exe` after extraction. |
-| macOS 26 on Apple silicon | Open the disk image and drag **Plico** into Applications. The ZIP contains the app for direct extraction. |
-| Ubuntu 24.04 x64 | Install the `.deb` with your package manager and open **Plico** from the desktop menu. The tar.gz opens with `./Plico/Plico` after extraction. |
+| macOS 26, Apple silicon or Intel | Open the disk image and drag **Plico** into Applications. The ZIP contains the app for direct extraction. |
+| Ubuntu 24.04, x64 or ARM64 | Install the `.deb` with your package manager and open **Plico** from the desktop menu. The tar.gz opens with `./Plico/Plico` after extraction. |
 
 The Windows executable and setup are unsigned. Microsoft Defender SmartScreen may show “Windows protected your PC.” The Mac app is ad-hoc signed and Gatekeeper may require a per-app approval because the build has no notarization. [Microsoft SmartScreen](https://learn.microsoft.com/en-us/windows/apps/package-and-deploy/smartscreen-reputation) · [Apple Gatekeeper](https://support.apple.com/en-us/102445)
 

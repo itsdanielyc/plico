@@ -35,12 +35,16 @@ jobs:
           fi
           gh run download "$archives" --pattern 'archive-*' --dir verified
           mkdir dist
-          mv "verified/archive-win-x64/Plico-$version-win-x64.zip" dist/
-          mv "verified/archive-win-x64/Plico-$version-win-x64-setup.exe" dist/
-          mv "verified/archive-osx-arm64/Plico-$version-osx-arm64.zip" dist/
-          mv "verified/archive-osx-arm64/Plico-$version-osx-arm64.dmg" dist/
-          mv "verified/archive-linux-x64/Plico-$version-linux-x64.tar.gz" dist/
-          mv "verified/archive-linux-x64/Plico-$version-linux-x64.deb" dist/
+          for target in win-x64 osx-arm64 osx-x64 linux-x64 linux-arm64; do
+            case "$target" in
+              win-*) suffixes=(.zip -setup.exe) ;;
+              osx-*) suffixes=(.zip .dmg) ;;
+              linux-*) suffixes=(.tar.gz .deb) ;;
+            esac
+            for suffix in "${suffixes[@]}"; do
+              mv "verified/archive-$target/Plico-$version-$target$suffix" dist/
+            done
+          done
           (cd dist && sha256sum Plico-* > SHA256SUMS)
           awk -v version="$version" 'index($0, "## [" version "]") == 1 {printing=1; next} /^## / && printing {exit} printing {print}' CHANGELOG.md > release-notes.md
           test -s release-notes.md
@@ -68,7 +72,9 @@ jobs:
         include:
           - {runner: windows-2025, rid: win-x64, extension: zip, installer_suffix: -setup.exe}
           - {runner: macos-26, rid: osx-arm64, extension: zip, installer_suffix: .dmg}
+          - {runner: macos-26-intel, rid: osx-x64, extension: zip, installer_suffix: .dmg}
           - {runner: ubuntu-24.04, rid: linux-x64, extension: tar.gz, installer_suffix: .deb}
+          - {runner: ubuntu-24.04-arm, rid: linux-arm64, extension: tar.gz, installer_suffix: .deb}
     steps:
       - uses: actions/checkout@v6
       - name: Download, check the checksum, and open the released copy
@@ -81,6 +87,9 @@ jobs:
         run: |
           $ErrorActionPreference = 'Stop'
           $PSNativeCommandUseErrorActionPreference = $true
+          if ([System.Runtime.InteropServices.RuntimeInformation]::RuntimeIdentifier -ne $env:PLICO_RUNTIME) {
+              throw "This job must use the native $env:PLICO_RUNTIME runtime."
+          }
           $version = $env:GITHUB_REF_NAME.TrimStart('v')
           $prefix = "Plico-$version-$env:PLICO_RUNTIME"
           $names = @("$prefix.$env:PLICO_EXTENSION", "$prefix$env:PLICO_INSTALLER_SUFFIX")

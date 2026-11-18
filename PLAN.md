@@ -17,5 +17,6 @@
 | 12 | Open a document's folder | Selecting the path opens the actual containing folder, including when a file lives in a subfolder of the library | L3, L4, L6 | Done |
 | 13 | Follow moved PDFs | Refresh follows a unique byte-identical PDF into a new folder and preserves its catalog record. Ambiguous matches create separate records. | L3, L6 | Done |
 | 14 | Batch review | Multiple chosen PDFs can be reviewed or returned to the inbox together. A missing record rolls back the selection update. | L3, L4, L6 | In progress |
+| 15 | More desktop architectures | Intel macOS and ARM64 Ubuntu pass native OCR, portable launch, and their installed-package checks on their own runners | L0–L7 | In progress |
 
 The initial release is followed by focused improvements and fresh evidence.

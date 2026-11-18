@@ -21,7 +21,9 @@ jobs:
         include:
           - {runner: windows-2025, rid: win-x64, executable: Plico.exe}
           - {runner: macos-26, rid: osx-arm64, executable: Plico}
+          - {runner: macos-26-intel, rid: osx-x64, executable: Plico}
           - {runner: ubuntu-24.04, rid: linux-x64, executable: Plico}
+          - {runner: ubuntu-24.04-arm, rid: linux-arm64, executable: Plico}
     steps:
       - uses: actions/checkout@v6
       - uses: actions/setup-dotnet@v5
@@ -33,7 +35,11 @@ jobs:
         shell: pwsh
         env:
           PLICO_EXECUTABLE: ${{ matrix.executable }}
+          PLICO_RUNTIME: ${{ matrix.rid }}
         run: |
+          if ([System.Runtime.InteropServices.RuntimeInformation]::RuntimeIdentifier -ne $env:PLICO_RUNTIME) {
+              throw "This job must use the native $env:PLICO_RUNTIME runtime."
+          }
           $executable = "src/Plico.Desktop/bin/Release/net10.0/$env:PLICO_EXECUTABLE"
           if ($IsLinux) {
             xvfb-run -a pwsh -NoProfile -File scripts/Test-Native.ps1 -Executable $executable -EvidenceDirectory artifacts/native

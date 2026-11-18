@@ -1,5 +1,5 @@
 param(
-    [Parameter(Mandatory)][ValidateSet('win-x64', 'osx-arm64', 'linux-x64')][string]$Runtime,
+    [Parameter(Mandatory)][ValidateSet('win-x64', 'osx-arm64', 'osx-x64', 'linux-x64', 'linux-arm64')][string]$Runtime,
     [string]$OutputDirectory = 'artifacts/archives',
     [string]$WindowsInstallerCompiler
 )
@@ -11,12 +11,14 @@ $output = (New-Item -ItemType Directory -Force -Path $OutputDirectory).FullName
 $buildProperties = [xml](Get-Content -Raw -LiteralPath (Join-Path $repository 'Directory.Build.props'))
 $version = $buildProperties.Project.PropertyGroup.Version
 $stage = [IO.Directory]::CreateTempSubdirectory('plico-package-')
+$macRuntime = $Runtime.StartsWith('osx-', [StringComparison]::Ordinal)
+$linuxRuntime = $Runtime.StartsWith('linux-', [StringComparison]::Ordinal)
 
 try {
     $publish = Join-Path $stage.FullName 'Plico'
     $resources = $publish
     $bundle = Join-Path $stage.FullName 'Plico.app'
-    if ($Runtime -eq 'osx-arm64') {
+    if ($macRuntime) {
         if (-not $IsMacOS) { throw 'Package the macOS app on macOS so it can be signed.' }
         $publish = Join-Path $bundle 'Contents/MacOS'
         $resources = Join-Path $bundle 'Contents/Resources'
@@ -30,7 +32,7 @@ try {
         if (Test-Path -LiteralPath $notice) { Copy-Item -LiteralPath $notice -Destination $resources }
     }
 
-    if ($Runtime -eq 'osx-arm64') {
+    if ($macRuntime) {
         $plist = Get-Content -Raw -LiteralPath (Join-Path $PSScriptRoot 'macos/Info.plist')
         $plist.Replace('@VERSION@', $version) | Set-Content -Encoding utf8NoBOM -LiteralPath (Join-Path $bundle 'Contents/Info.plist')
         Get-ChildItem -LiteralPath $publish -File -Recurse -Filter 'tesseract' | ForEach-Object { chmod +x $_.FullName }
@@ -44,10 +46,10 @@ try {
         } finally {
             Remove-Item -LiteralPath $applicationsLink -Force
         }
-    } elseif ($Runtime -eq 'linux-x64') {
+    } elseif ($linuxRuntime) {
         Get-ChildItem -LiteralPath $publish -File -Recurse -Filter 'tesseract' | ForEach-Object { chmod +x $_.FullName }
         tar -czf (Join-Path $output "Plico-$version-$Runtime.tar.gz") -C $stage.FullName Plico
-        & (Join-Path $PSScriptRoot 'Package-LinuxDeb.ps1') -Payload $publish -OutputDirectory $output -Version $version
+        & (Join-Path $PSScriptRoot 'Package-LinuxDeb.ps1') -Payload $publish -OutputDirectory $output -Version $version -Runtime $Runtime
     } else {
         Compress-Archive -Force -LiteralPath $publish -DestinationPath (Join-Path $output "Plico-$version-$Runtime.zip")
         if ($WindowsInstallerCompiler) {
