@@ -2,8 +2,8 @@
 
 | # | Slice | Done when | Keel levels | Status |
 | --- | --- | --- | --- | --- |
-| 0 | Avalonia scaffold | Build and native window smoke pass on all three runners | L0, L4, L6 | In progress |
-| 1 | Local PDF inbox | Digital and image imports yield plain searchable PDFs, with catalog and error recovery tests | L1–L4, L6 | Planned |
+| 0 | Avalonia scaffold | Build and native window smoke pass on all three runners | L0, L4, L6 | Done |
+| 1 | Local PDF inbox | Digital and image imports yield plain searchable PDFs, with catalog and error recovery tests | L1–L4, L6 | In progress |
 | 2 | Review and retrieval | Tags, reviewed state and text search survive restart and a copied library; visible controls pass headless and native journeys | L1–L6 | Planned |
 | 3 | Scan into the inbox | WIA, SANE and eSCL adapters share the import path; discovery and unsupported-source paths exercised | L3, L4, L6 | Planned |
 | 4 | v0.1.0 | All three released archives pass the native journey from clean extraction on the exact tagged commit | L7 | Planned |

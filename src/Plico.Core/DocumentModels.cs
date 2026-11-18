@@ -1,0 +1,33 @@
+namespace Plico.Core;
+
+/// <summary>A page of results, scoped by inbox status, a tag, or literal search terms.</summary>
+public sealed record DocumentFilter(string Query = "", string? Tag = null, bool InboxOnly = false, int Offset = 0);
+
+/// <summary>The catalog fields needed to select and open a document.</summary>
+public sealed record DocumentSummary(
+    long Id,
+    string Title,
+    string RelativePath,
+    DateTimeOffset AddedAt,
+    bool Reviewed,
+    int PageCount,
+    bool HasText,
+    IReadOnlyList<string> Tags,
+    string Match);
+
+/// <summary>Results in display order and whether there are more at the next offset.</summary>
+public sealed record DocumentPage(IReadOnlyList<DocumentSummary> Items, bool HasMore);
+
+/// <summary>Files reindexed from disk and any files that could not be read.</summary>
+public sealed record RefreshResult(int Indexed, IReadOnlyList<string> Warnings);
+
+internal sealed record PdfText(string Body, int PageCount, bool HasTextOnEveryPage);
+
+internal readonly record struct FileVersion(long LastModifiedTicks, long Length, bool Present)
+{
+    internal static FileVersion Read(string path)
+    {
+        var file = new FileInfo(path);
+        return new FileVersion(file.LastWriteTimeUtc.Ticks, file.Length, Present: true);
+    }
+}

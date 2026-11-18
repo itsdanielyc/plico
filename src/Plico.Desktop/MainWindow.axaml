@@ -1,19 +1,214 @@
 <Window xmlns="https://github.com/avaloniaui"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-        x:Class="Plico.Desktop.MainWindow"
-        Title="Plico" Width="1060" Height="720" MinWidth="840" MinHeight="560"
-        FontFamily="{StaticResource InterFont}" Background="#F1F3EB"
+        xmlns:local="using:Plico.Desktop"
+        xmlns:core="using:Plico.Core"
+        x:Class="Plico.Desktop.MainWindow" x:DataType="local:InboxViewModel"
+        Title="Plico" Width="1180" Height="760" MinWidth="900" MinHeight="590"
+        FontFamily="{StaticResource InterFont}" Foreground="#1F3027" Background="#F4F5EF"
         WindowStartupLocation="CenterScreen">
-    <Grid ColumnDefinitions="220,*">
-        <Border Background="#1B302B" Padding="24">
-            <StackPanel Spacing="32">
-                <TextBlock Text="Plico" FontSize="26" FontWeight="SemiBold" Foreground="#FFFFFF" />
-                <TextBlock Text="Inbox" FontSize="15" Foreground="#DCE7D7" />
-            </StackPanel>
+    <Window.Styles>
+        <Style Selector="Button">
+            <Setter Property="Padding" Value="13,8" />
+            <Setter Property="CornerRadius" Value="8" />
+            <Setter Property="FontSize" Value="13" />
+        </Style>
+        <Style Selector="Button.primary">
+            <Setter Property="Background" Value="#254C37" />
+            <Setter Property="Foreground" Value="White" />
+            <Setter Property="FontWeight" Value="SemiBold" />
+            <Setter Property="BorderThickness" Value="0" />
+        </Style>
+        <Style Selector="Button.primary:pointerover /template/ ContentPresenter">
+            <Setter Property="Background" Value="#346449" />
+            <Setter Property="Foreground" Value="White" />
+        </Style>
+        <Style Selector="Button.rail">
+            <Setter Property="Background" Value="Transparent" />
+            <Setter Property="Foreground" Value="#D1DFD3" />
+            <Setter Property="HorizontalAlignment" Value="Stretch" />
+            <Setter Property="HorizontalContentAlignment" Value="Left" />
+            <Setter Property="BorderThickness" Value="0" />
+        </Style>
+        <Style Selector="Button.rail:pointerover /template/ ContentPresenter, Button.rail.current /template/ ContentPresenter">
+            <Setter Property="Background" Value="#344E42" />
+            <Setter Property="Foreground" Value="#F9FBF5" />
+        </Style>
+        <Style Selector="TextBlock.muted">
+            <Setter Property="Foreground" Value="#5C685D" />
+            <Setter Property="FontSize" Value="12" />
+        </Style>
+    </Window.Styles>
+
+    <Grid ColumnDefinitions="204,*">
+        <Border Background="#1B302B" Padding="17,21,17,16">
+            <Grid RowDefinitions="Auto,Auto,*,Auto" RowSpacing="25">
+                <StackPanel Orientation="Horizontal" Spacing="11" Margin="5,0">
+                    <Border Width="34" Height="34" Background="#CBDFA9" CornerRadius="9">
+                        <PathIcon Width="20" Height="20" Foreground="#254333"
+                                  Data="M4,3 L13,3 L19,9 L19,21 L4,21 Z M13,3 L13,9 L19,9 M7,13 L16,13 M7,17 L16,17" />
+                    </Border>
+                    <TextBlock Text="Plico" FontSize="23" FontWeight="SemiBold" Foreground="#FFFFFF" VerticalAlignment="Center" />
+                </StackPanel>
+                <StackPanel Grid.Row="1" Spacing="3">
+                    <Button x:Name="InboxButton" Classes="rail" Classes.current="{Binding InboxSelected}"
+                            Command="{Binding ShowInboxCommand}" Content="Inbox" />
+                    <Button x:Name="AllDocumentsButton" Classes="rail" Classes.current="{Binding AllSelected}"
+                            Command="{Binding ShowAllCommand}" Content="All documents" />
+                </StackPanel>
+                <Grid Grid.Row="2" RowDefinitions="Auto,*" RowSpacing="6" IsVisible="{Binding HasTags}">
+                    <TextBlock Text="Tags" Foreground="#ACC2B4" FontSize="12" FontWeight="SemiBold" Margin="12,0,0,0" />
+                    <ScrollViewer Grid.Row="1" HorizontalScrollBarVisibility="Disabled">
+                        <ItemsControl ItemsSource="{Binding Tags}">
+                            <ItemsControl.ItemTemplate>
+                                <DataTemplate x:DataType="x:String">
+                                    <Button Classes="rail" Click="FilterTag_Click">
+                                        <StackPanel Orientation="Horizontal" Spacing="9">
+                                            <Ellipse Width="6" Height="6" Fill="#C5DDA6" VerticalAlignment="Center" />
+                                            <TextBlock Text="{Binding}" MaxWidth="130" TextTrimming="CharacterEllipsis" />
+                                        </StackPanel>
+                                    </Button>
+                                </DataTemplate>
+                            </ItemsControl.ItemTemplate>
+                        </ItemsControl>
+                    </ScrollViewer>
+                </Grid>
+                <StackPanel Grid.Row="3" Spacing="3">
+                    <TextBlock Text="Library" Foreground="#ACC2B4" FontSize="12" FontWeight="SemiBold" Margin="12,0,0,3" />
+                    <Button Classes="rail" Command="{Binding ChooseLibraryCommand}" IsEnabled="{Binding IsIdle}"
+                            ToolTip.Tip="{Binding LibraryPath}" AutomationProperties.Name="Choose library folder">
+                        <TextBlock Text="{Binding LibraryName}" MaxWidth="142" TextTrimming="CharacterEllipsis" FontWeight="SemiBold" />
+                    </Button>
+                    <Button Classes="rail" Content="Show PDF folder" Command="{Binding OpenPdfFolderCommand}" IsEnabled="{Binding HasLibrary}" />
+                    <Button Classes="rail" Content="Refresh index" Command="{Binding RefreshIndexCommand}" IsEnabled="{Binding CanWork}" />
+                </StackPanel>
+            </Grid>
         </Border>
-        <StackPanel Grid.Column="1" Margin="36" Spacing="12">
-            <TextBlock x:Name="InboxHeading" Text="Inbox" FontSize="34" FontWeight="SemiBold" />
-            <TextBlock Text="Your paperwork will appear here." Foreground="#505B51" FontSize="15" />
-        </StackPanel>
+
+        <Grid Grid.Column="1" RowDefinitions="Auto,*,Auto">
+            <Border Background="#FCFDF8" BorderBrush="#DDE2D7" BorderThickness="0,0,0,1" Padding="25,16">
+                <Grid ColumnDefinitions="*,Auto" ColumnSpacing="14">
+                    <TextBox x:Name="SearchBox" Text="{Binding Query, Mode=TwoWay}" MaxLength="256"
+                             PlaceholderText="Search names and document text" AutomationProperties.Name="Search documents"
+                             VerticalContentAlignment="Center" CornerRadius="8" MinHeight="38">
+                        <TextBox.InnerLeftContent>
+                            <PathIcon Width="15" Height="15" Margin="11,0,1,0" Foreground="#536459"
+                                      Data="M10,2 A8,8 0 1 0 10,18 A8,8 0 1 0 10,2 M10,4 A6,6 0 1 1 10,16 A6,6 0 1 1 10,4 M15,16 L21,22 L23,20 L17,14 Z" />
+                        </TextBox.InnerLeftContent>
+                    </TextBox>
+                    <Button Grid.Column="1" x:Name="AddFilesButton" Classes="primary"
+                            IsEnabled="{Binding CanWork}" Command="{Binding AddFilesCommand}" Content="Add files" MinHeight="38" />
+                </Grid>
+            </Border>
+            <Grid Grid.Row="1" Margin="25,21,25,20" RowDefinitions="Auto,*" RowSpacing="16">
+                <Grid ColumnDefinitions="*,Auto" ColumnSpacing="12">
+                    <TextBlock x:Name="InboxHeading" Text="{Binding Heading}" FontSize="31" FontWeight="SemiBold"
+                               TextTrimming="CharacterEllipsis" AutomationProperties.HeadingLevel="1" />
+                    <TextBlock Grid.Column="1" Classes="muted" Text="{Binding ResultCount}" VerticalAlignment="Bottom" Margin="0,0,0,4" />
+                </Grid>
+                <Grid Grid.Row="1" ColumnDefinitions="2*,3*" ColumnSpacing="15">
+                    <Border CornerRadius="11" Background="#FCFDF8" BorderBrush="#DDE2D7" BorderThickness="1" ClipToBounds="True">
+                        <Grid RowDefinitions="*,Auto">
+                            <TextBlock Text="{Binding EmptyMessage}" IsVisible="{Binding !HasDocuments}"
+                                       Foreground="#556358" MaxWidth="220" TextAlignment="Center" TextWrapping="Wrap"
+                                       HorizontalAlignment="Center" VerticalAlignment="Center" Margin="12" />
+                            <ListBox x:Name="DocumentList" ItemsSource="{Binding Documents}" SelectedItem="{Binding SelectedDocument, Mode=TwoWay}"
+                                     IsVisible="{Binding HasDocuments}" Background="Transparent" Padding="4"
+                                     ScrollViewer.HorizontalScrollBarVisibility="Disabled" AutomationProperties.Name="Documents">
+                                <ListBox.Styles>
+                                    <Style Selector="ListBoxItem">
+                                        <Setter Property="Padding" Value="13,11" />
+                                        <Setter Property="Margin" Value="1,2" />
+                                        <Setter Property="HorizontalContentAlignment" Value="Stretch" />
+                                    </Style>
+                                    <Style Selector="ListBoxItem:selected /template/ ContentPresenter">
+                                        <Setter Property="Background" Value="#E4EEDD" />
+                                        <Setter Property="Foreground" Value="#1F3027" />
+                                    </Style>
+                                </ListBox.Styles>
+                                <ListBox.ItemTemplate>
+                                    <DataTemplate x:DataType="core:DocumentSummary">
+                                        <Grid ColumnDefinitions="34,*" ColumnSpacing="11">
+                                            <Border Background="#EDF2E8" Height="39" CornerRadius="6" VerticalAlignment="Top">
+                                                <TextBlock Text="PDF" Foreground="#30543E" FontWeight="Bold" FontSize="9"
+                                                           HorizontalAlignment="Center" VerticalAlignment="Center" />
+                                            </Border>
+                                            <StackPanel Grid.Column="1" Spacing="4">
+                                                <TextBlock Text="{Binding Title}" FontSize="13" FontWeight="SemiBold" TextTrimming="CharacterEllipsis" />
+                                                <TextBlock Text="{Binding AddedAt, StringFormat='{}{0:dd MMM yyyy}'}" Classes="muted" />
+                                                <TextBlock Text="{Binding Match}" Classes="muted" TextTrimming="CharacterEllipsis" />
+                                            </StackPanel>
+                                        </Grid>
+                                    </DataTemplate>
+                                </ListBox.ItemTemplate>
+                            </ListBox>
+                            <Button Grid.Row="1" Content="Load more" IsVisible="{Binding HasMore}" Command="{Binding LoadMoreCommand}"
+                                    HorizontalAlignment="Center" Margin="8" />
+                        </Grid>
+                    </Border>
+                    <Border Grid.Column="1" CornerRadius="11" Background="#FCFDF8" BorderBrush="#DDE2D7" BorderThickness="1" ClipToBounds="True">
+                        <Panel>
+                            <TextBlock Text="Select a document to preview it" IsVisible="{Binding !HasSelection}"
+                                       Foreground="#556358" FontSize="13" HorizontalAlignment="Center" VerticalAlignment="Center" />
+                            <Grid IsVisible="{Binding HasSelection}" RowDefinitions="Auto,*,Auto" RowSpacing="11" Margin="15">
+                                <Grid ColumnDefinitions="*,Auto" ColumnSpacing="10">
+                                    <StackPanel Spacing="4">
+                                        <TextBlock Text="{Binding SelectedDocument.Title}" TextTrimming="CharacterEllipsis" FontSize="17" FontWeight="SemiBold" />
+                                        <TextBlock Text="{Binding SelectedDocument.RelativePath}" Classes="muted" TextTrimming="CharacterEllipsis" />
+                                    </StackPanel>
+                                    <Button Grid.Column="1" Content="Open PDF" Command="{Binding OpenPdfCommand}" VerticalAlignment="Top" />
+                                </Grid>
+                                <Border Grid.Row="1" Background="#EAEFE6" CornerRadius="8" Padding="12" ClipToBounds="True">
+                                    <Grid RowDefinitions="*,Auto" RowSpacing="7">
+                                        <Image Source="{Binding Preview}" Stretch="Uniform" AutomationProperties.Name="PDF page preview" />
+                                        <TextBlock Text="{Binding PreviewMessage}" IsVisible="{Binding HasPreviewMessage}"
+                                                   HorizontalAlignment="Center" VerticalAlignment="Center" TextWrapping="Wrap" />
+                                        <StackPanel Grid.Row="1" Orientation="Horizontal" Spacing="8" HorizontalAlignment="Center">
+                                            <Button Content="‹" Command="{Binding PreviousPageCommand}" IsEnabled="{Binding CanGoBack}"
+                                                    AutomationProperties.Name="Previous page" Padding="9,3" />
+                                            <TextBlock Text="{Binding PageLabel}" Classes="muted" VerticalAlignment="Center" />
+                                            <Button Content="›" Command="{Binding NextPageCommand}" IsEnabled="{Binding CanGoForward}"
+                                                    AutomationProperties.Name="Next page" Padding="9,3" />
+                                        </StackPanel>
+                                    </Grid>
+                                </Border>
+                                <StackPanel Grid.Row="2" Spacing="8">
+                                    <TextBlock Text="{Binding SelectedDocument.Match}" Classes="muted" IsVisible="{Binding HasMatch}"
+                                               TextTrimming="CharacterEllipsis" />
+                                    <TextBlock Text="No searchable text found" Foreground="#795327" FontSize="12"
+                                               IsVisible="{Binding HasNoSearchableText}" />
+                                    <ItemsControl ItemsSource="{Binding SelectedDocument.Tags}" MaxHeight="67">
+                                        <ItemsControl.ItemsPanel><ItemsPanelTemplate><WrapPanel /></ItemsPanelTemplate></ItemsControl.ItemsPanel>
+                                        <ItemsControl.ItemTemplate>
+                                            <DataTemplate x:DataType="x:String">
+                                                <Button Click="RemoveTag_Click" Margin="0,0,5,3" Padding="8,4"
+                                                        Background="#EAF0E5" MaxWidth="144"
+                                                        AutomationProperties.Name="{Binding StringFormat='Remove tag {0}'}">
+                                                    <TextBlock Text="{Binding StringFormat='{}{0}  ×'}" FontSize="11" TextTrimming="CharacterEllipsis" />
+                                                </Button>
+                                            </DataTemplate>
+                                        </ItemsControl.ItemTemplate>
+                                    </ItemsControl>
+                                    <Grid ColumnDefinitions="*,Auto,Auto" ColumnSpacing="6" IsEnabled="{Binding CanWork}">
+                                        <TextBox x:Name="TagBox" Text="{Binding TagInput, Mode=TwoWay}" MaxLength="48"
+                                                 PlaceholderText="New tag" AutomationProperties.Name="New tag" KeyDown="TagBox_KeyDown" FontSize="12" />
+                                        <Button Grid.Column="1" x:Name="AddTagButton" Content="Add" Command="{Binding AddTagCommand}"
+                                                AutomationProperties.Name="Add tag" />
+                                        <Button Grid.Column="2" x:Name="ReviewButton" Content="{Binding ReviewAction}" Command="{Binding ToggleReviewCommand}" />
+                                    </Grid>
+                                </StackPanel>
+                            </Grid>
+                        </Panel>
+                    </Border>
+                </Grid>
+            </Grid>
+            <Border Grid.Row="2" Padding="25,7" Background="#FCFDF8" BorderBrush="#DDE2D7" BorderThickness="0,1,0,0">
+                <Grid ColumnDefinitions="*,Auto,Auto" ColumnSpacing="10" MinHeight="24">
+                    <TextBlock Text="{Binding Status}" Classes="muted" VerticalAlignment="Center" TextTrimming="CharacterEllipsis"
+                               ToolTip.Tip="{Binding Status}" AutomationProperties.LiveSetting="Polite" />
+                    <ProgressBar Grid.Column="1" Width="74" IsIndeterminate="True" IsVisible="{Binding IsBusy}" VerticalAlignment="Center" />
+                    <Button Grid.Column="2" Content="Cancel" Command="{Binding CancelCommand}" IsVisible="{Binding IsBusy}" Padding="8,3" />
+                </Grid>
+            </Border>
+        </Grid>
     </Grid>
 </Window>

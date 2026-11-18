@@ -1,0 +1,15 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <ItemGroup>
+    <PackageReference Include="Microsoft.Data.Sqlite" />
+    <PackageReference Include="NAPS2.Images.Skia" />
+    <PackageReference Include="NAPS2.Pdfium.Binaries" />
+    <PackageReference Include="NAPS2.Sdk" />
+    <PackageReference Include="NAPS2.Tesseract.Binaries" />
+    <PackageReference Include="PdfPig" />
+    <PackageReference Include="SkiaSharp.NativeAssets.Linux" />
+  </ItemGroup>
+  <ItemGroup>
+    <Content Include="../../assets/ocr/eng.traineddata" Link="tessdata/eng.traineddata" CopyToOutputDirectory="PreserveNewest" CopyToPublishDirectory="PreserveNewest" />
+    <Content Include="../../assets/ocr/LICENSE" Link="tessdata/LICENSE" CopyToOutputDirectory="PreserveNewest" CopyToPublishDirectory="PreserveNewest" />
+  </ItemGroup>
+</Project>

@@ -10,5 +10,9 @@
     <PackageReference Include="Avalonia.Desktop" />
     <PackageReference Include="Avalonia.Fonts.Inter" />
     <PackageReference Include="Avalonia.Themes.Fluent" />
+    <PackageReference Include="CommunityToolkit.Mvvm" />
+    <PackageReference Include="SkiaSharp.NativeAssets.Linux" />
+    <ProjectReference Include="../Plico.Core/Plico.Core.csproj" />
+    <InternalsVisibleTo Include="Plico.Tests" />
   </ItemGroup>
 </Project>

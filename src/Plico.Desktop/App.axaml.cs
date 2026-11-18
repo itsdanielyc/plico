@@ -18,11 +18,27 @@ public sealed class App : Application
         {
             var window = new MainWindow();
             desktop.MainWindow = window;
-            if (desktop.Args is [VerifySwitch, var evidenceDirectory])
+            if (desktop.Args is [VerifySwitch, var evidenceDirectory, var fixture])
             {
+                var testLibrary = Directory.CreateTempSubdirectory("plico-verify-");
+                var model = new InboxViewModel(new FixtureDialogs(fixture));
+                model.InitializeLibrary(() => testLibrary.FullName);
+                window.DataContext = model;
+                desktop.Exit += (_, _) =>
+                {
+                    model.Dispose();
+                    testLibrary.Delete(recursive: true);
+                };
                 window.Opened += (_, _) => Dispatcher.UIThread.Post(
-                    () => NativeVerification.Run(desktop, window, evidenceDirectory),
+                    () => _ = NativeVerification.RunAsync(desktop, window, model, evidenceDirectory),
                     DispatcherPriority.Background);
+            }
+            else
+            {
+                var model = new InboxViewModel(new WorkspaceDialogs(window), LibraryPreference.Save);
+                model.InitializeLibrary(LibraryPreference.LoadOrCreateDefault);
+                window.DataContext = model;
+                desktop.Exit += (_, _) => model.Dispose();
             }
         }
 

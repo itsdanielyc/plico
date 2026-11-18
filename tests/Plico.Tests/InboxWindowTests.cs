@@ -20,7 +20,10 @@ public sealed class InboxWindowTests
     [AvaloniaFact]
     public void OpensWithVisibleInboxHeading()
     {
-        var window = new MainWindow();
+        using var temporary = new TemporaryLibrary();
+        using var model = new InboxViewModel(new FixtureDialogs());
+        model.InitializeLibrary(() => temporary.Path);
+        var window = new MainWindow { DataContext = model };
         window.Show();
         try
         {
@@ -28,6 +31,10 @@ public sealed class InboxWindowTests
             Assert.Equal("Inbox", heading.Text);
             Assert.True(heading.IsVisible);
             Assert.True(heading.Bounds.Width > 0);
+            var search = Assert.IsType<TextBox>(window.FindControl<TextBox>("SearchBox"));
+            var add = Assert.IsType<Button>(window.FindControl<Button>("AddFilesButton"));
+            Assert.True(search.Bounds.Width > add.Bounds.Width);
+            Assert.True(add.IsEnabled);
         }
         finally
         {

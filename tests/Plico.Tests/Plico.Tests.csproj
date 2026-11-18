@@ -11,4 +11,7 @@
     <PackageReference Include="xunit.runner.visualstudio" PrivateAssets="all" />
     <ProjectReference Include="../../src/Plico.Desktop/Plico.Desktop.csproj" />
   </ItemGroup>
+  <ItemGroup>
+    <None Include="../fixtures/*" Link="fixtures/%(Filename)%(Extension)" CopyToOutputDirectory="PreserveNewest" />
+  </ItemGroup>
 </Project>

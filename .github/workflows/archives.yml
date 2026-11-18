@@ -1,0 +1,47 @@
+name: Verify archives
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  archive:
+    name: Extract and run (${{ matrix.rid }})
+    runs-on: ${{ matrix.runner }}
+    timeout-minutes: 20
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - {runner: windows-2025, rid: win-x64}
+          - {runner: macos-26, rid: osx-arm64}
+          - {runner: ubuntu-24.04, rid: linux-x64}
+    steps:
+      - uses: actions/checkout@v6
+      - uses: actions/setup-dotnet@v5
+        with:
+          global-json-file: global.json
+      - run: dotnet restore Plico.slnx --locked-mode
+      - name: Package and verify the archive
+        shell: pwsh
+        env:
+          PLICO_RUNTIME: ${{ matrix.rid }}
+        run: |
+          ./scripts/Package.ps1 -Runtime $env:PLICO_RUNTIME
+          $archives = @(Get-ChildItem -LiteralPath artifacts/archives -File)
+          if ($archives.Count -ne 1) { throw 'Expected one archive for this platform.' }
+          ./scripts/Test-Archive.ps1 -Archive $archives[0].FullName -EvidenceDirectory artifacts/install
+      - uses: actions/upload-artifact@v7
+        with:
+          name: archive-${{ matrix.rid }}
+          path: artifacts/archives/
+          compression-level: 0
+          retention-days: 7
+          if-no-files-found: error
+      - uses: actions/upload-artifact@v7
+        if: always()
+        with:
+          name: install-${{ matrix.rid }}
+          path: artifacts/install/
+          if-no-files-found: ignore

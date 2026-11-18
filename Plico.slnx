@@ -1,5 +1,6 @@
 <Solution>
   <Folder Name="/src/">
+    <Project Path="src/Plico.Core/Plico.Core.csproj" />
     <Project Path="src/Plico.Desktop/Plico.Desktop.csproj" />
   </Folder>
   <Folder Name="/tests/">

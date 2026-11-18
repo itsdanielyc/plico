@@ -1,6 +1,7 @@
 param(
     [Parameter(Mandatory)][string]$Executable,
-    [Parameter(Mandatory)][string]$EvidenceDirectory
+    [Parameter(Mandatory)][string]$EvidenceDirectory,
+    [string]$Fixture = (Join-Path $PSScriptRoot '../tests/fixtures/Hardware Store Receipt.png')
 )
 
 $ErrorActionPreference = 'Stop'
@@ -17,6 +18,7 @@ $start.FileName = $executablePath
 $start.WorkingDirectory = Split-Path -Parent $executablePath
 $start.ArgumentList.Add('--verify')
 $start.ArgumentList.Add($evidencePath)
+$start.ArgumentList.Add((Resolve-Path -LiteralPath $Fixture).Path)
 $process = [System.Diagnostics.Process]::Start($start)
 try {
     if (-not $process.WaitForExit(60000)) {
