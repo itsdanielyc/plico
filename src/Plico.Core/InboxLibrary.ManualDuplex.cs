@@ -64,10 +64,10 @@ public sealed partial class InboxLibrary
                 backs[index] = backs[index].WithTransform(new RotationTransform(BackSideRotation), disposeSelf: true);
             }
         }
-        var documents = await FileScanBatchAsync(stage, context, settings.Title, ScanBatchPages.Interleave(fronts, backs),
+        var batch = await FileScanBatchAsync(stage, context, settings.Title, ScanBatchPages.Interleave(fronts, backs),
             settings.Batch, target, language, $"{PendingDuplexFolder}\n{settings.JobId}", cancellationToken).ConfigureAwait(false);
         Directory.Move(pending, Path.Combine(stage, PendingDuplexFolder));
-        return new ScanBatchOutcome(documents);
+        return batch;
     }
 
     private static async Task SaveDuplexFrontsAsync(string stage, string pending, ScanningContext context,

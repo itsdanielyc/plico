@@ -1,0 +1,24 @@
+<Window xmlns="https://github.com/avaloniaui" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        x:Class="Plico.Desktop.ArchiveSerialDialog" Width="460" SizeToContent="Height"
+        WindowStartupLocation="CenterOwner" CanResize="False"
+        FontFamily="{StaticResource InterFont}" Background="#F4F5EF">
+    <StackPanel Margin="24" Spacing="12">
+        <TextBlock x:Name="ArchiveSerialPrompt" TextWrapping="Wrap" />
+        <TextBox x:Name="SerialInput" PlaceholderText="Archive serial number" MaxLength="19"
+                 AutomationProperties.Name="Archive serial number" />
+        <StackPanel x:Name="LabelCountControls" Spacing="4">
+            <TextBlock Text="Number of labels" />
+            <NumericUpDown x:Name="LabelCount" Value="30" Minimum="1" Maximum="10000" FormatString="0"
+                           AutomationProperties.Name="Number of labels" />
+        </StackPanel>
+        <StackPanel x:Name="PaperControls" Spacing="4">
+            <TextBlock Text="Paper size" />
+            <ComboBox x:Name="PaperSize" HorizontalAlignment="Stretch" AutomationProperties.Name="Paper size" />
+        </StackPanel>
+        <TextBlock x:Name="SerialError" Foreground="#9A3024" TextWrapping="Wrap" />
+        <StackPanel Orientation="Horizontal" Spacing="8" HorizontalAlignment="Right">
+            <Button Content="Cancel" IsCancel="True" Click="Cancel_Click" />
+            <Button x:Name="AcceptSerial" Content="Continue" IsDefault="True" Click="Accept_Click" />
+        </StackPanel>
+    </StackPanel>
+</Window>

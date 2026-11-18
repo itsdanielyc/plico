@@ -346,8 +346,10 @@ internal sealed partial class ScanDialog : Window
                     preferences.RememberLastScanner(scanner);
                 });
             }
-            var batch = SplitScanBatch.IsChecked == true
-                ? new ScanBatchOptions(true, CustomSeparatorBarcode.Text?.Trim())
+            bool split = SplitScanBatch.IsChecked == true;
+            bool readSerials = ReadArchiveSerials.IsChecked == true;
+            var batch = split || readSerials
+                ? new ScanBatchOptions(split, CustomSeparatorBarcode.Text?.Trim(), readSerials)
                 : null;
             Close(new ScanRequest(scanner, options.Feed, options.Paper, options.Resolution, options.Cleanup, batch));
         }

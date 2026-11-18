@@ -79,6 +79,7 @@
         <Expander Header="Batch separators" HorizontalAlignment="Stretch" HorizontalContentAlignment="Stretch">
             <StackPanel Spacing="6">
                 <CheckBox x:Name="SplitScanBatch" Content="Split at PATCH-T separator sheets" />
+                <CheckBox x:Name="ReadArchiveSerials" Content="Read archive serial number labels" />
                 <TextBox x:Name="CustomSeparatorBarcode" PlaceholderText="Additional separator barcode value (optional)"
                          AutomationProperties.Name="Additional separator barcode value" />
             </StackPanel>

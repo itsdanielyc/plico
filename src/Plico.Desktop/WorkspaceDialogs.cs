@@ -14,6 +14,8 @@ internal interface IWorkspaceDialogs
     Task<ScanRequest?> PickScannerAsync();
     Task<bool> ConfirmPartialScanAsync(ScanInterruption interruption, CancellationToken cancellationToken);
     Task<ManualDuplexDecision> ChooseDuplexActionAsync(ManualDuplexPrompt prompt, CancellationToken cancellationToken);
+    Task<ArchiveSerialInput?> PickArchiveSerialAsync(ArchiveSerialAction action, long? current = null);
+    Task<string?> PickArchiveSheetPathAsync(string filename);
     Task<string?> EditTitleAsync(string currentTitle);
     Task<DocumentDateEdit?> EditDocumentDateAsync(DateOnly? currentDate);
     Task<DocumentDateEdit?> EditBatchDocumentDatesAsync(DateOnly? commonDate, int documentCount);
@@ -86,6 +88,21 @@ internal sealed class WorkspaceDialogs(Window owner) : IWorkspaceDialogs
 
     public Task<ManualDuplexDecision> ChooseDuplexActionAsync(ManualDuplexPrompt prompt, CancellationToken cancellationToken) =>
         new ManualDuplexDialog(prompt).ShowDecisionAsync(owner, cancellationToken);
+
+    public Task<ArchiveSerialInput?> PickArchiveSerialAsync(ArchiveSerialAction action, long? current = null) =>
+        new ArchiveSerialDialog(action, current).ShowDialog<ArchiveSerialInput?>(owner);
+
+    public async Task<string?> PickArchiveSheetPathAsync(string filename)
+    {
+        var file = await owner.StorageProvider.SaveFilePickerAsync(new FilePickerSaveOptions
+        {
+            Title = "Save a printable PDF",
+            SuggestedFileName = filename,
+            DefaultExtension = "pdf",
+            FileTypeChoices = [PdfDocuments]
+        });
+        return file?.TryGetLocalPath();
+    }
 
     public Task<string?> EditTitleAsync(string currentTitle) =>
         new DocumentTitleDialog(currentTitle).ShowDialog<string?>(owner);

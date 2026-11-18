@@ -8,7 +8,12 @@ public sealed partial class InboxLibrary
     public long? ReadArchiveSerialNumber(long documentId) => _catalog.ReadArchiveSerialNumber(documentId);
 
     /// <summary>Assigns a free positive serial to a present document, or clears its current assignment.</summary>
-    public void SetArchiveSerialNumber(long documentId, long? serial) => _catalog.SetArchiveSerialNumber(documentId, serial);
+    public void SetArchiveSerialNumber(long documentId, long? serial)
+    {
+        _fileOperations.Wait();
+        try { _catalog.SetArchiveSerialNumber(documentId, serial); }
+        finally { _fileOperations.Release(); }
+    }
 
     /// <summary>Finds a present document by its exact archive serial number.</summary>
     public DocumentSummary? FindByArchiveSerialNumber(long serial) =>

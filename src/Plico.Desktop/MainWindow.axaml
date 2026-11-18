@@ -173,6 +173,13 @@
                                 <MenuItem Header="Check library integrity…" Command="{Binding CheckIntegrityCommand}" />
                                 <MenuItem Header="Export library metadata (JSON)…" Command="{Binding ExportMetadataCommand}" />
                                 <MenuItem Header="Export search results (CSV)…" Command="{Binding ExportSearchCsvCommand}" />
+                                <MenuItem Header="Archive serial numbers">
+                                    <MenuItem Header="Set number on this document…" Command="{Binding EditArchiveSerialCommand}"
+                                              IsEnabled="{Binding HasSelection}" />
+                                    <MenuItem Header="Find by archive number…" Command="{Binding FindArchiveSerialCommand}" />
+                                    <MenuItem Header="Save label sheets…" Command="{Binding PrintArchiveLabelsCommand}" />
+                                    <MenuItem Header="Save a PATCH-T separator…" Command="{Binding PrintSeparatorSheetCommand}" />
+                                </MenuItem>
                                 <Separator />
                                 <MenuItem Header="Refresh index" Command="{Binding RefreshIndexCommand}" />
                             </MenuFlyout>
