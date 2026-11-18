@@ -235,11 +235,15 @@
 | 2026-11-18 | L1, L3, L4 | The focused metadata, migration recovery, deadlines, retrieval, provider and assistant tests passed locally. The metadata and reminders UI test filter passed 85 checks on the earlier build. | Windows x64 | Local `dotnet test` on `build/metadata-reminders`, 13:09–13:13 UTC. The focused tests include ASN reservation, iCalendar identifiers, cache invalidation, loopback requests, and undo with a later edit. |
 | 2026-11-18 | L1, L3 negative checks | Eight deliberate mutations failed assertions for endpoint restrictions, embedding ordering and caching, lexical ranking, filing validation, chat scope, calendar alarms, and tag hierarchy. | Windows x64 | Focused Release tests in a temporary worktree from `641ef52`, 13:14 UTC. |
 | 2026-11-18 | L0, L1, L3, L4 integration | The coordination features, phone inbox, and household binder built together and passed 265 solution checks. One Unix symlink test was skipped. | Windows x64 | Locked restore and Release suite at `f563e37` on `integrate/plico-roadmap`, 13:16 UTC. |
+| 2026-11-18 | L0, L3, L4, L6 | The standalone household binder passed the solution and native export journey. Its PDF contains ordered searchable pages and an independently readable contents page. | GitHub-hosted Windows x64 and ARM64, macOS Intel, Ubuntu x64 and ARM64 | [Binder CI 44310982093](https://github.com/itsdanielyc/plico/actions/runs/44310982093) at `314f255`. Reviewed the Intel Mac ordering screenshot and binder PDF. The earlier Mac assertions failed on the `/var` to `/private/var` alias. |
+| 2026-11-18 | L0, L1, L3, L4 | Build passed with zero warnings. The solution passed 263 tests, including revision recovery, PDF export checks, thumbnail navigation, theme preference, and the same-user activation relay. The Windows linked-folder test retained its platform skip. | Local Windows x64 | `dotnet build Plico.slnx -c Release --no-restore` and `dotnet test Plico.slnx -c Release --no-build` at `e3ee002`, 13:18–13:19 UTC. The targeted suites initially failed on missing binder, version, derivative, and preview APIs. |
+| 2026-11-18 | L6 | The native window reordered the binder, restored an earlier PDF, exported redacted and stamped copies, checked the compression result, navigated thumbnails, zoomed, applied dark mode and French labels, and imported the Open With fixture without changing the source. | Local Windows x64 | `scripts/Test-Native.ps1` at `e3ee002` passed at 13:19 UTC. Evidence in `artifacts/pdf-desktop-native`. |
 
 ## Unverified
 
 - Physical scanner interoperability requires a compatible device.
 - Developer ID signing and notarization on macOS, and Authenticode signing on Windows.
+- The standalone binder's Apple silicon job and the combined PDF desktop archive gate are pending.
 
 ## Earlier hosted runs
 

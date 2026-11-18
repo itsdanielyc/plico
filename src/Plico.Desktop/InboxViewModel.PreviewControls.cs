@@ -30,11 +30,14 @@ internal sealed partial class InboxViewModel
 
     [ObservableProperty] private double _previewDisplayWidth = double.NaN;
     [ObservableProperty] private double _previewDisplayHeight = double.NaN;
-    [ObservableProperty] private bool _showPageThumbnails;
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(HasVisiblePageThumbnails))]
+    private bool _showPageThumbnails;
     [ObservableProperty] private IReadOnlyList<PdfPageThumbnail> _pageThumbnails = [];
 
     public bool IsPreviewZoomed => PreviewZoomPercent != 0;
     public bool IsPreviewScrollable => IsPreviewZoomed || FitPreviewWidth;
+    public bool HasVisiblePageThumbnails => ShowPageThumbnails && !IsPageTextView && HasMultiplePages;
     public bool CanZoomIn => PreviewZoomPercent < ZoomSteps[^1];
     public bool CanZoomOut => PreviewZoomPercent != ZoomSteps[0];
     public string PreviewZoomLabel => IsPreviewZoomed ? $"{PreviewZoomPercent}%" : DesktopText.Translate("Fit");

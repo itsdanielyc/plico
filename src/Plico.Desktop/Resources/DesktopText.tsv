@@ -16,7 +16,7 @@ Apply	Apply	Appliquer
 ApplyChosenFields	Apply chosen fields	Appliquer les champs choisis
 ArchivalPDFA2b	Archival PDF/A-2b	PDF/A-2b d’archivage
 Automatic	Automatic	Automatique
-BackUpLibrary	Back up library…	Sauvegarder la bibliothèque…
+BackUpLibrary	Back up library…	Sauvegarder…
 BackingUpTheLibrary	Backing up the library…	Sauvegarde de la bibliothèque…
 BackupDestinationSelectionClosed	Backup destination selection closed.	Sélection du dossier de sauvegarde annulée.
 BeforeAddingARevisedPDF	Before adding a revised PDF	Avant l’ajout d’un PDF révisé
@@ -220,7 +220,7 @@ LibraryIntegrity	Library integrity	Intégrité de la bibliothèque
 LibraryIntegrityFindings	Library integrity findings	Résultats du contrôle d’intégrité
 LibraryReady	Library ready.	Bibliothèque prête.
 LibraryReady0	Library ready. {0}	Bibliothèque prête. {0}
-LibraryTools	Library tools…	Outils de la bibliothèque…
+LibraryTools	Library tools…	Outils de bibliothèque…
 Light	Light	Clair
 LoadMore	Load more	Afficher plus
 Lossless	Lossless	Sans perte
@@ -345,7 +345,7 @@ RestorePDF	Restore PDF…	Restaurer le PDF…
 Restored0	Restored {0}.	{0} restauré.
 RestoringPDF	Restoring PDF…	Restauration du PDF…
 ResumeAndCatchUp	Resume and catch up	Reprendre et rattraper les fichiers
-ResumeFolderWatch	Resume folder watch	Reprendre la surveillance du dossier
+ResumeFolderWatch	Resume folder watch	Reprendre la veille
 ResumeTheSavedWatchAndCheckScansWhenThisLibraryOpens	Resume the saved watch and check scans when this library opens	Reprendre la surveillance et vérifier les numérisations à l’ouverture de la bibliothèque
 ResumingFolderWatch	Resuming folder watch…	Reprise de la surveillance du dossier…
 RetryFiles	Retry files	Réessayer l’import des fichiers
@@ -401,7 +401,7 @@ SelectADocumentToPreviewIt	Select a document to preview it	Sélectionnez un docu
 SelectALibraryFolder	Select a library folder	Choisir le dossier de la bibliothèque
 SelectShown	Select shown	Sélectionner les résultats affichés
 SelectedPDFPages	Selected PDF pages	Pages PDF sélectionnées
-ShowPDFFolder	Show PDF folder	Afficher le dossier des PDF
+ShowPDFFolder	Show PDF folder	Dossier des PDF
 ShowPage	Show page	Afficher la page
 SkipBlankPages	Skip blank pages	Ignorer les pages blanches
 SmallerScans	Smaller scans	Numérisations allégées

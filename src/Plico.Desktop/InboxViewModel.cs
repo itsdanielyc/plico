@@ -46,6 +46,7 @@ internal sealed partial class InboxViewModel : ObservableObject, IDisposable
     private string _pageText = "";
     [ObservableProperty]
     [NotifyPropertyChangedFor(nameof(PageTextAction))]
+    [NotifyPropertyChangedFor(nameof(HasVisiblePageThumbnails))]
     private bool _isPageTextView;
     [ObservableProperty]
     [NotifyPropertyChangedFor(nameof(PreviewFitAction))]
@@ -523,6 +524,7 @@ internal sealed partial class InboxViewModel : ObservableObject, IDisposable
         OnPropertyChanged(nameof(ReviewAction));
         OnPropertyChanged(nameof(HasNoSearchableText));
         OnPropertyChanged(nameof(HasMultiplePages));
+        OnPropertyChanged(nameof(HasVisiblePageThumbnails));
         OnPropertyChanged(nameof(SearchableCopyAction));
         OnPropertyChanged(nameof(HasPageMatchAction));
         NotifyPageChanged();
