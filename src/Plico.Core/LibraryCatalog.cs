@@ -70,9 +70,12 @@ internal sealed partial class LibraryCatalog
         CREATE INDEX documents_ocr_copies ON documents(ocr_copy_source_id, source_sha256, ocr_copy_language)
             WHERE ocr_copy_language IS NOT NULL;
         """;
+    private const string TextPresenceMigration = """
+        CREATE INDEX documents_text_presence ON documents(has_text, id DESC) WHERE is_present = 1;
+        """;
     private static readonly string[] Migrations =
         [Schema, FingerprintMigration, DisplayTitleMigration, PdfFingerprintMigration, OcrCopyMigration, AddedDateIndexMigration,
-            PdfMoveMigration, SavedSearchMigration, DocumentDateMigration];
+            PdfMoveMigration, SavedSearchMigration, DocumentDateMigration, TextPresenceMigration];
 
     private readonly string _connectionString;
 
@@ -313,6 +316,11 @@ internal sealed partial class LibraryCatalog
         {
             conditions.Add("d.reviewed = $reviewed");
             command.Parameters.AddWithValue("$reviewed", search.Reviewed.GetValueOrDefault());
+        }
+        if (search.HasText is bool hasText)
+        {
+            conditions.Add("d.has_text = $hasText");
+            command.Parameters.AddWithValue("$hasText", hasText);
         }
         if (filter.Tag is not null)
         {

@@ -100,6 +100,9 @@
                     </Button>
                     <Button x:Name="AllDocumentsButton" Classes="rail" Classes.current="{Binding AllSelected}"
                             Command="{Binding ShowAllCommand}" Content="All documents" />
+                    <Button x:Name="WithoutTextButton" Classes="rail" Classes.current="{Binding WithoutTextSelected}"
+                            Command="{Binding ShowWithoutTextCommand}" Content="Without text"
+                            ToolTip.Tip="Find PDFs without searchable text" />
                 </StackPanel>
                 <ScrollViewer Grid.Row="2" HorizontalScrollBarVisibility="Disabled">
                     <StackPanel Spacing="16">
@@ -172,7 +175,7 @@
                 <Grid ColumnDefinitions="*,Auto,Auto,Auto" ColumnSpacing="10">
                     <TextBox x:Name="SearchBox" Text="{Binding Query, Mode=TwoWay}" MaxLength="256"
                              PlaceholderText="Search text, status:…, tag:…, dated:…" AutomationProperties.Name="Search documents"
-                             ToolTip.Tip="Use status:inbox for the review queue or status:reviewed for reviewed PDFs.&#10;dated:2024-02 matches the document date. added:2026-11 matches the date added.&#10;Use tag:tax, folder:&quot;Filed/Property&quot;, and quoted phrases in the same query."
+                             ToolTip.Tip="Use status:inbox for the review queue or status:reviewed for reviewed PDFs.&#10;Use text:missing or text:present to filter by searchable text.&#10;dated:2024-02 matches the document date. added:2026-11 matches the date added.&#10;Use tag:tax, folder:&quot;Filed/Property&quot;, and quoted phrases in the same query."
                              VerticalContentAlignment="Center" CornerRadius="8" MinHeight="38">
                         <TextBox.InnerLeftContent>
                             <PathIcon Width="15" Height="15" Margin="11,0,1,0" Foreground="#536459"

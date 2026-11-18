@@ -75,6 +75,8 @@ internal sealed partial class InboxViewModel : ObservableObject, IDisposable
     public bool HasSelection => SelectedDocument is not null;
     public bool InboxSelected => _inboxOnly && _activeTag is null && string.IsNullOrWhiteSpace(Query);
     public bool AllSelected => !_inboxOnly && _activeTag is null && string.IsNullOrWhiteSpace(Query);
+    public bool WithoutTextSelected => _activeTag is null && ActiveSavedSearch is null &&
+        Query.AsSpan().Trim().Equals(WithoutTextQuery, StringComparison.OrdinalIgnoreCase);
     public string LibraryName
     {
         get
@@ -171,6 +173,7 @@ internal sealed partial class InboxViewModel : ObservableObject, IDisposable
     [RelayCommand] private void Cancel() => _operationCancellation?.Cancel();
     [RelayCommand] private void ShowInbox() => Navigate(inboxOnly: true);
     [RelayCommand] private void ShowAll() => Navigate(inboxOnly: false);
+    [RelayCommand] private void ShowWithoutText() => Navigate(inboxOnly: false, query: WithoutTextQuery);
     [RelayCommand]
     private void LoadMore()
     {
@@ -402,13 +405,13 @@ internal sealed partial class InboxViewModel : ObservableObject, IDisposable
         }
     }
 
-    private void Navigate(bool inboxOnly, string? tag = null, long? preferredId = null)
+    private void Navigate(bool inboxOnly, string? tag = null, long? preferredId = null, string query = "")
     {
         ActiveSavedSearch = null;
         _inboxOnly = inboxOnly;
         _activeTag = tag;
         OnPropertyChanged(nameof(HasActiveTag));
-        Query = "";
+        Query = query;
         LoadResults(preferredId);
     }
 

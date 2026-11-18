@@ -45,6 +45,8 @@ Schema v8 stores saved query text, the selected sidebar tag key, and the result 
 
 Schema v9 stores the user-entered document date as a nullable day number on the catalog record. The present-document index supports the `dated:` bounds and document-date ordering. The date follows the record through filing and refresh and travels in a catalog backup. `added:` continues to match the local day of the intake timestamp.
 
+Schema v10 adds a partial index on text presence and descending ID for present PDFs. `text:missing` and `text:present` query the catalog’s existing text flag. A PDF with text on any page belongs to `text:present`. The sidebar shortcut uses the same compiled query, and refreshed files update the index with their extracted text.
+
 Publishing a PDF copy reads its initial document date in the same catalog transaction that copies its tags. The date comes from a single source or a date shared by every source in a packet. The inserted copy has its own date field for future edits.
 
 Batch filing checks the selected paths and file stamps before the first move. Under one library lease it commits each move through the same journal and retains the next numbered filename for each colliding name. Cancellation or an error stops the batch and reports completed moves and remaining work.

@@ -76,6 +76,7 @@ public sealed partial class LibraryTests
             database.Open();
             using var command = database.CreateCommand();
             command.CommandText = """
+                DROP INDEX documents_text_presence;
                 DROP INDEX documents_document_day;
                 ALTER TABLE documents DROP COLUMN document_day;
                 PRAGMA user_version = 8;

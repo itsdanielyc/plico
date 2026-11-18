@@ -36,7 +36,7 @@ public sealed record DocumentSummary(
 }
 
 /// <summary>The part of a search query that needs correction before it can run.</summary>
-public enum SearchQueryIssue { NoSearchTerms, Tag, AddedDate, DocumentDate, Folder, ReviewStatus }
+public enum SearchQueryIssue { NoSearchTerms, Tag, AddedDate, DocumentDate, Folder, ReviewStatus, TextAvailability }
 
 /// <summary>Results in display order and whether there are more at the next offset.</summary>
 public sealed record DocumentPage(IReadOnlyList<DocumentSummary> Items, bool HasMore)

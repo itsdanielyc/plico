@@ -15,6 +15,9 @@ public sealed class LibrarySearchQueryIssuesTests
     [InlineData("folder:Receipts folder:Letters", SearchQueryIssue.Folder)]
     [InlineData("status:", SearchQueryIssue.ReviewStatus)]
     [InlineData("status:inbox status:reviewed", SearchQueryIssue.ReviewStatus)]
+    [InlineData("text:", SearchQueryIssue.TextAvailability)]
+    [InlineData("text:present text:missing", SearchQueryIssue.TextAvailability)]
+    [InlineData("text:\"missing\"", SearchQueryIssue.TextAvailability)]
     public void SearchReportsWhichClauseNeedsRepair(string query, SearchQueryIssue issue)
     {
         using var directory = new TemporaryLibrary();

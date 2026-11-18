@@ -7,6 +7,7 @@ namespace Plico.Desktop;
 
 internal sealed partial class InboxViewModel
 {
+    private const string WithoutTextQuery = "text:missing";
     private static readonly TimeSpan SearchDelay = TimeSpan.FromMilliseconds(180);
     private readonly DispatcherTimer _searchTimer = new() { Interval = SearchDelay };
     private readonly SemaphoreSlim _searchSlot = new(initialCount: 1, maxCount: 1);
@@ -202,11 +203,20 @@ internal sealed partial class InboxViewModel
     {
         HasDeferredWatchResults = false;
         bool hasQuery = !string.IsNullOrWhiteSpace(filter.Query);
-        Heading = ActiveSavedSearch?.Name ?? (hasQuery ? "Search results" : filter.Tag ?? (filter.InboxOnly ? "Inbox" : "All documents"));
-        EmptyMessage = hasQuery || filter.Tag is not null ? "No documents match." :
-            filter.InboxOnly ? "Add a file to start your inbox." : "This library has no documents yet.";
+        if (WithoutTextSelected)
+        {
+            Heading = "Without text";
+            EmptyMessage = "No PDFs without searchable text.";
+        }
+        else
+        {
+            Heading = ActiveSavedSearch?.Name ?? (hasQuery ? "Search results" : filter.Tag ?? (filter.InboxOnly ? "Inbox" : "All documents"));
+            EmptyMessage = hasQuery || filter.Tag is not null ? "No documents match." :
+                filter.InboxOnly ? "Add a file to start your inbox." : "This library has no documents yet.";
+        }
         OnPropertyChanged(nameof(InboxSelected));
         OnPropertyChanged(nameof(AllSelected));
+        OnPropertyChanged(nameof(WithoutTextSelected));
     }
 
     private void ApplyResultPage(DocumentFilter filter, DocumentPage page, long? preferredId = null, bool reloadPreview = false)
@@ -236,6 +246,7 @@ internal sealed partial class InboxViewModel
         SearchQueryIssue.DocumentDate => "Use a date such as dated:2024-02. Document-date filters must overlap.",
         SearchQueryIssue.Folder => "Use a folder such as folder:\"Filed/Tax\". Use one folder or nested folders.",
         SearchQueryIssue.ReviewStatus => "Use one review status. Try status:inbox or status:reviewed.",
+        SearchQueryIssue.TextAvailability => "Use one text filter. Try text:missing or text:present.",
         _ => "Enter a word, number, or search filter."
     };
 

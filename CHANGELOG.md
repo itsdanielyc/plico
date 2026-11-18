@@ -40,6 +40,7 @@
 - Read and select the current page’s text directly in the preview, including after jumping to a search match.
 - Reopen a library on the same computer to find unresolved import errors and retry the files.
 - Create OCR copies of selected PDFs and see the result for each source, including existing copies, errors, and work left after cancellation.
+- Find PDFs without searchable text from the sidebar and combine text availability with other search filters.
 
 ## [0.15.0] - 2026-11-18
 

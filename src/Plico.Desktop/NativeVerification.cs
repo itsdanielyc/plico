@@ -89,7 +89,7 @@ internal static partial class NativeVerification
             await VerifyBatchOcrAsync(window, model, fixture, evidenceDirectory, priorOcrSource);
 
             File.WriteAllText(Path.Combine(evidenceDirectory, "passed.txt"),
-                $"Verified {runtime}. Native window completed multilingual OCR and correction, oriented JPEG and multi-page TIFF import, PDF combination, page extraction and rotation, phrase, tag, and review-status search, query correction, saved search restoration, document-date editing, filtering, and inheritance, result sorting, fit-width and selectable page text previews, match navigation, tag merging and suggestions, duplicate drop, folder watch and inbox counting, title edit, single and batch PDF moves, external relocation, selected PDF export, library backup, text copy, single and batch OCR copies, and saved import error recovery and retry. {scanRecoveryEvidence}");
+                $"Verified {runtime}. Native window completed multilingual OCR and correction, oriented JPEG and multi-page TIFF import, PDF combination, page extraction and rotation, phrase, tag, review-status, and text-availability search, query correction, saved search restoration, document-date editing, filtering, and inheritance, result sorting, fit-width and selectable page text previews, match navigation, tag merging and suggestions, duplicate drop, folder watch and inbox counting, title edit, single and batch PDF moves, external relocation, selected PDF export, library backup, text copy, single and batch OCR copies, and saved import error recovery and retry. {scanRecoveryEvidence}");
             desktop.Shutdown(0);
         }
         catch (Exception error)

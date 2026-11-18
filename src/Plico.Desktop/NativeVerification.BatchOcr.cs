@@ -17,6 +17,15 @@ internal static partial class NativeVerification
         var newSource = model.Documents.Single(document => document.RelativePath == scanName);
         var priorSource = model.Documents.Single(document => document.Id == priorSourceId);
 
+        Control<Button>(window, "WithoutTextButton").Command!.Execute(null);
+        Require(model.Heading == "Without text" && model.Query == "text:missing" &&
+                model.Documents.All(document => !document.HasText) &&
+                model.Documents.Any(document => document.Id == priorSourceId) &&
+                model.Documents.Any(document => document.Id == newSource.Id),
+            "The Without text view did not find the image-only PDFs.");
+        await UntilAsync(() => model.Preview is not null, () => model.PreviewMessage);
+        await CaptureAsync(window, directory, "without-text.png");
+
         Control<ComboBox>(window, "OcrLanguageBox").SetCurrentValue(ComboBox.SelectedItemProperty, OcrLanguage.English);
         var list = Control<ListBox>(window, "DocumentList");
         list.SelectedItems = new List<DocumentSummary> { priorSource, newSource };
@@ -48,5 +57,10 @@ internal static partial class NativeVerification
             dialog.Close();
             await closed;
         }
+
+        Control<TextBox>(window, "SearchBox").SetCurrentValue(TextBox.TextProperty, $"{ReceiptKeyword} text:present");
+        await UntilAsync(() => model.Heading == "Search results" &&
+            model.Documents.Any(document => document.Title == copyTitle) &&
+            model.Documents.All(document => document.HasText) && model.Preview is not null, () => model.Status);
     }
 }
