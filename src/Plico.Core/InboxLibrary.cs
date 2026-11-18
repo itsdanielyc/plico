@@ -368,7 +368,8 @@ public sealed partial class InboxLibrary : IDisposable
 
     private DocumentSummary CommitPdf(string stagedPdf, string title, PdfText text, CancellationToken cancellationToken,
         byte[]? sourceFingerprint = null, byte[]? pdfFingerprint = null, OcrCopySource? ocrCopySource = null,
-        IReadOnlyList<long>? metadataSourceIds = null, string? destinationFolder = null, OcrLanguage? recognizedLanguage = null)
+        IReadOnlyList<long>? metadataSourceIds = null, string? destinationFolder = null, OcrLanguage? recognizedLanguage = null,
+        MigrationWrite? migration = null)
     {
         var version = FileVersion.Read(stagedPdf);
         var fingerprint = pdfFingerprint ?? FingerprintPdf(stagedPdf, cancellationToken);
@@ -378,9 +379,11 @@ public sealed partial class InboxLibrary : IDisposable
             throw new IOException("The intake folder changed during processing. Select it again and retry.");
         }
         cancellationToken.ThrowIfCancellationRequested();
-        string publishedPdf = PublishPdf(stagedPdf, title, target, cancellationToken);
+        Action<string>? reserve = migration is null ? null : path =>
+            _catalog.RecordPendingMigration(migration.Key, new(RelativePdfPath(path), fingerprint, sourceFingerprint));
+        string publishedPdf = PublishPdf(stagedPdf, title, target, cancellationToken, reserve);
         long id = _catalog.Upsert(RelativePdfPath(publishedPdf), title, text, version, fingerprint, sourceFingerprint,
-            ocrCopySource, metadataSourceIds, recognizedLanguage);
+            ocrCopySource, metadataSourceIds, recognizedLanguage, migration);
         return _catalog.Get(id);
     }
 
@@ -398,7 +401,8 @@ public sealed partial class InboxLibrary : IDisposable
         Path.GetRelativePath(PdfDirectory, path).Replace(Path.DirectorySeparatorChar, '/');
 
     // O(k log n) time for k candidate paths among n catalog entries, with constant extra space.
-    private string PublishPdf(string stagedPdf, string title, string destinationFolder, CancellationToken cancellationToken)
+    private string PublishPdf(string stagedPdf, string title, string destinationFolder, CancellationToken cancellationToken,
+        Action<string>? reserve = null)
     {
         string stem = PortableStem(title);
         for (int duplicate = 1; ; duplicate++)
@@ -407,6 +411,11 @@ public sealed partial class InboxLibrary : IDisposable
             string name = NumberedName(stem, duplicate);
             string destination = Path.Combine(destinationFolder, name + DocumentProcessor.PdfExtension);
             if (_catalog.ReservesPath(RelativePdfPath(destination))) continue;
+            if (reserve is not null)
+            {
+                if (Path.Exists(destination)) continue;
+                reserve(destination);
+            }
             if (_claimPdfPath(stagedPdf, destination, allowHardLink: true)) return destination;
         }
     }

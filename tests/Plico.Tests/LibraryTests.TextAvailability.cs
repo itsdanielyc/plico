@@ -86,7 +86,7 @@ public sealed partial class LibraryTests
         Assert.Equal(File.ReadAllBytes(Fixture(Letter)), File.ReadAllBytes(reopened.ResolvePdf(record)));
         database.Open();
         command.CommandText = "PRAGMA user_version;";
-        Assert.Equal(12L, command.ExecuteScalar());
+        Assert.Equal(LibraryCatalog.SchemaVersion, command.ExecuteScalar());
         command.CommandText = "SELECT count(*) FROM sqlite_schema WHERE type = 'index' AND name = 'documents_text_presence';";
         Assert.Equal(1L, command.ExecuteScalar());
     }

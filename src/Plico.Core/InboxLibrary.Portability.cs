@@ -148,6 +148,10 @@ public sealed partial class InboxLibrary
         JsonSerializer.Serialize(json, _catalog.ReadSavedSearches(), PortableJson);
         json.WritePropertyName("tagRules");
         JsonSerializer.Serialize(json, _catalog.ReadFilingRules(), PortableJson);
+        json.WritePropertyName("metadataDefinitions");
+        JsonSerializer.Serialize(json, GetMetadataDefinitions(), PortableJson);
+        json.WritePropertyName("tagAppearances");
+        JsonSerializer.Serialize(json, GetTagAppearances(), PortableJson);
         json.WriteEndObject();
     }
 

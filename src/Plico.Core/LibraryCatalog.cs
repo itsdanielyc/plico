@@ -73,7 +73,10 @@ internal sealed partial class LibraryCatalog
         """;
     private static readonly string[] Migrations =
         [Schema, FingerprintMigration, DisplayTitleMigration, PdfFingerprintMigration, OcrCopyMigration, AddedDateIndexMigration,
-            PdfMoveMigration, SavedSearchMigration, DocumentDateMigration, TextPresenceMigration, TrashMigration, FilingMigration];
+            PdfMoveMigration, SavedSearchMigration, DocumentDateMigration, TextPresenceMigration, TrashMigration, FilingMigration,
+            StructuredMetadataMigration, ArchiveSerialMigration];
+
+    internal static long SchemaVersion => Migrations.Length;
 
     private readonly string _connectionString;
 
@@ -118,11 +121,12 @@ internal sealed partial class LibraryCatalog
 
     internal long Upsert(string relativePath, string title, PdfText text, FileVersion version,
         byte[] pdfFingerprint, byte[]? sourceFingerprint = null, OcrCopySource? ocrCopySource = null,
-        IReadOnlyList<long>? metadataSourceIds = null, OcrLanguage? recognizedLanguage = null)
+        IReadOnlyList<long>? metadataSourceIds = null, OcrLanguage? recognizedLanguage = null, MigrationWrite? migration = null)
     {
         metadataSourceIds ??= ocrCopySource is { } origin ? [origin.DocumentId] : null;
         using var connection = Connect();
-        using var transaction = metadataSourceIds is { Count: > 0 } || recognizedLanguage.HasValue ? connection.BeginTransaction() : null;
+        using var transaction = metadataSourceIds is { Count: > 0 } || recognizedLanguage.HasValue || migration is not null
+            ? connection.BeginTransaction() : null;
         using var command = connection.CreateCommand();
         command.Transaction = transaction;
         string initialDocumentDay = "NULL";
@@ -179,6 +183,7 @@ internal sealed partial class LibraryCatalog
             command.Parameters.AddWithValue("$language", language.ToString());
             command.ExecuteNonQuery();
         }
+        if (migration is not null) WriteMigratedMetadata(connection, transaction!, documentId, migration, isNew: true);
         transaction?.Commit();
         return documentId;
     }

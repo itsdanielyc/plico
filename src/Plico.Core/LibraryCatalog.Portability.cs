@@ -6,7 +6,8 @@ internal enum PortableDocumentState { Present, Missing, Trashed }
 
 internal sealed record PortableDocumentMetadata(long Id, string Title, string RelativePath, PortableDocumentState State,
     DateTimeOffset AddedAt, DateOnly? DocumentDate, bool Reviewed, bool HasText, int PageCount, IReadOnlyList<string> Tags,
-    long FileBytes, string? Sha256, DateTimeOffset? TrashedAt, string? OcrLanguage);
+    long FileBytes, string? Sha256, DateTimeOffset? TrashedAt, string? OcrLanguage, long? ArchiveSerialNumber,
+    DocumentMetadata Metadata);
 
 internal sealed partial class LibraryCatalog
 {
@@ -17,10 +18,13 @@ internal sealed partial class LibraryCatalog
         command.CommandText = $"""
             SELECT d.id, COALESCE(d.display_title, d.title), COALESCE(trash.original_path, d.relative_path), d.is_present,
                    d.added_at, d.document_day, d.reviewed, d.has_text, d.page_count, {FilingTagsSql},
-                   d.file_bytes, d.pdf_sha256, trash.trashed_at, COALESCE(language.language, d.ocr_copy_language)
+                   d.file_bytes, d.pdf_sha256, trash.trashed_at, COALESCE(language.language, d.ocr_copy_language),
+                   serial.asn, {StructuredMetadataProjection}
             FROM documents d
             LEFT JOIN document_trash trash ON trash.document_id = d.id
             LEFT JOIN document_ocr_languages language ON language.document_id = d.id
+            LEFT JOIN document_asns serial ON serial.document_id = d.id
+            LEFT JOIN document_metadata m ON m.document_id = d.id
             ORDER BY d.id;
             """;
         using var rows = command.ExecuteReader();
@@ -40,7 +44,8 @@ internal sealed partial class LibraryCatalog
                 JsonSerializer.Deserialize<string[]>(rows.GetString(9)) ?? [], rows.GetInt64(10),
                 rows.IsDBNull(11) ? null : Convert.ToHexString(rows.GetFieldValue<byte[]>(11)),
                 rows.IsDBNull(12) ? null : DateTimeOffset.FromUnixTimeSeconds(rows.GetInt64(12)),
-                rows.IsDBNull(13) ? null : rows.GetString(13));
+                rows.IsDBNull(13) ? null : rows.GetString(13),
+                rows.IsDBNull(14) ? null : rows.GetInt64(14), ReadStructuredMetadata(rows, 15));
         }
     }
 

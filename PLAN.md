@@ -101,3 +101,14 @@ The v0.17.0 commit `ef4bdb6` passed source, archive, and published download chec
 ## Release scope
 
 Ruling for v0.17.0. Implement the brief’s first nine ranked items together on the six current platforms. Add managed PDFsharp for AES protection and retain the existing native dependencies. This covers offline capture, review, retrieval and export. Later work includes structured fields and reminders, separator sheets and manual duplex, versions, additional drivers, household export, phone intake, migration, formats, OCR engines, similarity, optional language models, PDF editing and desktop polish. Those slices require their own storage, driver or platform decisions.
+
+## Structured metadata, reminders and local search
+
+| Brief item | Done when | Evidence |
+| --- | --- | --- |
+| 10 | A library can retain typed fields, contacts and aliases, document types, notes, and nested coloured tags across edit, reopen, and export. Migration adapters share the same typed metadata boundary. | L1 validation, L3 catalog and import tests, L4 editing, L6 native metadata journey |
+| 11 | Documents carry due, renewal, expiry and keep-until dates. The desktop shows reminders and exports calendar events with alarms. | L1 date and calendar tests, L3 persistence, L6 native reminder journey |
+| 20 | Related documents are available with no configured model. Semantic queries rank documents through opt-in local embeddings and keep pace with changes to the index. | L1 ranking, L3 fixture model, L6 native retrieval |
+| 21 | Users can opt into a loopback model to review filing suggestions and ask questions using selected library text. Applying suggestions is explicit and reversible. | L1 validation, L3 protocol and privacy tests, L6 native review and chat |
+
+The intake lane owns format adapters, scanner and phone capture. The PDF and desktop lane owns versioned editing, binder export, PDF tools and desktop polish. The coordinator registers catalog migrations and integrates shared call sites and release evidence. [Capture and intake handoff](docs/handoff/capture-intake.md)
