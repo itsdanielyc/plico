@@ -113,7 +113,25 @@ public sealed partial class InboxLibrary : IDisposable
     public string ReadIndexedText(long documentId) => _catalog.ReadIndexedText(documentId);
 
     /// <summary>Returns the first one-based page whose embedded text matches the text terms in the query, or null.</summary>
-    public int? FindFirstMatchingPage(DocumentSummary document, string query, CancellationToken cancellationToken = default)
+    public int? FindFirstMatchingPage(DocumentSummary document, string query, CancellationToken cancellationToken = default) =>
+        FindMatchingPage(document, query, 0, PageMatchDirection.Forward, cancellationToken);
+
+    /// <summary>Returns the closest matching page strictly before or after the one-based anchor, or null when none remains.</summary>
+    public int? FindAdjacentMatchingPage(DocumentSummary document, string query, int anchorPage, PageMatchDirection direction,
+        CancellationToken cancellationToken = default)
+    {
+        ArgumentNullException.ThrowIfNull(document);
+        ArgumentOutOfRangeException.ThrowIfLessThan(anchorPage, 1);
+        ArgumentOutOfRangeException.ThrowIfGreaterThan(anchorPage, document.PageCount);
+        if (direction is not (PageMatchDirection.Forward or PageMatchDirection.Backward))
+        {
+            throw new ArgumentOutOfRangeException(nameof(direction));
+        }
+        return FindMatchingPage(document, query, anchorPage, direction, cancellationToken);
+    }
+
+    private int? FindMatchingPage(DocumentSummary document, string query, int anchorPage, PageMatchDirection direction,
+        CancellationToken cancellationToken)
     {
         cancellationToken.ThrowIfCancellationRequested();
         var search = SearchTerms.Compile(query);
@@ -121,7 +139,7 @@ public sealed partial class InboxLibrary : IDisposable
 
         string path = ResolvePdf(document);
         var version = FileVersion.Read(path);
-        int? page = PdfPageSearch.FindFirstMatch(path, search.FullTextExpression, cancellationToken);
+        int? page = PdfPageSearch.FindMatch(path, search.FullTextExpression, anchorPage, direction, cancellationToken);
         cancellationToken.ThrowIfCancellationRequested();
         EnsureCurrentFile(path, version);
         return page;

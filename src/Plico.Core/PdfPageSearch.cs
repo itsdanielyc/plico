@@ -15,10 +15,17 @@ internal static class PdfPageSearch
         SELECT EXISTS (SELECT rowid FROM page_search WHERE page_search MATCH $expression);
         """;
 
-    // After text extraction, expected O(processed text) time and O(largest page text) scratch space.
-    internal static int? FindFirstMatch(string path, string expression, CancellationToken cancellationToken) =>
+    // O(visited pages + their processed text) time and O(largest page text) scratch space, plus PDF parser state.
+    internal static int? FindMatch(string path, string expression, int anchorPage, PageMatchDirection direction,
+        CancellationToken cancellationToken) =>
         DocumentProcessor.WithReadablePdf<int?>(path, pdf =>
         {
+            bool forward = direction == PageMatchDirection.Forward;
+            int pageCount = pdf.NumberOfPages;
+            if (forward ? anchorPage >= pageCount : anchorPage <= 1) return null;
+            int step = forward ? 1 : -1;
+            int firstPage = forward ? anchorPage + step : Math.Min(anchorPage + step, pageCount);
+
             using var connection = new SqliteConnection("Data Source=:memory:;Pooling=False");
             connection.Open();
             using (var create = connection.CreateCommand())
@@ -33,15 +40,15 @@ internal static class PdfPageSearch
             match.Parameters.AddWithValue("$expression", expression);
             match.Prepare();
 
-            foreach (var page in pdf.GetPages())
+            for (int page = firstPage; page >= 1 && page <= pageCount; page += step)
             {
                 cancellationToken.ThrowIfCancellationRequested();
-                string text = DocumentProcessor.ReadPageText(page);
+                string text = DocumentProcessor.ReadPageText(pdf.GetPage(page));
                 if (text.Length == 0) continue;
                 body.Value = text;
                 var found = (long)match.ExecuteScalar()! == 1;
                 cancellationToken.ThrowIfCancellationRequested();
-                if (found) return page.Number;
+                if (found) return page;
             }
             return null;
         });

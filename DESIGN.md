@@ -32,7 +32,7 @@ Both tag fields suggest up to eight names from the current library. The single-d
 
 The preview shows the whole page by default. **Fit width** fills the available reading width and allows vertical scrolling. Page navigation stays visible and starts each new page at the top.
 
-**Go to match** sits beneath the preview header actions for multi-page text results. It opens the first page that matches the text terms and reports its page number in the status bar.
+**Go to match** sits beneath the preview header actions for multi-page text results. After the first jump, **Previous match** and **Next match** move from the page currently in view. The status bar reports the page number or when there are no more matches in that direction.
 
 **Copy text** sits beside the page controls when the selected PDF has searchable text. The status bar confirms a successful copy.
 

@@ -269,11 +269,17 @@
                                                     IsEnabled="{Binding CanWork}" />
                                             <Button Classes="secondary" Content="Open PDF" Command="{Binding OpenPdfCommand}" />
                                         </StackPanel>
-                                        <Button x:Name="GoToMatchButton" Classes="secondary" Content="Go to match"
-                                                HorizontalAlignment="Right" Padding="8,3" Command="{Binding GoToMatchCommand}"
-                                                IsVisible="{Binding HasPageMatchAction}" IsEnabled="{Binding CanWork}"
-                                                AutomationProperties.Name="Go to matching page"
-                                                ToolTip.Tip="Go to the first page that matches the text terms" />
+                                        <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" Spacing="5"
+                                                    IsVisible="{Binding HasPageMatchAction}">
+                                            <Button x:Name="PreviousMatchButton" Classes="secondary" Content="Previous match"
+                                                    Padding="8,3" Command="{Binding PreviousMatchCommand}"
+                                                    IsVisible="{Binding PageMatchNavigationActive}" IsEnabled="{Binding CanWork}"
+                                                    ToolTip.Tip="Go to the previous page that matches the text terms" />
+                                            <Button x:Name="GoToMatchButton" Classes="secondary" Content="{Binding PageMatchActionLabel}"
+                                                    Padding="8,3" Command="{Binding GoToMatchCommand}"
+                                                    IsVisible="{Binding HasPageMatchAction}" IsEnabled="{Binding CanWork}"
+                                                    ToolTip.Tip="{Binding PageMatchActionHelp}" />
+                                        </StackPanel>
                                     </StackPanel>
                                 </Grid>
                                 <Border Grid.Row="1" Background="#EAEFE6" CornerRadius="8" Padding="12" ClipToBounds="True">

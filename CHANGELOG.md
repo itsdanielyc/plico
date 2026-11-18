@@ -17,6 +17,7 @@
 - Import TIFF scans as searchable PDFs, including multi-page files.
 - Reuse existing tags with suggestions when tagging one PDF or a selection.
 - Recover new and updated scans after watched-folder notifications are interrupted.
+- Move between matching pages in a PDF with **Previous match** and **Next match**.
 
 ## [0.15.0] - 2026-11-18
 

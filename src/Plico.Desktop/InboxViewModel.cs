@@ -445,7 +445,11 @@ internal sealed partial class InboxViewModel : ObservableObject, IDisposable
             _pageNumber = 1;
             reloadPreview = true;
         }
-        if (reloadPreview) RequestPreview();
+        if (reloadPreview)
+        {
+            ResetPageMatchNavigation();
+            RequestPreview();
+        }
         OnPropertyChanged(nameof(HasSelection));
         OnPropertyChanged(nameof(ReviewAction));
         OnPropertyChanged(nameof(HasNoSearchableText));
@@ -458,6 +462,7 @@ internal sealed partial class InboxViewModel : ObservableObject, IDisposable
     private void ShowPreviewPage(int pageNumber)
     {
         if (SelectedDocument is not { } document || pageNumber < 1 || pageNumber > document.PageCount || pageNumber == _pageNumber) return;
+        CancelPageMatchSearch();
         _pageNumber = pageNumber;
         NotifyPageChanged();
         RequestPreview();

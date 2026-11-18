@@ -62,6 +62,83 @@ public sealed partial class InboxWindowTests
     }
 
     [AvaloniaFact]
+    public async Task PageMatchNavigationMovesInBothDirectionsAndResetsForANewQuery()
+    {
+        const string ledgerQuery = "\"ledger renewal\"";
+        using var temporary = new TemporaryLibrary();
+        using (var library = InboxLibrary.Open(temporary.Path))
+        {
+            string fixture = Path.Combine(AppContext.BaseDirectory, "fixtures", "Match Ledger.pdf");
+            var token = TestContext.Current.CancellationToken;
+            var document = await library.ImportAsync(fixture, token);
+            Assert.Equal(5, document.PageCount);
+            File.Copy(fixture, Path.Combine(library.PdfDirectory, "Other Ledger.pdf"));
+            Assert.Equal(1, library.Refresh(token).Indexed);
+        }
+
+        using var model = new InboxViewModel(new FixtureDialogs());
+        model.InitializeLibrary(() => temporary.Path);
+        var window = new MainWindow { DataContext = model };
+        window.Show();
+        try
+        {
+            await WaitForPreviewAsync(model);
+            var search = Assert.IsType<TextBox>(window.FindControl<TextBox>("SearchBox"));
+            var next = Assert.IsType<Button>(window.FindControl<Button>("GoToMatchButton"));
+            search.SetCurrentValue(TextBox.TextProperty, ledgerQuery);
+            await WaitForAsync(() => next.IsVisible && next.IsEnabled);
+            await ExecuteMatchButtonAsync(model, next);
+            Assert.Equal("2 / 5", model.PageLabel);
+
+            await ExecuteMatchButtonAsync(model, next);
+            Assert.Equal("4 / 5", model.PageLabel);
+            Assert.Equal("Next match", next.Content);
+            await ExecuteMatchButtonAsync(model, next);
+            Assert.Equal("No later matching pages.", model.Status);
+            Assert.Equal("4 / 5", model.PageLabel);
+
+            var previous = Assert.IsType<Button>(window.FindControl<Button>("PreviousMatchButton"));
+            Assert.True(previous.IsVisible);
+            model.NextPageCommand.Execute(null);
+            await WaitForPreviewAsync(model);
+            Assert.Equal("5 / 5", model.PageLabel);
+            await ExecuteMatchButtonAsync(model, previous);
+            Assert.Equal("4 / 5", model.PageLabel);
+            await ExecuteMatchButtonAsync(model, previous);
+            Assert.Equal("2 / 5", model.PageLabel);
+            await ExecuteMatchButtonAsync(model, previous);
+            Assert.Equal("No earlier matching pages.", model.Status);
+
+            var documents = Assert.IsType<ListBox>(window.FindControl<ListBox>("DocumentList"));
+            var other = Assert.Single(model.Documents, document => document.Id != model.SelectedDocument?.Id);
+            documents.SetCurrentValue(ListBox.SelectedItemProperty, other);
+            await WaitForPreviewAsync(model);
+            Assert.False(previous.IsVisible);
+            Assert.Equal("Go to match", next.Content);
+            await ExecuteMatchButtonAsync(model, next);
+            Assert.Equal("2 / 5", model.PageLabel);
+
+            search.SetCurrentValue(TextBox.TextProperty, "Appendix");
+            Assert.False(previous.IsVisible);
+            await WaitForAsync(() => next.IsVisible && next.IsEnabled);
+            Assert.Equal("Go to match", next.Content);
+            await ExecuteMatchButtonAsync(model, next);
+            Assert.Equal("5 / 5", model.PageLabel);
+            Assert.NotNull(model.Preview);
+        }
+        finally
+        {
+            window.Close();
+        }
+    }
+
+    private static async Task ExecuteMatchButtonAsync(InboxViewModel model, Button button)
+    {
+        await Assert.IsAssignableFrom<IAsyncRelayCommand>(button.Command).ExecuteAsync(button.CommandParameter);
+        await WaitForPreviewAsync(model);
+    }
+
+    [AvaloniaFact]
     public async Task NewQueryCancelsTheBackgroundSearchAndOnlyPublishesItsOwnResults()
     {
         const string firstTitle = "Plumbing invoice";

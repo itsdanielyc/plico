@@ -72,6 +72,7 @@ internal static class NativeVerification
             await VerifySearchableCopyAsync(window, model, fixture, evidenceDirectory);
             await VerifyTiffImportAsync(window, model, dialogs, fixture, evidenceDirectory);
             await VerifyTagSuggestionAsync(window, model, evidenceDirectory);
+            await VerifyAdjacentMatchesAsync(window, model, dialogs, fixture, evidenceDirectory);
             await VerifyScannerDialogAsync(window, evidenceDirectory);
 
             File.WriteAllText(Path.Combine(evidenceDirectory, "passed.txt"),
@@ -242,6 +243,34 @@ internal static class NativeVerification
         await ((IAsyncRelayCommand)jump.Command!).ExecuteAsync(jump.CommandParameter);
         await UntilAsync(() => model.PageLabel == "2 / 2" && model.Preview is not null, () => model.Status);
         await CaptureAsync(window, directory, "tiff-import.png");
+    }
+
+    private static async Task VerifyAdjacentMatchesAsync(MainWindow window, InboxViewModel model, FixtureDialogs dialogs,
+        string fixture, string directory)
+    {
+        const string query = "\"ledger renewal\"";
+        dialogs.SelectedFiles = [Path.Combine(Path.GetDirectoryName(fixture)!, "Match Ledger.pdf")];
+        await ((IAsyncRelayCommand)Control<Button>(window, "AddFilesButton").Command!).ExecuteAsync(null);
+        var search = Control<TextBox>(window, "SearchBox");
+        var next = Control<Button>(window, "GoToMatchButton");
+        var previous = Control<Button>(window, "PreviousMatchButton");
+        var nextMatch = (IAsyncRelayCommand)next.Command!;
+        var previousMatch = (IAsyncRelayCommand)previous.Command!;
+        search.SetCurrentValue(TextBox.TextProperty, query);
+        await UntilAsync(() => model.SelectedDocument?.Title == "Match Ledger" && next.IsVisible && next.IsEnabled,
+            () => model.Status);
+
+        await nextMatch.ExecuteAsync(next.CommandParameter);
+        Require(model.PageLabel == "2 / 5" && previous.IsVisible && Equals(next.Content, "Next match"),
+            "The first match did not open page two or offer navigation.");
+        await UntilAsync(() => model.Preview is not null, () => model.PreviewMessage);
+        await nextMatch.ExecuteAsync(next.CommandParameter);
+        await UntilAsync(() => model.PageLabel == "4 / 5" && model.Preview is not null, () => model.Status);
+        Require(model.Query == query && model.Documents.Count == 1, "Match navigation changed the search results.");
+        await CaptureAsync(window, directory, "next-match.png");
+
+        await previousMatch.ExecuteAsync(previous.CommandParameter);
+        await UntilAsync(() => model.PageLabel == "2 / 5" && model.Preview is not null, () => model.Status);
     }
 
     private static async Task VerifyTagSuggestionAsync(MainWindow window, InboxViewModel model, string directory)

@@ -103,6 +103,27 @@ public sealed partial class LibraryTests
     }
 
     [Fact]
+    public async Task AdjacentMatchingPagesExcludeTheAnchorAndStopAtTheDocumentEnds()
+    {
+        const string phrase = "\"ledger renewal\"";
+        using var temporary = new TemporaryLibrary();
+        using var library = InboxLibrary.Open(temporary.Path);
+        var token = TestContext.Current.CancellationToken;
+        var document = await library.ImportAsync(Fixture("Match Ledger.pdf"), token);
+
+        Assert.Equal(2, library.FindFirstMatchingPage(document, phrase, token));
+        Assert.Equal(4, library.FindAdjacentMatchingPage(document, phrase, 2, PageMatchDirection.Forward, token));
+        Assert.Equal(2, library.FindAdjacentMatchingPage(document, phrase, 4, PageMatchDirection.Backward, token));
+        Assert.Null(library.FindAdjacentMatchingPage(document, phrase, 4, PageMatchDirection.Forward, token));
+        Assert.Null(library.FindAdjacentMatchingPage(document, phrase, 2, PageMatchDirection.Backward, token));
+        Assert.Null(library.FindAdjacentMatchingPage(document, "tag:ledger", 2, PageMatchDirection.Forward, token));
+        Assert.Throws<ArgumentOutOfRangeException>(() =>
+            library.FindAdjacentMatchingPage(document, phrase, 0, PageMatchDirection.Forward, token));
+        Assert.Throws<OperationCanceledException>(() =>
+            library.FindAdjacentMatchingPage(document, phrase, 2, PageMatchDirection.Forward, new CancellationToken(true)));
+    }
+
+    [Fact]
     public async Task MalformedPdfDoesNotPublishAFileOrRow()
     {
         using var temporary = new TemporaryLibrary();

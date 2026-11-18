@@ -1,4 +1,5 @@
 using Avalonia.Threading;
+using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using Plico.Core;
 
@@ -11,22 +12,59 @@ internal sealed partial class InboxViewModel
     private readonly SemaphoreSlim _searchSlot = new(initialCount: 1, maxCount: 1);
     private readonly Func<InboxLibrary, DocumentFilter, CancellationToken, DocumentPage> _searchDocuments;
     private CancellationTokenSource? _searchCancellation;
+    private CancellationTokenSource? _pageMatchCancellation;
     private string? _appliedQuery;
+
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(PageMatchActionLabel))]
+    [NotifyPropertyChangedFor(nameof(PageMatchActionHelp))]
+    private bool _pageMatchNavigationActive;
 
     public bool HasPageMatchAction => !string.IsNullOrWhiteSpace(Query) && Query == _appliedQuery &&
         SelectedDocument is { HasText: true, PageCount: > 1, Match.Length: > 0 };
+    public string PageMatchActionLabel => PageMatchNavigationActive ? "Next match" : "Go to match";
+    public string PageMatchActionHelp => PageMatchNavigationActive
+        ? "Go to the next page that matches the text terms"
+        : "Go to the first page that matches the text terms";
 
     [RelayCommand]
-    private Task GoToMatchAsync()
+    private Task GoToMatchAsync() => SeekPageMatchAsync(PageMatchDirection.Forward);
+
+    [RelayCommand]
+    private Task PreviousMatchAsync() => SeekPageMatchAsync(PageMatchDirection.Backward);
+
+    private Task SeekPageMatchAsync(PageMatchDirection direction)
     {
         if (!HasPageMatchAction || SelectedDocument is not { } document) return Task.CompletedTask;
+        bool findFirst = !PageMatchNavigationActive;
+        if (findFirst && direction == PageMatchDirection.Backward) return Task.CompletedTask;
         string query = Query;
         int startingPage = _pageNumber;
         return RunOperationAsync("Finding a matching page…", async token =>
         {
             var library = RequireLibrary();
-            int? match = await Task.Run(() => library.FindFirstMatchingPage(document, query, token), token);
-            token.ThrowIfCancellationRequested();
+            using var source = CancellationTokenSource.CreateLinkedTokenSource(token);
+            _pageMatchCancellation = source;
+            int? match;
+            try
+            {
+                var searchToken = source.Token;
+                match = await Task.Run(() => findFirst
+                    ? library.FindFirstMatchingPage(document, query, searchToken)
+                    : library.FindAdjacentMatchingPage(document, query, startingPage, direction, searchToken), searchToken);
+                searchToken.ThrowIfCancellationRequested();
+            }
+            catch (Exception) when (source.IsCancellationRequested)
+            {
+                token.ThrowIfCancellationRequested();
+                Status = "Search or preview changed.";
+                return;
+            }
+            finally
+            {
+                _pageMatchCancellation = null;
+            }
+
             if (!ReferenceEquals(_library, library) || Query != query || SelectedDocument?.Id != document.Id ||
                 _pageNumber != startingPage)
             {
@@ -35,7 +73,12 @@ internal sealed partial class InboxViewModel
             }
             if (match is not int page)
             {
-                Status = "0 matching pages.";
+                Status = (findFirst, direction) switch
+                {
+                    (true, _) => "0 matching pages.",
+                    (false, PageMatchDirection.Forward) => "No later matching pages.",
+                    _ => "No earlier matching pages."
+                };
                 return;
             }
             if (page > document.PageCount)
@@ -44,12 +87,14 @@ internal sealed partial class InboxViewModel
                 return;
             }
             ShowPreviewPage(page);
+            PageMatchNavigationActive = true;
             Status = $"Match on page {page}.";
         });
     }
 
     partial void OnQueryChanged(string value)
     {
+        ResetPageMatchNavigation();
         CancelTypedSearch();
         OnPropertyChanged(nameof(HasPageMatchAction));
         if (_library is null) return;
@@ -57,6 +102,14 @@ internal sealed partial class InboxViewModel
         ResultCount = "Searching…";
         _searchTimer.Start();
     }
+
+    private void ResetPageMatchNavigation()
+    {
+        CancelPageMatchSearch();
+        PageMatchNavigationActive = false;
+    }
+
+    private void CancelPageMatchSearch() => _pageMatchCancellation?.Cancel();
 
     partial void OnSortOptionChanged(SortChoice? value) => LoadResults();
 
@@ -148,6 +201,7 @@ internal sealed partial class InboxViewModel
     private void ReportResultFailure(Exception error)
     {
         _appliedQuery = null;
+        ResetPageMatchNavigation();
         OnPropertyChanged(nameof(HasPageMatchAction));
         HasMore = false;
         ResultCount = "Results unavailable";
