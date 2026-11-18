@@ -6,13 +6,14 @@ namespace Plico.Desktop;
 
 internal static partial class NativeVerification
 {
+    private const string PagingFixtureFolder = "Paging check";
+
     private static async Task VerifyBatchTagPagingAsync(Window window, InboxViewModel model, string fixture, string evidenceDirectory)
     {
-        const string folderName = "Paging check";
         const string appliedTag = "Page selection";
         const int extraDocuments = 2;
         const int documentCount = InboxLibrary.DefaultResultPageSize + extraDocuments;
-        string folder = Directory.CreateDirectory(Path.Combine(model.LibraryPath, "PDFs", folderName)).FullName;
+        string folder = Directory.CreateDirectory(Path.Combine(model.LibraryPath, "PDFs", PagingFixtureFolder)).FullName;
         string source = Path.Combine(Path.GetDirectoryName(fixture)!, "Lease Renewal.pdf");
         for (int index = 1; index <= documentCount; index++)
         {
@@ -20,9 +21,9 @@ internal static partial class NativeVerification
         }
 
         await model.RefreshIndexCommand.ExecuteAsync(null);
-        Control<TextBox>(window, "SearchBox").SetCurrentValue(TextBox.TextProperty, $"folder:\"{folderName}\"");
+        Control<TextBox>(window, "SearchBox").SetCurrentValue(TextBox.TextProperty, $"folder:\"{PagingFixtureFolder}\"");
         await UntilAsync(() => model.HasMore && model.Documents.Count == InboxLibrary.DefaultResultPageSize &&
-            model.Documents.All(document => document.RelativePath.StartsWith($"{folderName}/", StringComparison.Ordinal)), () => model.Status);
+            model.Documents.All(document => document.RelativePath.StartsWith($"{PagingFixtureFolder}/", StringComparison.Ordinal)), () => model.Status);
         model.LoadMoreCommand.Execute(null);
         Require(model.Documents.Count == documentCount && !model.HasMore, "The native result list did not load its second page.");
 

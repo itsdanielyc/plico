@@ -40,6 +40,8 @@ Use `tag:tax` to require an exact tag. Use `tag:tax tag:"Home insurance" renewal
 
 Use `status:inbox` to find PDFs waiting for review and `status:reviewed` to find reviewed PDFs. Save a query such as `renewal tag:property status:inbox` to return to a review queue that updates as you mark documents reviewed.
 
+When a review removes the open PDF from the current results, Plico opens the next match or the previous one at the end. Single and batch review keep the loaded result pages in view.
+
 Choose **Without text** to find PDFs with no searchable text. Use `text:missing` or `text:present` with other filters. A query such as `text:missing tag:tax folder:Filed` finds scans you can select together for OCR.
 
 Use `added:2026`, `added:2026-11`, or `added:2026-11-18` to filter by year, month, or day added. The date follows the local date shown beside each document. Combine filters and text with a query such as `receipt tag:tax added:2026-11`.

@@ -60,20 +60,76 @@ internal sealed partial class InboxViewModel
     }
 
     [RelayCommand]
+    private void ToggleReview()
+    {
+        if (!CanWork || SelectedDocument is not { } document) return;
+        var position = CaptureReviewPosition(document.Id);
+        bool reviewed = !document.Reviewed;
+        try
+        {
+            RequireLibrary().SetReviewed(document.Id, reviewed);
+            RefreshInboxCount();
+            LoadResults(document.Id, retainLoadedResults: true, reviewPosition: position);
+            Status = reviewed ? "Marked as reviewed." : "Returned to inbox.";
+        }
+        catch (Exception error)
+        {
+            Status = error.Message;
+        }
+    }
+
+    [RelayCommand]
     private Task ReviewSelectedAsync()
     {
         if (!HasBatchSelection) return Task.CompletedTask;
         var selectedIds = _batchSelection.Select(document => document.Id).ToArray();
         bool reviewed = !AllSelectedAreReviewed;
+        var position = CaptureReviewPosition(SelectedDocument?.Id ?? selectedIds[0]);
         return RunOperationAsync("Updating the selected documents…", async token =>
         {
             var library = RequireLibrary();
             await Task.Run(() => library.SetReviewedDocuments(selectedIds, reviewed), token);
             RefreshInboxCount();
-            LoadResults();
+            LoadResults(retainLoadedResults: true, reviewPosition: position);
             var count = DocumentCount(selectedIds.Length);
             Status = reviewed ? $"{count} marked reviewed." : $"{count} returned to inbox.";
         });
+    }
+
+    private sealed record ReviewPosition(DocumentFilter Filter, IReadOnlyList<DocumentSummary> PreviousResults, int Index);
+
+    private ReviewPosition? CaptureReviewPosition(long documentId)
+    {
+        if (_appliedQuery != Query) return null;
+        for (int index = 0; index < Documents.Count; index++)
+        {
+            if (Documents[index].Id == documentId) return new ReviewPosition(CurrentFilter(), Documents, index);
+        }
+        return null;
+    }
+
+    // O(n + m) time for n previous rows and m current rows. O(m) space when the focused row leaves the view.
+    private static long? ChooseReviewResult(IReadOnlyList<DocumentSummary> documents, ReviewPosition position)
+    {
+        if (documents.Count == 0) return null;
+        var previous = position.PreviousResults;
+        long focused = previous[position.Index].Id;
+        if (documents.Any(document => document.Id == focused)) return focused;
+
+        var currentIndices = new Dictionary<long, int>(documents.Count);
+        for (int index = 0; index < documents.Count; index++) currentIndices.Add(documents[index].Id, index);
+        for (int index = position.Index + 1; index < previous.Count; index++)
+        {
+            long candidate = previous[index].Id;
+            if (currentIndices.ContainsKey(candidate)) return candidate;
+        }
+        for (int index = position.Index - 1; index >= 0; index--)
+        {
+            if (!currentIndices.TryGetValue(previous[index].Id, out int preceding)) continue;
+            // A newly loaded row can now follow the last surviving row from the previous page.
+            return documents[Math.Min(preceding + 1, documents.Count - 1)].Id;
+        }
+        return null;
     }
 
     internal Task ApplySelectedTagAsync()

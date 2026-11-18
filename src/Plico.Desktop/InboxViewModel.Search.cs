@@ -196,7 +196,8 @@ internal sealed partial class InboxViewModel
         }
     }
 
-    private void LoadResults(long? preferredId = null, bool append = false, bool reloadPreview = false, bool retainLoadedResults = false)
+    private void LoadResults(long? preferredId = null, bool append = false, bool reloadPreview = false,
+        bool retainLoadedResults = false, ReviewPosition? reviewPosition = null)
     {
         CancelTypedSearch();
         var filter = CurrentFilter(append ? Documents.Count : 0);
@@ -207,6 +208,10 @@ internal sealed partial class InboxViewModel
         {
             bool reloadExpandedResults = retainLoadedResults && !append && HasExpandedResults && _appliedQuery == filter.Query;
             var page = reloadExpandedResults ? library.Find(filter, Documents.Count, CancellationToken.None) : library.Find(filter);
+            if (reviewPosition is { } position && position.Filter == filter)
+            {
+                preferredId = ChooseReviewResult(page.Items, position);
+            }
             ApplyResultPage(filter, page, preferredId, reloadPreview);
         }
         catch (Exception error)

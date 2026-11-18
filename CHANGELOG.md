@@ -52,6 +52,7 @@
 - Batch tag edits keep loaded result pages and reselect PDFs that still match the current filter.
 - Set a shared document date for selected PDFs or clear their dates in one action.
 - Export the previewed PDF directly to a folder and open its destination from the status bar.
+- Keep your place in a review queue and preserve loaded pages when a review removes results.
 
 ## [0.15.0] - 2026-11-18
 

@@ -25,6 +25,8 @@ JPEG intake reads the image origin with Skia. For a rotation or reflection, Plic
 
 Batch review and tagging update the selected IDs in one SQLite transaction. A row-count check preserves the selection's previous state if a document became unavailable. The desktop restores matching selections after the tag update.
 
+Review actions capture the active filter and focused position before updating the catalog. The desktop refreshes the loaded range and uses the prior document order to choose a surviving successor. A refreshed page can supply the next row when the focused document was at its boundary.
+
 Batch tag removal counts labels from the current selection. The catalog validates the selected IDs and deletes the chosen tag's matching document links in the same transaction. It reports how many assignments changed.
 
 Batch tag edits refresh an expanded search with one bounded catalog read. The limit is the number of rows already loaded, plus one row to determine whether another page exists. The desktop restores selected IDs present in the refreshed results and uses the resulting count for the next offset.

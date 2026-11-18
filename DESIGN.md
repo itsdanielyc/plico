@@ -30,6 +30,8 @@ The refresh status counts unavailable PDFs beside indexed and moved files. **Ind
 
 Batch review lives below the document list. The selection count identifies its scope. The preview keeps the individual document's review action.
 
+Reviewing from a filtered queue keeps the loaded result range. When the open PDF leaves that queue, the preview advances to the next match. At the end of the results it shows the preceding match.
+
 **Create OCR copies** uses the current language for the selected PDFs. The status line shows progress through the selection. **OCR results** opens the latest batch report with a result and file path for each source.
 
 **Move PDFs…** uses one folder choice for the selection. The status reports completed moves, files already in the folder, and the next file when a batch pauses.

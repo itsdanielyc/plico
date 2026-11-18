@@ -235,15 +235,6 @@ internal sealed partial class InboxViewModel : ObservableObject, IDisposable
         if (UpdateDocument((library, document) => library.AddTag(document.Id, TagInput), "Tag added.")) TagInput = "";
     }
 
-    [RelayCommand]
-    private void ToggleReview() => UpdateDocument(
-        (library, document) =>
-        {
-            library.SetReviewed(document.Id, !document.Reviewed);
-            RefreshInboxCount();
-        },
-        SelectedDocument?.Reviewed == true ? "Returned to inbox." : "Marked as reviewed.");
-
     [RelayCommand] private void PreviousPage() => NavigatePage(-1);
     [RelayCommand] private void NextPage() => NavigatePage(1);
 
