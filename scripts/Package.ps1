@@ -37,9 +37,17 @@ try {
         codesign --force --deep --sign - $bundle
         codesign --verify --deep --strict $bundle
         ditto -c -k --sequesterRsrc --keepParent $bundle (Join-Path $output "Plico-$version-$Runtime.zip")
+        $applicationsLink = Join-Path $stage.FullName 'Applications'
+        New-Item -ItemType SymbolicLink -Path $applicationsLink -Target '/Applications' | Out-Null
+        try {
+            hdiutil create -quiet -srcfolder $stage.FullName -volname Plico -fs HFS+ -format UDZO (Join-Path $output "Plico-$version-$Runtime.dmg")
+        } finally {
+            Remove-Item -LiteralPath $applicationsLink -Force
+        }
     } elseif ($Runtime -eq 'linux-x64') {
         Get-ChildItem -LiteralPath $publish -File -Recurse -Filter 'tesseract' | ForEach-Object { chmod +x $_.FullName }
         tar -czf (Join-Path $output "Plico-$version-$Runtime.tar.gz") -C $stage.FullName Plico
+        & (Join-Path $PSScriptRoot 'Package-LinuxDeb.ps1') -Payload $publish -OutputDirectory $output -Version $version
     } else {
         Compress-Archive -Force -LiteralPath $publish -DestinationPath (Join-Path $output "Plico-$version-$Runtime.zip")
         if ($WindowsInstallerCompiler) {

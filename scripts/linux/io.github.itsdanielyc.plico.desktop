@@ -1,0 +1,8 @@
+[Desktop Entry]
+Type=Application
+Name=Plico
+Comment=Scan, tag, and search your paperwork
+Exec=plico
+Icon=application-pdf
+Terminal=false
+Categories=Office;Utility;

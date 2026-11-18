@@ -38,7 +38,9 @@ jobs:
           mv "verified/archive-win-x64/Plico-$version-win-x64.zip" dist/
           mv "verified/archive-win-x64/Plico-$version-win-x64-setup.exe" dist/
           mv "verified/archive-osx-arm64/Plico-$version-osx-arm64.zip" dist/
+          mv "verified/archive-osx-arm64/Plico-$version-osx-arm64.dmg" dist/
           mv "verified/archive-linux-x64/Plico-$version-linux-x64.tar.gz" dist/
+          mv "verified/archive-linux-x64/Plico-$version-linux-x64.deb" dist/
           (cd dist && sha256sum Plico-* > SHA256SUMS)
           awk -v version="$version" 'index($0, "## [" version "]") == 1 {printing=1; next} /^## / && printing {exit} printing {print}' CHANGELOG.md > release-notes.md
           test -s release-notes.md
@@ -64,9 +66,9 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          - {runner: windows-2025, rid: win-x64, extension: zip}
-          - {runner: macos-26, rid: osx-arm64, extension: zip}
-          - {runner: ubuntu-24.04, rid: linux-x64, extension: tar.gz}
+          - {runner: windows-2025, rid: win-x64, extension: zip, installer_suffix: -setup.exe}
+          - {runner: macos-26, rid: osx-arm64, extension: zip, installer_suffix: .dmg}
+          - {runner: ubuntu-24.04, rid: linux-x64, extension: tar.gz, installer_suffix: .deb}
     steps:
       - uses: actions/checkout@v6
       - name: Download, check the checksum, and open the released copy
@@ -75,14 +77,13 @@ jobs:
           GH_TOKEN: ${{ github.token }}
           PLICO_RUNTIME: ${{ matrix.rid }}
           PLICO_EXTENSION: ${{ matrix.extension }}
+          PLICO_INSTALLER_SUFFIX: ${{ matrix.installer_suffix }}
         run: |
           $ErrorActionPreference = 'Stop'
           $PSNativeCommandUseErrorActionPreference = $true
           $version = $env:GITHUB_REF_NAME.TrimStart('v')
-          $name = "Plico-$version-$env:PLICO_RUNTIME.$env:PLICO_EXTENSION"
-          $setup = "Plico-$version-win-x64-setup.exe"
-          $names = @($name)
-          if ($IsWindows) { $names += $setup }
+          $prefix = "Plico-$version-$env:PLICO_RUNTIME"
+          $names = @("$prefix.$env:PLICO_EXTENSION", "$prefix$env:PLICO_INSTALLER_SUFFIX")
           $downloadArguments = @('release', 'download', $env:GITHUB_REF_NAME, '--pattern', 'SHA256SUMS', '--dir', 'incoming')
           foreach ($assetName in $names) { $downloadArguments += @('--pattern', $assetName) }
           gh @downloadArguments
@@ -93,10 +94,7 @@ jobs:
                   throw "$assetName failed its SHA-256 check."
               }
           }
-          ./scripts/Test-Archive.ps1 -Archive (Join-Path incoming $name) -EvidenceDirectory artifacts/release/extracted
-          if ($IsWindows) {
-              ./scripts/Test-WindowsInstaller.ps1 -Installer (Join-Path incoming $setup) -EvidenceDirectory artifacts/release/setup
-          }
+          ./scripts/Test-Distribution.ps1 -Directory incoming -EvidenceDirectory artifacts/release
       - uses: actions/upload-artifact@v7
         if: always()
         with:

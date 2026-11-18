@@ -1,0 +1,12 @@
+Package: plico
+Version: @VERSION@
+Section: utils
+Priority: optional
+Architecture: amd64
+Maintainer: Daniel <97357730+itsdanielyc@users.noreply.github.com>
+Depends: ca-certificates, libc6, libgcc-s1, libgssapi-krb5-2, libicu74, libssl3t64, libstdc++6, tzdata, zlib1g, libx11-6, libice6, libsm6, libfontconfig1
+Suggests: libsane1
+Homepage: https://github.com/itsdanielyc/plico
+Description: Local paperwork inbox
+ Scan or import documents, embed searchable text with local OCR,
+ and organize ordinary PDFs using tags and full-text search.

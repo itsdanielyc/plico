@@ -1,5 +1,11 @@
 # Changelog
 
+## [0.4.0] - 2026-11-18
+
+- Open the macOS disk image and drag Plico into Applications.
+- Install the Ubuntu package and find Plico in the desktop menu. Package removal preserves the library.
+- The release includes Windows setup, macOS disk image, and Ubuntu package downloads alongside the portable archives.
+
 ## [0.3.2] - 2026-11-18
 
 - Edit a document's title from its preview. Search recognizes the edited title, PDF filename, and document text.

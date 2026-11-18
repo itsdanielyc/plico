@@ -16,7 +16,7 @@
     "build": "dotnet build Plico.slnx -c Release",
     "e2e": "pwsh -File scripts/Test-Native.ps1 -Executable <path-to-Plico> -EvidenceDirectory artifacts/native",
     "package": "pwsh -File scripts/Package.ps1 -Runtime <runtime-identifier>",
-    "installers": "pwsh -File scripts/Test-Archive.ps1 -Archive <archive> -EvidenceDirectory artifacts/install"
+    "installers": "pwsh -File scripts/Test-Distribution.ps1 -Directory <bundle-directory> -EvidenceDirectory artifacts/install"
   },
   "paths": {
     "ui": "src/Plico.Desktop/",

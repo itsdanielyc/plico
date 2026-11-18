@@ -34,14 +34,7 @@ jobs:
           } else {
               ./scripts/Package.ps1 -Runtime $env:PLICO_RUNTIME
           }
-          $archives = @(Get-ChildItem -LiteralPath artifacts/archives -File | Where-Object Name -Match '\.(zip|tar\.gz)$')
-          if ($archives.Count -ne 1) { throw 'Expected one archive for this platform.' }
-          ./scripts/Test-Archive.ps1 -Archive $archives[0].FullName -EvidenceDirectory artifacts/install
-          if ($IsWindows) {
-              $installers = @(Get-ChildItem -LiteralPath artifacts/archives -File -Filter '*-setup.exe')
-              if ($installers.Count -ne 1) { throw 'Expected one Windows setup executable.' }
-              ./scripts/Test-WindowsInstaller.ps1 -Installer $installers[0].FullName -EvidenceDirectory artifacts/setup
-          }
+          ./scripts/Test-Distribution.ps1 -Directory artifacts/archives -EvidenceDirectory artifacts/install
       - uses: actions/upload-artifact@v7
         with:
           name: archive-${{ matrix.rid }}
@@ -53,7 +46,5 @@ jobs:
         if: always()
         with:
           name: install-${{ matrix.rid }}
-          path: |
-            artifacts/install/
-            artifacts/setup/
+          path: artifacts/install/
           if-no-files-found: ignore
