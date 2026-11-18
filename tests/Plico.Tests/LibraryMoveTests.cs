@@ -5,7 +5,7 @@ using Xunit;
 
 namespace Plico.Tests;
 
-public sealed class LibraryMoveTests
+public sealed partial class LibraryMoveTests
 {
     private static string Fixture => Path.Combine(AppContext.BaseDirectory, "fixtures", "Lease Renewal.pdf");
 

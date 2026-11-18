@@ -77,6 +77,9 @@ internal readonly record struct OcrCopySource(long DocumentId, OcrLanguage Langu
 internal readonly record struct CatalogFileReference(long Id, string RelativePath, FileVersion Version);
 internal sealed record IndexedPdf(long Id, string RelativePath, FileVersion Version, byte[]? Fingerprint);
 
+internal readonly record struct CatalogRelocation(long DocumentId, string SourceRelativePath, string DestinationRelativePath,
+    string Filename, FileVersion Version);
+
 internal readonly record struct FileVersion(long LastModifiedTicks, long Length, bool Present)
 {
     internal static FileVersion Read(string path)

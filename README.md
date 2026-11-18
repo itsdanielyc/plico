@@ -96,7 +96,7 @@ Plico v0.16.0 upgrades the library catalog to version 9. Use a build with versio
 
 To make a copy while Plico is open, choose **Back up library…** and select a destination outside the current library. Plico creates a dated folder with the PDFs and their catalog. **Open backup** shows that folder in the file manager. Choose the folder as a library to reopen it in Plico.
 
-Refresh also follows a uniquely identifiable PDF that you move or rename inside `PDFs/`. Its title, tags, and review state travel with its catalog record. For libraries from older Plico versions, run **Refresh index** once while the original paths are present to prepare them for moves.
+Refresh also follows a uniquely identifiable PDF that you move or rename inside `PDFs/`, including when two files exchange names. Its title, tags, date, and review state travel with its catalog record. For libraries from older Plico versions, run **Refresh index** once while the original paths are present to prepare them for moves.
 
 Plico recognizes exact source files already in the library and reports that it reused the existing document. Existing libraries upgrade automatically. For older entries, repeat detection can also compare an unchanged digital PDF to the file you import.
 

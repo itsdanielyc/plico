@@ -18,6 +18,8 @@ The preview shows the PDF path below its catalog title. The path opens the docum
 
 **Move to folder…** opens the system folder picker at the library’s PDF directory. After the move, the path and status show the new location and the preview keeps its current page.
 
+**Refresh index** follows uniquely matched files through external filename swaps. The result list and open preview follow the catalog record to its new path.
+
 Batch review lives below the document list. The selection count identifies its scope. The preview keeps the individual document's review action.
 
 **Create OCR copies** uses the current language for the selected PDFs. The status line shows progress through the selection. **OCR results** opens the latest batch report with a result and file path for each source.

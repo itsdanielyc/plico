@@ -33,7 +33,9 @@ Schema v2 indexes the SHA-256 digest of the source. Import computes it while cop
 
 Schema v3 stores an optional display title. The FTS title field includes the display title and filename when a title has been edited. Existing FTS entries remain valid through migration. A refresh updates file text while preserving user-assigned titles.
 
-Schema v4 stores the SHA-256 digest of the published PDF. Refresh pairs a unique absent catalog path with a unique new path when those PDF bytes match. It updates the path and filename search terms on the same catalog record. Matching duplicates are treated as separate files, and unchanged indexed files need only a file stamp check.
+Schema v4 stores the SHA-256 digest of the published PDF. Refresh matches unique digests from the catalog and the changed files. It updates the path and filename search terms on the same catalog record. Matching duplicates are treated as separate files, and unchanged indexed files need only a file stamp check.
+
+An occupied destination can join an external move when its previous document also has a matched destination. Refresh resolves chains and exchanges and checks the destination file stamps before writing. One SQLite transaction vacates the old keys and assigns the final paths. New files that fill a vacated path get their own records.
 
 Schema v5 records the source document and language of each new OCR copy. The source ID, source fingerprint, and language identify an existing copy for reuse. A refresh that indexes changed PDF contents clears their previous import and OCR-copy associations.
 
