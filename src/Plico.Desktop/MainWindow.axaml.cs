@@ -16,6 +16,10 @@ public sealed partial class MainWindow : Window
     {
         InitializeComponent();
         BatchTagBox.MaxLength = TagBox.MaxLength;
+        PreviewPage.PropertyChanged += (_, change) =>
+        {
+            if (change.Property == Image.SourceProperty) PreviewScroll.Offset = default;
+        };
     }
 
     protected override void OnKeyDown(KeyEventArgs e)

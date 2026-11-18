@@ -38,7 +38,12 @@ internal sealed partial class InboxViewModel : ObservableObject, IDisposable
     [ObservableProperty] private IReadOnlyList<DocumentSummary> _documents = [];
     [ObservableProperty] private IReadOnlyList<string> _tags = [];
     [ObservableProperty] private DocumentSummary? _selectedDocument;
-    [ObservableProperty] private Bitmap? _preview;
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(HasPreview))]
+    private Bitmap? _preview;
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(PreviewFitAction))]
+    private bool _fitPreviewWidth;
     [ObservableProperty] private bool _isBusy;
     [ObservableProperty] private bool _hasMore;
 
@@ -74,6 +79,8 @@ internal sealed partial class InboxViewModel : ObservableObject, IDisposable
     public bool CanGoBack => _pageNumber > 1;
     public bool CanGoForward => _pageNumber < SelectedDocument?.PageCount;
     public bool HasPreviewMessage => PreviewMessage.Length > 0;
+    public bool HasPreview => Preview is not null;
+    public string PreviewFitAction => FitPreviewWidth ? "Fit page" : "Fit width";
     public bool HasNoSearchableText => SelectedDocument is { HasText: false };
 
     internal void InitializeLibrary(Func<string> locate)
@@ -151,6 +158,7 @@ internal sealed partial class InboxViewModel : ObservableObject, IDisposable
     [RelayCommand] private void ShowInbox() => Navigate(inboxOnly: true);
     [RelayCommand] private void ShowAll() => Navigate(inboxOnly: false);
     [RelayCommand] private void LoadMore() => LoadResults(append: true);
+    [RelayCommand] private void TogglePreviewFit() => FitPreviewWidth = !FitPreviewWidth;
     [RelayCommand] private void OpenPdfFolder() => OpenPath(() => RequireLibrary().PdfDirectory);
 
     [RelayCommand]

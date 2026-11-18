@@ -1,5 +1,6 @@
 using Avalonia;
 using Avalonia.Controls;
+using Avalonia.Controls.Primitives;
 using Avalonia.Headless;
 using Avalonia.Headless.XUnit;
 using Avalonia.Interactivity;
@@ -21,6 +22,47 @@ public static class HeadlessApplication
 
 public sealed class InboxWindowTests
 {
+    [AvaloniaFact]
+    public async Task FitWidthEnablesVerticalScrollingWithoutRenderingThePageAgain()
+    {
+        using var temporary = new TemporaryLibrary();
+        using (var library = InboxLibrary.Open(temporary.Path))
+        {
+            BatchFixtures.AddTwoDocuments(library, TestContext.Current.CancellationToken);
+        }
+        using var model = new InboxViewModel(new FixtureDialogs());
+        model.InitializeLibrary(() => temporary.Path);
+        var window = new MainWindow { DataContext = model };
+        window.Show();
+        try
+        {
+            await WaitForPreviewAsync(model);
+            var preview = Assert.IsType<Avalonia.Media.Imaging.Bitmap>(model.Preview);
+            var fit = Assert.IsType<Button>(window.FindControl<Button>("PreviewFitButton"));
+            var scroll = Assert.IsType<ScrollViewer>(window.FindControl<ScrollViewer>("PreviewScroll"));
+            Assert.Equal(ScrollBarVisibility.Disabled, scroll.VerticalScrollBarVisibility);
+            Assert.Equal("Fit width", fit.Content);
+            Assert.True(fit.IsEnabled);
+            var toggle = Assert.IsAssignableFrom<System.Windows.Input.ICommand>(fit.Command);
+
+            toggle.Execute(fit.CommandParameter);
+
+            Assert.Equal("Fit page", fit.Content);
+            Assert.Equal(ScrollBarVisibility.Auto, scroll.VerticalScrollBarVisibility);
+            Assert.Equal(ScrollBarVisibility.Disabled, scroll.HorizontalScrollBarVisibility);
+            Assert.Same(preview, model.Preview);
+
+            toggle.Execute(fit.CommandParameter);
+
+            Assert.Equal(ScrollBarVisibility.Disabled, scroll.VerticalScrollBarVisibility);
+            Assert.Equal("Fit width", fit.Content);
+        }
+        finally
+        {
+            window.Close();
+        }
+    }
+
     [AvaloniaFact]
     public async Task SortControlReordersResultsAndKeepsTheOpenDocument()
     {

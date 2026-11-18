@@ -29,5 +29,6 @@
 | 24 | Open the latest backup | The backup result can be opened in the file manager from the active library, and switching libraries clears the action | L4, L6 | In progress |
 | 25 | Windows ARM64 | A Windows 11 ARM64 runner verifies the native app from ZIP and per-user setup, including OCR and uninstall | L0–L7 | In progress |
 | 26 | Sort document results | Choose newest added or title A–Z within the current filters. Ordering applies before paging and keeps the open PDF selected when it is visible. | L3, L4, L6 | In progress |
+| 27 | Fit width in the preview | Enlarge the current page to the width of the preview. Vertical scrolling exposes the rest of the page and returns to the top when the page changes. | L4, L6 | In progress |
 
 The initial release is followed by focused improvements and fresh evidence.

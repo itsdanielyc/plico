@@ -64,10 +64,11 @@ internal static class NativeVerification
             await VerifyOcrLanguageAsync(window, model, dialogs, fixture, evidenceDirectory);
             await VerifyLibraryBackupAsync(window, model, dialogs, evidenceDirectory);
             await VerifyImportErrorsAsync(window, model, dialogs, fixture, evidenceDirectory);
+            await VerifyPreviewFitAsync(window, model, evidenceDirectory);
             await VerifyScannerDialogAsync(window, evidenceDirectory);
 
             File.WriteAllText(Path.Combine(evidenceDirectory, "passed.txt"),
-                $"Verified {runtime}. Native window completed multilingual OCR, phrase search, result sorting, duplicate drop, folder watch, title edit, relocation, batch actions, library backup, and import retry.");
+                $"Verified {runtime}. Native window completed multilingual OCR, phrase search, result sorting, fit-width preview, duplicate drop, folder watch, title edit, relocation, batch actions, library backup, and import retry.");
             desktop.Shutdown(0);
         }
         catch (Exception error)
@@ -75,6 +76,32 @@ internal static class NativeVerification
             File.WriteAllText(Path.Combine(evidenceDirectory, "error.txt"), error.ToString());
             desktop.Shutdown(1);
         }
+    }
+
+    private static async Task VerifyPreviewFitAsync(MainWindow window, InboxViewModel model, string directory)
+    {
+        var fit = Control<Button>(window, "PreviewFitButton");
+        var scroll = Control<ScrollViewer>(window, "PreviewScroll");
+        var firstPage = model.Preview;
+        Require(firstPage is not null && model.CanGoForward && fit.IsEnabled,
+            "Fit width requires the first page of a multipage preview.");
+        Require(scroll.Extent.Height <= scroll.Viewport.Height, "The initial preview did not fit the whole page.");
+
+        fit.Command!.Execute(null);
+        await UntilAsync(() => scroll.Extent.Height > scroll.Viewport.Height,
+            () => $"The fit-width image did not extend vertically. Extent {scroll.Extent}, viewport {scroll.Viewport}.");
+        Require(ReferenceEquals(model.Preview, firstPage) && scroll.Extent.Width <= scroll.Viewport.Width,
+            "Fit width replaced the existing render or caused sideways scrolling.");
+        await CaptureAsync(window, directory, "preview-fit-width.png");
+
+        scroll.Offset = new Vector(0, scroll.Extent.Height - scroll.Viewport.Height);
+        Require(scroll.Offset.Y > 0, "The zoomed page did not scroll.");
+        model.NextPageCommand.Execute(null);
+        await UntilAsync(() => model.Preview is not null, () => model.PreviewMessage);
+        Require(scroll.Offset.Y == 0 && model.FitPreviewWidth, "The next page did not start at the top in fit-width mode.");
+
+        fit.Command.Execute(null);
+        await UntilAsync(() => scroll.Extent.Height <= scroll.Viewport.Height, () => "The preview did not return to fit-page mode.");
     }
 
     private static async Task VerifyImportErrorsAsync(MainWindow window, InboxViewModel model, FixtureDialogs dialogs,
