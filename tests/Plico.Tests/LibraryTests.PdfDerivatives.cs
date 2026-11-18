@@ -95,4 +95,52 @@ public sealed partial class LibraryTests
         Assert.Contains(LetterKeyword, ContentOrderTextExtractor.GetText(pdf.GetPage(1)), StringComparison.OrdinalIgnoreCase);
         Assert.Equal(File.ReadAllBytes(source), File.ReadAllBytes(library.ResolvePdf(imported)));
     }
+
+    [Fact]
+    public async Task PdfDerivativesOptimizeColorJpegScansWithoutRebuildingTheTextLayer()
+    {
+        using var temporary = new TemporaryLibrary();
+        using var library = InboxLibrary.Open(Directory.CreateDirectory(Path.Combine(temporary.Path, "Library")).FullName);
+        string target = Directory.CreateDirectory(Path.Combine(temporary.Path, "Export")).FullName;
+        string source = Path.Combine(temporary.Path, "Color JPEG scan.pdf");
+        using (var bitmap = new SKBitmap(2400, 1600))
+        {
+            using (var canvas = new SKCanvas(bitmap))
+            using (var gradient = SKShader.CreateLinearGradient(new SKPoint(0, 0), new SKPoint(bitmap.Width, bitmap.Height),
+                       [SKColors.Orange, SKColors.SteelBlue, SKColors.Beige], null, SKShaderTileMode.Clamp))
+            using (var fill = new SKPaint { Shader = gradient })
+                canvas.DrawRect(new SKRect(0, 0, bitmap.Width, bitmap.Height), fill);
+
+            using var jpeg = bitmap.Encode(SKEncodedImageFormat.Jpeg, 100);
+            using var writer = PdfSharpCore.Pdf.IO.PdfReader.Open(Fixture(Letter), PdfSharpCore.Pdf.IO.PdfDocumentOpenMode.Modify);
+            var image = new PdfSharpCore.Pdf.PdfDictionary(writer);
+            image.Elements.SetName("/Type", "/XObject");
+            image.Elements.SetName("/Subtype", "/Image");
+            image.Elements.SetName("/ColorSpace", "/DeviceRGB");
+            image.Elements.SetName("/Filter", "/DCTDecode");
+            image.Elements.SetInteger("/Width", bitmap.Width);
+            image.Elements.SetInteger("/Height", bitmap.Height);
+            image.Elements.SetInteger("/BitsPerComponent", 8);
+            image.CreateStream(jpeg.ToArray());
+            writer.Internals.AddObject(image);
+            var page = writer.Pages[0];
+            var resources = page.Elements.GetDictionary("/Resources")!;
+            var images = resources.Elements.GetDictionary("/XObject") ?? new PdfSharpCore.Pdf.PdfDictionary(writer);
+            resources.Elements["/XObject"] = images;
+            images.Elements["/SyntheticScan"] = image.Reference!;
+            page.Contents.AppendContent().CreateStream(Encoding.ASCII.GetBytes("\nq 510 0 0 340 40 250 cm /SyntheticScan Do Q\n"));
+            writer.Save(source);
+        }
+
+        var token = TestContext.Current.CancellationToken;
+        var document = await library.ImportAsync(source, token);
+        var compressed = await library.ExportCompressedPdfAsync(document.Id, PdfCompressionMode.SmallerScans, target, token);
+        Assert.True(compressed.OutputBytes < compressed.OriginalBytes,
+            $"Trial output {compressed.OutputBytes} bytes, original {compressed.OriginalBytes} bytes.");
+        using var pdf = PdfDocument.Open(Assert.IsType<string>(compressed.Location));
+        Assert.Contains(LetterKeyword, ContentOrderTextExtractor.GetText(pdf.GetPage(1)), StringComparison.OrdinalIgnoreCase);
+        var resizedImage = Assert.Single(pdf.GetPage(1).GetImages());
+        Assert.Equal(1800, resizedImage.WidthInSamples);
+        Assert.Equal(1200, resizedImage.HeightInSamples);
+    }
 }

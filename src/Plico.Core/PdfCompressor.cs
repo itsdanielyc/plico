@@ -1,5 +1,6 @@
 using System.IO.Compression;
 using PdfSharpCore.Pdf;
+using PdfSharpCore.Pdf.Advanced;
 using PdfSharpCore.Pdf.IO;
 using SkiaSharp;
 
@@ -49,8 +50,8 @@ internal static class PdfCompressor
     private static void OptimizeJpeg(PdfDictionary dictionary)
     {
         var elements = dictionary.Elements;
-        if (elements.GetName("/Subtype") != "/Image" || elements.GetName(Filter) != "/DCTDecode" ||
-            elements.GetName("/ColorSpace") != "/DeviceRGB" || elements.GetInteger("/BitsPerComponent") != 8 ||
+        if (ReadName(elements["/Subtype"]) != "/Image" || ReadName(elements[Filter]) != "/DCTDecode" ||
+            ReadName(elements["/ColorSpace"]) != "/DeviceRGB" || ReadInteger(elements["/BitsPerComponent"]) != 8 ||
             elements.ContainsKey("/SMask") || elements.ContainsKey("/Mask") ||
             elements.ContainsKey("/Decode") || elements.ContainsKey("/ImageMask")) return;
 
@@ -59,8 +60,8 @@ internal static class PdfCompressor
         if (codec is null) return;
         int width = codec.Info.Width;
         int height = codec.Info.Height;
-        if ((long)width * height > MaximumDecodedImagePixels || width != elements.GetInteger(Width) ||
-            height != elements.GetInteger(Height)) return;
+        if ((long)width * height > MaximumDecodedImagePixels || width != ReadInteger(elements[Width]) ||
+            height != ReadInteger(elements[Height])) return;
 
         using var original = SKBitmap.Decode(codec);
         if (original is null) return;
@@ -75,4 +76,20 @@ internal static class PdfCompressor
         elements.SetInteger(Width, image.Width);
         elements.SetInteger(Height, image.Height);
     }
+
+    private static string? ReadName(PdfItem? item) => ResolveReference(item) switch
+    {
+        PdfName name => name.Value,
+        PdfNameObject name => name.Value,
+        _ => null
+    };
+
+    private static int? ReadInteger(PdfItem? item) => ResolveReference(item) switch
+    {
+        PdfInteger number => number.Value,
+        PdfIntegerObject number => number.Value,
+        _ => null
+    };
+
+    private static PdfItem? ResolveReference(PdfItem? item) => item is PdfReference reference ? reference.Value : item;
 }
