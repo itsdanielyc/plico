@@ -35,8 +35,12 @@ public enum ScanFeed { Automatic, Flatbed, Feeder, Duplex }
 /// <summary>The physical page format requested from the scanner.</summary>
 public enum ScanPaper { A4, Letter }
 
+/// <summary>The requested capture resolution in dots per inch.</summary>
+public enum ScanResolution { Quick = 150, Standard = 300, Detailed = 600 }
+
 /// <summary>Capture parameters chosen by the user in the native desktop window.</summary>
-public sealed record ScanRequest(ScannerDevice Device, ScanFeed Feed, ScanPaper Paper);
+public sealed record ScanRequest(ScannerDevice Device, ScanFeed Feed, ScanPaper Paper,
+    ScanResolution Resolution = ScanResolution.Standard);
 
 /// <summary>Discovered scanners and actionable messages from unavailable drivers.</summary>
 public sealed record ScanDiscovery(IReadOnlyList<ScannerDevice> Devices, IReadOnlyList<string> Warnings);
@@ -44,7 +48,6 @@ public sealed record ScanDiscovery(IReadOnlyList<ScannerDevice> Devices, IReadOn
 /// <summary>Discovers devices over supported host drivers and local network eSCL.</summary>
 public static class Scanners
 {
-    private const int DocumentScanDpi = 300;
     private const string DefaultEsclPath = "/eSCL";
     private static readonly TimeSpan AddressLookupTimeout = TimeSpan.FromSeconds(10);
 
@@ -104,7 +107,8 @@ public static class Scanners
     internal static ScanOptions CaptureOptions(ScanRequest request) => new()
     {
         Device = request.Device.NativeDevice,
-        Dpi = DocumentScanDpi,
+        Dpi = Enum.IsDefined(request.Resolution) ? (int)request.Resolution
+            : throw new ArgumentOutOfRangeException(nameof(request), "Unknown scan resolution."),
         PageSize = request.Paper switch
         {
             ScanPaper.A4 => PageSize.A4,

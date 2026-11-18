@@ -1,5 +1,10 @@
 # Changelog
 
+## [0.11.0] - 2026-11-18
+
+- Choose 150, 300, or 600 dpi when scanning. The scanner picker starts at 300 dpi.
+- Plico sends the chosen resolution to the scanner driver with the paper source and size.
+
 ## [0.10.0] - 2026-11-18
 
 - Choose English, French, or German for OCR in new scans and imports.

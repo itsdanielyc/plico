@@ -198,9 +198,11 @@ internal static class NativeVerification
         {
             var address = Control<TextBox>(dialog, "AddressBox");
             var connect = Control<Button>(dialog, "ConnectButton");
+            var resolution = Control<ComboBox>(dialog, "ResolutionBox");
             bool hasSavedScanner = settings is not null;
             Require(address.IsVisible && connect.IsEnabled && Control<Button>(dialog, "StartButton").IsEnabled == hasSavedScanner &&
-                    Control<Button>(dialog, "ForgetButton").IsVisible == hasSavedScanner,
+                    Control<Button>(dialog, "ForgetButton").IsVisible == hasSavedScanner &&
+                    resolution.ItemCount == 3 && resolution.SelectedItem?.ToString() == "300 dpi",
                 "The native scanner dialog did not offer the expected scanner actions.");
             await CaptureAsync(dialog, directory, filename);
         }

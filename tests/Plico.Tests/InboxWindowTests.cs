@@ -289,6 +289,32 @@ public sealed class InboxWindowTests
         => await WaitForAsync(() => model.Preview is not null || model.HasPreviewMessage);
 
     [AvaloniaFact]
+    public async Task ScannerPickerStartsAtStandardResolutionAndReturnsTheChoice()
+    {
+        var scanner = Scanners.FromAddress("scanner.test", "Desk scanner");
+        var dialog = new ScanDialog(_ => Task.FromResult(new ScanDiscovery([scanner], [])));
+        var owner = new Window();
+        owner.Show();
+        var result = dialog.ShowDialog<ScanRequest?>(owner);
+        try
+        {
+            var resolution = Assert.IsType<ComboBox>(dialog.FindControl<ComboBox>("ResolutionBox"));
+            Assert.Equal("300 dpi", resolution.SelectedItem?.ToString());
+            resolution.SelectedIndex = resolution.ItemCount - 1;
+            var scanButton = Assert.IsType<Button>(dialog.FindControl<Button>("StartButton"));
+            scanButton.RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
+
+            var request = Assert.IsType<ScanRequest>(await result.WaitAsync(TestContext.Current.CancellationToken));
+            Assert.Equal(ScanResolution.Detailed, request.Resolution);
+        }
+        finally
+        {
+            if (dialog.IsVisible) dialog.Close();
+            owner.Close();
+        }
+    }
+
+    [AvaloniaFact]
     public void LanguageSelectorLoadsAndUpdatesTheLocalChoice()
     {
         using var directory = new TemporaryLibrary();

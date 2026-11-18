@@ -14,6 +14,11 @@ internal sealed partial class ScanDialog : Window
         public override string ToString() => Label;
     }
 
+    private sealed record ResolutionOption(ScanResolution Value)
+    {
+        public override string ToString() => $"{(int)Value} dpi";
+    }
+
     private static readonly SourceOption[] Sources =
     [
         new("Automatic", ScanFeed.Automatic),
@@ -21,6 +26,8 @@ internal sealed partial class ScanDialog : Window
         new("Feeder · one-sided", ScanFeed.Feeder),
         new("Feeder · two-sided", ScanFeed.Duplex)
     ];
+    private static readonly ResolutionOption[] Resolutions =
+        Enum.GetValues<ScanResolution>().Select(value => new ResolutionOption(value)).ToArray();
 
     private readonly Func<CancellationToken, Task<ScanDiscovery>> _discover;
     private readonly Func<string, CancellationToken, Task<ScannerDevice>> _connect;
@@ -42,6 +49,8 @@ internal sealed partial class ScanDialog : Window
         SourceBox.SelectedItem = Sources[0];
         PaperBox.ItemsSource = Enum.GetValues<ScanPaper>();
         PaperBox.SelectedItem = RegionInfo.CurrentRegion.IsMetric ? ScanPaper.A4 : ScanPaper.Letter;
+        ResolutionBox.ItemsSource = Resolutions;
+        ResolutionBox.SelectedItem = Resolutions.Single(option => option.Value == ScanResolution.Standard);
         TrySettingsChange(() =>
         {
             foreach (var scanner in _settings?.Load() ?? []) _connected[scanner.Address!] = scanner;
@@ -191,9 +200,9 @@ internal sealed partial class ScanDialog : Window
     private void Start_Click(object? sender, RoutedEventArgs e)
     {
         if (DeviceBox.SelectedItem is ScannerDevice scanner && SourceBox.SelectedItem is SourceOption source &&
-            PaperBox.SelectedItem is ScanPaper paper)
+            PaperBox.SelectedItem is ScanPaper paper && ResolutionBox.SelectedItem is ResolutionOption resolution)
         {
-            Close(new ScanRequest(scanner, source.Value, paper));
+            Close(new ScanRequest(scanner, source.Value, paper, resolution.Value));
         }
     }
 }
