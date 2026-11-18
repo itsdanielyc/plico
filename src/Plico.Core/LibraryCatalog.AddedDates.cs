@@ -4,7 +4,10 @@ namespace Plico.Core;
 
 internal sealed partial class LibraryCatalog
 {
-    private const string AddedDateIndexMigration = "CREATE INDEX documents_added_at ON documents(added_at) WHERE is_present = 1;";
+    // A leading equality lets SQLite narrow the time range before sorting the matches.
+    private const string AddedDateIndexMigration = """
+        CREATE INDEX documents_added_at ON documents(is_present, added_at) WHERE is_present = 1;
+        """;
     private const long SecondsPerDay = 24 * 60 * 60;
     private const long MaximumLocalOffsetSeconds = 14 * 60 * 60;
     private static readonly int UnixEpochDay = DateOnly.FromDateTime(DateTime.UnixEpoch).DayNumber;
