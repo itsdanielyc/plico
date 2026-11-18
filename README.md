@@ -24,7 +24,7 @@ On Linux, Plico uses X11 or XWayland. The Debian package declares its runtime li
 2. Select a document to preview it and add tags. **Mark reviewed** takes it out of the Inbox.
 3. Search by name or document text, including documents you already reviewed. Choose a tag to narrow the results.
 
-Use **Intake folder…** in the Library sidebar to send added files, dropped files, manual retries, and scans to an existing folder inside `PDFs/`. With a custom folder selected, turn on **Include watched scans** to file new arrivals and catch-up scans there too. Plico remembers both choices for each library on this computer. New PDFs still appear in the Inbox for review. Choose `PDFs/` to file at the top level again. If the folder has moved or been deleted, choose an available folder and retry from the import error list.
+Use **Intake folder…** in the Library sidebar to send added files, dropped files, manual retries, and scans to an existing folder inside `PDFs/`. With a custom folder selected, turn on **Include watched scans** to file new arrivals and catch-up scans there too. Plico remembers both choices for each library on this computer. New PDFs still appear in the Inbox for review. Choose `PDFs/` to file at the top level again. If the folder has moved or been deleted, choose an available folder before retrying.
 
 Select a language in **OCR** for scans, imports, and searchable copies. Plico remembers the choice and uses that bundled model for recognition.
 
