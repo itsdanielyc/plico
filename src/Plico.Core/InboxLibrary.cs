@@ -103,6 +103,10 @@ public sealed partial class InboxLibrary : IDisposable
     /// <summary>Returns a bounded page of results for the selected filters.</summary>
     public DocumentPage Find(DocumentFilter filter) => _catalog.Find(filter);
 
+    /// <summary>Returns the extracted text from all indexed pages, or an empty string for a PDF without text.</summary>
+    /// <exception cref="InvalidOperationException">The document is unavailable in the catalog.</exception>
+    public string ReadIndexedText(long documentId) => _catalog.ReadIndexedText(documentId);
+
     /// <summary>Lists the tags used by PDFs currently in the library.</summary>
     public IReadOnlyList<string> GetTags() => _catalog.Tags();
 

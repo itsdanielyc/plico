@@ -12,6 +12,7 @@ internal sealed class LibraryCatalog
     internal const int PageSize = 60;
     private const string NewestCatalogEntry = "d.id DESC";
     private const string TitleCollation = "plico_title";
+    private const string DocumentUnavailableMessage = "This document is no longer in the library.";
 
     private const string Schema = """
         CREATE TABLE documents(
@@ -177,9 +178,18 @@ internal sealed class LibraryCatalog
     }
 
     internal DocumentSummary Get(long documentId) => Query(new DocumentFilter(), documentId).Items.SingleOrDefault() ??
-        throw new InvalidOperationException("This document is no longer in the library.");
+        throw new InvalidOperationException(DocumentUnavailableMessage);
 
     internal DocumentPage Find(DocumentFilter filter) => Query(filter);
+
+    internal string ReadIndexedText(long documentId)
+    {
+        using var connection = Connect();
+        using var command = connection.CreateCommand();
+        command.CommandText = "SELECT body FROM documents WHERE id = $id AND is_present = 1;";
+        command.Parameters.AddWithValue("$id", documentId);
+        return command.ExecuteScalar() as string ?? throw new InvalidOperationException(DocumentUnavailableMessage);
+    }
 
     private DocumentPage Query(DocumentFilter filter, long? documentId = null)
     {
@@ -331,7 +341,7 @@ internal sealed class LibraryCatalog
         command.Parameters.AddWithValue("$id", documentId);
         if (command.ExecuteNonQuery() == 0)
         {
-            throw new InvalidOperationException("This document is no longer in the library.");
+            throw new InvalidOperationException(DocumentUnavailableMessage);
         }
     }
 
@@ -349,7 +359,7 @@ internal sealed class LibraryCatalog
         command.Parameters.AddWithValue("$id", documentId);
         if (command.ExecuteNonQuery() == 0)
         {
-            throw new InvalidOperationException("This document is no longer in the library.");
+            throw new InvalidOperationException(DocumentUnavailableMessage);
         }
     }
 

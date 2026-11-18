@@ -20,4 +20,6 @@ The sort selector sits beside the results count. It applies to the current inbox
 
 The preview shows the whole page by default. **Fit width** fills the available reading width and allows vertical scrolling. Page navigation stays visible and starts each new page at the top.
 
+**Copy text** sits beside the page controls when the selected PDF has searchable text. The status bar confirms a successful copy.
+
 Keep labels present on actions. Use a polite live region for processing status. Keep the PDF accessible by keyboard and show a visible response for unavailable previews.

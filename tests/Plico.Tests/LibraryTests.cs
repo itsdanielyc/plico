@@ -19,6 +19,20 @@ public sealed class LibraryTests
     private const string LetterKeyword = "NORTHSTAR";
 
     [Fact]
+    public async Task ReadingIndexedTextRejectsAnEntryMarkedMissing()
+    {
+        using var temporary = new TemporaryLibrary();
+        using var library = InboxLibrary.Open(temporary.Path);
+        var document = await library.ImportAsync(Fixture(Letter), TestContext.Current.CancellationToken);
+        Assert.Contains(LetterKeyword, library.ReadIndexedText(document.Id), StringComparison.OrdinalIgnoreCase);
+
+        File.Delete(library.ResolvePdf(document));
+        library.Refresh(TestContext.Current.CancellationToken);
+
+        Assert.Throws<InvalidOperationException>(() => library.ReadIndexedText(document.Id));
+    }
+
+    [Fact]
     public async Task DigitalPdfStaysIntactAndSearchable()
     {
         using var temporary = new TemporaryLibrary();

@@ -1,5 +1,6 @@
 using System.Diagnostics;
 using Avalonia.Controls;
+using Avalonia.Input.Platform;
 using Avalonia.Platform.Storage;
 using Plico.Core;
 
@@ -13,6 +14,7 @@ internal interface IWorkspaceDialogs
     Task<ScanRequest?> PickScannerAsync();
     Task<string?> EditTitleAsync(string currentTitle);
     Task<ImportErrorsAction> ShowImportErrorsAsync(IReadOnlyList<ImportFailure> failures);
+    Task CopyTextAsync(string text);
     void OpenPath(string path);
 }
 
@@ -56,6 +58,9 @@ internal sealed class WorkspaceDialogs(Window owner) : IWorkspaceDialogs
 
     public Task<ImportErrorsAction> ShowImportErrorsAsync(IReadOnlyList<ImportFailure> failures) =>
         new ImportErrorsDialog(failures).ShowDialog<ImportErrorsAction>(owner);
+
+    public Task CopyTextAsync(string text) =>
+        (owner.Clipboard ?? throw new InvalidOperationException("The clipboard is unavailable.")).SetTextAsync(text);
 
     public void OpenPath(string path)
     {

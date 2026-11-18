@@ -62,13 +62,14 @@ internal static class NativeVerification
             await VerifySortAsync(window, model, evidenceDirectory);
             await VerifyBatchReviewAsync(window, model, evidenceDirectory);
             await VerifyOcrLanguageAsync(window, model, dialogs, fixture, evidenceDirectory);
+            await VerifyCopiedTextAsync(window, model, dialogs);
             await VerifyLibraryBackupAsync(window, model, dialogs, evidenceDirectory);
             await VerifyImportErrorsAsync(window, model, dialogs, fixture, evidenceDirectory);
             await VerifyPreviewFitAsync(window, model, evidenceDirectory);
             await VerifyScannerDialogAsync(window, evidenceDirectory);
 
             File.WriteAllText(Path.Combine(evidenceDirectory, "passed.txt"),
-                $"Verified {runtime}. Native window completed multilingual OCR, phrase search, result sorting, fit-width preview, duplicate drop, folder watch, title edit, relocation, batch actions, library backup, and import retry.");
+                $"Verified {runtime}. Native window completed multilingual OCR, phrase search, result sorting, fit-width preview, duplicate drop, folder watch, title edit, relocation, batch actions, library backup, text copy, and import retry.");
             desktop.Shutdown(0);
         }
         catch (Exception error)
@@ -102,6 +103,17 @@ internal static class NativeVerification
 
         fit.Command.Execute(null);
         await UntilAsync(() => scroll.Extent.Height <= scroll.Viewport.Height, () => "The preview did not return to fit-page mode.");
+    }
+
+    private static async Task VerifyCopiedTextAsync(MainWindow window, InboxViewModel model, FixtureDialogs dialogs)
+    {
+        var copy = Control<Button>(window, "CopyDocumentTextButton");
+        Require(copy.IsVisible && copy.IsEnabled && copy.Command is IAsyncRelayCommand,
+            "The selected OCR PDF did not offer its text for copying.");
+        await ((IAsyncRelayCommand)copy.Command!).ExecuteAsync(copy.CommandParameter);
+        Require(model.Status == "Document text copied." &&
+            dialogs.LastCopiedText?.Contains("Règlement", StringComparison.OrdinalIgnoreCase) == true,
+            "The copied text did not contain the selected PDF's accented text.");
     }
 
     private static async Task VerifyImportErrorsAsync(MainWindow window, InboxViewModel model, FixtureDialogs dialogs,
@@ -448,6 +460,7 @@ internal sealed class FixtureDialogs(params string[] documents) : IWorkspaceDial
     internal string? FolderPath { get; set; }
     internal string? EditedTitle { get; init; }
     internal string? LastOpenedPath { get; private set; }
+    internal string? LastCopiedText { get; private set; }
     internal ImportErrorsAction ImportErrorsChoice { get; set; }
     internal IReadOnlyList<ImportFailure> InspectedImportFailures { get; private set; } = [];
     internal IReadOnlyList<string> SelectedFiles { get; set; } = documents;
@@ -461,4 +474,10 @@ internal sealed class FixtureDialogs(params string[] documents) : IWorkspaceDial
         return Task.FromResult(ImportErrorsChoice);
     }
     public void OpenPath(string path) => LastOpenedPath = path;
+
+    public Task CopyTextAsync(string text)
+    {
+        LastCopiedText = text;
+        return Task.CompletedTask;
+    }
 }

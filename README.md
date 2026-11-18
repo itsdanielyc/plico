@@ -38,6 +38,8 @@ Use **Edit title** in the preview to change the document's catalog title. Search
 
 Choose **Fit width** in the preview to enlarge the page and scroll through it. Choose **Fit page** to see it all at once.
 
+Choose **Copy text** to copy the searchable text from all pages of the selected PDF.
+
 The library starts under Documents/Plico. Select the library name in the sidebar to choose another folder. **Show PDF folder** opens the `PDFs/` directory. **Refresh index** picks up PDFs that you add, edit, or remove on disk. To move or back up a library with its tags, close Plico and copy the entire directory, including `.plico/`. Digital PDFs with text on every page are copied unchanged.
 
 To make a copy while Plico is open, choose **Back up library…** and select a destination outside the current library. Plico creates a dated folder with the PDFs and their catalog. **Open backup** shows that folder in the file manager. Choose the folder as a library to reopen it in Plico.

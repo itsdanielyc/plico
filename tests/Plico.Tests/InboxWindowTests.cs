@@ -3,11 +3,14 @@ using Avalonia.Controls;
 using Avalonia.Controls.Primitives;
 using Avalonia.Headless;
 using Avalonia.Headless.XUnit;
+using Avalonia.Input.Platform;
 using Avalonia.Interactivity;
 using CommunityToolkit.Mvvm.Input;
 using NAPS2.Scan;
 using Plico.Desktop;
 using Plico.Core;
+using UglyToad.PdfPig.Content;
+using UglyToad.PdfPig.Writer;
 using Xunit;
 
 [assembly: AvaloniaTestApplication(typeof(Plico.Tests.HeadlessApplication))]
@@ -22,6 +25,50 @@ public static class HeadlessApplication
 
 public sealed class InboxWindowTests
 {
+    [AvaloniaFact]
+    public async Task CopyTextUsesTheSelectedPdfAndIsHiddenForAnEmptyPage()
+    {
+        using var temporary = new TemporaryLibrary();
+        using (var library = InboxLibrary.Open(temporary.Path))
+        {
+            const string letter = "Lease Renewal.pdf";
+            File.Copy(Path.Combine(AppContext.BaseDirectory, "fixtures", letter), Path.Combine(library.PdfDirectory, letter));
+            using var blank = new PdfDocumentBuilder();
+            blank.AddPage(PageSize.A4);
+            File.WriteAllBytes(Path.Combine(library.PdfDirectory, "Blank form.pdf"), blank.Build());
+            Assert.Equal(2, library.Refresh(TestContext.Current.CancellationToken).Indexed);
+        }
+
+        var window = new MainWindow();
+        using var model = new InboxViewModel(new WorkspaceDialogs(window));
+        model.InitializeLibrary(() => temporary.Path);
+        window.DataContext = model;
+        window.Show();
+        try
+        {
+            await WaitForPreviewAsync(model);
+            var copy = Assert.IsType<Button>(window.FindControl<Button>("CopyDocumentTextButton"));
+            var list = Assert.IsType<ListBox>(window.FindControl<ListBox>("DocumentList"));
+            list.SetCurrentValue(ListBox.SelectedItemProperty, Assert.Single(model.Documents, document => document.HasText));
+            await WaitForPreviewAsync(model);
+            Assert.True(copy.IsVisible);
+            Assert.True(copy.IsEnabled);
+            await Assert.IsAssignableFrom<IAsyncRelayCommand>(copy.Command).ExecuteAsync(copy.CommandParameter);
+            var clipboard = Assert.IsAssignableFrom<IClipboard>(window.Clipboard);
+            var copied = await clipboard.TryGetTextAsync();
+            Assert.Contains("NORTHSTAR", copied, StringComparison.OrdinalIgnoreCase);
+
+            list.SetCurrentValue(ListBox.SelectedItemProperty, Assert.Single(model.Documents, document => !document.HasText));
+            await WaitForPreviewAsync(model);
+            Assert.False(copy.IsVisible);
+            Assert.Equal(copied, await clipboard.TryGetTextAsync());
+        }
+        finally
+        {
+            window.Close();
+        }
+    }
+
     [AvaloniaFact]
     public async Task FitWidthEnablesVerticalScrollingWithoutRenderingThePageAgain()
     {

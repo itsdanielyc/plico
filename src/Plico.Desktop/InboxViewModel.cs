@@ -176,6 +176,25 @@ internal sealed partial class InboxViewModel : ObservableObject, IDisposable
     }
 
     [RelayCommand]
+    private Task CopyDocumentTextAsync()
+    {
+        if (SelectedDocument is not { HasText: true } document) return Task.CompletedTask;
+        return RunOperationAsync("Reading document text…", async token =>
+        {
+            var library = RequireLibrary();
+            string text = await Task.Run(() => library.ReadIndexedText(document.Id), token);
+            token.ThrowIfCancellationRequested();
+            if (string.IsNullOrWhiteSpace(text))
+            {
+                Status = "No searchable text found.";
+                return;
+            }
+            await _dialogs.CopyTextAsync(text);
+            Status = "Document text copied.";
+        });
+    }
+
+    [RelayCommand]
     private Task EditDocumentTitleAsync() => RunOperationAsync("Edit the document title…", async token =>
     {
         if (SelectedDocument is not { } document) return;
