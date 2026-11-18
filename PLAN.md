@@ -26,9 +26,9 @@
 | 21 | Back up the library | A backup opens as a complete library with the same PDFs and catalog data. Cancellation leaves the chosen destination clear. | L3, L6 | Done |
 | 22 | Inspect and retry imports | A batch keeps unresolved errors by file, and retry imports those files through the regular intake path | L3, L4, L6 | Done |
 | 23 | Resume a watched folder | The folder choice belongs to the current library and can be resumed explicitly after reopening Plico | L3, L4, L6 | Done |
-| 24 | Open the latest backup | The backup result can be opened in the file manager from the active library, and switching libraries clears the action | L4, L6 | In progress |
-| 25 | Windows ARM64 | A Windows 11 ARM64 runner verifies the native app from ZIP and per-user setup, including OCR and uninstall | L0–L7 | In progress |
-| 26 | Sort document results | Choose newest added or title A–Z within the current filters. Ordering applies before paging and keeps the open PDF selected when it is visible. | L3, L4, L6 | In progress |
-| 27 | Fit width in the preview | Enlarge the current page to the width of the preview. Vertical scrolling exposes the rest of the page and returns to the top when the page changes. | L4, L6 | In progress |
+| 24 | Open the latest backup | The backup result can be opened in the file manager from the active library, and switching libraries clears the action | L4, L6 | Tested locally on Windows x64 and Ubuntu x64 (L4, L6) |
+| 25 | Windows ARM64 | A Windows 11 ARM64 runner verifies the native app from ZIP and per-user setup, including OCR and uninstall | L0–L7 | Cross-built on Windows x64. Native ARM64 checks pending. |
+| 26 | Sort document results | Choose newest added or title A–Z within the current filters. Ordering applies before paging and keeps the open PDF selected when it is visible. | L3, L4, L6 | Tested locally on Windows x64 and Ubuntu x64 (L3, L4, L6) |
+| 27 | Fit width in the preview | Enlarge the current page to the width of the preview. Vertical scrolling exposes the rest of the page and returns to the top when the page changes. | L4, L6 | Tested locally on Windows x64 and Ubuntu x64 (L4, L6) |
 
 The initial release is followed by focused improvements and fresh evidence.
