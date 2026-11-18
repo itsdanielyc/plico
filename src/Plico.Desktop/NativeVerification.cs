@@ -4,6 +4,7 @@ using Avalonia.Controls.ApplicationLifetimes;
 using Avalonia.Media.Imaging;
 using Avalonia.Threading;
 using CommunityToolkit.Mvvm.Input;
+using Plico.Core;
 
 namespace Plico.Desktop;
 
@@ -90,5 +91,6 @@ internal sealed class FixtureDialogs(params string[] documents) : IWorkspaceDial
 {
     public Task<IReadOnlyList<string>> PickDocumentsAsync() => Task.FromResult<IReadOnlyList<string>>(documents);
     public Task<string?> PickLibraryAsync() => Task.FromResult<string?>(null);
+    public Task<ScanRequest?> PickScannerAsync() => Task.FromResult<ScanRequest?>(null);
     public void OpenPath(string path) => throw new InvalidOperationException("The verification fixture does not launch other apps.");
 }

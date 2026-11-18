@@ -20,5 +20,10 @@
     <true/>
     <key>NSLocalNetworkUsageDescription</key>
     <string>Plico looks for document scanners on your local network when you choose Scan.</string>
+    <key>NSBonjourServices</key>
+    <array>
+        <string>_uscan._tcp</string>
+        <string>_uscans._tcp</string>
+    </array>
 </dict>
 </plist>

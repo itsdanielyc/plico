@@ -1,4 +1,8 @@
 using Plico.Core;
+using System.Runtime.CompilerServices;
+using NAPS2.Images;
+using NAPS2.ImportExport;
+using NAPS2.Scan;
 using UglyToad.PdfPig;
 using UglyToad.PdfPig.DocumentLayoutAnalysis.TextExtractor;
 using Xunit;
@@ -103,6 +107,34 @@ public sealed class LibraryTests
         Assert.Empty(refreshed.Warnings);
         Assert.Single(library.Find(new DocumentFilter(Query: LetterKeyword)).Items);
         Assert.Equal(0, library.Refresh(TestContext.Current.CancellationToken).Indexed);
+    }
+
+    [Fact]
+    public async Task MultipageScanUsesTheSameSearchableOutputAsImport()
+    {
+        using var temporary = new TemporaryLibrary();
+        using var library = InboxLibrary.Open(temporary.Path);
+        var document = await library.StoreScanAsync("Feeder job", ReadCapturedPages, TestContext.Current.CancellationToken);
+        using var pdf = PdfDocument.Open(library.ResolvePdf(document));
+
+        Assert.Equal(2, document.PageCount);
+        Assert.All(pdf.GetPages(), page =>
+            Assert.Contains(ReceiptKeyword, ContentOrderTextExtractor.GetText(page), StringComparison.OrdinalIgnoreCase));
+        Assert.Equal(document.Id, Assert.Single(library.Find(new DocumentFilter(Query: ReceiptKeyword)).Items).Id);
+    }
+
+    private static async IAsyncEnumerable<ProcessedImage> ReadCapturedPages(
+        ScanningContext context, [EnumeratorCancellation] CancellationToken cancellationToken)
+    {
+        var capturedFiles = new[] { Fixture(Receipt), Fixture(Receipt) };
+        var importer = new ImageImporter(context);
+        foreach (var capturedFile in capturedFiles)
+        {
+            await foreach (var image in importer.Import(capturedFile, progress: cancellationToken))
+            {
+                yield return image;
+            }
+        }
     }
 
     private static string Fixture(string name) => Path.Combine(AppContext.BaseDirectory, "fixtures", name);

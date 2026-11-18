@@ -51,13 +51,20 @@ internal sealed partial class InboxViewModel : ObservableObject, IDisposable
     public bool HasSelection => SelectedDocument is not null;
     public bool InboxSelected => _inboxOnly && _activeTag is null && string.IsNullOrWhiteSpace(Query);
     public bool AllSelected => !_inboxOnly && _activeTag is null && string.IsNullOrWhiteSpace(Query);
-    public string LibraryName => HasLibrary ? Path.GetFileName(Path.TrimEndingDirectorySeparator(LibraryPath)) : "Choose library";
+    public string LibraryName
+    {
+        get
+        {
+            if (!HasLibrary) return "Choose library";
+            var name = Path.GetFileName(Path.TrimEndingDirectorySeparator(LibraryPath));
+            return name.Length == 0 ? LibraryPath : name;
+        }
+    }
     public string ReviewAction => SelectedDocument?.Reviewed == true ? "Return to inbox" : "Mark reviewed";
     public string PageLabel => SelectedDocument is { } document ? $"{_pageNumber} / {document.PageCount}" : "";
     public bool CanGoBack => _pageNumber > 1;
     public bool CanGoForward => _pageNumber < SelectedDocument?.PageCount;
     public bool HasPreviewMessage => PreviewMessage.Length > 0;
-    public bool HasMatch => !string.IsNullOrWhiteSpace(SelectedDocument?.Match);
     public bool HasNoSearchableText => SelectedDocument is { HasText: false };
 
     internal void InitializeLibrary(Func<string> locate)
@@ -132,8 +139,7 @@ internal sealed partial class InboxViewModel : ObservableObject, IDisposable
     private void AddTag()
     {
         if (string.IsNullOrWhiteSpace(TagInput)) return;
-        UpdateDocument((library, document) => library.AddTag(document.Id, TagInput), "Tag added.");
-        if (Status == "Tag added.") TagInput = "";
+        if (UpdateDocument((library, document) => library.AddTag(document.Id, TagInput), "Tag added.")) TagInput = "";
     }
 
     [RelayCommand]
@@ -265,6 +271,7 @@ internal sealed partial class InboxViewModel : ObservableObject, IDisposable
             Documents = append ? [.. Documents, .. page.Items] : page.Items;
             HasMore = page.HasMore;
             ResultCount = HasMore ? $"Showing {DocumentCount(Documents.Count)}" : DocumentCount(Documents.Count);
+            if (_activeTag is not null && hasQuery) ResultCount += $" in {_activeTag}";
             SelectedDocument = Documents.FirstOrDefault(document => document.Id == selection) ?? Documents.FirstOrDefault();
         }
         catch (Exception error)
@@ -273,9 +280,9 @@ internal sealed partial class InboxViewModel : ObservableObject, IDisposable
         }
     }
 
-    private void UpdateDocument(Action<InboxLibrary, DocumentSummary> update, string success)
+    private bool UpdateDocument(Action<InboxLibrary, DocumentSummary> update, string success)
     {
-        if (!CanWork || SelectedDocument is not { } document) return;
+        if (!CanWork || SelectedDocument is not { } document) return false;
         try
         {
             var library = RequireLibrary();
@@ -283,10 +290,12 @@ internal sealed partial class InboxViewModel : ObservableObject, IDisposable
             Tags = library.GetTags();
             LoadResults(document.Id);
             Status = success;
+            return true;
         }
         catch (Exception error)
         {
             Status = error.Message;
+            return false;
         }
     }
 
@@ -332,7 +341,6 @@ internal sealed partial class InboxViewModel : ObservableObject, IDisposable
         }
         OnPropertyChanged(nameof(HasSelection));
         OnPropertyChanged(nameof(ReviewAction));
-        OnPropertyChanged(nameof(HasMatch));
         OnPropertyChanged(nameof(HasNoSearchableText));
         NotifyPageChanged();
     }

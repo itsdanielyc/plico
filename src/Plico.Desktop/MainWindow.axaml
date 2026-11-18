@@ -22,6 +22,16 @@
             <Setter Property="Background" Value="#346449" />
             <Setter Property="Foreground" Value="White" />
         </Style>
+        <Style Selector="Button.secondary">
+            <Setter Property="Background" Value="#EFF2E9" />
+            <Setter Property="Foreground" Value="#284838" />
+            <Setter Property="BorderBrush" Value="#D4DED2" />
+            <Setter Property="BorderThickness" Value="1" />
+        </Style>
+        <Style Selector="Button.secondary:pointerover /template/ ContentPresenter">
+            <Setter Property="Background" Value="#E2ECD6" />
+            <Setter Property="Foreground" Value="#223E30" />
+        </Style>
         <Style Selector="Button.rail">
             <Setter Property="Background" Value="Transparent" />
             <Setter Property="Foreground" Value="#D1DFD3" />
@@ -86,7 +96,7 @@
 
         <Grid Grid.Column="1" RowDefinitions="Auto,*,Auto">
             <Border Background="#FCFDF8" BorderBrush="#DDE2D7" BorderThickness="0,0,0,1" Padding="25,16">
-                <Grid ColumnDefinitions="*,Auto" ColumnSpacing="14">
+                <Grid ColumnDefinitions="*,Auto,Auto" ColumnSpacing="10">
                     <TextBox x:Name="SearchBox" Text="{Binding Query, Mode=TwoWay}" MaxLength="256"
                              PlaceholderText="Search names and document text" AutomationProperties.Name="Search documents"
                              VerticalContentAlignment="Center" CornerRadius="8" MinHeight="38">
@@ -95,7 +105,9 @@
                                       Data="M10,2 A8,8 0 1 0 10,18 A8,8 0 1 0 10,2 M10,4 A6,6 0 1 1 10,16 A6,6 0 1 1 10,4 M15,16 L21,22 L23,20 L17,14 Z" />
                         </TextBox.InnerLeftContent>
                     </TextBox>
-                    <Button Grid.Column="1" x:Name="AddFilesButton" Classes="primary"
+                    <Button Grid.Column="1" x:Name="ScanButton" Classes="secondary" Command="{Binding ScanCommand}"
+                            Content="Scan" IsEnabled="{Binding CanWork}" MinHeight="38" />
+                    <Button Grid.Column="2" x:Name="AddFilesButton" Classes="primary"
                             IsEnabled="{Binding CanWork}" Command="{Binding AddFilesCommand}" Content="Add files" MinHeight="38" />
                 </Grid>
             </Border>
@@ -134,7 +146,7 @@
                                             </Border>
                                             <StackPanel Grid.Column="1" Spacing="4">
                                                 <TextBlock Text="{Binding Title}" FontSize="13" FontWeight="SemiBold" TextTrimming="CharacterEllipsis" />
-                                                <TextBlock Text="{Binding AddedAt, StringFormat='{}{0:dd MMM yyyy}'}" Classes="muted" />
+                                                <TextBlock Text="{Binding AddedAt.LocalDateTime, StringFormat='{}{0:dd MMM yyyy}'}" Classes="muted" />
                                                 <TextBlock Text="{Binding Match}" Classes="muted" TextTrimming="CharacterEllipsis" />
                                             </StackPanel>
                                         </Grid>
@@ -155,7 +167,7 @@
                                         <TextBlock Text="{Binding SelectedDocument.Title}" TextTrimming="CharacterEllipsis" FontSize="17" FontWeight="SemiBold" />
                                         <TextBlock Text="{Binding SelectedDocument.RelativePath}" Classes="muted" TextTrimming="CharacterEllipsis" />
                                     </StackPanel>
-                                    <Button Grid.Column="1" Content="Open PDF" Command="{Binding OpenPdfCommand}" VerticalAlignment="Top" />
+                                    <Button Grid.Column="1" Classes="secondary" Content="Open PDF" Command="{Binding OpenPdfCommand}" VerticalAlignment="Top" />
                                 </Grid>
                                 <Border Grid.Row="1" Background="#EAEFE6" CornerRadius="8" Padding="12" ClipToBounds="True">
                                     <Grid RowDefinitions="*,Auto" RowSpacing="7">
@@ -172,8 +184,6 @@
                                     </Grid>
                                 </Border>
                                 <StackPanel Grid.Row="2" Spacing="8">
-                                    <TextBlock Text="{Binding SelectedDocument.Match}" Classes="muted" IsVisible="{Binding HasMatch}"
-                                               TextTrimming="CharacterEllipsis" />
                                     <TextBlock Text="No searchable text found" Foreground="#795327" FontSize="12"
                                                IsVisible="{Binding HasNoSearchableText}" />
                                     <ItemsControl ItemsSource="{Binding SelectedDocument.Tags}" MaxHeight="67">
@@ -191,9 +201,9 @@
                                     <Grid ColumnDefinitions="*,Auto,Auto" ColumnSpacing="6" IsEnabled="{Binding CanWork}">
                                         <TextBox x:Name="TagBox" Text="{Binding TagInput, Mode=TwoWay}" MaxLength="48"
                                                  PlaceholderText="New tag" AutomationProperties.Name="New tag" KeyDown="TagBox_KeyDown" FontSize="12" />
-                                        <Button Grid.Column="1" x:Name="AddTagButton" Content="Add" Command="{Binding AddTagCommand}"
+                                        <Button Grid.Column="1" x:Name="AddTagButton" Classes="secondary" Content="Add" Command="{Binding AddTagCommand}"
                                                 AutomationProperties.Name="Add tag" />
-                                        <Button Grid.Column="2" x:Name="ReviewButton" Content="{Binding ReviewAction}" Command="{Binding ToggleReviewCommand}" />
+                                        <Button Grid.Column="2" x:Name="ReviewButton" Classes="secondary" Content="{Binding ReviewAction}" Command="{Binding ToggleReviewCommand}" />
                                     </Grid>
                                 </StackPanel>
                             </Grid>

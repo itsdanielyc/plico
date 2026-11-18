@@ -1,6 +1,7 @@
 using System.Diagnostics;
 using Avalonia.Controls;
 using Avalonia.Platform.Storage;
+using Plico.Core;
 
 namespace Plico.Desktop;
 
@@ -9,6 +10,7 @@ internal interface IWorkspaceDialogs
 {
     Task<IReadOnlyList<string>> PickDocumentsAsync();
     Task<string?> PickLibraryAsync();
+    Task<ScanRequest?> PickScannerAsync();
     void OpenPath(string path);
 }
 
@@ -41,6 +43,8 @@ internal sealed class WorkspaceDialogs(Window owner) : IWorkspaceDialogs
         });
         return folders.FirstOrDefault()?.TryGetLocalPath();
     }
+
+    public Task<ScanRequest?> PickScannerAsync() => new ScanDialog(Scanners.DiscoverAsync).ShowDialog<ScanRequest?>(owner);
 
     public void OpenPath(string path)
     {

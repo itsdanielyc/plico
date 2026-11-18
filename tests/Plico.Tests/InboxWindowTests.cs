@@ -3,6 +3,7 @@ using Avalonia.Controls;
 using Avalonia.Headless;
 using Avalonia.Headless.XUnit;
 using Plico.Desktop;
+using Plico.Core;
 using Xunit;
 
 [assembly: AvaloniaTestApplication(typeof(Plico.Tests.HeadlessApplication))]
@@ -39,6 +40,27 @@ public sealed class InboxWindowTests
         finally
         {
             window.Close();
+        }
+    }
+
+    [AvaloniaFact]
+    public void ScannerPickerSurfacesMissingDriverAndDisablesCapture()
+    {
+        const string missingDriver = "SANE is unavailable.";
+        var dialog = new ScanDialog(_ => Task.FromResult(new ScanDiscovery([], [missingDriver])));
+        dialog.Show();
+        try
+        {
+            var capture = Assert.IsType<Button>(dialog.FindControl<Button>("StartButton"));
+            var refresh = Assert.IsType<Button>(dialog.FindControl<Button>("RefreshButton"));
+            var status = Assert.IsType<TextBlock>(dialog.FindControl<TextBlock>("ScannerStatus"));
+            Assert.Equal(missingDriver, status.Text);
+            Assert.False(capture.IsEnabled);
+            Assert.True(refresh.IsEnabled);
+        }
+        finally
+        {
+            dialog.Close();
         }
     }
 }

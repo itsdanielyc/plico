@@ -125,7 +125,7 @@ internal sealed class LibraryCatalog
         if (expression.Length > 0)
         {
             join = "JOIN documents_search ON documents_search.rowid = d.id";
-            match = "snippet(documents_search, 1, '', '', ' … ', 18)";
+            match = "replace(replace(snippet(documents_search, 1, '', '', ' … ', 18), char(13), ''), char(10), ' ')";
             order = "documents_search.rank, d.id DESC";
             conditions.Add("documents_search MATCH $expression");
             command.Parameters.AddWithValue("$expression", expression);

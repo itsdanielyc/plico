@@ -1,5 +1,7 @@
 using System.Globalization;
 using System.Text;
+using NAPS2.Images;
+using NAPS2.Scan;
 
 namespace Plico.Core;
 
@@ -73,6 +75,24 @@ public sealed class InboxLibrary : IDisposable
     public Task<DocumentSummary> ImportAsync(string sourcePath, CancellationToken cancellationToken = default) =>
         StoreAsync(Path.GetFileNameWithoutExtension(sourcePath),
             (output, token) => _processor.PrepareAsync(sourcePath, output, token), cancellationToken);
+
+    /// <summary>Captures a scan job as a single searchable PDF in the inbox.</summary>
+    public Task<DocumentSummary> ScanAsync(ScanRequest request, CancellationToken cancellationToken = default)
+    {
+        var options = Scanners.CaptureOptions(request);
+        return StoreScanAsync(Scanners.ScanTitle(), (context, token) => new ScanController(context).Scan(options, token),
+            cancellationToken);
+    }
+
+    internal Task<DocumentSummary> StoreScanAsync(
+        string title,
+        Func<ScanningContext, CancellationToken, IAsyncEnumerable<ProcessedImage>> capture,
+        CancellationToken cancellationToken) =>
+        StoreAsync(title, async (output, token) =>
+        {
+            using var context = DocumentProcessor.CreateCaptureContext(Path.GetDirectoryName(output)!);
+            return await _processor.ExportAsync(context, capture(context, token), output, token).ConfigureAwait(false);
+        }, cancellationToken);
 
     /// <summary>Returns a bounded page of results for the selected filters.</summary>
     public DocumentPage Find(DocumentFilter filter) => _catalog.Find(filter);

@@ -18,6 +18,7 @@ try {
     }
 
     dotnet publish (Join-Path $repository 'src/Plico.Desktop/Plico.Desktop.csproj') -c Release -r $Runtime --self-contained -o $publish -p:NuGetLockFilePath=obj/publish-packages.lock.json
+    & (Join-Path $PSScriptRoot 'Copy-Notices.ps1') -AssetsFile (Join-Path $repository 'src/Plico.Desktop/obj/project.assets.json') -InstallDirectory $publish
     foreach ($file in @('README.md', 'THIRD-PARTY.md')) {
         $notice = Join-Path $repository $file
         if (Test-Path -LiteralPath $notice) { Copy-Item -LiteralPath $notice -Destination $publish }
