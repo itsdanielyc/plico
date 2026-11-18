@@ -22,7 +22,7 @@
 | 17 | Quoted text search | Quoted phrases require adjacent whole words, while ordinary search and partially typed queries remain usable | L3, L6 | Done |
 | 18 | French and German OCR | The user can select a bundled language. New PDFs get searchable text in that language, and the choice is stored locally | L3, L4, L6 | Done |
 | 19 | Scan resolution | The scanner picker starts at 300 dpi and sends the chosen resolution through the native capture request | L3, L4, L6 | Done |
-| 20 | Remember scan options | Paper source, paper size, and resolution reopen from local settings. Invalid settings fall back to the regional defaults. | L3, L4, L6 | In progress |
-| 21 | Back up the library | A backup opens as a complete library with the same PDFs and catalog data. Cancellation leaves the chosen destination clear. | L3, L6 | Planned |
+| 20 | Remember scan options | Paper source, paper size, and resolution reopen from local settings. Invalid settings fall back to the regional defaults. | L3, L4, L6 | Done |
+| 21 | Back up the library | A backup opens as a complete library with the same PDFs and catalog data. Cancellation leaves the chosen destination clear. | L3, L6 | In progress |
 
 The initial release is followed by focused improvements and fresh evidence.
