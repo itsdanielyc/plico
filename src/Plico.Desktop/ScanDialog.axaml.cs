@@ -1,4 +1,3 @@
-using System.Globalization;
 using Avalonia.Controls;
 using Avalonia.Input;
 using Avalonia.Interactivity;
@@ -32,29 +31,38 @@ internal sealed partial class ScanDialog : Window
     private readonly Func<CancellationToken, Task<ScanDiscovery>> _discover;
     private readonly Func<string, CancellationToken, Task<ScannerDevice>> _connect;
     private readonly SavedScannerStore? _settings;
+    private readonly ScanOptionsPreference? _captureOptions;
     private readonly CancellationTokenSource _lifetime = new();
     private readonly Dictionary<Uri, ScannerDevice> _connected = [];
     private IReadOnlyList<ScannerDevice> _discovered = [];
     private bool _checkingDevices;
+    private bool _captureOptionsReady;
     private string? _settingsError;
 
     internal ScanDialog(Func<CancellationToken, Task<ScanDiscovery>> discover,
-        Func<string, CancellationToken, Task<ScannerDevice>>? connect = null, SavedScannerStore? settings = null)
+        Func<string, CancellationToken, Task<ScannerDevice>>? connect = null, SavedScannerStore? settings = null,
+        ScanOptionsPreference? captureOptions = null)
     {
         _discover = discover;
         _connect = connect ?? Scanners.ConnectAsync;
         _settings = settings;
+        _captureOptions = captureOptions;
         InitializeComponent();
+        var options = CaptureSettings.RegionalDefaults;
+        TrySettingsChange(() => options = _captureOptions?.Load() ?? options);
+        var captureError = _settingsError;
         SourceBox.ItemsSource = Sources;
-        SourceBox.SelectedItem = Sources[0];
+        SourceBox.SelectedItem = Sources.Single(option => option.Value == options.Feed);
         PaperBox.ItemsSource = Enum.GetValues<ScanPaper>();
-        PaperBox.SelectedItem = RegionInfo.CurrentRegion.IsMetric ? ScanPaper.A4 : ScanPaper.Letter;
+        PaperBox.SelectedItem = options.Paper;
         ResolutionBox.ItemsSource = Resolutions;
-        ResolutionBox.SelectedItem = Resolutions.Single(option => option.Value == ScanResolution.Standard);
+        ResolutionBox.SelectedItem = Resolutions.Single(option => option.Value == options.Resolution);
         TrySettingsChange(() =>
         {
             foreach (var scanner in _settings?.Load() ?? []) _connected[scanner.Address!] = scanner;
         });
+        _settingsError ??= captureError;
+        _captureOptionsReady = true;
         ShowDevices(null);
     }
 
@@ -181,6 +189,16 @@ internal sealed partial class ScanDialog : Window
 
     private void Device_Changed(object? sender, SelectionChangedEventArgs e) => UpdateStartButton();
 
+    private void CaptureOptions_Changed(object? sender, SelectionChangedEventArgs e)
+    {
+        if (!_captureOptionsReady || _captureOptions is null || ReadCaptureSettings() is not { } options) return;
+        if (!TrySettingsChange(() => _captureOptions.Save(options))) ScannerStatus.Text = _settingsError;
+    }
+
+    private CaptureSettings? ReadCaptureSettings() =>
+        SourceBox.SelectedItem is SourceOption source && PaperBox.SelectedItem is ScanPaper paper &&
+        ResolutionBox.SelectedItem is ResolutionOption resolution ? new(source.Value, paper, resolution.Value) : null;
+
     private void UpdateStartButton()
     {
         if (StartButton is not null && DeviceBox is not null)
@@ -199,10 +217,9 @@ internal sealed partial class ScanDialog : Window
 
     private void Start_Click(object? sender, RoutedEventArgs e)
     {
-        if (DeviceBox.SelectedItem is ScannerDevice scanner && SourceBox.SelectedItem is SourceOption source &&
-            PaperBox.SelectedItem is ScanPaper paper && ResolutionBox.SelectedItem is ResolutionOption resolution)
+        if (DeviceBox.SelectedItem is ScannerDevice scanner && ReadCaptureSettings() is { } options)
         {
-            Close(new ScanRequest(scanner, source.Value, paper, resolution.Value));
+            Close(new ScanRequest(scanner, options.Feed, options.Paper, options.Resolution));
         }
     }
 }

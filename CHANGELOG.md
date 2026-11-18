@@ -1,9 +1,10 @@
 # Changelog
 
-## [0.11.0] - 2026-11-18
+## [0.12.0] - 2026-11-18
 
-- Choose 150, 300, or 600 dpi when scanning. The scanner picker starts at 300 dpi.
-- Plico sends the chosen resolution to the scanner driver with the paper source and size.
+- Choose 150, 300, or 600 dpi when scanning. Plico sends the selected resolution with the paper source and size.
+- The scan picker remembers paper source, paper size, and resolution locally.
+- Unreadable scan options open with the regional paper default and 300 dpi.
 
 ## [0.10.0] - 2026-11-18
 

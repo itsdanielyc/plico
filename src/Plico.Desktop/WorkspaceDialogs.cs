@@ -46,7 +46,8 @@ internal sealed class WorkspaceDialogs(Window owner) : IWorkspaceDialogs
     }
 
     public Task<ScanRequest?> PickScannerAsync() =>
-        new ScanDialog(Scanners.DiscoverAsync, settings: new SavedScannerStore(ApplicationSettings.DirectoryPath))
+        new ScanDialog(Scanners.DiscoverAsync, settings: new SavedScannerStore(ApplicationSettings.DirectoryPath),
+            captureOptions: new ScanOptionsPreference(ApplicationSettings.DirectoryPath))
             .ShowDialog<ScanRequest?>(owner);
 
     public Task<string?> EditTitleAsync(string currentTitle) =>

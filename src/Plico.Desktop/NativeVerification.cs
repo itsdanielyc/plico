@@ -182,7 +182,9 @@ internal static class NativeVerification
         {
             var settings = new SavedScannerStore(settingsDirectory.FullName);
             settings.AddOrUpdate(Scanners.FromAddress("scanner.test:8080", "Office scanner"));
-            await CaptureScanDialogAsync(owner, directory, "saved-scanner.png", settings);
+            var options = new ScanOptionsPreference(settingsDirectory.FullName);
+            options.Save(new CaptureSettings(ScanFeed.Feeder, ScanPaper.Letter, ScanResolution.Detailed));
+            await CaptureScanDialogAsync(owner, directory, "saved-scanner.png", settings, options);
         }
         finally
         {
@@ -190,9 +192,11 @@ internal static class NativeVerification
         }
     }
 
-    private static async Task CaptureScanDialogAsync(Window owner, string directory, string filename, SavedScannerStore? settings = null)
+    private static async Task CaptureScanDialogAsync(Window owner, string directory, string filename,
+        SavedScannerStore? settings = null, ScanOptionsPreference? captureOptions = null)
     {
-        var dialog = new ScanDialog(_ => Task.FromResult(new ScanDiscovery([], [])), settings: settings);
+        var dialog = new ScanDialog(_ => Task.FromResult(new ScanDiscovery([], [])),
+            settings: settings, captureOptions: captureOptions);
         var result = dialog.ShowDialog<ScanRequest?>(owner);
         try
         {
@@ -200,10 +204,17 @@ internal static class NativeVerification
             var connect = Control<Button>(dialog, "ConnectButton");
             var resolution = Control<ComboBox>(dialog, "ResolutionBox");
             bool hasSavedScanner = settings is not null;
+            string expectedResolution = captureOptions is null ? "300 dpi" : "600 dpi";
             Require(address.IsVisible && connect.IsEnabled && Control<Button>(dialog, "StartButton").IsEnabled == hasSavedScanner &&
                     Control<Button>(dialog, "ForgetButton").IsVisible == hasSavedScanner &&
-                    resolution.ItemCount == 3 && resolution.SelectedItem?.ToString() == "300 dpi",
+                    resolution.ItemCount == 3 && resolution.SelectedItem?.ToString() == expectedResolution,
                 "The native scanner dialog did not offer the expected scanner actions.");
+            if (captureOptions is not null)
+            {
+                Require(Control<ComboBox>(dialog, "SourceBox").SelectedItem?.ToString() == "Feeder · one-sided" &&
+                    Equals(Control<ComboBox>(dialog, "PaperBox").SelectedItem, ScanPaper.Letter),
+                    "The native scanner dialog did not restore the saved paper options.");
+            }
             await CaptureAsync(dialog, directory, filename);
         }
         finally
