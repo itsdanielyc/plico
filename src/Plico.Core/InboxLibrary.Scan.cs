@@ -19,11 +19,22 @@ public sealed partial class InboxLibrary
     /// <param name="language">The bundled model used to recognize the pages.</param>
     public Task<ScanOutcome> ScanWithRecoveryAsync(ScanRequest request,
         Func<ScanInterruption, CancellationToken, Task<bool>> keepCapturedPages,
-        CancellationToken cancellationToken = default, OcrLanguage language = OcrLanguage.English)
+        CancellationToken cancellationToken = default, OcrLanguage language = OcrLanguage.English) =>
+        ScanWithRecoveryAsync(request, keepCapturedPages, cancellationToken, language, destinationFolder: null);
+
+    /// <summary>Captures a scan into a selected library folder and offers to keep completed pages after an interruption.</summary>
+    /// <param name="request">The scanner and capture settings for this job.</param>
+    /// <param name="keepCapturedPages">Chooses whether to write the available pages. The callback must honor cancellation and avoid starting another library write.</param>
+    /// <param name="cancellationToken">Cancels capture, confirmation, or OCR before the PDF is published.</param>
+    /// <param name="language">The bundled model used to recognize the pages.</param>
+    /// <param name="destinationFolder">An existing directory within the library's PDF directory, or null for the root.</param>
+    public Task<ScanOutcome> ScanWithRecoveryAsync(ScanRequest request,
+        Func<ScanInterruption, CancellationToken, Task<bool>> keepCapturedPages,
+        CancellationToken cancellationToken, OcrLanguage language, string? destinationFolder)
     {
         ArgumentNullException.ThrowIfNull(keepCapturedPages);
         return StoreScanWithRecoveryAsync(Scanners.ScanTitle(), CreateScanSource(request), keepCapturedPages,
-            cancellationToken, language);
+            cancellationToken, language, destinationFolder);
     }
 
     private static Func<ScanningContext, CancellationToken, IAsyncEnumerable<ProcessedImage>> CreateScanSource(ScanRequest request)
@@ -43,9 +54,10 @@ public sealed partial class InboxLibrary
     internal Task<ScanOutcome> StoreScanWithRecoveryAsync(string title,
         Func<ScanningContext, CancellationToken, IAsyncEnumerable<ProcessedImage>> capture,
         Func<ScanInterruption, CancellationToken, Task<bool>>? keepCapturedPages,
-        CancellationToken cancellationToken, OcrLanguage language = OcrLanguage.English) =>
+        CancellationToken cancellationToken, OcrLanguage language = OcrLanguage.English, string? destinationFolder = null) =>
         InStageAsync(async (stage, token) =>
         {
+            string? target = destinationFolder is null ? null : ResolveIntakeDirectory(destinationFolder);
             using var context = DocumentProcessor.CreateCaptureContext(stage);
             var captured = new List<ProcessedImage>();
             var interruption = await CaptureScanPagesAsync(context, capture, captured, keepCapturedPages is not null, token)
@@ -62,7 +74,7 @@ public sealed partial class InboxLibrary
             var text = await _processor.ExportCapturedAsync(context, captured, output, language, token).ConfigureAwait(false);
             if (text.PageCount != captured.Count) throw new InvalidDataException("The scan PDF is missing captured pages.");
             string documentTitle = interruption is null ? title : $"{title} (partial)";
-            return new ScanOutcome(CommitPdf(output, documentTitle, text, token), interruption);
+            return new ScanOutcome(CommitPdf(output, documentTitle, text, token, destinationFolder: target), interruption);
         }, cancellationToken);
 
     // O(pages) references in memory. The scanning context owns the page files until the job exits.

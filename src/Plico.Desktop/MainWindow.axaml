@@ -149,6 +149,14 @@
                         <TextBlock Text="{Binding LibraryName}" MaxWidth="142" TextTrimming="CharacterEllipsis" FontWeight="SemiBold" />
                     </Button>
                     <Button Classes="rail" Content="Show PDF folder" Command="{Binding OpenPdfFolderCommand}" IsEnabled="{Binding HasLibrary}" />
+                    <Button x:Name="IntakeFolderButton" Classes="rail" Command="{Binding ChooseIntakeFolderCommand}"
+                            IsEnabled="{Binding CanWork}" ToolTip.Tip="{Binding IntakeFolderLabel}" AutomationProperties.Name="Choose intake folder">
+                        <StackPanel Spacing="2">
+                            <TextBlock Text="Intake folder…" />
+                            <TextBlock Text="{Binding IntakeFolderLabel}" IsVisible="{Binding HasCustomIntakeFolder}"
+                                       Foreground="#CADDCA" FontSize="12" MaxWidth="142" TextTrimming="CharacterEllipsis" />
+                        </StackPanel>
+                    </Button>
                     <Button Classes="rail" Content="Refresh index" Command="{Binding RefreshIndexCommand}" IsEnabled="{Binding CanWork}" />
                     <Button x:Name="BackUpLibraryButton" Classes="rail" Content="Back up library…"
                             Command="{Binding BackUpLibraryCommand}" IsEnabled="{Binding CanWork}" />
@@ -192,9 +200,10 @@
                                   IsEnabled="{Binding IsIdle}" AutomationProperties.Name="OCR language" />
                     </StackPanel>
                     <Button Grid.Column="3" x:Name="ScanButton" Classes="secondary" Command="{Binding ScanCommand}"
-                            Content="Scan" IsEnabled="{Binding CanWork}" MinHeight="38" />
+                            Content="Scan" IsEnabled="{Binding CanWork}" MinHeight="38" ToolTip.Tip="{Binding IntakeFolderLabel}" />
                     <Button Grid.Column="4" x:Name="AddFilesButton" Classes="primary"
-                            IsEnabled="{Binding CanWork}" Command="{Binding AddFilesCommand}" Content="Add files" MinHeight="38" />
+                            IsEnabled="{Binding CanWork}" Command="{Binding AddFilesCommand}" Content="Add files" MinHeight="38"
+                            ToolTip.Tip="{Binding IntakeFolderLabel}" />
                 </Grid>
             </Border>
             <Grid Grid.Row="1" Margin="25,21,25,20" RowDefinitions="Auto,*" RowSpacing="16">

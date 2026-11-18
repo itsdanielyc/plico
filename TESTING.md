@@ -61,6 +61,7 @@
 48. In **Index report**, select an unavailable PDF and restore it from a matching copy. Check the original path, source bytes, and metadata. Exercise a same-size altered copy, an occupied or linked destination, and cancellation. Fail the catalog write after publication and recover through refresh (L3, L4 and L6).
 49. Restore from a folder with renamed and nested copies, duplicate original bytes at two catalog paths, and an unmatched PDF. Check the report for an occupied destination. Change a candidate after matching and cancel after one completed restore (L3, L4 and L6).
 50. Choose a nested search folder while a query and sidebar tag are active. Check the retained terms, date, and sort, and replace two old folder scopes. Exercise quoted text, an unfinished query, a long path, and selection outside the library (L1, L3, L4 and L6).
+51. Choose an intake subfolder and file both an imported PDF and recovered scanner pages. Check a repeat across folders, an occupied filename, and a destination that disappears during capture. Switch libraries to check the preference, and verify watched files enter the PDF root (L3, L4 and L6).
 
 Run `dotnet test Plico.slnx -c Release` for the fast suite. Run the native harness from `keel.json` for installed-platform evidence. Visual review starts with per-OS captures and geometry checks. Add pixel baselines when repeatable runner captures justify the maintenance.
 

@@ -24,6 +24,11 @@ internal static partial class NativeVerification
 
         Require(Uri.TryCreate(endpoint, UriKind.Absolute, out var address) && address.IsLoopback,
             "Use a loopback endpoint for the interrupted scanner fixture.");
+        const string folderName = "Scan intake";
+        string pdfs = Path.Combine(model.LibraryPath, "PDFs");
+        string target = Directory.CreateDirectory(Path.Combine(pdfs, folderName)).FullName;
+        await ChooseNativeIntakeFolderAsync(window, model, dialogs, target);
+        Require(model.IntakeFolderLabel == $"PDFs/{folderName}", "The scanner's intake folder was not selected.");
         var device = await Scanners.ConnectAsync(endpoint);
         dialogs.ScannerChoice = new ScanRequest(device, ScanFeed.Feeder, ScanPaper.Letter);
         dialogs.PartialScanChoice = (interruption, token) => ChooseCapturedPagesAsync(window, interruption, directory, save: true, token);
@@ -41,13 +46,16 @@ internal static partial class NativeVerification
 
         var saved = model.SelectedDocument;
         Require(model.Status == "Partial scan added to inbox." && saved is { PageCount: InterruptedScannerPages, HasText: true } &&
+                saved.RelativePath.StartsWith($"{folderName}/", StringComparison.Ordinal) &&
                 saved.Title.EndsWith("(partial)", StringComparison.Ordinal), model.Status);
         await UntilAsync(() => model.Preview is not null, () => model.PreviewMessage);
         await CaptureAsync(window, directory, "partial-scan-inbox.png");
         Control<TextBox>(window, "SearchBox").SetCurrentValue(TextBox.TextProperty, ReceiptKeyword);
         await UntilAsync(() => model.Documents.Any(item => item.Id == saved!.Id &&
             item.Match.Contains(ReceiptKeyword, StringComparison.OrdinalIgnoreCase)), () => model.Status);
-        return "Verified the interrupted eSCL job saved a searchable two-page PDF through the native Scan action.";
+        await ChooseNativeIntakeFolderAsync(window, model, dialogs, pdfs);
+        Require(!model.HasCustomIntakeFolder, "The original intake folder was not restored.");
+        return "Verified the interrupted eSCL job filed a searchable two-page PDF in the selected intake folder through the native Scan action.";
     }
 
     private static async Task<bool> ChooseCapturedPagesAsync(Window owner, ScanInterruption interruption, string directory,

@@ -11,6 +11,7 @@ internal sealed partial class InboxViewModel
     {
         var library = RequireLibrary();
         var language = RecognitionLanguage;
+        string? destinationFolder = ManualIntakeDestination(library);
         var request = await _dialogs.PickScannerAsync();
         if (request is null)
         {
@@ -21,7 +22,7 @@ internal sealed partial class InboxViewModel
         Status = $"Scanning from {request.Device.Name}…";
         var scan = await Task.Run(() => library.ScanWithRecoveryAsync(request,
             (interruption, cancellation) => Dispatcher.UIThread.InvokeAsync(() => ConfirmPartialScanAsync(interruption, cancellation)),
-            token, language), token);
+            token, language, destinationFolder), token);
         if (scan.Document is not { } document)
         {
             Status = "Captured pages discarded.";

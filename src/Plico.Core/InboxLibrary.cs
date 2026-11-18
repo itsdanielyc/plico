@@ -310,12 +310,17 @@ public sealed partial class InboxLibrary : IDisposable
 
     private DocumentSummary CommitPdf(string stagedPdf, string title, PdfText text, CancellationToken cancellationToken,
         byte[]? sourceFingerprint = null, byte[]? pdfFingerprint = null, OcrCopySource? ocrCopySource = null,
-        IReadOnlyList<long>? metadataSourceIds = null)
+        IReadOnlyList<long>? metadataSourceIds = null, string? destinationFolder = null)
     {
         var version = FileVersion.Read(stagedPdf);
         var fingerprint = pdfFingerprint ?? FingerprintPdf(stagedPdf, cancellationToken);
+        string target = destinationFolder is null ? PdfDirectory : ResolveIntakeDirectory(destinationFolder);
+        if (destinationFolder is not null && Path.GetRelativePath(destinationFolder, target) != ".")
+        {
+            throw new IOException("The intake folder changed during processing. Select it again and retry.");
+        }
         cancellationToken.ThrowIfCancellationRequested();
-        string publishedPdf = PublishPdf(stagedPdf, title);
+        string publishedPdf = PublishPdf(stagedPdf, title, target);
         long id = _catalog.Upsert(RelativePdfPath(publishedPdf), title, text, version, fingerprint, sourceFingerprint, ocrCopySource, metadataSourceIds);
         return _catalog.Get(id);
     }
@@ -334,13 +339,13 @@ public sealed partial class InboxLibrary : IDisposable
         Path.GetRelativePath(PdfDirectory, path).Replace(Path.DirectorySeparatorChar, '/');
 
     // O(k log n) catalog lookups for k occupied names among n entries. The move uses a constant file buffer.
-    private string PublishPdf(string stagedPdf, string title)
+    private string PublishPdf(string stagedPdf, string title, string destinationFolder)
     {
         string stem = PortableStem(title);
         for (int duplicate = 1; ; duplicate++)
         {
             string name = NumberedName(stem, duplicate);
-            string destination = Path.Combine(PdfDirectory, name + DocumentProcessor.PdfExtension);
+            string destination = Path.Combine(destinationFolder, name + DocumentProcessor.PdfExtension);
             if (_catalog.ReservesPath(RelativePdfPath(destination))) continue;
             try
             {

@@ -28,7 +28,8 @@ internal sealed partial class InboxViewModel
             switch (await _dialogs.ShowImportErrorsAsync(failures))
             {
                 case ImportErrorsAction.Retry:
-                    await ImportFilesAsync(failures.Select(failure => failure.SourcePath).ToArray(), token);
+                    await ImportFilesAsync(failures.Select(failure => failure.SourcePath).ToArray(), token,
+                        destinationFolder: ManualIntakeDestination(RequireLibrary()));
                     break;
                 case ImportErrorsAction.Clear:
                     if (PersistImportFailures(RequireLibrary().RootPath, []) is { } warning)

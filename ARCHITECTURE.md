@@ -31,6 +31,8 @@ The desktop builds a sorted index of the sidebar's tag keys when a tag field fir
 
 Schema v2 indexes the SHA-256 digest of the source. Import computes it while copying a snapshot to staging. Repeating an unchanged source can reuse its existing PDF and avoid OCR. For a v1 entry, a PDF candidate with matching size is hashed on demand. Paths reserved by missing entries keep newly imported documents from inheriting unrelated metadata.
 
+The desktop stores the manual intake folder as a relative PDF path in its per-library settings. Core checks the resolved directory inside `PDFs/` before preparing the file or capturing pages, then checks it again before publishing. Each operation claims an available name in the destination and records its relative path in SQLite. Exact-source detection spans the library. Scanner folder watch files at the PDF root.
+
 Schema v3 stores an optional display title. The FTS title field includes the display title and filename when a title has been edited. Existing FTS entries remain valid through migration. A refresh updates file text while preserving user-assigned titles.
 
 Schema v4 stores the SHA-256 digest of the published PDF. Refresh matches unique digests from the catalog and the changed files. It updates the path and filename search terms on the same catalog record. Matching duplicates are treated as separate files, and unchanged indexed files need only a file stamp check.

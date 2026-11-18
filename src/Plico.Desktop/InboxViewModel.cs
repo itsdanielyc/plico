@@ -56,12 +56,13 @@ internal sealed partial class InboxViewModel : ObservableObject, IDisposable
     internal InboxViewModel(IWorkspaceDialogs dialogs, Action<string>? rememberLocation = null,
         WatchFolderPreference? watchPreference = null,
         Func<InboxLibrary, DocumentFilter, CancellationToken, DocumentPage>? searchDocuments = null,
-        ImportFailureStore? importFailureStore = null)
+        ImportFailureStore? importFailureStore = null, IntakeFolderPreference? intakeFolderPreference = null)
     {
         _dialogs = dialogs;
         _rememberLocation = rememberLocation;
         _watchPreference = watchPreference;
         _importFailureStore = importFailureStore;
+        _intakeFolderPreference = intakeFolderPreference;
         _searchDocuments = searchDocuments ?? (static (library, filter, token) => library.Find(filter, token));
         _searchTimer.Tick += (_, _) => _ = LoadTypedSearchAsync();
     }
@@ -127,7 +128,7 @@ internal sealed partial class InboxViewModel : ObservableObject, IDisposable
             Status = "No files selected.";
             return;
         }
-        await ImportFilesAsync(files, token);
+        await ImportFilesAsync(files, token, destinationFolder: ManualIntakeDestination(RequireLibrary()));
     });
 
     internal Task ImportDroppedFilesAsync(IReadOnlyList<string> files, bool hasSupportedFile)
@@ -137,7 +138,8 @@ internal sealed partial class InboxViewModel : ObservableObject, IDisposable
             Status = "Drop a PDF, PNG, JPEG, or TIFF document.";
             return Task.CompletedTask;
         }
-        return RunOperationAsync("Importing dropped files…", token => ImportFilesAsync(files, token));
+        return RunOperationAsync("Importing dropped files…",
+            token => ImportFilesAsync(files, token, destinationFolder: ManualIntakeDestination(RequireLibrary())));
     }
 
     [RelayCommand]
@@ -266,6 +268,7 @@ internal sealed partial class InboxViewModel : ObservableObject, IDisposable
         CancelPreview();
         previous?.Dispose();
         var importNotice = RestoreImportFailures(replacement.RootPath);
+        var intakeNotice = RestoreIntakeFolder(replacement.RootPath);
         OcrCopyBatchResults = [];
         LatestIndexRefresh = null;
         FolderRestoreNotices = [];
@@ -287,10 +290,12 @@ internal sealed partial class InboxViewModel : ObservableObject, IDisposable
         Navigate(inboxOnly: true);
         Status = watchNotice is null ? "Library ready." : $"Library ready. {watchNotice}";
         if (importNotice is not null) Status += $" {importNotice}";
+        if (intakeNotice is not null) Status += $" {intakeNotice}";
         if (replacement.MoveRecoveryNotice is { } moveNotice) Status += $" {moveNotice}";
     }
 
-    private async Task ImportFilesAsync(IReadOnlyList<string> files, CancellationToken token, bool revealAdded = true)
+    private async Task ImportFilesAsync(IReadOnlyList<string> files, CancellationToken token, bool revealAdded = true,
+        string? destinationFolder = null)
     {
         var library = RequireLibrary();
         var language = RecognitionLanguage;
@@ -310,7 +315,7 @@ internal sealed partial class InboxViewModel : ObservableObject, IDisposable
                 Status = $"Processing {filename}…";
                 try
                 {
-                    var result = await Task.Run(() => library.ImportFileAsync(file, token, language), token);
+                    var result = await Task.Run(() => library.ImportFileAsync(file, token, language, destinationFolder), token);
                     reportChanged |= _unresolvedImports.Remove(file);
                     if (!result.Added)
                     {

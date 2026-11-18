@@ -47,6 +47,7 @@
 - Restore a missing PDF from a verified copy through the index report and recover its original catalog entry.
 - Recover several unavailable PDFs from one folder of matching backups, including renamed files in subfolders.
 - Choose a library folder beside search while keeping other terms and filters.
+- Choose an intake folder for added files, drops, retries, and scans. Plico remembers the choice for each library on the computer.
 
 ## [0.15.0] - 2026-11-18
 

@@ -29,7 +29,8 @@ public sealed class App : Application
                 };
                 string settingsDirectory = Path.Combine(testLibrary.FullName, "Settings");
                 var model = new InboxViewModel(dialogs, watchPreference: new WatchFolderPreference(settingsDirectory),
-                    importFailureStore: new ImportFailureStore(settingsDirectory));
+                    importFailureStore: new ImportFailureStore(settingsDirectory),
+                    intakeFolderPreference: new IntakeFolderPreference(settingsDirectory));
                 model.InitializeLibrary(() => testLibrary.FullName);
                 window.DataContext = model;
                 desktop.Exit += (_, _) =>
@@ -45,7 +46,8 @@ public sealed class App : Application
             {
                 string settingsDirectory = ApplicationSettings.DirectoryPath;
                 var model = new InboxViewModel(new WorkspaceDialogs(window), LibraryPreference.Save, new WatchFolderPreference(settingsDirectory),
-                    importFailureStore: new ImportFailureStore(settingsDirectory));
+                    importFailureStore: new ImportFailureStore(settingsDirectory),
+                    intakeFolderPreference: new IntakeFolderPreference(settingsDirectory));
                 model.InitializeLibrary(LibraryPreference.LoadOrCreateDefault);
                 var recognition = new OcrLanguagePreference(settingsDirectory);
                 model.InitializeRecognitionLanguage(recognition.Load, recognition.Save);
