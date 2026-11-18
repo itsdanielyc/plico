@@ -49,6 +49,7 @@
 - Choose a library folder beside search while keeping other terms and filters.
 - Choose an intake folder for added files, drops, retries, and scans. Plico remembers the choice for each library on the computer.
 - Remove one tag from a selection of PDFs. The chooser shows how many selected PDFs carry each tag.
+- Batch tag edits keep loaded result pages and reselect PDFs that still match the current filter.
 
 ## [0.15.0] - 2026-11-18
 

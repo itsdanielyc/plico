@@ -17,6 +17,9 @@ public sealed partial class InboxLibrary : IDisposable
     /// <summary>The maximum length of a tag label in the catalog.</summary>
     public const int MaximumTagNameLength = SearchTerms.MaximumTagLength;
 
+    /// <summary>The number of matches in a standard search result page.</summary>
+    public const int DefaultResultPageSize = LibraryCatalog.PageSize;
+
     private static readonly HashSet<string> ReservedWindowsFileNames = new(StringComparer.OrdinalIgnoreCase)
     {
         "CON", "PRN", "AUX", "NUL",
@@ -90,6 +93,17 @@ public sealed partial class InboxLibrary : IDisposable
 
     /// <summary>Returns a bounded page of results and honours cancellation during the catalog read.</summary>
     public DocumentPage Find(DocumentFilter filter, CancellationToken cancellationToken) => _catalog.Find(filter, cancellationToken);
+
+    /// <summary>Reads up to the requested number of matches from the specified search offset.</summary>
+    /// <param name="filter">The search, sort, and offset to apply.</param>
+    /// <param name="maximumResults">The positive maximum number of documents to read into the result.</param>
+    /// <param name="cancellationToken">Cancels the catalog read.</param>
+    /// <returns>The matching documents and whether another match follows.</returns>
+    public DocumentPage Find(DocumentFilter filter, int maximumResults, CancellationToken cancellationToken)
+    {
+        ArgumentOutOfRangeException.ThrowIfNegativeOrZero(maximumResults);
+        return _catalog.Find(filter, cancellationToken, maximumResults);
+    }
 
     /// <summary>Returns the extracted text from all indexed pages, or an empty string for a PDF without text.</summary>
     /// <exception cref="InvalidOperationException">The document is unavailable in the catalog.</exception>

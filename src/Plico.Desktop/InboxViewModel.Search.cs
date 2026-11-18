@@ -15,7 +15,7 @@ internal sealed partial class InboxViewModel
     private CancellationTokenSource? _searchCancellation;
     private CancellationTokenSource? _pageMatchCancellation;
     private string? _appliedQuery;
-    private bool _hasAppendedResults;
+    private bool HasExpandedResults => Documents.Count > InboxLibrary.DefaultResultPageSize;
 
     [RelayCommand]
     private Task ChooseSearchFolderAsync() => RunOperationAsync("Choose a library folder to search…", async token =>
@@ -177,7 +177,7 @@ internal sealed partial class InboxViewModel
 
             // A cancelled provider can still finish its read. Only the current request can publish its page.
             if (token.IsCancellationRequested) return;
-            if (preserveView && (HasBatchSelection || _hasAppendedResults ||
+            if (preserveView && (HasBatchSelection || HasExpandedResults ||
                 (SelectedDocument is { } open && !page.Items.Any(document => document.Id == open.Id))))
             {
                 HasDeferredWatchResults = true;
@@ -196,7 +196,7 @@ internal sealed partial class InboxViewModel
         }
     }
 
-    private void LoadResults(long? preferredId = null, bool append = false, bool reloadPreview = false)
+    private void LoadResults(long? preferredId = null, bool append = false, bool reloadPreview = false, bool retainLoadedResults = false)
     {
         CancelTypedSearch();
         var filter = CurrentFilter(append ? Documents.Count : 0);
@@ -205,7 +205,9 @@ internal sealed partial class InboxViewModel
 
         try
         {
-            ApplyResultPage(filter, library.Find(filter), preferredId, reloadPreview);
+            bool reloadExpandedResults = retainLoadedResults && !append && HasExpandedResults && _appliedQuery == filter.Query;
+            var page = reloadExpandedResults ? library.Find(filter, Documents.Count, CancellationToken.None) : library.Find(filter);
+            ApplyResultPage(filter, page, preferredId, reloadPreview);
         }
         catch (Exception error)
         {
@@ -240,7 +242,6 @@ internal sealed partial class InboxViewModel
     {
         long? selection = preferredId ?? SelectedDocument?.Id;
         _appliedQuery = filter.Query;
-        _hasAppendedResults = filter.Offset > 0;
         ReplaceResults(filter.Offset > 0 ? [.. Documents, .. page.Items] : page.Items, selection, reloadPreview);
         HasMore = page.HasMore;
 

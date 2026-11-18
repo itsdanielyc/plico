@@ -64,6 +64,8 @@ Use Ctrl or Shift when selecting rows, or choose **Select shown** to select the 
 
 Choose **Remove tag…** to remove one tag from the selected PDFs. The chooser shows how many of the selected PDFs carry each tag.
 
+Batch tagging keeps the result pages you loaded and the selected PDFs that still match the current search.
+
 Choose **Move PDFs…** on a selection to file all of them in one library folder. Plico checks the selection before starting and reports what finished if you cancel or it encounters a file error.
 
 With multiple PDFs selected, choose **Export PDFs…** and pick a destination outside the library. Plico creates a dated folder with the selected PDFs. Use **Open export** to see the copies in your file manager.

@@ -261,8 +261,8 @@ internal sealed partial class LibraryCatalog
         return new FileVersion(result.GetInt64(0), result.GetInt64(1), Present: true);
     }
 
-    internal DocumentPage Find(DocumentFilter filter, CancellationToken cancellationToken = default) =>
-        Query(filter, cancellationToken: cancellationToken);
+    internal DocumentPage Find(DocumentFilter filter, CancellationToken cancellationToken = default, int maximumResults = PageSize) =>
+        Query(filter, cancellationToken: cancellationToken, maximumResults: maximumResults);
 
     internal string ReadIndexedText(long documentId)
     {
@@ -348,7 +348,8 @@ internal sealed partial class LibraryCatalog
         return new IndexedPdf(row.GetInt64(0), row.GetString(1), version, fingerprint);
     }
 
-    private DocumentPage Query(DocumentFilter filter, long? documentId = null, CancellationToken cancellationToken = default)
+    private DocumentPage Query(DocumentFilter filter, long? documentId = null,
+        CancellationToken cancellationToken = default, int maximumResults = PageSize)
     {
         cancellationToken.ThrowIfCancellationRequested();
         ArgumentOutOfRangeException.ThrowIfNegative(filter.Offset);
@@ -430,11 +431,11 @@ internal sealed partial class LibraryCatalog
             ORDER BY {order}
             LIMIT $limit OFFSET $offset;
             """;
-        command.Parameters.AddWithValue("$limit", PageSize + 1);
+        command.Parameters.AddWithValue("$limit", (long)maximumResults + 1);
         command.Parameters.AddWithValue("$offset", filter.Offset);
         try
         {
-            return ReadResultPage(command, cancellationToken);
+            return ReadResultPage(command, maximumResults, cancellationToken);
         }
         catch (SqliteException error) when (error.SqliteErrorCode == raw.SQLITE_INTERRUPT && cancellationToken.IsCancellationRequested)
         {
@@ -442,15 +443,15 @@ internal sealed partial class LibraryCatalog
         }
     }
 
-    private static DocumentPage ReadResultPage(SqliteCommand command, CancellationToken cancellationToken)
+    private static DocumentPage ReadResultPage(SqliteCommand command, int maximumResults, CancellationToken cancellationToken)
     {
         cancellationToken.ThrowIfCancellationRequested();
         using var results = command.ExecuteReader();
-        var documents = new List<DocumentSummary>(PageSize);
+        var documents = new List<DocumentSummary>(Math.Min(PageSize, maximumResults));
         while (results.Read())
         {
             cancellationToken.ThrowIfCancellationRequested();
-            if (documents.Count == PageSize)
+            if (documents.Count == maximumResults)
             {
                 return new(documents, HasMore: true);
             }

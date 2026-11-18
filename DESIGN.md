@@ -70,6 +70,8 @@ Both tag fields suggest up to eight names from the current library. The single-d
 
 **Remove tag…** appears when a selection contains tagged PDFs. Its chooser sorts the tags on that selection by name and shows a document count for each. Confirming removes the chosen assignments and keeps the matching results selected.
 
+After a batch tag edit, the results list refreshes the number of rows already loaded. The selection follows the PDFs that still match, and **Load more** continues from the refreshed list.
+
 The preview shows the whole page by default. **Fit width** fills the available reading width and allows vertical scrolling. Page navigation stays visible and starts each new page at the top.
 
 **Go to match** sits beneath the preview header actions for multi-page text results. After the first jump, **Previous match** and **Next match** move from the page currently in view. The status bar reports the page number or when there are no more matches in that direction.

@@ -30,7 +30,7 @@ internal sealed partial class InboxViewModel
         OnPropertyChanged(nameof(BatchCountLabel));
         OnPropertyChanged(nameof(SelectShownAction));
         OnPropertyChanged(nameof(BatchReviewAction));
-        if (HasDeferredWatchResults && !HasBatchSelection && !_hasAppendedResults)
+        if (HasDeferredWatchResults && !HasBatchSelection && !HasExpandedResults)
         {
             Dispatcher.UIThread.Post(() =>
             {
@@ -44,7 +44,7 @@ internal sealed partial class InboxViewModel
         // A queued query will read the new catalog. An active query needs a fresh read.
         if (_searchTimer.IsEnabled) return;
         bool preserveView = _searchCancellation is null || _appliedQuery == Query;
-        if (preserveView && (HasBatchSelection || _hasAppendedResults))
+        if (preserveView && (HasBatchSelection || HasExpandedResults))
         {
             HasDeferredWatchResults = true;
             return;
@@ -91,7 +91,7 @@ internal sealed partial class InboxViewModel
             var library = RequireLibrary();
             await Task.Run(() => library.AddTagToDocuments(selectedIds, tag), token);
             Tags = library.GetTags();
-            LoadResults();
+            LoadResults(retainLoadedResults: true);
             BatchTagInput = "";
             Status = $"Tag applied to {DocumentCount(selectedIds.Length)}.";
         });
@@ -114,7 +114,7 @@ internal sealed partial class InboxViewModel
             var selectedIds = selectedDocuments.Select(document => document.Id).ToArray();
             int changed = await Task.Run(() => library.RemoveTagFromDocuments(selectedIds, tag, token), token);
             Tags = library.GetTags();
-            LoadResults();
+            LoadResults(retainLoadedResults: true);
             Status = changed == 0 ? "The selected documents no longer have that tag." : $"Tag removed from {DocumentCount(changed)}.";
         });
     }

@@ -90,9 +90,10 @@ internal static partial class NativeVerification
             await VerifyExternalSwapAsync(window, model, dialogs, fixture, evidenceDirectory);
             await VerifyFolderSearchPickerAsync(window, model, dialogs, evidenceDirectory);
             await VerifyIntakeFolderAsync(window, model, dialogs, fixture, evidenceDirectory);
+            await VerifyBatchTagPagingAsync(window, model, fixture, evidenceDirectory);
 
             File.WriteAllText(Path.Combine(evidenceDirectory, "passed.txt"),
-                $"Verified {runtime}. Native window completed multilingual OCR and correction, oriented JPEG and multi-page TIFF import, PDF combination, page extraction and rotation, phrase, tag, review-status, folder, and text-availability search, query correction, saved search restoration, document-date editing, filtering, and inheritance, result sorting, fit-width and selectable page text previews, match navigation, tag merging, suggestions, and removal from selected PDFs, duplicate drop, folder watch and inbox counting, title edit, single and batch PDF moves, external relocation and PDF swaps, index reporting and PDF restoration from files and folders, selected PDF export, library backup, text copy, single and batch OCR copies, saved import error recovery and retry, and filing through the chosen intake folder. {scanRecoveryEvidence}");
+                $"Verified {runtime}. Native window completed multilingual OCR and correction, oriented JPEG and multi-page TIFF import, PDF combination, page extraction and rotation, phrase, tag, review-status, folder, and text-availability search, query correction, saved search restoration, document-date editing, filtering, and inheritance, result sorting, fit-width and selectable page text previews, match navigation, tag merging, suggestions, and edits across loaded result pages, duplicate drop, folder watch and inbox counting, title edit, single and batch PDF moves, external relocation and PDF swaps, index reporting and PDF restoration from files and folders, selected PDF export, library backup, text copy, single and batch OCR copies, saved import error recovery and retry, and filing through the chosen intake folder. {scanRecoveryEvidence}");
             desktop.Shutdown(0);
         }
         catch (Exception error)
