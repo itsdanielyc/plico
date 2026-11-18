@@ -20,6 +20,7 @@ internal partial interface IWorkspaceDialogs
     Task<TagRenameRequest?> RenameTagAsync(string currentName, IReadOnlyList<string> catalogNames);
     Task<string?> ChooseTagToRemoveAsync(IReadOnlyList<BatchTagOption> options);
     Task<CombinePdfsRequest?> OrderPdfCombinationAsync(IReadOnlyList<DocumentSummary> selectedDocuments);
+    Task<CombinePdfsRequest?> OrderHouseholdBinderAsync(IReadOnlyList<DocumentSummary> selectedDocuments);
     Task<PdfPageCopyRequest?> ChoosePdfPageCopyAsync(DocumentSummary document, int currentPage, PdfPageCopyAction action);
     Task<ImportErrorsAction> ShowImportErrorsAsync(IReadOnlyList<ImportFailure> failures);
     Task ShowOcrCopyBatchResultsAsync(IReadOnlyList<OcrCopyBatchItem> results);
@@ -103,6 +104,9 @@ internal sealed partial class WorkspaceDialogs(Window owner) : IWorkspaceDialogs
 
     public Task<CombinePdfsRequest?> OrderPdfCombinationAsync(IReadOnlyList<DocumentSummary> selectedDocuments) =>
         new CombinePdfsDialog(selectedDocuments).ShowDialog<CombinePdfsRequest?>(owner);
+
+    public Task<CombinePdfsRequest?> OrderHouseholdBinderAsync(IReadOnlyList<DocumentSummary> selectedDocuments) =>
+        new CombinePdfsDialog(selectedDocuments, isBinder: true).ShowDialog<CombinePdfsRequest?>(owner);
 
     public Task<PdfPageCopyRequest?> ChoosePdfPageCopyAsync(DocumentSummary document, int currentPage, PdfPageCopyAction action) =>
         new PdfPageCopyDialog(document.PageCount, currentPage, action).ShowDialog<PdfPageCopyRequest?>(owner);

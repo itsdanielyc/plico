@@ -1,4 +1,5 @@
 using System.Collections.ObjectModel;
+using Avalonia.Automation;
 using Avalonia.Controls;
 using Avalonia.Interactivity;
 using Plico.Core;
@@ -14,12 +15,18 @@ internal sealed partial class CombinePdfsDialog : Window
     private const string DefaultTitle = "Combined paperwork";
     private readonly ObservableCollection<DocumentSummary> _documents;
 
-    internal CombinePdfsDialog(IReadOnlyList<DocumentSummary> documents)
+    internal CombinePdfsDialog(IReadOnlyList<DocumentSummary> documents, bool isBinder = false)
     {
         InitializeComponent();
         _documents = new ObservableCollection<DocumentSummary>(documents);
         TitleBox.MaxLength = InboxLibrary.MaximumTitleLength;
-        TitleBox.Text = DefaultTitle;
+        TitleBox.Text = isBinder ? "Household binder" : DefaultTitle;
+        if (isBinder)
+        {
+            Title = "Export household binder";
+            ConfirmCombineButton.Content = "Choose destination…";
+            AutomationProperties.SetName(TitleBox, "Household binder title");
+        }
         SourceList.ItemsSource = _documents;
         SourceList.SelectionChanged += (_, _) => UpdateOrderButtons();
         SourceList.SelectedIndex = 0;

@@ -83,6 +83,7 @@ internal static partial class NativeVerification
             await VerifyAdjacentMatchesAsync(window, model, dialogs, fixture, evidenceDirectory);
             await VerifyOrientedJpegAsync(window, model, dialogs, fixture, evidenceDirectory);
             await VerifyCombinedPdfsAsync(window, model, dialogs, evidenceDirectory);
+            await VerifyHouseholdBinderAsync(window, model, dialogs, evidenceDirectory);
             await VerifyBatchMoveAsync(window, model, dialogs, evidenceDirectory);
             await VerifyExtractPagesAsync(window, model, dialogs, evidenceDirectory);
             await VerifyRotatePagesAsync(window, model, dialogs, evidenceDirectory);
@@ -373,9 +374,9 @@ internal static partial class NativeVerification
     }
 
     private static async Task<CombinePdfsRequest?> ConfirmCombineOrderAsync(Window owner, IReadOnlyList<DocumentSummary> documents,
-        string title, string directory)
+        string title, string directory, bool isBinder = false)
     {
-        var dialog = new CombinePdfsDialog(documents);
+        var dialog = new CombinePdfsDialog(documents, isBinder);
         var response = dialog.ShowDialog<CombinePdfsRequest?>(owner);
         try
         {
@@ -383,7 +384,7 @@ internal static partial class NativeVerification
             Require(down.IsEnabled, "The first source PDF could not be moved in the order dialog.");
             down.RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
             Control<TextBox>(dialog, "TitleBox").Text = title;
-            await CaptureAsync(dialog, directory, "combine-order.png");
+            await CaptureAsync(dialog, directory, isBinder ? "household-binder-order.png" : "combine-order.png");
             Control<Button>(dialog, "ConfirmCombineButton").RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
             return await response;
         }
@@ -1071,6 +1072,7 @@ internal sealed partial class FixtureDialogs(params string[] documents) : IWorks
     internal TagRenameRequest? TagRenameChoice { get; set; }
     internal Func<IReadOnlyList<BatchTagOption>, Task<string?>>? TagRemovalChoice { get; set; }
     internal Func<IReadOnlyList<DocumentSummary>, Task<CombinePdfsRequest?>>? CombineChoice { get; set; }
+    internal Func<IReadOnlyList<DocumentSummary>, Task<CombinePdfsRequest?>>? BinderChoice { get; set; }
     internal Func<DocumentSummary, int, PdfPageCopyAction, Task<PdfPageCopyRequest?>>? PageCopyChoice { get; set; }
     internal ScanRequest? ScannerChoice { get; set; }
     internal Func<ScanInterruption, CancellationToken, Task<bool>>? PartialScanChoice { get; set; }
@@ -1110,6 +1112,8 @@ internal sealed partial class FixtureDialogs(params string[] documents) : IWorks
         TagRemovalChoice?.Invoke(options) ?? Task.FromResult<string?>(null);
     public Task<CombinePdfsRequest?> OrderPdfCombinationAsync(IReadOnlyList<DocumentSummary> selectedDocuments) =>
         CombineChoice?.Invoke(selectedDocuments) ?? Task.FromResult<CombinePdfsRequest?>(null);
+    public Task<CombinePdfsRequest?> OrderHouseholdBinderAsync(IReadOnlyList<DocumentSummary> selectedDocuments) =>
+        BinderChoice?.Invoke(selectedDocuments) ?? Task.FromResult<CombinePdfsRequest?>(null);
     public Task<PdfPageCopyRequest?> ChoosePdfPageCopyAsync(DocumentSummary document, int currentPage, PdfPageCopyAction action) =>
         PageCopyChoice?.Invoke(document, currentPage, action) ?? Task.FromResult<PdfPageCopyRequest?>(null);
     public Task<ImportErrorsAction> ShowImportErrorsAsync(IReadOnlyList<ImportFailure> failures)
