@@ -14,14 +14,19 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          - {runner: windows-2025, rid: win-x64}
-          - {runner: windows-11-arm, rid: win-arm64}
-          - {runner: macos-26, rid: osx-arm64}
-          - {runner: macos-26-intel, rid: osx-x64}
-          - {runner: ubuntu-24.04, rid: linux-x64}
-          - {runner: ubuntu-24.04-arm, rid: linux-arm64}
+          - {runner: macos-15, rid: osx-arm64}
+    env:
+      PLICO_SOURCE_SHA: d7190ca48f56dc138cebcc12fb4050584b7088fd
     steps:
       - uses: actions/checkout@v6
+        with:
+          ref: ${{ env.PLICO_SOURCE_SHA }}
+      - name: Verify exact source checkout
+        shell: pwsh
+        run: |
+          $actual = git rev-parse HEAD
+          if ($actual -ne $env:PLICO_SOURCE_SHA) { throw "Expected $env:PLICO_SOURCE_SHA, got $actual" }
+          Write-Output "Source commit $actual"
       - uses: actions/setup-dotnet@v5
         with:
           global-json-file: global.json
