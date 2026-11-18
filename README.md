@@ -34,6 +34,8 @@ Use **Sort** to browse by newest added or title A–Z. **Automatic** puts the be
 
 Use Ctrl or Shift when selecting rows, or choose **Select shown** to select the loaded results. Use **Tag selected** to apply a tag to the whole selection. The batch control can mark the selection reviewed or return reviewed documents to the inbox.
 
+With multiple PDFs selected, choose **Export PDFs…** and pick a destination outside the library. Plico creates a dated folder with the selected PDFs. Use **Open export** to see the copies in your file manager.
+
 Use **Edit title** in the preview to change the document's catalog title. Search covers both the title and filename. Select the PDF's filename to open its containing folder.
 
 Choose **Fit width** in the preview to enlarge the page and scroll through it. Choose **Fit page** to see it all at once.

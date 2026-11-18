@@ -16,6 +16,8 @@ The preview shows the PDF path below its catalog title. The path opens the docum
 
 Batch review lives below the document list. The selection count identifies its scope. The preview keeps the individual document's review action.
 
+**Export PDFs…** appears in the batch controls. After the export finishes, the status bar shows the output path and offers **Open export**.
+
 The OCR selector sits beside intake controls. Its current language is visible before a new file or scan begins.
 
 The sort selector sits beside the results count. It applies to the current inbox, tag, or text search. The selected PDF stays open when it is visible in the reordered list.

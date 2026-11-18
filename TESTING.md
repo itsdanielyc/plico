@@ -26,6 +26,7 @@
 13. Edit a query while the previous read is in progress. Confirm that only the latest results appear and pagination waits for the new first page. Check that the catalog remains usable after cancellation (L3, L4 and L6).
 14. Jump from a search result to an OCR match on page two. Confirm that the preview renders that page and that terms spread across pages produce zero matching pages (L3, L4 and L6).
 15. Refresh a library containing `Scanned Receipt.pdf`, the image-only page from the mixed PDF fixture. Make a searchable copy, search for its OCR text and tag, and compare the source bytes. Exercise repeat requests, a blank scan, a changed file, and cancellation (L3, L4 and L6).
+16. Export selected PDFs and open the resulting folder. Compare bytes, include case-insensitive filename collisions, and exercise cancellation and stale source paths (L3, L4 and L6).
 
 Run `dotnet test Plico.slnx -c Release` for the fast suite. Run the native harness from `keel.json` for installed-platform evidence. Visual review starts with per-OS captures and geometry checks. Add pixel baselines when repeatable runner captures justify the maintenance.
 

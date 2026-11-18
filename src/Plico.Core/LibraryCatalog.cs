@@ -159,10 +159,10 @@ internal sealed class LibraryCatalog
         return (long)command.ExecuteScalar()! == 1;
     }
 
-    internal IReadOnlyList<ImportCandidate> FindSource(byte[] fingerprint, bool searchableOnly = false) =>
+    internal IReadOnlyList<CatalogFileReference> FindSource(byte[] fingerprint, bool searchableOnly = false) =>
         ReadImportCandidates(searchableOnly ? "source_sha256 = $value AND has_text = 1" : "source_sha256 = $value", fingerprint);
 
-    internal IReadOnlyList<ImportCandidate> FindLegacyPdfs(long fileBytes) =>
+    internal IReadOnlyList<CatalogFileReference> FindLegacyPdfs(long fileBytes) =>
         ReadImportCandidates("source_sha256 IS NULL AND file_bytes = $value", fileBytes);
 
     internal void RecordSource(long id, byte[] fingerprint)
@@ -175,7 +175,7 @@ internal sealed class LibraryCatalog
         command.ExecuteNonQuery();
     }
 
-    private IReadOnlyList<ImportCandidate> ReadImportCandidates(string condition, object value)
+    private IReadOnlyList<CatalogFileReference> ReadImportCandidates(string condition, object value)
     {
         using var connection = Connect();
         using var command = connection.CreateCommand();
@@ -184,8 +184,28 @@ internal sealed class LibraryCatalog
             WHERE is_present = 1 AND {condition} ORDER BY id DESC;
             """;
         command.Parameters.AddWithValue("$value", value);
+        return ReadFileReferences(command);
+    }
+
+    internal IReadOnlyList<CatalogFileReference> ReadSelectedFiles(IReadOnlyList<long> documentIds)
+    {
+        using var connection = Connect();
+        using var command = connection.CreateCommand();
+        command.CommandText = """
+            SELECT d.id, d.relative_path, d.modified_ticks, d.file_bytes
+            FROM json_each($ids) selection JOIN documents d ON d.id = selection.value
+            WHERE d.is_present = 1 ORDER BY selection.key;
+            """;
+        int expected = BindSelection(command, documentIds);
+        var files = ReadFileReferences(command);
+        RequireSelection(files.Count, expected);
+        return files;
+    }
+
+    private static List<CatalogFileReference> ReadFileReferences(SqliteCommand command)
+    {
         using var reader = command.ExecuteReader();
-        var candidates = new List<ImportCandidate>();
+        var candidates = new List<CatalogFileReference>();
         while (reader.Read())
         {
             candidates.Add(new(reader.GetInt64(0), reader.GetString(1),

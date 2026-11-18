@@ -1,4 +1,3 @@
-using System.Globalization;
 using System.Text;
 using NAPS2.Images;
 using NAPS2.Scan;
@@ -263,7 +262,7 @@ public sealed partial class InboxLibrary : IDisposable
         string stem = PortableStem(title);
         for (int duplicate = 1; ; duplicate++)
         {
-            string name = duplicate == 1 ? stem : $"{stem} ({duplicate.ToString(CultureInfo.InvariantCulture)})";
+            string name = NumberedName(stem, duplicate);
             string destination = Path.Combine(PdfDirectory, name + DocumentProcessor.PdfExtension);
             if (_catalog.ReservesPath(RelativePdfPath(destination))) continue;
             try

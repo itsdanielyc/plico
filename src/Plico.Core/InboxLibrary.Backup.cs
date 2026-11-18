@@ -5,7 +5,8 @@ namespace Plico.Core;
 public sealed partial class InboxLibrary
 {
     private const string BackupStagePrefix = ".plico-backup-";
-    private const string BackupTimestampFormat = "yyyy-MM-dd HH-mm-ss";
+    private const string BackupFolderLabel = "Plico backup";
+    private const string CopyTimestampFormat = "yyyy-MM-dd HH-mm-ss";
     private const string BackupInventoryChanged = "The PDF folder changed during backup. Try again once the files are saved.";
 
     /// <summary>Publishes a portable copy of the PDFs and a SQLite snapshot in an existing destination directory.</summary>
@@ -13,15 +14,13 @@ public sealed partial class InboxLibrary
     public async Task<BackupResult> BackupAsync(string destination, IProgress<BackupProgress>? progress = null,
         CancellationToken cancellationToken = default)
     {
-        string target = ResolveBackupTarget(destination);
+        string target = ResolveExternalTarget(destination);
         await _fileOperations.WaitAsync(cancellationToken).ConfigureAwait(false);
         string? stage = null;
         try
         {
             var inventory = CaptureBackupInventory(cancellationToken);
-            var proposedStage = Path.Combine(target, $"{BackupStagePrefix}{Guid.NewGuid():N}");
-            if (Path.Exists(proposedStage)) throw new IOException("Could not allocate a new backup folder.");
-            stage = Directory.CreateDirectory(proposedStage).FullName;
+            stage = CreateCopyStage(target, BackupStagePrefix);
             var pdfDestination = Directory.CreateDirectory(Path.Combine(stage, PdfFolderName)).FullName;
             var catalogDestination = Directory.CreateDirectory(Path.Combine(stage, MetadataFolderName)).FullName;
 
@@ -29,8 +28,8 @@ public sealed partial class InboxLibrary
             foreach (var entry in inventory)
             {
                 cancellationToken.ThrowIfCancellationRequested();
-                await CopyBackupPdfAsync(ResolvePdfPath(entry.Key), Path.Combine(pdfDestination, entry.Key),
-                    entry.Value, cancellationToken).ConfigureAwait(false);
+                await CopyPdfAsync(ResolvePdfPath(entry.Key), Path.Combine(pdfDestination, entry.Key),
+                    entry.Value, BackupInventoryChanged, cancellationToken).ConfigureAwait(false);
                 copied++;
                 progress?.Report(new BackupProgress(copied, inventory.Count));
             }
@@ -39,7 +38,7 @@ public sealed partial class InboxLibrary
             _catalog.BackupTo(Path.Combine(catalogDestination, CatalogFilename));
             VerifyBackupInventory(inventory, cancellationToken);
             cancellationToken.ThrowIfCancellationRequested();
-            return new BackupResult(PublishBackup(stage, target), inventory.Count);
+            return new BackupResult(PublishCopyFolder(stage, target, BackupFolderLabel, cancellationToken), inventory.Count);
         }
         finally
         {
@@ -74,8 +73,8 @@ public sealed partial class InboxLibrary
         if (count != expected.Count) throw new IOException(BackupInventoryChanged);
     }
 
-    private static async Task CopyBackupPdfAsync(string source, string destination, FileVersion version,
-        CancellationToken cancellationToken)
+    private static async Task CopyPdfAsync(string source, string destination, FileVersion version,
+        string changedMessage, CancellationToken cancellationToken)
     {
         Directory.CreateDirectory(Path.GetDirectoryName(destination)!);
         await using (var input = new FileStream(source, FileMode.Open, FileAccess.Read, FileShare.Read,
@@ -84,22 +83,27 @@ public sealed partial class InboxLibrary
                          bufferSize: 0, options: SequentialAsync))
         {
             await input.CopyToAsync(output, SnapshotBufferBytes, cancellationToken).ConfigureAwait(false);
-            if (output.Length != version.Length) throw new IOException(BackupInventoryChanged);
+            if (output.Length != version.Length) throw new IOException(changedMessage);
         }
         File.SetLastWriteTimeUtc(destination, new DateTime(version.LastModifiedTicks, DateTimeKind.Utc));
     }
 
-    private string ResolveBackupTarget(string destination)
+    private string ResolveExternalTarget(string destination)
     {
         var target = ResolveDirectoryLinks(destination);
         var library = ResolveDirectoryLinks(RootPath);
-        var relative = Path.GetRelativePath(library, target);
-        if (relative == "." || (!Path.IsPathRooted(relative) && relative != ".." &&
-                !relative.StartsWith($"..{Path.DirectorySeparatorChar}", StringComparison.Ordinal)))
+        if (IsAtOrWithinFolder(library, target))
         {
-            throw new ArgumentException("Choose a backup destination outside the current library.", nameof(destination));
+            throw new ArgumentException("Choose a destination outside the current library.", nameof(destination));
         }
         return target;
+    }
+
+    private static bool IsAtOrWithinFolder(string folder, string path)
+    {
+        string relative = Path.GetRelativePath(folder, path);
+        return !Path.IsPathRooted(relative) && relative != ".." &&
+            !relative.StartsWith($"..{Path.DirectorySeparatorChar}", StringComparison.Ordinal);
     }
 
     private static string ResolveDirectoryLinks(string path)
@@ -116,13 +120,21 @@ public sealed partial class InboxLibrary
         return resolved;
     }
 
-    private static string PublishBackup(string stage, string target)
+    private static string CreateCopyStage(string destination, string prefix)
     {
-        string timestamp = DateTimeOffset.Now.ToString(BackupTimestampFormat, CultureInfo.InvariantCulture);
-        string stem = $"Plico backup {timestamp}";
+        string stage = Path.Combine(destination, $"{prefix}{Guid.NewGuid():N}");
+        if (Path.Exists(stage)) throw new IOException("Could not allocate a new staging folder.");
+        return Directory.CreateDirectory(stage).FullName;
+    }
+
+    private static string PublishCopyFolder(string stage, string target, string label, CancellationToken cancellationToken)
+    {
+        string timestamp = DateTimeOffset.Now.ToString(CopyTimestampFormat, CultureInfo.InvariantCulture);
+        string stem = $"{label} {timestamp}";
         for (int sequence = 1; ; sequence++)
         {
-            string name = sequence == 1 ? stem : $"{stem} ({sequence.ToString(CultureInfo.InvariantCulture)})";
+            cancellationToken.ThrowIfCancellationRequested();
+            string name = NumberedName(stem, sequence);
             string destination = Path.Combine(target, name);
             if (Path.Exists(destination)) continue;
             try
@@ -132,8 +144,11 @@ public sealed partial class InboxLibrary
             }
             catch (IOException) when (Path.Exists(destination))
             {
-                // Another backup can finish in the same second.
+                // Another copy can finish in the same second.
             }
         }
     }
+
+    private static string NumberedName(string stem, int sequence) =>
+        sequence == 1 ? stem : $"{stem} ({sequence.ToString(CultureInfo.InvariantCulture)})";
 }

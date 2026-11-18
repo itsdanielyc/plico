@@ -60,7 +60,7 @@ internal static class NativeVerification
             await VerifyMovedPdfAsync(window, model, dialogs, evidenceDirectory);
             await VerifyPhraseSearchAsync(window, model, evidenceDirectory);
             await VerifySortAsync(window, model, evidenceDirectory);
-            await VerifyBatchReviewAsync(window, model, evidenceDirectory);
+            await VerifyBatchReviewAsync(window, model, dialogs, evidenceDirectory);
             await VerifyOcrLanguageAsync(window, model, dialogs, fixture, evidenceDirectory);
             await VerifyCopiedTextAsync(window, model, dialogs);
             await VerifyLibraryBackupAsync(window, model, dialogs, evidenceDirectory);
@@ -71,7 +71,7 @@ internal static class NativeVerification
             await VerifyScannerDialogAsync(window, evidenceDirectory);
 
             File.WriteAllText(Path.Combine(evidenceDirectory, "passed.txt"),
-                $"Verified {runtime}. Native window completed multilingual OCR, phrase search, result sorting, fit-width preview, match navigation, duplicate drop, folder watch, title edit, relocation, batch actions, library backup, text copy, searchable PDF copy, and import retry.");
+                $"Verified {runtime}. Native window completed multilingual OCR, phrase search, result sorting, fit-width preview, match navigation, duplicate drop, folder watch, title edit, relocation, batch actions, selected PDF export, library backup, text copy, searchable PDF copy, and import retry.");
             desktop.Shutdown(0);
         }
         catch (Exception error)
@@ -287,7 +287,7 @@ internal static class NativeVerification
         sort.SetCurrentValue(ComboBox.SelectedItemProperty, model.SortChoices[0]);
     }
 
-    private static async Task VerifyBatchReviewAsync(MainWindow window, InboxViewModel model, string directory)
+    private static async Task VerifyBatchReviewAsync(MainWindow window, InboxViewModel model, FixtureDialogs dialogs, string directory)
     {
         model.ShowAllCommand.Execute(null);
         var select = Control<Button>(window, "SelectShownButton");
@@ -305,10 +305,49 @@ internal static class NativeVerification
         Require(model.Documents.All(document => document.Tags.Contains(batchTag)),
             "The tag did not attach to both selected PDFs.");
         await CaptureAsync(window, directory, "batch-review.png");
+        await VerifySelectedExportAsync(window, model, dialogs, directory);
         await ((IAsyncRelayCommand)review.Command!).ExecuteAsync(null);
         model.ShowInboxCommand.Execute(null);
         Require(model.Documents.Count == 0 && model.Status == "2 documents marked reviewed.",
             "Batch review did not remove both selected documents from the inbox.");
+    }
+
+    private static async Task VerifySelectedExportAsync(MainWindow window, InboxViewModel model, FixtureDialogs dialogs, string directory)
+    {
+        var destination = Directory.CreateTempSubdirectory("plico-verify-export-");
+        string? previousFolder = dialogs.FolderPath;
+        try
+        {
+            dialogs.FolderPath = destination.FullName;
+            var export = Control<Button>(window, "ExportSelectedPdfsButton");
+            Require(export.IsEffectivelyVisible && export.IsEnabled && export.Command is IAsyncRelayCommand,
+                "The selected PDFs did not offer an export action.");
+            await ((IAsyncRelayCommand)export.Command!).ExecuteAsync(export.CommandParameter);
+            var result = Directory.EnumerateDirectories(destination.FullName).Single();
+            Require(model.HasBatchSelection && Directory.EnumerateFileSystemEntries(result).Count() == model.Documents.Count,
+                $"Export did not copy the selected PDFs. {model.Status}");
+            foreach (var document in model.Documents)
+            {
+                string source = Path.Combine(model.LibraryPath, "PDFs", document.RelativePath);
+                string copied = Path.Combine(result, Path.GetFileName(document.RelativePath));
+                Require(File.ReadAllBytes(source).AsSpan().SequenceEqual(File.ReadAllBytes(copied)),
+                    "An exported PDF differed from its source.");
+            }
+
+            var open = Control<Button>(window, "OpenExportFolderButton");
+            Require(open.IsVisible && open.IsEnabled && open.Command is not null, "The export shortcut was unavailable.");
+            open.Command!.Execute(null);
+            Require(dialogs.LastOpenedPath == model.LatestExportLocation && Directory.Exists(dialogs.LastOpenedPath) &&
+                    Path.GetFileName(dialogs.LastOpenedPath) == Path.GetFileName(result),
+                "The export shortcut opened a different folder.");
+            await CaptureAsync(window, directory, "selected-export.png");
+        }
+        finally
+        {
+            model.LatestExportLocation = null;
+            dialogs.FolderPath = previousFolder;
+            destination.Delete(recursive: true);
+        }
     }
 
     private static void VerifyDocumentLocation(MainWindow window, FixtureDialogs dialogs, string expectedFolder)

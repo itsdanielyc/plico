@@ -225,6 +225,9 @@
                                             <Button Grid.Column="1" x:Name="ApplyBatchTagButton" Classes="secondary"
                                                     Content="Tag selected" Click="ApplyBatchTag_Click" />
                                         </Grid>
+                                        <Button x:Name="ExportSelectedPdfsButton" Classes="secondary" HorizontalAlignment="Right"
+                                                Content="Export PDFs…" Command="{Binding ExportSelectedPdfsCommand}"
+                                                IsEnabled="{Binding CanWork}" AutomationProperties.Name="Export selected PDFs" />
                                     </StackPanel>
                                 </Border>
                             </StackPanel>
@@ -317,7 +320,7 @@
                 </Grid>
             </Grid>
             <Border Grid.Row="2" Padding="25,7" Background="#FCFDF8" BorderBrush="#DDE2D7" BorderThickness="0,1,0,0">
-                <Grid ColumnDefinitions="*,Auto,Auto,Auto,Auto" ColumnSpacing="10" MinHeight="24">
+                <Grid ColumnDefinitions="*,Auto,Auto,Auto,Auto,Auto" ColumnSpacing="10" MinHeight="24">
                     <TextBlock Text="{Binding Status}" Classes="muted" VerticalAlignment="Center" TextTrimming="CharacterEllipsis"
                                ToolTip.Tip="{Binding Status}" AutomationProperties.LiveSetting="Polite" />
                     <Button Grid.Column="1" x:Name="ImportErrorsButton" Classes="secondary" Content="Import errors"
@@ -326,8 +329,11 @@
                     <Button Grid.Column="2" x:Name="OpenBackupFolderButton" Classes="secondary" Content="Open backup"
                             Command="{Binding OpenBackupFolderCommand}" IsVisible="{Binding HasLatestBackup}"
                             IsEnabled="{Binding CanWork}" Padding="8,3" />
-                    <ProgressBar Grid.Column="3" Width="74" IsIndeterminate="True" IsVisible="{Binding IsBusy}" VerticalAlignment="Center" />
-                    <Button Grid.Column="4" Content="Cancel" Command="{Binding CancelCommand}" IsVisible="{Binding IsBusy}" Padding="8,3" />
+                    <Button Grid.Column="3" x:Name="OpenExportFolderButton" Classes="secondary" Content="Open export"
+                            Command="{Binding OpenExportFolderCommand}" IsVisible="{Binding HasLatestExport}"
+                            IsEnabled="{Binding CanWork}" Padding="8,3" />
+                    <ProgressBar Grid.Column="4" Width="74" IsIndeterminate="True" IsVisible="{Binding IsBusy}" VerticalAlignment="Center" />
+                    <Button Grid.Column="5" Content="Cancel" Command="{Binding CancelCommand}" IsVisible="{Binding IsBusy}" Padding="8,3" />
                 </Grid>
             </Border>
         </Grid>

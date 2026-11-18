@@ -110,7 +110,7 @@ public sealed partial class InboxLibrary
         return null;
     }
 
-    private string? ResolveUnchangedPdf(ImportCandidate candidate)
+    private string? ResolveUnchangedPdf(CatalogFileReference candidate)
     {
         string path = ResolvePdfPath(candidate.RelativePath);
         try

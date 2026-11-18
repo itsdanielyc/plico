@@ -251,6 +251,7 @@ internal sealed partial class InboxViewModel : ObservableObject, IDisposable
         previous?.Dispose();
         ClearImportErrors();
         LatestBackupLocation = null;
+        LatestExportLocation = null;
         SelectedDocument = null;
         LibraryPath = replacement.RootPath;
         var watchNotice = RestoreWatchFolder(replacement.RootPath);

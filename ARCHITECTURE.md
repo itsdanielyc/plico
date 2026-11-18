@@ -27,6 +27,8 @@ Schema v4 stores the SHA-256 digest of the published PDF. Refresh pairs a unique
 
 Backup copies the PDF tree and takes an online SQLite snapshot under the library's file-operation lease. It validates the file inventory and publishes the staged backup by an atomic directory move inside the selected destination. [Microsoft.Data.Sqlite online backup](https://learn.microsoft.com/en-us/dotnet/standard/data/sqlite/backup)
 
+Selected export reads the chosen catalog paths and file stamps under the same lease. It stages the PDF bytes under the chosen destination, assigns distinct portable filenames, and checks the sources again before publishing the folder. [Directory.Move](https://learn.microsoft.com/en-us/dotnet/api/system.io.directory.move?view=net-10.0)
+
 Search uses a bounded page of document records and SQLite FTS5. The UI never loads every document body to filter results. Tagged or reviewed documents remain in the same filesystem location.
 
 Result ordering runs in SQLite before the page limit. Newest added follows catalog insertion order. Alphabetical order compares the visible titles case-insensitively, with the most recently added record breaking ties.

@@ -31,6 +31,9 @@ public sealed record RefreshResult(int Indexed, IReadOnlyList<string> Warnings, 
 /// <summary>The portable backup folder and number of PDFs copied into it.</summary>
 public sealed record BackupResult(string Location, int PdfCount);
 
+/// <summary>The folder containing the exported PDFs and the number copied.</summary>
+public sealed record ExportResult(string Location, int PdfCount);
+
 /// <summary>The number of PDFs copied so far and the total in the backup.</summary>
 public readonly record struct BackupProgress(int Copied, int Total);
 
@@ -40,7 +43,7 @@ public sealed record FileImportResult(DocumentSummary Document, bool Added);
 internal sealed record PdfText(string Body, int PageCount, bool HasTextOnEveryPage);
 internal readonly record struct PreparedPdf(PdfText Text, bool CopiedSource);
 
-internal readonly record struct ImportCandidate(long Id, string RelativePath, FileVersion Version);
+internal readonly record struct CatalogFileReference(long Id, string RelativePath, FileVersion Version);
 internal sealed record IndexedPdf(long Id, string RelativePath, FileVersion Version, byte[]? Fingerprint);
 
 internal readonly record struct FileVersion(long LastModifiedTicks, long Length, bool Present)

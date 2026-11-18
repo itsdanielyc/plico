@@ -11,6 +11,7 @@
 - Typed searches run in the background and give the latest query priority. **Load more** follows the current search results.
 - Choose **Go to match** on a multi-page text result to open the first page that matches the full search.
 - Choose **Create searchable copy** to run OCR on a scanned PDF in the library and add a new PDF with the source tags.
+- Choose **Export PDFs…** to copy the current multi-selection into a dated folder.
 
 ## [0.15.0] - 2026-11-18
 
