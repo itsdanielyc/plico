@@ -54,7 +54,7 @@ public sealed partial class LibraryTests
         byte[] originalBytes;
         using (var library = InboxLibrary.Open(temporary.Path, (source, destination, allowHardLink) =>
         {
-            if (destination == activePath) throw new InterruptedVersionTestException();
+            if (IsActiveVersionClaim(destination, activePath, allowHardLink)) throw new InterruptedVersionTestException();
             return PdfFilePublication.TryClaim(source, destination, allowHardLink);
         }))
         {
@@ -86,7 +86,7 @@ public sealed partial class LibraryTests
         long documentId;
         using (var library = InboxLibrary.Open(temporary.Path, (source, destination, allowHardLink) =>
         {
-            if (destination == activePath && allowHardLink)
+            if (IsActiveVersionClaim(destination, activePath, allowHardLink))
             {
                 File.WriteAllBytes(destination, competing);
                 return false;
@@ -121,7 +121,7 @@ public sealed partial class LibraryTests
         using (var library = InboxLibrary.Open(temporary.Path, (source, destination, allowHardLink) =>
         {
             bool claimed = PdfFilePublication.TryClaim(source, destination, allowHardLink);
-            if (claimed && destination == active) throw new InterruptedVersionTestException();
+            if (claimed && IsActiveVersionClaim(destination, active, allowHardLink)) throw new InterruptedVersionTestException();
             return claimed;
         }))
         {
@@ -204,6 +204,10 @@ public sealed partial class LibraryTests
         Assert.False((await library.UnlockAndImportPdfAsync(locked, password, cancellationToken: token)).Added);
         Assert.Single(library.GetPdfVersions(unlocked.Document.Id));
     }
+
+    private static bool IsActiveVersionClaim(string destination, string? active, bool publishing) =>
+        // A fixture's temporary directory can be addressed through /var or /private/var on macOS.
+        publishing && active is not null && Path.GetFileName(destination) == Path.GetFileName(active);
 
     private sealed class InterruptedVersionTestException : Exception;
 }
