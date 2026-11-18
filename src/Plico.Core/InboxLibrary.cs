@@ -109,16 +109,16 @@ public sealed partial class InboxLibrary : IDisposable
     /// <exception cref="InvalidOperationException">The document is unavailable in the catalog.</exception>
     public string ReadIndexedText(long documentId) => _catalog.ReadIndexedText(documentId);
 
-    /// <summary>Returns the first one-based page whose embedded text matches the full search query, or null.</summary>
+    /// <summary>Returns the first one-based page whose embedded text matches the text terms in the query, or null.</summary>
     public int? FindFirstMatchingPage(DocumentSummary document, string query, CancellationToken cancellationToken = default)
     {
         cancellationToken.ThrowIfCancellationRequested();
-        string expression = SearchTerms.FullTextExpression(query);
-        if (expression.Length == 0) return null;
+        var search = SearchTerms.Compile(query);
+        if (!search.IsValid || search.FullTextExpression.Length == 0) return null;
 
         string path = ResolvePdf(document);
         var version = FileVersion.Read(path);
-        int? page = PdfPageSearch.FindFirstMatch(path, expression, cancellationToken);
+        int? page = PdfPageSearch.FindFirstMatch(path, search.FullTextExpression, cancellationToken);
         cancellationToken.ThrowIfCancellationRequested();
         EnsureCurrentFile(path, version);
         return page;

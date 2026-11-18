@@ -71,7 +71,7 @@ internal static class NativeVerification
             await VerifyScannerDialogAsync(window, evidenceDirectory);
 
             File.WriteAllText(Path.Combine(evidenceDirectory, "passed.txt"),
-                $"Verified {runtime}. Native window completed multilingual OCR, phrase search, result sorting, fit-width preview, match navigation, duplicate drop, folder watch, title edit, relocation, batch actions, selected PDF export, library backup, text copy, searchable PDF copy, and import retry.");
+                $"Verified {runtime}. Native window completed multilingual OCR, phrase and tag search, result sorting, fit-width preview, match navigation, duplicate drop, folder watch, title edit, relocation, batch actions, selected PDF export, library backup, text copy, searchable PDF copy, and import retry.");
             desktop.Shutdown(0);
         }
         catch (Exception error)
@@ -121,11 +121,25 @@ internal static class NativeVerification
     private static async Task VerifyGoToMatchAsync(MainWindow window, InboxViewModel model, string directory)
     {
         var document = model.SelectedDocument ?? throw new InvalidOperationException("The mixed PDF was not selected.");
+        const string reviewTag = "Scan review";
+        var tagBox = Control<TextBox>(window, "TagBox");
+        var addTag = Control<Button>(window, "AddTagButton").Command ?? throw new InvalidOperationException("Tag action unavailable.");
+        tagBox.SetCurrentValue(TextBox.TextProperty, TestTag);
+        addTag.Execute(null);
+        tagBox.SetCurrentValue(TextBox.TextProperty, reviewTag);
+        addTag.Execute(null);
         model.PreviousPageCommand.Execute(null);
         Require(model.PageLabel == "1 / 2", "Search match navigation needs the first page of the mixed PDF.");
-        Control<TextBox>(window, "SearchBox").SetCurrentValue(TextBox.TextProperty, ReceiptKeyword);
         var jump = Control<Button>(window, "GoToMatchButton");
-        await UntilAsync(() => jump.IsVisible && jump.IsEnabled, () => model.Status);
+        var search = Control<TextBox>(window, "SearchBox");
+        string tags = $"tag:{TestTag} tag:\"{reviewTag}\"";
+        search.SetCurrentValue(TextBox.TextProperty, tags);
+        await UntilAsync(() => model.Heading == "Search results" && model.Documents.Count == 1, () => model.Status);
+        Require(model.SelectedDocument?.Id == document.Id && !jump.IsVisible,
+            "Tag-only search did not isolate the mixed PDF.");
+
+        search.SetCurrentValue(TextBox.TextProperty, $"{ReceiptKeyword} {tags}");
+        await UntilAsync(() => model.Documents.Count == 1 && jump.IsVisible && jump.IsEnabled, () => model.Status);
         Require(model.SelectedDocument?.Id == document.Id && jump.Command is IAsyncRelayCommand,
             "The mixed PDF’s search result did not offer a matching page.");
 

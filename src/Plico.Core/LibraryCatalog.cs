@@ -244,8 +244,8 @@ internal sealed class LibraryCatalog
     {
         cancellationToken.ThrowIfCancellationRequested();
         ArgumentOutOfRangeException.ThrowIfNegative(filter.Offset);
-        var expression = SearchTerms.FullTextExpression(filter.Query);
-        if (!string.IsNullOrWhiteSpace(filter.Query) && expression.Length == 0)
+        var search = SearchTerms.Compile(filter.Query);
+        if (!search.IsValid)
         {
             return new([], HasMore: false);
         }
@@ -261,13 +261,13 @@ internal sealed class LibraryCatalog
         var conditions = new List<string> { "d.is_present = 1" };
         string join = "";
         string match = "''";
-        bool hasSearch = expression.Length > 0;
+        bool hasSearch = search.FullTextExpression.Length > 0;
         if (hasSearch)
         {
             join = "JOIN documents_search ON documents_search.rowid = d.id";
             match = $"replace(replace(snippet(documents_search, 1, char({SnippetMarker}), char({SnippetMarker}), ' … ', 18), char(13), ''), char(10), ' ')";
             conditions.Add("documents_search MATCH $expression");
-            command.Parameters.AddWithValue("$expression", expression);
+            command.Parameters.AddWithValue("$expression", search.FullTextExpression);
         }
         if (filter.InboxOnly)
         {
@@ -277,6 +277,18 @@ internal sealed class LibraryCatalog
         {
             conditions.Add("d.id IN (SELECT document_id FROM document_tags WHERE tag_key = $tag)");
             command.Parameters.AddWithValue("$tag", SearchTerms.TagKey(filter.Tag));
+        }
+        if (search.TagKeys.Count > 0)
+        {
+            conditions.Add("""
+                d.id IN (
+                    SELECT dt.document_id
+                    FROM json_each($tagKeys) requested JOIN document_tags dt ON dt.tag_key = requested.value
+                    GROUP BY dt.document_id HAVING count(*) = $tagCount
+                )
+                """);
+            command.Parameters.AddWithValue("$tagKeys", JsonSerializer.Serialize(search.TagKeys));
+            command.Parameters.AddWithValue("$tagCount", search.TagKeys.Count);
         }
         if (documentId is not null)
         {

@@ -16,13 +16,14 @@ public sealed partial class InboxWindowTests
     [AvaloniaFact]
     public async Task GoToMatchOpensTheMatchingOcrPageFromTheCurrentResults()
     {
-        const string receiptQuery = "WRENCH470";
+        const string receiptQuery = "WRENCH470 tag:\"Workshop receipts\"";
         using var temporary = new TemporaryLibrary();
         using (var library = InboxLibrary.Open(temporary.Path))
         {
             string fixture = Path.Combine(AppContext.BaseDirectory, "fixtures", "Mixed Pages.pdf");
             var document = await library.ImportAsync(fixture, TestContext.Current.CancellationToken);
             Assert.Equal(2, document.PageCount);
+            library.AddTag(document.Id, "Workshop receipts");
         }
 
         using var model = new InboxViewModel(new FixtureDialogs());

@@ -37,6 +37,8 @@ Copy text reads the body from the selected catalog record and passes plain text 
 
 Search input is compiled into a parameterized FTS5 expression. Ordinary words are prefix terms, and completed quoted phrases use adjacent whole tokens. [SQLite FTS5 query syntax](https://www.sqlite.org/fts5.html#full_text_query_syntax)
 
+The query compiler extracts tag clauses and normalizes their keys with the same rule as catalog tags. SQLite joins the requested keys through the tag index and returns documents containing every key. Page matching uses the text expression from that same compiler.
+
 Typed search uses a single background reader for results. Editing the query cancels the previous read and gives the newest request control of the results. SQLite checks cancellation during the read so an abandoned query can release the reader slot. [SQLite progress callbacks](https://www.sqlite.org/c3ref/progress_handler.html)
 
 Match navigation reads the selected PDF in the background. A scratch FTS5 index uses the catalog’s query compiler and tokenizer, holds the text index for one page, and stops at the first matching page. The desktop checks that the search, selected document, and preview page are still current before applying the jump. [FTS5 contentless indexes](https://sqlite.org/fts5.html#the_delete_all_command)

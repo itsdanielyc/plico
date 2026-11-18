@@ -134,8 +134,8 @@
             <Border Background="#FCFDF8" BorderBrush="#DDE2D7" BorderThickness="0,0,0,1" Padding="25,16">
                 <Grid ColumnDefinitions="*,Auto,Auto,Auto" ColumnSpacing="10">
                     <TextBox x:Name="SearchBox" Text="{Binding Query, Mode=TwoWay}" MaxLength="256"
-                             PlaceholderText="Search names and document text" AutomationProperties.Name="Search documents"
-                             ToolTip.Tip="Put quotation marks around an exact phrase"
+                             PlaceholderText="Search documents or type tag:…" AutomationProperties.Name="Search documents"
+                             ToolTip.Tip="Use quotation marks for phrases or tags with spaces, such as tag:&quot;Home insurance&quot;"
                              VerticalContentAlignment="Center" CornerRadius="8" MinHeight="38">
                         <TextBox.InnerLeftContent>
                             <PathIcon Width="15" Height="15" Margin="11,0,1,0" Foreground="#536459"
@@ -257,7 +257,7 @@
                                                 HorizontalAlignment="Right" Padding="8,3" Command="{Binding GoToMatchCommand}"
                                                 IsVisible="{Binding HasPageMatchAction}" IsEnabled="{Binding CanWork}"
                                                 AutomationProperties.Name="Go to matching page"
-                                                ToolTip.Tip="Go to the first page that matches the full search" />
+                                                ToolTip.Tip="Go to the first page that matches the text terms" />
                                     </StackPanel>
                                 </Grid>
                                 <Border Grid.Row="1" Background="#EAEFE6" CornerRadius="8" Padding="12" ClipToBounds="True">

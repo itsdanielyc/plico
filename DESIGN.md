@@ -24,9 +24,11 @@ The sort selector sits beside the results count. It applies to the current inbox
 
 The results count shows **Searching…** after a query edit. **Load more** becomes available when the current search has a next page.
 
+The search box hints at `tag:` filters and offers a quoted example in its tooltip. Multiple tag clauses narrow the same results view.
+
 The preview shows the whole page by default. **Fit width** fills the available reading width and allows vertical scrolling. Page navigation stays visible and starts each new page at the top.
 
-**Go to match** sits beneath the preview header actions for multi-page text results. It opens the first page that matches the complete search and reports its page number in the status bar.
+**Go to match** sits beneath the preview header actions for multi-page text results. It opens the first page that matches the text terms and reports its page number in the status bar.
 
 **Copy text** sits beside the page controls when the selected PDF has searchable text. The status bar confirms a successful copy.
 

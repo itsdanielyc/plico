@@ -30,6 +30,8 @@ When an import fails, **Import errors** lists the source files and reasons. Fix 
 
 Put a phrase in quotation marks to search its adjacent whole words. For example, "lease renewal" north searches for the phrase together with a word beginning with north.
 
+Use `tag:tax` to require an exact tag. Use `tag:tax tag:"Home insurance" renewal` to require both tags and match renewal in the document. Tags ignore case. Within a quoted tag, put a backslash before a literal quotation mark or backslash.
+
 Use **Sort** to browse by newest added or title A–Z. **Automatic** puts the best matches first during a text search and the most recent documents first while browsing.
 
 Use Ctrl or Shift when selecting rows, or choose **Select shown** to select the loaded results. Use **Tag selected** to apply a tag to the whole selection. The batch control can mark the selection reviewed or return reviewed documents to the inbox.
@@ -40,7 +42,7 @@ Use **Edit title** in the preview to change the document's catalog title. Search
 
 Choose **Fit width** in the preview to enlarge the page and scroll through it. Choose **Fit page** to see it all at once.
 
-Choose **Go to match** on a multi-page text result to open the first page that matches the full search. Terms on separate pages can match the document as a whole.
+Choose **Go to match** on a multi-page text result to open the first page that matches the text terms. Terms on separate pages can match the document as a whole.
 
 Choose **Copy text** to copy the searchable text from all pages of the selected PDF.
 
