@@ -1,4 +1,4 @@
-name: Verify release candidate
+name: Verify local model provider
 on:
   workflow_dispatch:
 
@@ -6,51 +6,43 @@ permissions:
   contents: read
 
 jobs:
-  archive:
-    name: Extract and run (${{ matrix.rid }})
-    runs-on: ${{ matrix.runner }}
-    timeout-minutes: 20
-    strategy:
-      fail-fast: false
-      matrix:
-        include:
-          - {runner: windows-2025, rid: win-x64}
-          - {runner: windows-11-arm, rid: win-arm64}
-          - {runner: macos-26, rid: osx-arm64}
-          - {runner: macos-26-intel, rid: osx-x64}
-          - {runner: ubuntu-24.04, rid: linux-x64}
-          - {runner: ubuntu-24.04-arm, rid: linux-arm64}
+  provider:
+    name: Plico with Ollama (Linux x64)
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
     steps:
       - uses: actions/checkout@v6
       - uses: actions/setup-dotnet@v5
         with:
           global-json-file: global.json
-      - run: dotnet restore Plico.slnx --locked-mode
-      - name: Run solution tests
-        run: dotnet test Plico.slnx -c Release --no-restore
-      - name: Package and verify the archive
-        shell: pwsh
-        env:
-          PLICO_RUNTIME: ${{ matrix.rid }}
-          PLICO_EXPECTED_NATIVE_RID: ${{ matrix.rid }}
+      - name: Restore candidate and confirm product source
         run: |
-          if ($IsWindows) {
-              $compiler = ./scripts/Get-Nsis.ps1 -DestinationDirectory (Join-Path $env:RUNNER_TEMP 'plico-nsis')
-              ./scripts/Package.ps1 -Runtime $env:PLICO_RUNTIME -WindowsInstallerCompiler $compiler
-          } else {
-              ./scripts/Package.ps1 -Runtime $env:PLICO_RUNTIME
-          }
-          ./scripts/Test-Distribution.ps1 -Directory artifacts/archives -EvidenceDirectory artifacts/install
-      - uses: actions/upload-artifact@v7
-        with:
-          name: archive-${{ matrix.rid }}
-          path: artifacts/archives/
-          compression-level: 0
-          retention-days: 7
-          if-no-files-found: error
-      - uses: actions/upload-artifact@v7
-        if: always()
-        with:
-          name: install-${{ matrix.rid }}
-          path: artifacts/install/
-          if-no-files-found: ignore
+          git diff --exit-code 214a4164fe8c8d597d71b1280daba470d8789cb2 -- src
+          dotnet restore Plico.slnx --locked-mode
+      - name: Verify embedding ranking, grounded chat and confirmed filing
+        env:
+          OLLAMA_HOST: 127.0.0.1:11434
+          OLLAMA_NO_CLOUD: "1"
+          PLICO_LIVE_MODEL_ENDPOINT: http://127.0.0.1:11434
+        run: |
+          set -euo pipefail
+          export OLLAMA_MODELS="$RUNNER_TEMP/plico-ollama-models"
+          runtime="$RUNNER_TEMP/plico-ollama"
+          archive="$RUNNER_TEMP/plico-ollama.tar.zst"
+          mkdir -p "$runtime"
+          curl --fail --silent --show-error --location --retry 2 --output "$archive" \
+            https://github.com/ollama/ollama/releases/download/v0.40.16/ollama-linux-amd64.tar.zst
+          printf '%s  %s\n' 87bfafb2acbc89b2e6a1be0a9043de6aa75fb450696f86bc426e65fc448f788d "$archive" | sha256sum --check
+          tar --extract --file "$archive" --directory "$runtime" \
+            --exclude='*/cuda*' --exclude='*/rocm*' --exclude='*/vulkan*'
+          "$runtime/bin/ollama" serve > "$RUNNER_TEMP/plico-ollama.log" 2>&1 &
+          server_pid=$!
+          trap 'kill "$server_pid" 2>/dev/null || true; tail -n 35 "$RUNNER_TEMP/plico-ollama.log"' EXIT
+          for attempt in {1..25}; do
+            if curl --fail --silent --output /dev/null http://127.0.0.1:11434/api/version; then break; fi
+            sleep 1
+          done
+          curl --fail --silent --show-error http://127.0.0.1:11434/api/version
+          "$runtime/bin/ollama" pull all-minilm:22m
+          "$runtime/bin/ollama" pull qwen2.5:0.5b
+          dotnet test Plico.slnx -c Release --no-restore --filter FullyQualifiedName~LiveLocalModelVerification
