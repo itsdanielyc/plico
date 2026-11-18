@@ -100,3 +100,9 @@ The v0.17.0 commit `ef4bdb6` passed source, archive, and published download chec
 ## Release scope
 
 Ruling for v0.17.0. Implement the brief’s first nine ranked items together on the six current platforms. Add managed PDFsharp for AES protection and retain the existing native dependencies. This covers offline capture, review, retrieval and export. Later work includes structured fields and reminders, separator sheets and manual duplex, versions, additional drivers, household export, phone intake, migration, formats, OCR engines, similarity, optional language models, PDF editing and desktop polish. Those slices require their own storage, driver or platform decisions.
+
+## Capture and intake
+
+| Slice | Done when | Levels | Status |
+|---|---|---|---|
+| #16 Phone inbox | A second per-library folder watches phone transfers while scanner intake continues. Empty files wait for contents. Each watch can stop, resume, catch up, and opt in to catch-up on open. The setup guide covers phone delivery. | L0, L3, L4, L6 | Hosted verification pending |

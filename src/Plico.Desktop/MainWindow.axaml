@@ -198,6 +198,24 @@
                               Foreground="#E3EFE4" Margin="12,0,0,0" IsVisible="{Binding CanOfferCatchUpOnOpen}"
                               IsEnabled="{Binding CanWork}" IsChecked="{Binding CatchUpOnOpen, Mode=TwoWay}"
                               ToolTip.Tip="Resume the saved watch and check scans when this library opens" />
+                    <Button x:Name="PhoneInboxButton" Classes="rail" Content="{Binding PhoneInboxLabel}"
+                            IsEnabled="{Binding HasLibrary}" ToolTip.Tip="{Binding PhoneInboxFolder}">
+                        <Button.Flyout>
+                            <MenuFlyout Placement="RightEdgeAlignedTop">
+                                <MenuItem x:Name="ChoosePhoneInboxFolder" Header="Choose phone folder…" Command="{Binding ChoosePhoneInboxFolderCommand}"
+                                          IsVisible="{Binding !IsWatchingPhoneInbox}" IsEnabled="{Binding CanWork}" />
+                                <MenuItem Header="Resume phone inbox" Command="{Binding ResumePhoneInboxCommand}"
+                                          IsVisible="{Binding CanResumePhoneInbox}" IsEnabled="{Binding CanWork}" />
+                                <MenuItem x:Name="CatchUpPhoneInbox" Header="{Binding PhoneCatchUpLabel}" Command="{Binding CatchUpPhoneInboxCommand}"
+                                          IsVisible="{Binding CanCatchUpPhoneInbox}" IsEnabled="{Binding CanWork}" />
+                                <MenuItem x:Name="StopPhoneInbox" Header="Stop phone inbox" Command="{Binding StopPhoneInboxCommand}"
+                                          IsVisible="{Binding IsWatchingPhoneInbox}" />
+                                <MenuItem x:Name="PhoneCatchUpOnOpen" Header="Catch up on open" ToggleType="CheckBox"
+                                          IsChecked="{Binding PhoneCatchUpOnOpen, Mode=TwoWay}" IsVisible="{Binding CanSetPhoneCatchUpOnOpen}"
+                                          IsEnabled="{Binding CanWork}" />
+                            </MenuFlyout>
+                        </Button.Flyout>
+                    </Button>
                 </StackPanel>
             </Grid>
         </Border>

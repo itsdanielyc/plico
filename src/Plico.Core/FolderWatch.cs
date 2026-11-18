@@ -4,7 +4,7 @@ using System.Threading.Channels;
 
 namespace Plico.Core;
 
-/// <summary>Supplies stable new files from a scanner's output folder while the desktop app is open.</summary>
+/// <summary>Supplies stable new files from an intake folder while the desktop app is open.</summary>
 public sealed class FolderWatch : IAsyncDisposable
 {
     private static readonly TimeSpan SampleInterval = TimeSpan.FromMilliseconds(650);
@@ -23,6 +23,7 @@ public sealed class FolderWatch : IAsyncDisposable
     }
 
     private readonly FileSystemWatcher _watcher;
+    private readonly string _canonicalFolder;
     private readonly Func<IReadOnlyList<string>, CancellationToken, Task> _import;
     private readonly CancellationTokenSource _stop = new();
     private readonly Lazy<Task> _disposal;
@@ -36,10 +37,11 @@ public sealed class FolderWatch : IAsyncDisposable
     private Exception? _watchError;
     private long? _lastRestart;
 
-    private FolderWatch(string folder, Func<IReadOnlyList<string>, CancellationToken, Task> import,
+    private FolderWatch(string folder, string canonicalFolder, Func<IReadOnlyList<string>, CancellationToken, Task> import,
         Dictionary<string, FileVersion> baseline, FileSystemWatcher watcher)
     {
         Folder = folder;
+        _canonicalFolder = canonicalFolder;
         _import = import;
         _knownFiles = baseline;
         _disposal = new Lazy<Task>(DisposeOnceAsync);
@@ -81,28 +83,37 @@ public sealed class FolderWatch : IAsyncDisposable
 
     internal static FolderWatch Start(string folder, string pdfDestination,
         Func<IReadOnlyList<string>, CancellationToken, Task> import, Func<string, FileSystemWatcher> createWatcher,
-        CancellationToken cancellationToken = default)
+        CancellationToken cancellationToken = default, string? metadataDirectory = null, FolderWatch? otherWatch = null)
     {
         ArgumentNullException.ThrowIfNull(import);
         cancellationToken.ThrowIfCancellationRequested();
         string source = ResolveDirectory(folder);
-        if (Path.GetRelativePath(ResolveDirectory(pdfDestination), source) == ".")
+        string canonicalSource = ResolveDirectoryAncestors(new DirectoryInfo(source));
+        if (IsSameOrInside(canonicalSource, pdfDestination) ||
+            (metadataDirectory is not null && IsSameOrInside(canonicalSource, metadataDirectory)))
         {
-            throw new ArgumentException("Choose your scanner's output folder. This folder already holds the library PDFs.", nameof(folder));
+            throw new ArgumentException("Choose a scanner output or phone folder outside the library's managed folders.", nameof(folder));
+        }
+        if (otherWatch is not null && Path.GetRelativePath(otherWatch._canonicalFolder, canonicalSource) == ".")
+        {
+            throw new ArgumentException("This folder is already being watched. Choose a separate intake folder.", nameof(folder));
         }
         var baseline = ReadFolderVersions(source, cancellationToken);
-        return new FolderWatch(source, import, baseline, createWatcher(source));
+        return new FolderWatch(source, canonicalSource, import, baseline, createWatcher(source));
     }
 
     // O(n) time to scan n directory entries and O(k) space for the k supported paths.
-    /// <summary>Queues supported files already in the watched directory for stability checking.</summary>
+    /// <summary>Queues supported nonempty files already in the watched directory for stability checking.</summary>
     /// <returns>The number of files newly added to the watch's queue.</returns>
     public int QueueExistingFiles(CancellationToken cancellationToken = default)
     {
         using var cancelWithWatch = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken, _stop.Token);
         var token = cancelWithWatch.Token;
         token.ThrowIfCancellationRequested();
-        var candidates = EnumerateScanFiles(Folder, token).Select(file => file.FullName).ToList();
+        var candidates = EnumerateScanFiles(Folder, token)
+            .Where(file => ReadVersion(file) is { Length: > 0 })
+            .Select(file => file.FullName)
+            .ToList();
 
         // Gather the candidates before changing the live queue so cancellation leaves the request unqueued.
         token.ThrowIfCancellationRequested();
@@ -263,7 +274,7 @@ public sealed class FolderWatch : IAsyncDisposable
         var versions = new Dictionary<string, FileVersion>(PathComparer);
         foreach (var file in EnumerateScanFiles(folder, cancellationToken))
         {
-            if (ReadVersion(file) is { } version) versions[file.FullName] = version;
+            if (ReadVersion(file) is { Length: > 0 } version) versions[file.FullName] = version;
         }
         cancellationToken.ThrowIfCancellationRequested();
         return versions;
@@ -287,5 +298,23 @@ public sealed class FolderWatch : IAsyncDisposable
         var directory = new DirectoryInfo(path);
         if (!directory.Exists) throw new DirectoryNotFoundException($"The folder is unavailable. {directory.FullName}");
         return (directory.ResolveLinkTarget(returnFinalTarget: true) ?? directory).FullName;
+    }
+
+    private static bool IsSameOrInside(string canonicalPath, string root)
+    {
+        string canonicalRoot = ResolveDirectoryAncestors(new DirectoryInfo(ResolveDirectory(root)));
+        string relative = Path.GetRelativePath(canonicalRoot, canonicalPath);
+        return !Path.IsPathRooted(relative) && relative != ".." &&
+            !relative.StartsWith(".." + Path.DirectorySeparatorChar, StringComparison.Ordinal);
+    }
+
+    private static string ResolveDirectoryAncestors(DirectoryInfo directory)
+    {
+        if (directory.Parent is not { } parent) return directory.FullName;
+        // A selected path can pass through a directory link even when its leaf is an ordinary folder.
+        var entry = new DirectoryInfo(Path.Combine(ResolveDirectoryAncestors(parent), directory.Name));
+        return entry.ResolveLinkTarget(returnFinalTarget: true) is DirectoryInfo target
+            ? ResolveDirectoryAncestors(target)
+            : entry.FullName;
     }
 }

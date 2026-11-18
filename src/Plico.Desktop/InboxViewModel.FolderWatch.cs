@@ -1,5 +1,4 @@
 using Avalonia.Threading;
-using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using Plico.Core;
 
@@ -7,97 +6,137 @@ namespace Plico.Desktop;
 
 internal sealed partial class InboxViewModel
 {
-    private FolderWatch? _folderWatch;
-    private readonly WatchFolderPreference? _watchPreference;
-    private bool _catchUpOnOpen;
-    [ObservableProperty] private string? _rememberedWatchFolder;
+    private sealed class WatchSlot(string description, string stopMessage, WatchSource source)
+    {
+        internal string Description { get; } = description;
+        internal string StopMessage { get; } = stopMessage;
+        internal WatchSource Source { get; } = source;
+        internal FolderWatch? Active { get; set; }
+        internal string? RememberedFolder { get; set; }
+        internal bool CatchUpOnOpen { get; set; }
+        internal bool CanResume => Active is null && RememberedFolder is not null;
+        internal bool CanCatchUp => Active is not null || CanResume;
+        internal string CatchUpLabel => Active is null ? "Resume and catch up" : "Import existing files";
+    }
 
-    public bool IsWatchingFolder => _folderWatch is not null;
+    private readonly WatchSlot _scannerWatch = new("scanner output folder", "Folder watch stopped.", WatchSource.Scanner);
+    private readonly WatchSlot _phoneWatch = new("phone inbox folder", "Phone inbox watch stopped.", WatchSource.Phone);
+    private readonly WatchFolderPreference? _watchPreference;
+
+    public bool IsWatchingFolder => _scannerWatch.Active is not null;
     public bool CanStartFolderWatch => CanWork && !IsWatchingFolder;
-    public bool CanOfferResumeFolderWatch => RememberedWatchFolder is not null && !IsWatchingFolder;
-    public bool CanOfferImportWatchFiles => IsWatchingFolder || CanOfferResumeFolderWatch;
+    public bool CanOfferResumeFolderWatch => _scannerWatch.CanResume;
+    public bool CanOfferImportWatchFiles => _scannerWatch.CanCatchUp;
     public bool CanOfferCatchUpOnOpen => _watchPreference is not null && RememberedWatchFolder is not null;
-    public string ImportWatchFilesLabel => IsWatchingFolder ? "Import existing files" : "Resume and catch up";
-    public string WatchedFolderPath => _folderWatch?.Folder ?? "";
-    public string WatchedFolderName => IsWatchingFolder
-        ? new DirectoryInfo(WatchedFolderPath).Name
-        : "";
+    public string ImportWatchFilesLabel => _scannerWatch.CatchUpLabel;
+    public string? RememberedWatchFolder => _scannerWatch.RememberedFolder;
+    public string WatchedFolderPath => _scannerWatch.Active?.Folder ?? "";
+    public string WatchedFolderName => _scannerWatch.Active is { } watch ? new DirectoryInfo(watch.Folder).Name : "";
 
     public bool CatchUpOnOpen
     {
-        get => _catchUpOnOpen;
-        set
+        get => _scannerWatch.CatchUpOnOpen;
+        set => SetCatchUpOnOpen(_scannerWatch, value);
+    }
+
+    public bool IsWatchingPhoneInbox => _phoneWatch.Active is not null;
+    public bool CanResumePhoneInbox => _phoneWatch.CanResume;
+    public bool CanCatchUpPhoneInbox => _phoneWatch.CanCatchUp;
+    public bool CanSetPhoneCatchUpOnOpen => _watchPreference is not null && _phoneWatch.RememberedFolder is not null;
+    public string PhoneCatchUpLabel => _phoneWatch.CatchUpLabel;
+    public string? PhoneInboxFolder => _phoneWatch.RememberedFolder;
+    public string PhoneInboxLabel => IsWatchingPhoneInbox ? "Phone inbox active…" : "Phone inbox…";
+
+    public bool PhoneCatchUpOnOpen
+    {
+        get => _phoneWatch.CatchUpOnOpen;
+        set => SetCatchUpOnOpen(_phoneWatch, value);
+    }
+
+    private bool HasActiveWatches => IsWatchingFolder || IsWatchingPhoneInbox;
+
+    internal Task CatchUpWhenWindowOpensAsync() =>
+        CanWork && (CatchUpOnOpen || PhoneCatchUpOnOpen)
+            ? RunOperationAsync("Resuming saved watches…", CatchUpSavedWatchesAsync)
+            : Task.CompletedTask;
+
+    [RelayCommand] private Task StartFolderWatchAsync() => ChooseWatchFolderAsync(_scannerWatch);
+    [RelayCommand] private Task ResumeFolderWatchAsync() => ResumeWatchAsync(_scannerWatch, queueExistingFiles: false);
+    [RelayCommand] private Task ImportWatchFolderFilesAsync() => CatchUpWatchAsync(_scannerWatch);
+    [RelayCommand] private Task StopFolderWatchAsync() => StopWatchAsync(_scannerWatch);
+
+    [RelayCommand] private Task ChoosePhoneInboxFolderAsync() => ChooseWatchFolderAsync(_phoneWatch);
+    [RelayCommand] private Task ResumePhoneInboxAsync() => ResumeWatchAsync(_phoneWatch, queueExistingFiles: false);
+    [RelayCommand] private Task CatchUpPhoneInboxAsync() => CatchUpWatchAsync(_phoneWatch);
+    [RelayCommand] private Task StopPhoneInboxAsync() => StopWatchAsync(_phoneWatch);
+
+    private void SetCatchUpOnOpen(WatchSlot slot, bool enabled)
+    {
+        if (slot.CatchUpOnOpen == enabled) return;
+        try
         {
-            if (value == _catchUpOnOpen) return;
-            if (IsBusy || _library is not { } library || _watchPreference is not { } preference || RememberedWatchFolder is not { } folder)
+            if (!CanWork || _library is not { } library || _watchPreference is not { } preference ||
+                slot.RememberedFolder is not { } folder) return;
+            if (enabled && preference.Load(library.RootPath, slot.Source) != folder)
             {
-                OnPropertyChanged(nameof(CatchUpOnOpen));
-                return;
+                preference.Save(library.RootPath, folder, slot.Source);
             }
-            try
-            {
-                if (value && preference.Load(library.RootPath) != folder) preference.Save(library.RootPath, folder);
-                preference.SaveCatchUpOnOpen(library.RootPath, value);
-                SetProperty(ref _catchUpOnOpen, value);
-            }
-            catch (Exception error) when (error is IOException or UnauthorizedAccessException)
-            {
-                Status = error.Message;
-                OnPropertyChanged(nameof(CatchUpOnOpen));
-            }
+            preference.SaveCatchUpOnOpen(library.RootPath, enabled, slot.Source);
+            slot.CatchUpOnOpen = enabled;
+        }
+        catch (Exception error) when (error is IOException or UnauthorizedAccessException)
+        {
+            Status = error.Message;
+        }
+        finally
+        {
+            OnPropertyChanged(slot.Source == WatchSource.Scanner ? nameof(CatchUpOnOpen) : nameof(PhoneCatchUpOnOpen));
         }
     }
 
-    internal Task CatchUpWhenWindowOpensAsync() =>
-        CanWork && CatchUpOnOpen ? ResumeRememberedWatchAsync(queueExistingFiles: true) : Task.CompletedTask;
-
-    [RelayCommand]
-    private Task StartFolderWatchAsync() => RunOperationAsync("Choose a scanner output folder…", async token =>
+    private Task ChooseWatchFolderAsync(WatchSlot slot) => RunOperationAsync($"Choose a {slot.Description}…", async token =>
     {
-        if (IsWatchingFolder) return;
-        var folder = await _dialogs.PickFolderAsync("Choose a scanner output folder");
+        if (slot.Active is not null) return;
+        var folder = await _dialogs.PickFolderAsync($"Choose a {slot.Description}");
         if (folder is null)
         {
             Status = "Folder selection closed.";
             return;
         }
         token.ThrowIfCancellationRequested();
-        await StartWatchAsync(folder, token);
+        await StartWatchAsync(slot, folder, token);
     });
 
-    [RelayCommand]
-    private Task ResumeFolderWatchAsync() => ResumeRememberedWatchAsync(queueExistingFiles: false);
-
-    private Task ResumeRememberedWatchAsync(bool queueExistingFiles)
+    private Task ResumeWatchAsync(WatchSlot slot, bool queueExistingFiles)
     {
-        if (RememberedWatchFolder is not { } folder || IsWatchingFolder) return Task.CompletedTask;
-        return RunOperationAsync("Resuming folder watch…", token => StartWatchAsync(folder, token, queueExistingFiles));
+        if (!slot.CanResume || slot.RememberedFolder is not { } folder) return Task.CompletedTask;
+        return RunOperationAsync($"Resuming the {slot.Description} watch…", token => StartWatchAsync(slot, folder, token, queueExistingFiles));
     }
 
-    [RelayCommand]
-    private Task ImportWatchFolderFilesAsync()
+    private Task CatchUpWatchAsync(WatchSlot slot)
     {
-        if (_folderWatch is not { } watch) return ResumeRememberedWatchAsync(queueExistingFiles: true);
-        return RunOperationAsync("Checking the watched folder…", async token =>
+        if (slot.Active is not { } watch) return ResumeWatchAsync(slot, queueExistingFiles: true);
+        return RunOperationAsync($"Checking the {slot.Description}…", async token =>
         {
             try
             {
                 int queued = await Task.Run(() => watch.QueueExistingFiles(token), token);
-                if (ReferenceEquals(_folderWatch, watch))
+                if (ReferenceEquals(slot.Active, watch))
                 {
                     Status = queued > 0 ? $"{DocumentCount(queued)} queued for the folder watch." : "No additional files to check.";
                 }
             }
             catch (Exception error) when ((error is OperationCanceledException or ObjectDisposedException) &&
-                                          !ReferenceEquals(_folderWatch, watch)) { }
+                                          !ReferenceEquals(slot.Active, watch)) { }
         });
     }
 
-    private async Task StartWatchAsync(string folder, CancellationToken cancellationToken, bool queueExistingFiles = false)
+    private async Task StartWatchAsync(WatchSlot slot, string folder, CancellationToken cancellationToken, bool queueExistingFiles = false)
     {
         var library = RequireLibrary();
-        Status = "Checking the scanner output folder…";
-        var watch = await Task.Run(() => FolderWatch.Start(folder, library.PdfDirectory, ImportWatchedFilesAsync, cancellationToken),
+        var otherWatch = ReferenceEquals(slot, _scannerWatch) ? _phoneWatch.Active : _scannerWatch.Active;
+        Status = $"Checking the {slot.Description}…";
+        var watch = await Task.Run(() => library.StartIntakeWatch(folder, ImportWatchedFilesAsync, otherWatch, cancellationToken),
             cancellationToken);
         int queued = 0;
         try
@@ -115,15 +154,15 @@ internal sealed partial class InboxViewModel
             await watch.DisposeAsync();
             throw;
         }
-        _folderWatch = watch;
-        RememberedWatchFolder = watch.Folder;
-        NotifyWatchChanged();
-        Status = $"Watching for new or updated files in {WatchedFolderName}.";
+        slot.Active = watch;
+        slot.RememberedFolder = watch.Folder;
+        NotifyWatchChanged(slot);
+        Status = $"Watching for new or updated files in {new DirectoryInfo(watch.Folder).Name}.";
         if (queued > 0) Status += $" {DocumentCount(queued)} queued for the folder watch.";
-        _ = ObserveWatchAsync(watch);
+        _ = ObserveWatchAsync(slot, watch);
         try
         {
-            _watchPreference?.Save(library.RootPath, watch.Folder);
+            _watchPreference?.Save(library.RootPath, watch.Folder, slot.Source);
         }
         catch (Exception error) when (error is IOException or UnauthorizedAccessException)
         {
@@ -131,16 +170,40 @@ internal sealed partial class InboxViewModel
         }
     }
 
-    private string? RestoreWatchFolder(string libraryRoot)
+    private async Task CatchUpSavedWatchesAsync(CancellationToken cancellationToken)
     {
-        RememberedWatchFolder = null;
-        SetProperty(ref _catchUpOnOpen, false, nameof(CatchUpOnOpen));
+        var scannerNotice = await TryStartSavedWatchAsync(_scannerWatch, cancellationToken);
+        var phoneNotice = await TryStartSavedWatchAsync(_phoneWatch, cancellationToken);
+        if (JoinWatchNotices(scannerNotice, phoneNotice) is { } notice) Status = notice;
+    }
+
+    private async Task<string?> TryStartSavedWatchAsync(WatchSlot slot, CancellationToken cancellationToken)
+    {
+        if (!slot.CatchUpOnOpen || !slot.CanResume || slot.RememberedFolder is not { } folder) return null;
         try
         {
-            if (_watchPreference is { } preference && preference.Load(libraryRoot) is { } folder)
+            await StartWatchAsync(slot, folder, cancellationToken, queueExistingFiles: true);
+            return null;
+        }
+        catch (Exception error) when (error is IOException or UnauthorizedAccessException or ArgumentException)
+        {
+            return $"Could not resume the {slot.Description} watch. {error.Message}";
+        }
+    }
+
+    private string? RestoreWatchFolders(string libraryRoot) =>
+        JoinWatchNotices(RestoreWatchFolder(_scannerWatch, libraryRoot), RestoreWatchFolder(_phoneWatch, libraryRoot));
+
+    private string? RestoreWatchFolder(WatchSlot slot, string libraryRoot)
+    {
+        slot.RememberedFolder = null;
+        slot.CatchUpOnOpen = false;
+        try
+        {
+            if (_watchPreference is { } preference && preference.Load(libraryRoot, slot.Source) is { } folder)
             {
-                RememberedWatchFolder = folder;
-                SetProperty(ref _catchUpOnOpen, preference.LoadCatchUpOnOpen(libraryRoot), nameof(CatchUpOnOpen));
+                slot.RememberedFolder = folder;
+                slot.CatchUpOnOpen = preference.LoadCatchUpOnOpen(libraryRoot, slot.Source);
             }
             return null;
         }
@@ -148,25 +211,26 @@ internal sealed partial class InboxViewModel
         {
             return error.Message;
         }
+        finally
+        {
+            NotifyWatchChanged(slot);
+        }
     }
 
-    partial void OnRememberedWatchFolderChanged(string? value)
-    {
-        OnPropertyChanged(nameof(CanOfferResumeFolderWatch));
-        OnPropertyChanged(nameof(CanOfferImportWatchFiles));
-        OnPropertyChanged(nameof(CanOfferCatchUpOnOpen));
-    }
+    private static string? JoinWatchNotices(string? scannerNotice, string? phoneNotice) =>
+        scannerNotice is null ? phoneNotice : phoneNotice is null ? scannerNotice : $"{scannerNotice} {phoneNotice}";
 
-    [RelayCommand]
-    private async Task StopFolderWatchAsync()
+    private Task StopAllWatchesAsync() => Task.WhenAll(StopWatchAsync(_scannerWatch), StopWatchAsync(_phoneWatch));
+
+    private async Task StopWatchAsync(WatchSlot slot)
     {
-        if (_folderWatch is not { } watch) return;
-        _folderWatch = null;
-        NotifyWatchChanged();
+        if (slot.Active is not { } watch) return;
+        slot.Active = null;
+        NotifyWatchChanged(slot);
         try
         {
             await watch.DisposeAsync();
-            if (_folderWatch is null) Status = "Folder watch stopped.";
+            if (slot.Active is null) Status = slot.StopMessage;
         }
         catch (Exception error)
         {
@@ -186,7 +250,7 @@ internal sealed partial class InboxViewModel
                 token => ImportFilesAsync(files, token, ImportOrigin.FolderWatch, revealAdded: false), cancellationToken);
         });
 
-    private async Task ObserveWatchAsync(FolderWatch watch)
+    private async Task ObserveWatchAsync(WatchSlot slot, FolderWatch watch)
     {
         try
         {
@@ -194,18 +258,33 @@ internal sealed partial class InboxViewModel
         }
         catch (Exception)
         {
-            if (ReferenceEquals(_folderWatch, watch)) await StopFolderWatchAsync();
+            if (ReferenceEquals(slot.Active, watch)) await StopWatchAsync(slot);
         }
     }
 
-    private void NotifyWatchChanged()
+    private void NotifyWatchChanged(WatchSlot slot)
     {
-        OnPropertyChanged(nameof(IsWatchingFolder));
-        OnPropertyChanged(nameof(CanStartFolderWatch));
-        OnPropertyChanged(nameof(CanOfferResumeFolderWatch));
-        OnPropertyChanged(nameof(CanOfferImportWatchFiles));
-        OnPropertyChanged(nameof(ImportWatchFilesLabel));
-        OnPropertyChanged(nameof(WatchedFolderPath));
-        OnPropertyChanged(nameof(WatchedFolderName));
+        if (slot.Source == WatchSource.Scanner)
+        {
+            OnPropertyChanged(nameof(IsWatchingFolder));
+            OnPropertyChanged(nameof(CanStartFolderWatch));
+            OnPropertyChanged(nameof(CanOfferResumeFolderWatch));
+            OnPropertyChanged(nameof(CanOfferImportWatchFiles));
+            OnPropertyChanged(nameof(CanOfferCatchUpOnOpen));
+            OnPropertyChanged(nameof(CatchUpOnOpen));
+            OnPropertyChanged(nameof(ImportWatchFilesLabel));
+            OnPropertyChanged(nameof(RememberedWatchFolder));
+            OnPropertyChanged(nameof(WatchedFolderPath));
+            OnPropertyChanged(nameof(WatchedFolderName));
+            return;
+        }
+        OnPropertyChanged(nameof(IsWatchingPhoneInbox));
+        OnPropertyChanged(nameof(CanResumePhoneInbox));
+        OnPropertyChanged(nameof(CanCatchUpPhoneInbox));
+        OnPropertyChanged(nameof(CanSetPhoneCatchUpOnOpen));
+        OnPropertyChanged(nameof(PhoneCatchUpOnOpen));
+        OnPropertyChanged(nameof(PhoneCatchUpLabel));
+        OnPropertyChanged(nameof(PhoneInboxFolder));
+        OnPropertyChanged(nameof(PhoneInboxLabel));
     }
 }
