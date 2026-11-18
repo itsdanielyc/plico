@@ -111,3 +111,8 @@ Ruling for v0.17.0. Implement the brief’s first nine ranked items together on 
 | 21 | Users can opt into a loopback model to review filing suggestions and ask questions using selected library text. Applying suggestions is explicit and reversible. | L1 validation, L3 protocol and privacy tests, L6 native review and chat |
 
 The intake lane owns format adapters, scanner and phone capture. The PDF and desktop lane owns versioned editing, binder export, PDF tools and desktop polish. The coordinator registers catalog migrations and integrates shared call sites and release evidence. [Capture and intake handoff](docs/handoff/capture-intake.md)
+## Capture and intake
+
+| Slice | Done when | Levels | Status |
+|---|---|---|---|
+| #12 Batch splitting and manual duplex | Scanner batches omit PATCH-T and configured separators. Manual duplex matches reverse-order backs to fronts and can resume after closing the library or correcting a count mismatch. | L0, L1, L3, L6 | Hosted verification pending |
