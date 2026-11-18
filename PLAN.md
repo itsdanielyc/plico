@@ -116,4 +116,4 @@ The intake lane owns format adapters, scanner and phone capture. The PDF and des
 | Slice | Done when | Levels | Status |
 |---|---|---|---|
 | #12 Batch splitting and manual duplex | Scanner batches omit PATCH-T and configured separators. Manual duplex matches reverse-order backs to fronts and can resume after closing the library or correcting a count mismatch. | L0, L1, L3, L6 | Hosted verification pending |
-| #12 Archive serial numbers and label sheets | Numbered labels start new scan documents. Fixed-size label sheets and separators can be printed. Exact lookup reaches the reserved number, and a conflicting capture is filed without taking another document's number. | L0, L3, L6 | Hosted verification pending |
+| #12 Archive serial numbers and label sheets | Numbered labels start new scan documents. Fixed-size label sheets and separators can be printed. Exact lookup reaches the reserved number, and a conflicting capture is filed without taking another document's number. | L0, L3, L6 | Three hosted runners passed. Remaining checks are pending. |
