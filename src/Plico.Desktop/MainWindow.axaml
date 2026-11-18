@@ -403,6 +403,8 @@
                                         <WrapPanel Orientation="Horizontal">
                                             <Button x:Name="MovePdfButton" Classes="secondary" Content="Move to folder…"
                                                     Command="{Binding MovePdfCommand}" IsEnabled="{Binding CanWork}" Margin="0,0,6,4" />
+                                            <Button x:Name="ExportPdfButton" Classes="secondary" Content="Export PDF…"
+                                                    Command="{Binding ExportPdfCommand}" IsEnabled="{Binding CanWork}" Margin="0,0,6,4" />
                                             <Button x:Name="ExtractPdfPagesButton" Classes="secondary" Content="Extract pages…"
                                                     Command="{Binding ExtractPdfPagesCommand}" IsEnabled="{Binding CanWork}"
                                                     IsVisible="{Binding HasMultiplePages}" Margin="0,0,6,4" />

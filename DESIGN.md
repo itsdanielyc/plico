@@ -34,7 +34,7 @@ Batch review lives below the document list. The selection count identifies its s
 
 **Move PDFs…** uses one folder choice for the selection. The status reports completed moves, files already in the folder, and the next file when a batch pauses.
 
-**Export PDFs…** appears in the batch controls. After the export finishes, the status bar shows the output path and offers **Open export**.
+**Export PDF…** sits beside the preview's filing controls and writes a copy to the chosen folder. **Export PDFs…** appears in the batch controls and creates a dated folder. The status bar gives the destination and offers **Open export**.
 
 **Combine PDFs…** opens a title and order dialog. It starts with the visible results order and lets the user move documents before creating the new inbox PDF.
 

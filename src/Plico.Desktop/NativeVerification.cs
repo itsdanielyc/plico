@@ -41,6 +41,7 @@ internal static partial class NativeVerification
             Require(model.Documents.Count == 1 && model.SelectedDocument is { HasText: true },
                 $"The receipt did not import with embedded text. {model.Status}");
             await UntilAsync(() => model.Preview is not null, () => model.PreviewMessage);
+            await VerifySingleExportAsync(window, model, dialogs, evidenceDirectory);
 
             Control<AutoCompleteBox>(window, "TagBox").SetCurrentValue(AutoCompleteBox.TextProperty, TestTag);
             Control<Button>(window, "AddTagButton").Command!.Execute(null);
@@ -94,7 +95,7 @@ internal static partial class NativeVerification
             await VerifyBatchDocumentDatesAsync(window, model, dialogs, evidenceDirectory);
 
             File.WriteAllText(Path.Combine(evidenceDirectory, "passed.txt"),
-                $"Verified {runtime}. Native window completed multilingual OCR and correction, oriented JPEG and multi-page TIFF import, PDF combination, page extraction and rotation, phrase, tag, review-status, folder, and text-availability search, query correction, saved search restoration, single and batch document-date editing, date filtering and inheritance, result sorting, fit-width and selectable page text previews, match navigation, tag merging, suggestions, and edits across loaded result pages, duplicate drop, folder watch and inbox counting, title edit, single and batch PDF moves, external relocation and PDF swaps, index reporting and PDF restoration from files and folders, selected PDF export, library backup, text copy, single and batch OCR copies, saved import error recovery and retry, and filing through the chosen intake folder. {scanRecoveryEvidence}");
+                $"Verified {runtime}. Native window completed multilingual OCR and correction, oriented JPEG and multi-page TIFF import, PDF combination, page extraction and rotation, phrase, tag, review-status, folder, and text-availability search, query correction, saved search restoration, single and batch document-date editing, date filtering and inheritance, result sorting, fit-width and selectable page text previews, match navigation, tag merging, suggestions, and edits across loaded result pages, duplicate drop, folder watch and inbox counting, title edit, single and batch PDF moves, external relocation and PDF swaps, index reporting and PDF restoration from files and folders, single and batch PDF export, library backup, text copy, single and batch OCR copies, saved import error recovery and retry, and filing through the chosen intake folder. {scanRecoveryEvidence}");
             desktop.Shutdown(0);
         }
         catch (Exception error)

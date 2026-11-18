@@ -73,6 +73,8 @@ Backup copies the PDF tree and takes an online SQLite snapshot under the library
 
 Selected export reads the chosen catalog paths and file stamps under the same lease. It stages the PDF bytes under the chosen destination, assigns distinct portable filenames, and checks the sources again before publishing the folder. [Directory.Move](https://learn.microsoft.com/en-us/dotnet/api/system.io.directory.move?view=net-10.0)
 
+Single PDF export uses the same source checks and staging in the destination directory. It publishes the copied file with a same-volume move that refuses to overwrite an occupied name, then tries a numeric suffix when needed. The native fixture keeps the exported OCR receipt as evidence for an independent PDF reader.
+
 Combining PDFs uses the selected-file checks and snapshots each source under the library lease. PDFsharp imports the pages, page annotations, and embedded text in the requested order. Plico verifies the output page count and source file stamps before publishing, then inserts the catalog record and unique source tags in one transaction. [NAPS2 PDFsharp page import](https://github.com/cyanfish/naps2-pdfsharp/blob/8d30f069e6cef9ee9b001372a94432de7f6a3146/PdfSharpCore/Pdf/PdfPages.cs)
 
 Page extraction uses that page-copy pipeline with ordered, merged ranges. The catalog operation checks the selection against the staged PDF’s page count, copies the selected page content and embedded text, and verifies the output count and source stamp before publication. The source document holds its page annotations.

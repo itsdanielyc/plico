@@ -11,6 +11,36 @@ public sealed partial class InboxLibrary
 
     private readonly record struct SelectedPdfSource(string Path, FileVersion Version);
 
+    /// <summary>Publishes a byte-identical copy of one library PDF directly in the chosen external folder.</summary>
+    /// <param name="documentId">The catalog ID of the PDF to copy.</param>
+    /// <param name="destination">An existing directory outside the current library.</param>
+    /// <param name="cancellationToken">Cancels the copy before publication.</param>
+    /// <returns>The path of the exported file, with a numeric suffix if needed.</returns>
+    public async Task<string> ExportPdfAsync(long documentId, string destination, CancellationToken cancellationToken = default)
+    {
+        await _fileOperations.WaitAsync(cancellationToken).ConfigureAwait(false);
+        string? stage = null;
+        try
+        {
+            string target = ResolveExternalTarget(destination);
+            var source = ResolveSelectedPdfSources(_catalog.ReadSelectedFiles([documentId]), cancellationToken).Single();
+            stage = CreateCopyStage(target, ExportStagePrefix);
+            string stagedPdf = Path.Combine(stage, StagedPdfName);
+            await CopyPdfAsync(source.Path, stagedPdf, source.Version, ExportSourceChanged, cancellationToken).ConfigureAwait(false);
+            VerifySelectedPdfSource(source);
+            if (Path.GetRelativePath(target, ResolveExternalTarget(target)) != ".")
+            {
+                throw new IOException("The export folder changed during the copy. Choose it again.");
+            }
+            return PublishExportedPdf(stagedPdf, target, ExportStem(source.Path), cancellationToken);
+        }
+        finally
+        {
+            if (stage is not null) TryRemoveStage(stage);
+            _fileOperations.Release();
+        }
+    }
+
     /// <summary>Copies selected PDFs to a new folder under an existing destination outside the library.</summary>
     /// <param name="documentIds">The selected catalog IDs. Repeated IDs are copied once.</param>
     /// <param name="destination">The existing folder where Plico creates the export.</param>
@@ -89,7 +119,7 @@ public sealed partial class InboxLibrary
 
     private static string ReserveExportPath(string stage, string source, Dictionary<string, int> nextSuffixes, HashSet<string> allocatedNames)
     {
-        string stem = PortableStem(Path.GetFileNameWithoutExtension(source).Normalize(NormalizationForm.FormC));
+        string stem = ExportStem(source);
         int suffix = nextSuffixes.GetValueOrDefault(stem, 1);
         while (true)
         {
@@ -98,6 +128,29 @@ public sealed partial class InboxLibrary
             if (!allocatedNames.Add(name) || Path.Exists(path)) continue;
             nextSuffixes[stem] = suffix;
             return path;
+        }
+    }
+
+    private static string ExportStem(string source) =>
+        PortableStem(Path.GetFileNameWithoutExtension(source).Normalize(NormalizationForm.FormC));
+
+    // O(k) path checks and constant space for k occupied names.
+    private static string PublishExportedPdf(string stagedPdf, string target, string stem, CancellationToken cancellationToken)
+    {
+        for (int sequence = 1; ; sequence++)
+        {
+            cancellationToken.ThrowIfCancellationRequested();
+            string path = Path.Combine(target, NumberedName(stem, sequence) + DocumentProcessor.PdfExtension);
+            if (Path.Exists(path)) continue;
+            try
+            {
+                File.Move(stagedPdf, path, overwrite: false);
+                return path;
+            }
+            catch (IOException) when (Path.Exists(path))
+            {
+                // Another export can claim this name before the staged file is moved.
+            }
         }
     }
 }

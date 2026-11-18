@@ -70,7 +70,7 @@ Batch tagging keeps the result pages you loaded and the selected PDFs that still
 
 Choose **Move PDFs…** on a selection to file all of them in one library folder. Plico checks the selection before starting and reports what finished if you cancel or it encounters a file error.
 
-With multiple PDFs selected, choose **Export PDFs…** and pick a destination outside the library. Plico creates a dated folder with the selected PDFs. Use **Open export** to see the copies in your file manager.
+Choose **Export PDF…** from the preview to copy one PDF directly into a folder outside the library. Plico adds a number when the filename is occupied. With multiple PDFs selected, **Export PDFs…** creates a dated folder. Use **Open export** to see the result in your file manager.
 
 Choose **Combine PDFs…** to make a single document from the selection. Set the title and use **Move up** or **Move down** to set the order. The new PDF opens in the inbox with the source pages, embedded text, and tags.
 

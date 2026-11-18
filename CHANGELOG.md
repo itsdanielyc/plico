@@ -51,6 +51,7 @@
 - Remove one tag from a selection of PDFs. The chooser shows how many selected PDFs carry each tag.
 - Batch tag edits keep loaded result pages and reselect PDFs that still match the current filter.
 - Set a shared document date for selected PDFs or clear their dates in one action.
+- Export the previewed PDF directly to a folder and open its destination from the status bar.
 
 ## [0.15.0] - 2026-11-18
 

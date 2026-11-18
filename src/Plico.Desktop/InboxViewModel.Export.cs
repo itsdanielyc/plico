@@ -12,6 +12,27 @@ internal sealed partial class InboxViewModel
     public bool HasLatestExport => LatestExportLocation is not null;
 
     [RelayCommand]
+    private Task ExportPdfAsync()
+    {
+        if (SelectedDocument is not { } document) return Task.CompletedTask;
+        return RunOperationAsync("Choose an export destination…", async token =>
+        {
+            var library = RequireLibrary();
+            string? destination = await _dialogs.PickFolderAsync("Choose where to export the PDF");
+            if (destination is null)
+            {
+                Status = "Export destination selection closed.";
+                return;
+            }
+
+            Status = "Copying PDF…";
+            string export = await Task.Run(() => library.ExportPdfAsync(document.Id, destination, token), token);
+            LatestExportLocation = Path.GetDirectoryName(export)!;
+            Status = $"Exported {Path.GetFileName(export)} to {LatestExportLocation}.";
+        });
+    }
+
+    [RelayCommand]
     private Task ExportSelectedPdfsAsync()
     {
         if (!HasBatchSelection) return Task.CompletedTask;
