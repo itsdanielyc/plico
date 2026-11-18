@@ -86,6 +86,8 @@ Use **Library tools… → Check library integrity…** to compare file checksum
 
 Choose **Combine PDFs…** to make a single document from the selection. Set the title and use **Move up** or **Move down** to set the order. The new PDF opens in the inbox with the source pages, embedded text, and tags.
 
+Choose **Export binder…** to share a hand-picked set of household documents as one searchable PDF. Set the binder title and order, then choose a folder. Plico adds printable contents pages and PDF bookmarks. The selected documents stay in the library.
+
 Choose **Extract pages…** in a multi-page preview and enter a selection such as `1,3-5`. The excerpt opens in the inbox with those pages in source order, embedded text, and source tags. Page annotations belong to the source PDF.
 
 Choose **Rotate pages…** for sideways or upside-down scans. Select pages, choose a direction, and title the new PDF. The copy keeps every page, its searchable text, and the source tags.

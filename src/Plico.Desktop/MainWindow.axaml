@@ -342,6 +342,10 @@
                                                     Content="Export PDFs…" Command="{Binding ExportSelectedPdfsCommand}"
                                                     IsEnabled="{Binding CanWork}" AutomationProperties.Name="Export selected PDFs"
                                                     Margin="6,0,0,4" Padding="10,7" />
+                                            <Button x:Name="ExportHouseholdBinderButton" Classes="secondary" Content="Export binder…"
+                                                    Command="{Binding ExportHouseholdBinderCommand}" IsEnabled="{Binding CanWork}"
+                                                    AutomationProperties.Name="Export the selected PDFs as a household binder"
+                                                    Margin="6,0,0,4" Padding="10,7" />
                                         </WrapPanel>
                                     </StackPanel>
                                 </Border>
@@ -438,6 +442,9 @@
                                                     Command="{Binding MovePdfCommand}" IsEnabled="{Binding CanWork}" Margin="0,0,6,4" />
                                             <Button x:Name="ExportPdfButton" Classes="secondary" Content="Export PDF…"
                                                     Command="{Binding ExportPdfCommand}" IsEnabled="{Binding CanWork}" Margin="0,0,6,4" />
+                                            <Button Classes="secondary" Content="Export binder…" IsVisible="{Binding !HasBatchSelection}"
+                                                    Command="{Binding ExportHouseholdBinderCommand}" IsEnabled="{Binding CanWork}"
+                                                    AutomationProperties.Name="Export this PDF as a household binder" Margin="0,0,6,4" />
                                             <Button x:Name="ExtractPdfPagesButton" Classes="secondary" Content="Extract pages…"
                                                     Command="{Binding ExtractPdfPagesCommand}" IsEnabled="{Binding CanWork}"
                                                     IsVisible="{Binding HasMultiplePages}" Margin="0,0,6,4" />
