@@ -12,7 +12,11 @@ public sealed partial class MainWindow : Window
     private bool _closeWhenIdle;
     private InboxViewModel? ViewModel => DataContext as InboxViewModel;
 
-    public MainWindow() => InitializeComponent();
+    public MainWindow()
+    {
+        InitializeComponent();
+        BatchTagBox.MaxLength = TagBox.MaxLength;
+    }
 
     protected override void OnKeyDown(KeyEventArgs e)
     {
@@ -76,6 +80,27 @@ public sealed partial class MainWindow : Window
         else if (DocumentList.ItemCount > 1)
         {
             DocumentList.Selection.SelectRange(0, DocumentList.ItemCount - 1);
+        }
+    }
+
+    private async void ApplyBatchTag_Click(object? sender, RoutedEventArgs e) => await ApplyBatchTagAsync();
+
+    private async void BatchTag_KeyDown(object? sender, KeyEventArgs e)
+    {
+        if (e.Key != Key.Enter) return;
+        e.Handled = true;
+        await ApplyBatchTagAsync();
+    }
+
+    private async Task ApplyBatchTagAsync()
+    {
+        if (ViewModel is not { CanWork: true, HasBatchSelection: true } model) return;
+        var selectedIds = DocumentList.Selection.SelectedItems.OfType<DocumentSummary>()
+            .Select(document => document.Id).ToHashSet();
+        await model.ApplySelectedTagAsync();
+        if (ReferenceEquals(ViewModel, model))
+        {
+            DocumentList.SelectedItems = model.Documents.Where(document => selectedIds.Contains(document.Id)).ToList();
         }
     }
 

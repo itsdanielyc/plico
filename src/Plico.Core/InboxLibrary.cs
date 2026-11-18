@@ -106,6 +106,13 @@ public sealed partial class InboxLibrary : IDisposable
     /// <summary>Assigns a tag once, treating equivalent case and Unicode forms as one tag.</summary>
     public void AddTag(long documentId, string tag) => _catalog.AddTag(documentId, tag);
 
+    /// <summary>Applies the tag to the entire selection in a single transaction.</summary>
+    public void AddTagToDocuments(IReadOnlyList<long> documentIds, string tag)
+    {
+        ArgumentNullException.ThrowIfNull(documentIds);
+        if (documentIds.Count > 0) _catalog.AddTagToDocuments(documentIds, tag);
+    }
+
     /// <summary>Removes a tag from one document.</summary>
     public void RemoveTag(long documentId, string tag) => _catalog.RemoveTag(documentId, tag);
 

@@ -228,7 +228,7 @@ public sealed class InboxWindowTests
         using var directory = new TemporaryLibrary();
         using (var library = InboxLibrary.Open(directory.Path))
         {
-            ReviewFixtures.AddTwoDocuments(library, TestContext.Current.CancellationToken);
+            BatchFixtures.AddTwoDocuments(library, TestContext.Current.CancellationToken);
         }
         using var model = new InboxViewModel(new FixtureDialogs());
         model.InitializeLibrary(() => directory.Path);
@@ -253,13 +253,48 @@ public sealed class InboxWindowTests
         }
     }
 
-    private static async Task WaitForPreviewAsync(InboxViewModel model)
+    [AvaloniaFact]
+    public async Task ApplyingABatchTagRetainsTheSelectionForReview()
     {
-        using var previewTimeout = CancellationTokenSource.CreateLinkedTokenSource(TestContext.Current.CancellationToken);
-        previewTimeout.CancelAfter(TimeSpan.FromSeconds(6));
-        while (model.Preview is null && !model.HasPreviewMessage)
+        using var directory = new TemporaryLibrary();
+        using (var library = InboxLibrary.Open(directory.Path))
         {
-            await Task.Delay(TimeSpan.FromMilliseconds(25), previewTimeout.Token);
+            BatchFixtures.AddTwoDocuments(library, TestContext.Current.CancellationToken);
+        }
+        using var model = new InboxViewModel(new FixtureDialogs());
+        model.InitializeLibrary(() => directory.Path);
+        var window = new MainWindow { DataContext = model };
+        window.Show();
+        try
+        {
+            await WaitForPreviewAsync(model);
+            var select = Assert.IsType<Button>(window.FindControl<Button>("SelectShownButton"));
+            select.RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
+            var tag = Assert.IsType<TextBox>(window.FindControl<TextBox>("BatchTagBox"));
+            tag.SetCurrentValue(TextBox.TextProperty, "Property");
+            var apply = Assert.IsType<Button>(window.FindControl<Button>("ApplyBatchTagButton"));
+            apply.RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
+            await WaitForAsync(() => model.Status == "Tag applied to 2 documents." && model.HasBatchSelection);
+            await WaitForPreviewAsync(model);
+
+            Assert.All(model.Documents, document => Assert.Contains("Property", document.Tags));
+        }
+        finally
+        {
+            window.Close();
+        }
+    }
+
+    private static async Task WaitForPreviewAsync(InboxViewModel model)
+        => await WaitForAsync(() => model.Preview is not null || model.HasPreviewMessage);
+
+    private static async Task WaitForAsync(Func<bool> condition)
+    {
+        using var timeout = CancellationTokenSource.CreateLinkedTokenSource(TestContext.Current.CancellationToken);
+        timeout.CancelAfter(TimeSpan.FromSeconds(6));
+        while (!condition())
+        {
+            await Task.Delay(TimeSpan.FromMilliseconds(25), timeout.Token);
         }
     }
 }

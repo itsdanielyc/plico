@@ -336,7 +336,6 @@ internal sealed class LibraryCatalog
 
     internal void SetReviewedDocuments(IReadOnlyList<long> documentIds, bool reviewed)
     {
-        var uniqueIds = documentIds.Distinct().ToArray();
         using var connection = Connect();
         using var transaction = connection.BeginTransaction();
         using var command = connection.CreateCommand();
@@ -346,12 +345,49 @@ internal sealed class LibraryCatalog
             WHERE is_present = 1 AND id IN (SELECT value FROM json_each($ids));
             """;
         command.Parameters.AddWithValue("$reviewed", reviewed);
+        int expected = BindSelection(command, documentIds);
+        RequireSelection(command.ExecuteNonQuery(), expected);
+        transaction.Commit();
+    }
+
+    internal void AddTagToDocuments(IReadOnlyList<long> documentIds, string tag)
+    {
+        var label = SearchTerms.CleanLabel(tag);
+        using var connection = Connect();
+        using var transaction = connection.BeginTransaction();
+        using var command = connection.CreateCommand();
+        command.Transaction = transaction;
+        command.CommandText = """
+            SELECT count(*) FROM documents
+            WHERE is_present = 1 AND id IN (SELECT value FROM json_each($ids));
+            """;
+        int expected = BindSelection(command, documentIds);
+        RequireSelection((long)command.ExecuteScalar()!, expected);
+
+        command.CommandText = """
+            INSERT INTO tags (tag_key, label) VALUES ($tag, $label) ON CONFLICT(tag_key) DO NOTHING;
+            INSERT OR IGNORE INTO document_tags (document_id, tag_key)
+            SELECT value, $tag FROM json_each($ids);
+            """;
+        command.Parameters.AddWithValue("$tag", label.ToUpperInvariant());
+        command.Parameters.AddWithValue("$label", label);
+        command.ExecuteNonQuery();
+        transaction.Commit();
+    }
+
+    private static int BindSelection(SqliteCommand command, IReadOnlyList<long> documentIds)
+    {
+        var uniqueIds = documentIds.Distinct().ToArray();
         command.Parameters.AddWithValue("$ids", JsonSerializer.Serialize(uniqueIds));
-        if (command.ExecuteNonQuery() != uniqueIds.Length)
+        return uniqueIds.Length;
+    }
+
+    private static void RequireSelection(long matched, int expected)
+    {
+        if (matched != expected)
         {
             throw new InvalidOperationException("A selected document is unavailable. Refresh the index and select the documents again.");
         }
-        transaction.Commit();
     }
 
     internal Dictionary<string, IndexedPdf> ReadIndexedFiles()

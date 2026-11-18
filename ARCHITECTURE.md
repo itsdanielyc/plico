@@ -15,7 +15,7 @@ A library is a user-selected directory. `PDFs/` holds ordinary PDFs. `.plico/cat
 
 Import renders into private staging and checks the processed PDF before moving it into `PDFs/` without overwriting existing files. An interrupted index write leaves a readable PDF that can be picked up on refresh. Plico preserves the selected source files. Catalog updates and full-text index triggers run together in SQLite transactions.
 
-Batch review updates the selected IDs in one SQLite transaction. A row-count check before commit preserves the selection's previous state if a document became unavailable.
+Batch review and tagging update the selected IDs in one SQLite transaction. A row-count check preserves the selection's previous state if a document became unavailable. The desktop restores matching selections after the tag update.
 
 Schema v2 indexes the SHA-256 digest of the source. Import computes it while copying a snapshot to staging. Repeating an unchanged source can reuse its existing PDF and avoid OCR. For a v1 entry, a PDF candidate with matching size is hashed on demand. Paths reserved by missing entries keep newly imported documents from inheriting unrelated metadata.
 

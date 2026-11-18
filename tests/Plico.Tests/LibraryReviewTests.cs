@@ -10,7 +10,7 @@ public sealed class LibraryReviewTests
     {
         using var directory = new TemporaryLibrary();
         using var library = InboxLibrary.Open(directory.Path);
-        ReviewFixtures.AddTwoDocuments(library, TestContext.Current.CancellationToken);
+        BatchFixtures.AddTwoDocuments(library, TestContext.Current.CancellationToken);
         var inbox = new DocumentFilter(InboxOnly: true);
         var selected = library.Find(inbox).Items.Select(document => document.Id).ToArray();
 
@@ -26,7 +26,7 @@ public sealed class LibraryReviewTests
     }
 }
 
-internal static class ReviewFixtures
+internal static class BatchFixtures
 {
     internal static void AddTwoDocuments(InboxLibrary library, CancellationToken token)
     {

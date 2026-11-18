@@ -56,7 +56,7 @@ internal static class NativeVerification
             await VerifyScannerDialogAsync(window, evidenceDirectory);
 
             File.WriteAllText(Path.Combine(evidenceDirectory, "passed.txt"),
-                "Native window completed OCR, review and search, duplicate drop, folder watch, title edit, PDF relocation, batch review, and scanner settings display.");
+                "Native window completed OCR, review and search, duplicate drop, folder watch, title edit, PDF relocation, batch tagging and review, and scanner settings display.");
             desktop.Shutdown(0);
         }
         catch (Exception error)
@@ -76,6 +76,13 @@ internal static class NativeVerification
         Require(model.HasBatchSelection && review.Command is IAsyncRelayCommand && model.BatchCountLabel == "2 selected",
             "The window did not select both documents.");
         await UntilAsync(() => model.Preview is not null, () => model.PreviewMessage);
+        const string batchTag = "Verification";
+        Control<TextBox>(window, "BatchTagBox").SetCurrentValue(TextBox.TextProperty, batchTag);
+        Control<Button>(window, "ApplyBatchTagButton").RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
+        await UntilAsync(() => model.HasBatchSelection && model.Status == "Tag applied to 2 documents." && model.Preview is not null,
+            () => model.Status);
+        Require(model.Documents.All(document => document.Tags.Contains(batchTag)),
+            "The tag did not attach to both selected PDFs.");
         await CaptureAsync(window, directory, "batch-review.png");
         await ((IAsyncRelayCommand)review.Command!).ExecuteAsync(null);
         model.ShowInboxCommand.Execute(null);

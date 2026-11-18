@@ -1,5 +1,10 @@
 # Changelog
 
+## [0.8.0] - 2026-11-18
+
+- Apply a tag to several selected documents at once. Existing spellings of matching tags are reused.
+- The selection stays available after tagging so you can apply another tag or mark the documents reviewed.
+
 ## [0.7.0] - 2026-11-18
 
 - Added Intel macOS downloads and ARM64 Ubuntu downloads.

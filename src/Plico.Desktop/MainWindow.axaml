@@ -183,12 +183,20 @@
                                     <Button Grid.Column="1" Content="Load more" IsVisible="{Binding HasMore}" Command="{Binding LoadMoreCommand}" />
                                 </Grid>
                                 <Border IsVisible="{Binding HasBatchSelection}" Background="#EAF0E5" CornerRadius="8" Padding="8">
-                                    <Grid ColumnDefinitions="*,Auto" ColumnSpacing="6">
-                                        <TextBlock Text="{Binding BatchCountLabel}" Classes="muted" VerticalAlignment="Center" />
-                                        <Button Grid.Column="1" x:Name="BatchReviewButton" Classes="secondary"
-                                                Content="{Binding BatchReviewAction}" Command="{Binding ReviewSelectedCommand}"
-                                                IsEnabled="{Binding CanWork}" />
-                                    </Grid>
+                                    <StackPanel Spacing="7">
+                                        <Grid ColumnDefinitions="*,Auto" ColumnSpacing="6">
+                                            <TextBlock Text="{Binding BatchCountLabel}" Classes="muted" VerticalAlignment="Center" />
+                                            <Button Grid.Column="1" x:Name="BatchReviewButton" Classes="secondary"
+                                                    Content="{Binding BatchReviewAction}" Command="{Binding ReviewSelectedCommand}"
+                                                    IsEnabled="{Binding CanWork}" />
+                                        </Grid>
+                                        <Grid ColumnDefinitions="*,Auto" ColumnSpacing="6" IsEnabled="{Binding CanWork}">
+                                            <TextBox x:Name="BatchTagBox" Text="{Binding BatchTagInput, Mode=TwoWay}" PlaceholderText="Tag"
+                                                     AutomationProperties.Name="Tag for the selected documents" KeyDown="BatchTag_KeyDown" />
+                                            <Button Grid.Column="1" x:Name="ApplyBatchTagButton" Classes="secondary"
+                                                    Content="Tag selected" Click="ApplyBatchTag_Click" />
+                                        </Grid>
+                                    </StackPanel>
                                 </Border>
                             </StackPanel>
                         </Grid>
