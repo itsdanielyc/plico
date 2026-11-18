@@ -25,6 +25,10 @@ try {
     }
 
     dotnet publish (Join-Path $repository 'src/Plico.Desktop/Plico.Desktop.csproj') -c Release -r $Runtime --self-contained -o $publish -p:NuGetLockFilePath=obj/publish-packages.lock.json
+    # Some native packages ship large PDBs for debugging. The release payload only needs the runtime files.
+    foreach ($symbol in Get-ChildItem -LiteralPath $publish -File -Recurse -Filter '*.pdb') {
+        Remove-Item -LiteralPath $symbol.FullName -Force
+    }
     New-Item -ItemType Directory -Force -Path $resources | Out-Null
     & (Join-Path $PSScriptRoot 'Copy-Notices.ps1') -AssetsFile (Join-Path $repository 'src/Plico.Desktop/obj/project.assets.json') -InstallDirectory $resources
     foreach ($file in @('README.md', 'THIRD-PARTY.md')) {

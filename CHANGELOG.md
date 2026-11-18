@@ -30,6 +30,7 @@
 - Rotate selected pages clockwise, counterclockwise, or 180 degrees in a copy that keeps every page, embedded text, bookmarks, and source tags.
 - Save completed pages as a partial searchable PDF when a scanner fails during capture.
 - Wait for Plico’s own PDF readers before filing a document, so an active preview can finish on Windows.
+- Reduce download and installation size by keeping debugger symbols out of release packages.
 
 ## [0.15.0] - 2026-11-18
 
