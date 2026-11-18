@@ -221,12 +221,12 @@
 | 2026-11-18 | L3 | Import, restore, and single export kept their collision behaviour through the staged hard-link fallback when the Linux rename call returned `EINVAL`. | Ubuntu 24.04 x64 under WSL | Local filtered `dotnet test` run, 11:27 UTC. Output in `artifacts/native-filename-race/link-fallback.txt`. |
 | 2026-11-18 | L6 | The native journey completed imports, single and batch filing, file and folder restoration, and exports through the desktop app. | Windows x64 and Ubuntu 24.04 x64 under WSL | Local `scripts/Test-Native.ps1` runs, 11:26–11:29 UTC. `passed.txt` in `artifacts/native-filename-race/windows-x64` and `artifacts/native-filename-race/ubuntu-x64`. |
 | 2026-11-18 | L3 finding | The restore and move recovery tests missed their collision when the temporary path had a symlink alias. Both failures reproduced with a symlinked `TMPDIR` on Ubuntu. Both tests passed after they staged the competing file using the path supplied by the claim. | Hosted macOS Intel and Apple silicon, local Windows x64 and Ubuntu 24.04 x64 under WSL | [CI run 44295249952](https://github.com/itsdanielyc/plico/actions/runs/44295249952) at `848a0bc`, followed by local focused tests, 11:31–11:34 UTC |
+| 2026-11-18 | L0, L3, L6 | All six runners passed the Release solution tests, including the late collisions and move recovery, and completed the native desktop journey. | GitHub-hosted Windows x64 and ARM64, macOS Intel and Apple silicon, Ubuntu x64 and ARM64 | [CI run 44295809593](https://github.com/itsdanielyc/plico/actions/runs/44295809593) at `c8bc758`, 11:33–11:42 UTC. Each runner uploaded its `native-<runtime>` artifact. |
 
 ## Unverified
 
 - Physical scanner interoperability requires a compatible device.
 - Developer ID signing and notarization on macOS, and Authenticode signing on Windows.
-- PDF filename claims on Windows ARM64, macOS Intel and Apple silicon, and Ubuntu ARM64.
 
 ## Earlier hosted runs
 
