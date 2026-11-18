@@ -373,6 +373,30 @@ public sealed class InboxWindowTests
         Assert.Equal(new[] { firstError, secondError }, dialogs.InspectedImportFailures.Select(error => error.SourcePath));
     }
 
+    [AvaloniaFact]
+    public async Task NewlySavedBackupOpensAndSwitchingLibrariesClearsItsAction()
+    {
+        using var firstLibrary = new TemporaryLibrary();
+        using var secondLibrary = new TemporaryLibrary();
+        using var destination = new TemporaryLibrary();
+        var dialogs = new FixtureDialogs { FolderPath = destination.Path };
+        using var model = new InboxViewModel(dialogs);
+        model.InitializeLibrary(() => firstLibrary.Path);
+
+        await model.BackUpLibraryCommand.ExecuteAsync(null);
+        Assert.True(model.HasLatestBackup);
+        model.OpenBackupFolderCommand.Execute(null);
+
+        Assert.Equal(model.LatestBackupLocation, dialogs.LastOpenedPath);
+        Assert.True(Directory.Exists(dialogs.LastOpenedPath));
+        Assert.True(File.Exists(Path.Combine(dialogs.LastOpenedPath!, ".plico", "catalog.sqlite3")));
+
+        dialogs.FolderPath = secondLibrary.Path;
+        await model.ChooseLibraryCommand.ExecuteAsync(null);
+        Assert.Equal(secondLibrary.Path, model.LibraryPath);
+        Assert.False(model.HasLatestBackup);
+    }
+
     private static async Task WaitForAsync(Func<bool> condition)
     {
         using var timeout = CancellationTokenSource.CreateLinkedTokenSource(TestContext.Current.CancellationToken);

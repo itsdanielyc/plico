@@ -55,7 +55,7 @@ internal static class NativeVerification
             await VerifyPhraseSearchAsync(window, model, evidenceDirectory);
             await VerifyBatchReviewAsync(window, model, evidenceDirectory);
             await VerifyOcrLanguageAsync(window, model, dialogs, fixture, evidenceDirectory);
-            await VerifyLibraryBackupAsync(window, dialogs, evidenceDirectory);
+            await VerifyLibraryBackupAsync(window, model, dialogs, evidenceDirectory);
             await VerifyImportErrorsAsync(window, model, dialogs, fixture, evidenceDirectory);
             await VerifyScannerDialogAsync(window, evidenceDirectory);
 
@@ -109,7 +109,8 @@ internal static class NativeVerification
         }
     }
 
-    private static async Task VerifyLibraryBackupAsync(MainWindow window, FixtureDialogs dialogs, string evidenceDirectory)
+    private static async Task VerifyLibraryBackupAsync(MainWindow window, InboxViewModel model, FixtureDialogs dialogs,
+        string evidenceDirectory)
     {
         var destination = Directory.CreateTempSubdirectory("plico-verify-backup-");
         try
@@ -124,10 +125,17 @@ internal static class NativeVerification
             var invoice = backup.Find(new DocumentFilter(Query: "Règlement")).Items.Single();
             Require(receipt.Reviewed && File.Exists(backup.ResolvePdf(receipt)) && File.Exists(backup.ResolvePdf(invoice)),
                 "The backed-up library lost a PDF or its catalog state.");
+            var open = Control<Button>(window, "OpenBackupFolderButton");
+            Require(open.IsVisible && open.Command is not null, "The backup action did not offer its folder.");
+            open.Command!.Execute(null);
+            Require(dialogs.LastOpenedPath == model.LatestBackupLocation && Directory.Exists(dialogs.LastOpenedPath) &&
+                    Path.GetFileName(dialogs.LastOpenedPath) == Path.GetFileName(backupFolder),
+                "The backup shortcut did not open the new backup folder.");
             await CaptureAsync(window, evidenceDirectory, "library-backup.png");
         }
         finally
         {
+            model.LatestBackupLocation = null;
             destination.Delete(recursive: true);
         }
     }

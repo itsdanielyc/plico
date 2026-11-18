@@ -26,6 +26,6 @@
 | 21 | Back up the library | A backup opens as a complete library with the same PDFs and catalog data. Cancellation leaves the chosen destination clear. | L3, L6 | Done |
 | 22 | Inspect and retry imports | A batch keeps unresolved errors by file, and retry imports those files through the regular intake path | L3, L4, L6 | Done |
 | 23 | Resume a watched folder | The folder choice belongs to the current library and can be resumed explicitly after reopening Plico | L3, L4, L6 | In progress |
-| 24 | Open the latest backup | The backup result can be opened in the file manager from the active library, and switching libraries clears the action | L4, L6 | Planned |
+| 24 | Open the latest backup | The backup result can be opened in the file manager from the active library, and switching libraries clears the action | L4, L6 | In progress |
 
 The initial release is followed by focused improvements and fresh evidence.

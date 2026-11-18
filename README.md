@@ -36,7 +36,7 @@ Use **Edit title** in the preview to change the document's catalog title. Search
 
 The library starts under Documents/Plico. Select the library name in the sidebar to choose another folder. **Show PDF folder** opens the `PDFs/` directory. **Refresh index** picks up PDFs that you add, edit, or remove on disk. To move or back up a library with its tags, close Plico and copy the entire directory, including `.plico/`. Digital PDFs with text on every page are copied unchanged.
 
-To make a copy while Plico is open, choose **Back up library…** and select a destination outside the current library. Plico creates a dated folder with the PDFs and their catalog. Choose that folder as a library to reopen the backup.
+To make a copy while Plico is open, choose **Back up library…** and select a destination outside the current library. Plico creates a dated folder with the PDFs and their catalog. **Open backup** shows that folder in the file manager. Choose the folder as a library to reopen it in Plico.
 
 Refresh also follows a uniquely identifiable PDF that you move or rename inside `PDFs/`. Its title, tags, and review state travel with its catalog record. For libraries from older Plico versions, run **Refresh index** once while the original paths are present to prepare them for moves.
 

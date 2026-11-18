@@ -1,5 +1,9 @@
 # Changelog
 
+## [0.15.1] - 2026-11-18
+
+- Use **Open backup** from the status bar after saving a library backup.
+
 ## [0.15.0] - 2026-11-18
 
 - Plico remembers the watch folder for each library on this computer.
