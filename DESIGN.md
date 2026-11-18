@@ -20,6 +20,8 @@ The preview shows the PDF path below its catalog title. The path opens the docum
 
 Batch review lives below the document list. The selection count identifies its scope. The preview keeps the individual document's review action.
 
+**Create OCR copies** uses the current language for the selected PDFs. The status line shows progress through the selection. **OCR results** opens the latest batch report with a result and file path for each source.
+
 **Move PDFs…** uses one folder choice for the selection. The status reports completed moves, files already in the folder, and the next file when a batch pauses.
 
 **Export PDFs…** appears in the batch controls. After the export finishes, the status bar shows the output path and offers **Open export**.

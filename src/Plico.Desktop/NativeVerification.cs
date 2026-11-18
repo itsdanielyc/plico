@@ -73,7 +73,7 @@ internal static partial class NativeVerification
             await VerifyPreviewFitAsync(window, model, evidenceDirectory);
             await VerifyGoToMatchAsync(window, model, evidenceDirectory);
             await VerifyTagMergeAsync(window, model, dialogs, evidenceDirectory);
-            await VerifySearchableCopyAsync(window, model, fixture, evidenceDirectory);
+            long priorOcrSource = await VerifySearchableCopyAsync(window, model, fixture, evidenceDirectory);
             await VerifyTiffImportAsync(window, model, dialogs, fixture, evidenceDirectory);
             await VerifyTagSuggestionAsync(window, model, evidenceDirectory);
             await VerifyAdjacentMatchesAsync(window, model, dialogs, fixture, evidenceDirectory);
@@ -86,9 +86,10 @@ internal static partial class NativeVerification
             string scanRecoveryEvidence = await VerifyScanRecoveryAsync(window, model, dialogs, evidenceDirectory);
             await VerifySavedSearchAsync(window, model, dialogs, evidenceDirectory);
             await VerifyDocumentDateAsync(window, model, dialogs, evidenceDirectory);
+            await VerifyBatchOcrAsync(window, model, fixture, evidenceDirectory, priorOcrSource);
 
             File.WriteAllText(Path.Combine(evidenceDirectory, "passed.txt"),
-                $"Verified {runtime}. Native window completed multilingual OCR and correction, oriented JPEG and multi-page TIFF import, PDF combination, page extraction and rotation, phrase, tag, and review-status search, query correction, saved search restoration, document-date editing, filtering, and inheritance, result sorting, fit-width and selectable page text previews, match navigation, tag merging and suggestions, duplicate drop, folder watch and inbox counting, title edit, single and batch PDF moves, external relocation, selected PDF export, library backup, text copy, searchable PDF copy, and saved import error recovery and retry. {scanRecoveryEvidence}");
+                $"Verified {runtime}. Native window completed multilingual OCR and correction, oriented JPEG and multi-page TIFF import, PDF combination, page extraction and rotation, phrase, tag, and review-status search, query correction, saved search restoration, document-date editing, filtering, and inheritance, result sorting, fit-width and selectable page text previews, match navigation, tag merging and suggestions, duplicate drop, folder watch and inbox counting, title edit, single and batch PDF moves, external relocation, selected PDF export, library backup, text copy, single and batch OCR copies, and saved import error recovery and retry. {scanRecoveryEvidence}");
             desktop.Shutdown(0);
         }
         catch (Exception error)
@@ -176,9 +177,10 @@ internal static partial class NativeVerification
         await CaptureAsync(window, directory, "matching-page.png");
     }
 
-    private static async Task VerifySearchableCopyAsync(MainWindow window, InboxViewModel model, string fixture, string directory)
+    private static async Task<long> VerifySearchableCopyAsync(MainWindow window, InboxViewModel model, string fixture, string directory)
     {
         const string scanName = "Pending OCR.pdf";
+        Control<ComboBox>(window, "OcrLanguageBox").SetCurrentValue(ComboBox.SelectedItemProperty, OcrLanguage.English);
         string scanPath = Path.Combine(model.LibraryPath, "PDFs", scanName);
         string scannedFixture = Path.Combine(Path.GetDirectoryName(fixture)!, "Scanned Receipt.pdf");
         byte[] sourceBytes = File.ReadAllBytes(scannedFixture);
@@ -205,6 +207,7 @@ internal static partial class NativeVerification
         await UntilAsync(() => model.SelectedDocument is { } current && current.Id == searchable!.Id &&
             model.Preview is not null && current.Match.Contains(ReceiptKeyword, StringComparison.OrdinalIgnoreCase), () => model.Status);
         await CaptureAsync(window, directory, "searchable-copy.png");
+        return original.Id;
     }
 
     private static async Task VerifyTagMergeAsync(MainWindow window, InboxViewModel model, FixtureDialogs dialogs, string directory)
@@ -1023,6 +1026,7 @@ internal sealed class FixtureDialogs(params string[] documents) : IWorkspaceDial
     internal string? LastCopiedText { get; private set; }
     internal ImportErrorsAction ImportErrorsChoice { get; set; }
     internal IReadOnlyList<ImportFailure> InspectedImportFailures { get; private set; } = [];
+    internal IReadOnlyList<OcrCopyBatchItem> InspectedOcrCopyResults { get; private set; } = [];
     internal IReadOnlyList<string> SelectedFiles { get; set; } = documents;
     public Task<IReadOnlyList<string>> PickDocumentsAsync() => Task.FromResult(SelectedFiles);
     public Task<string?> PickFolderAsync(string title, string? startFolder = null)
@@ -1048,6 +1052,11 @@ internal sealed class FixtureDialogs(params string[] documents) : IWorkspaceDial
     {
         InspectedImportFailures = failures;
         return Task.FromResult(ImportErrorsChoice);
+    }
+    public Task ShowOcrCopyBatchResultsAsync(IReadOnlyList<OcrCopyBatchItem> results)
+    {
+        InspectedOcrCopyResults = results;
+        return Task.CompletedTask;
     }
     public void OpenPath(string path) => LastOpenedPath = path;
 

@@ -88,6 +88,8 @@ When a scan copied into `PDFs/` needs OCR, choose **Create searchable copy** in 
 
 To correct a PDF’s OCR, choose the language in **OCR** and select **Create OCR copy**. Plico renders the visible pages and writes fresh searchable text into a separate PDF with the source tags.
 
+Select several PDFs and choose **Create OCR copies** to process them in the current OCR language. **OCR results** shows which copies were added or reused, which inputs failed, and which remain after cancellation. New copies appear in Inbox.
+
 Plico v0.16.0 upgrades the library catalog to version 9. Use a build with version 9 support to open an upgraded library.
 
 To make a copy while Plico is open, choose **Back up library…** and select a destination outside the current library. Plico creates a dated folder with the PDFs and their catalog. **Open backup** shows that folder in the file manager. Choose the folder as a library to reopen it in Plico.
