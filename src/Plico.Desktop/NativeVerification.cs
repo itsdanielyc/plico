@@ -96,7 +96,7 @@ internal static partial class NativeVerification
             await VerifyReviewPositionAsync(window, model, evidenceDirectory);
 
             File.WriteAllText(Path.Combine(evidenceDirectory, "passed.txt"),
-                $"Verified {runtime}. Native window completed multilingual OCR and correction, oriented JPEG and multi-page TIFF import, PDF combination, page extraction and rotation, phrase, tag, review-status, folder, and text-availability search, query correction, saved search restoration, single and batch document-date editing, date filtering and inheritance, result sorting, continued review across loaded results, fit-width and selectable page text previews, match navigation, tag merging, suggestions, and edits across loaded result pages, duplicate drop, folder watch and inbox counting, title edit, single and batch PDF moves, external relocation and PDF swaps, index reporting and PDF restoration from files and folders, single and batch PDF export, library backup, text copy, single and batch OCR copies, saved import error recovery and retry, and filing through the chosen intake folder. {scanRecoveryEvidence}");
+                $"Verified {runtime}. Native window completed multilingual OCR and correction, oriented JPEG and multi-page TIFF import, PDF combination, page extraction and rotation, phrase, tag, review-status, folder, and text-availability search, query correction, saved search restoration, single and batch document-date editing, date filtering and inheritance, result sorting, continued review across loaded results, fit-width and selectable page text previews, match navigation, tag merging, suggestions, and edits across loaded result pages, duplicate drop, folder watch and inbox counting, title edit, single and batch PDF moves, external relocation and PDF swaps, index reporting and PDF restoration from files and folders, single and batch PDF export, library backup, text copy, single and batch OCR copies, saved import error recovery and retry, per-scanner capture option restoration, and filing through the chosen intake folder. {scanRecoveryEvidence}");
             desktop.Shutdown(0);
         }
         catch (Exception error)
@@ -869,10 +869,15 @@ internal static partial class NativeVerification
         try
         {
             var settings = new SavedScannerStore(settingsDirectory.FullName);
-            settings.AddOrUpdate(Scanners.FromAddress("scanner.test:8080", "Office scanner"));
+            var flatbed = Scanners.FromAddress("flatbed.test:8080", "Office flatbed");
+            var feeder = Scanners.FromAddress("scanner.test:8080", "Office feeder");
+            settings.AddOrUpdate(flatbed);
+            settings.AddOrUpdate(feeder);
             var options = new ScanOptionsPreference(settingsDirectory.FullName);
-            options.Save(new CaptureSettings(ScanFeed.Feeder, ScanPaper.Letter, ScanResolution.Detailed));
-            await CaptureScanDialogAsync(owner, directory, "saved-scanner.png", settings, options);
+            options.Save(new CaptureSettings(ScanFeed.Flatbed, ScanPaper.A4, ScanResolution.Quick), flatbed);
+            options.Save(new CaptureSettings(ScanFeed.Feeder, ScanPaper.Letter, ScanResolution.Detailed), feeder);
+            options.RememberLastScanner(feeder);
+            await CaptureScanDialogAsync(owner, directory, "saved-scanner.png", settings, options, feeder, flatbed);
         }
         finally
         {
@@ -881,7 +886,8 @@ internal static partial class NativeVerification
     }
 
     private static async Task CaptureScanDialogAsync(Window owner, string directory, string filename,
-        SavedScannerStore? settings = null, ScanOptionsPreference? captureOptions = null)
+        SavedScannerStore? settings = null, ScanOptionsPreference? captureOptions = null,
+        ScannerDevice? expectedScanner = null, ScannerDevice? alternateScanner = null)
     {
         var dialog = new ScanDialog(_ => Task.FromResult(new ScanDiscovery([], [])),
             settings: settings, captureOptions: captureOptions);
@@ -899,8 +905,16 @@ internal static partial class NativeVerification
                 "The native scanner dialog did not offer the expected scanner actions.");
             if (captureOptions is not null)
             {
+                var devices = Control<ComboBox>(dialog, "DeviceBox");
+                Require(Equals(devices.SelectedItem, expectedScanner), "The scanner picker did not restore the last used device.");
+                devices.SelectedItem = alternateScanner;
+                Require(Control<ComboBox>(dialog, "SourceBox").SelectedItem?.ToString() == "Flatbed" &&
+                    Equals(Control<ComboBox>(dialog, "PaperBox").SelectedItem, ScanPaper.A4) &&
+                    resolution.SelectedItem?.ToString() == "150 dpi", "Changing scanners did not restore the other device's options.");
+                devices.SelectedItem = expectedScanner;
                 Require(Control<ComboBox>(dialog, "SourceBox").SelectedItem?.ToString() == "Feeder · one-sided" &&
-                    Equals(Control<ComboBox>(dialog, "PaperBox").SelectedItem, ScanPaper.Letter),
+                    Equals(Control<ComboBox>(dialog, "PaperBox").SelectedItem, ScanPaper.Letter) &&
+                    resolution.SelectedItem?.ToString() == expectedResolution,
                     "The native scanner dialog did not restore the saved paper options.");
             }
             await CaptureAsync(dialog, directory, filename);

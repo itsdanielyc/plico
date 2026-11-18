@@ -129,7 +129,7 @@ Plico remembers connected addresses in settings on this computer. Select a saved
 
 Scanning supports automatic source selection, flatbed, feeder, and duplex when the selected device provides them. Choose 150, 300, or 600 dpi. An eSCL scanner uses its nearest supported resolution when needed. OCR and search run locally. Scan discovery contacts the local network when you open the scanner picker.
 
-The scan picker remembers the paper source, size, and resolution you choose.
+The scan picker opens on the last scanner you started with when it is available. Plico remembers the paper source, size, and resolution for each scanner on this computer. Existing shared settings supply the defaults for scanners with no saved choices.
 
 If the scanner reports an error after delivering pages, choose **Save partial PDF** or **Discard**. A saved partial scan opens in the inbox with searchable text from the pages that arrived.
 

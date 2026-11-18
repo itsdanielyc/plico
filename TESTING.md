@@ -67,6 +67,7 @@
 54. Open **Document date…** with mixed dates and check the empty field, cancel, then apply a leap-day date. Verify the selected PDFs across pages, a repeated ID, and the search results after an explicit clear. Cancel a catalog edit and make one selected PDF unavailable before an update to check that every recorded date is preserved (L3, L4 and L6).
 55. Export one PDF from the preview and open its destination. Check an occupied filename, two independent exports to the same folder, and a cancelled or changed source. Search `exported-ocr-receipt.pdf` from the native evidence directory with an independent reader (L3, L4 and L6).
 56. Review the last shown PDF while another page is available, then review across two loaded pages. Check that the next match opens. Remove the final result and confirm the preceding PDF opens. Apply the batch action to adjacent matches in a filtered queue (L4 and L6).
+57. Set distinct capture options on two scanners with the same name. Reopen after starting a scan, change the scanner's displayed label, and verify the identifier still selects it. Check fallback when the device is unavailable and when its saved options are invalid (L3, L4 and L6).
 
 Run `dotnet test Plico.slnx -c Release` for the fast suite. Run the native harness from `keel.json` for installed-platform evidence. Visual review starts with per-OS captures and geometry checks. Add pixel baselines when repeatable runner captures justify the maintenance.
 

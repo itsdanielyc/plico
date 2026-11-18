@@ -1,4 +1,6 @@
 using System.Globalization;
+using System.Security.Cryptography;
+using System.Text;
 using NAPS2.Images;
 using NAPS2.Images.Skia;
 using NAPS2.Scan;
@@ -16,6 +18,8 @@ public sealed record ScannerDevice
         {
             Address = address;
         }
+        string identifier = Address?.AbsoluteUri ?? device.ID;
+        SettingsKey = Convert.ToHexString(SHA256.HashData(Encoding.UTF8.GetBytes($"{device.Driver}\n{identifier}")));
     }
     internal ScanDevice NativeDevice { get; }
 
@@ -24,6 +28,9 @@ public sealed record ScannerDevice
 
     /// <summary>The directly supplied eSCL address, when this device was connected by address.</summary>
     public Uri? Address { get; }
+
+    /// <summary>The machine-local settings key derived from the driver and its device identifier.</summary>
+    public string SettingsKey { get; }
 
     /// <summary>A label that distinguishes local and network entries for the same scanner.</summary>
     public string DisplayName => $"{Name} · {Address?.Authority ?? Scanners.DriverLabel(NativeDevice.Driver)}";

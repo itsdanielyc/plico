@@ -16,6 +16,8 @@ An active watch offers **Import existing files** under the folder name. The stat
 
 The scan picker offers address entry alongside discovery. Connecting shows the device model and selects it so the same paper controls and Scan to inbox action apply.
 
+The picker restores the last scanner used to start a job when that device is available. Switching scanners restores the chosen device's paper controls. Refresh keeps the selected device when it is still available.
+
 The preview shows the PDF path below its catalog title. The path opens the document's containing folder in the file manager.
 
 **Move to folder…** opens the system folder picker at the library’s PDF directory. After the move, the path and status show the new location and the preview keeps its current page.

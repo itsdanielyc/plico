@@ -32,11 +32,12 @@ internal sealed partial class ScanDialog : Window
     private readonly Func<string, CancellationToken, Task<ScannerDevice>> _connect;
     private readonly SavedScannerStore? _settings;
     private readonly ScanOptionsPreference? _captureOptions;
+    private readonly string? _lastScannerKey;
     private readonly CancellationTokenSource _lifetime = new();
     private readonly Dictionary<Uri, ScannerDevice> _connected = [];
     private IReadOnlyList<ScannerDevice> _discovered = [];
     private bool _checkingDevices;
-    private bool _captureOptionsReady;
+    private bool _updatingPicker = true;
     private string? _settingsError;
 
     internal ScanDialog(Func<CancellationToken, Task<ScanDiscovery>> discover,
@@ -48,28 +49,26 @@ internal sealed partial class ScanDialog : Window
         _settings = settings;
         _captureOptions = captureOptions;
         InitializeComponent();
-        var options = CaptureSettings.RegionalDefaults;
-        TrySettingsChange(() => options = _captureOptions?.Load() ?? options);
-        var captureError = _settingsError;
         SourceBox.ItemsSource = Sources;
-        SourceBox.SelectedItem = Sources.Single(option => option.Value == options.Feed);
         PaperBox.ItemsSource = Enum.GetValues<ScanPaper>();
-        PaperBox.SelectedItem = options.Paper;
         ResolutionBox.ItemsSource = Resolutions;
-        ResolutionBox.SelectedItem = Resolutions.Single(option => option.Value == options.Resolution);
+        ApplyCaptureSettings(CaptureSettings.RegionalDefaults);
         TrySettingsChange(() =>
         {
             foreach (var scanner in _settings?.Load() ?? []) _connected[scanner.Address!] = scanner;
         });
-        _settingsError ??= captureError;
-        _captureOptionsReady = true;
-        ShowDevices(null);
+        var addressError = _settingsError;
+        string? lastScannerKey = null;
+        TrySettingsChange(() => lastScannerKey = _captureOptions?.LoadLastScannerKey());
+        _lastScannerKey = lastScannerKey;
+        _settingsError ??= addressError;
+        ShowDevices(_lastScannerKey);
     }
 
     protected override async void OnOpened(EventArgs e)
     {
         base.OnOpened(e);
-        await DiscoverAsync();
+        await DiscoverAsync(preferLastScanner: true);
     }
 
     protected override void OnClosed(EventArgs e)
@@ -102,10 +101,10 @@ internal sealed partial class ScanDialog : Window
         await ConnectAsync();
     }
 
-    private async Task DiscoverAsync()
+    private async Task DiscoverAsync(bool preferLastScanner = false)
     {
         var token = _lifetime.Token;
-        ScannerDevice? previouslySelected = DeviceBox.SelectedItem as ScannerDevice;
+        string? previousKey = SelectedScanner?.SettingsKey;
         SetCheckingDevices(true);
         ScannerStatus.Text = "Looking for scanners…";
         try
@@ -113,7 +112,9 @@ internal sealed partial class ScanDialog : Window
             var result = await _discover(token);
             if (token.IsCancellationRequested) return;
             _discovered = result.Devices;
-            ShowDevices(previouslySelected);
+            string? currentKey = SelectedScanner?.SettingsKey;
+            string? preferredKey = preferLastScanner && currentKey == previousKey ? _lastScannerKey : currentKey;
+            ShowDevices(preferredKey, fallbackKey: currentKey);
             var status = result.Warnings.Count > 0 ? string.Join(Environment.NewLine, result.Warnings) :
                 DeviceBox.SelectedItem is null ? "No scanner found. Connect one by address or choose Refresh." :
                 "Pages from this scan will be saved as one PDF.";
@@ -142,9 +143,9 @@ internal sealed partial class ScanDialog : Window
             if (token.IsCancellationRequested) return;
             var address = scanner.Address ?? throw new InvalidDataException("This scanner did not report a usable address.");
             _connected[address] = scanner;
-            ShowDevices(scanner);
-            var saved = TrySettingsChange(() => _settings?.AddOrUpdate(scanner));
-            ScannerStatus.Text = saved ? $"Connected to {scanner.Name}." : $"Connected to {scanner.Name}. {_settingsError}";
+            TrySettingsChange(() => _settings?.AddOrUpdate(scanner));
+            ShowDevices(scanner.SettingsKey);
+            ScannerStatus.Text = _settingsError is null ? $"Connected to {scanner.Name}." : $"Connected to {scanner.Name}. {_settingsError}";
         }
         catch (OperationCanceledException) when (token.IsCancellationRequested) { }
         catch (Exception error)
@@ -157,11 +158,27 @@ internal sealed partial class ScanDialog : Window
         }
     }
 
-    private void ShowDevices(ScannerDevice? preferred)
+    private ScannerDevice? SelectedScanner => DeviceBox.SelectedItem as ScannerDevice;
+
+    // O(n) time and space for the available devices, grouped by their native identity.
+    private void ShowDevices(string? preferredKey, string? fallbackKey = null)
     {
-        var available = _discovered.Concat(_connected.Values).Distinct().ToArray();
-        DeviceBox.ItemsSource = available;
-        DeviceBox.SelectedItem = available.FirstOrDefault(device => device == preferred) ?? available.FirstOrDefault();
+        bool firstDisplay = _updatingPicker;
+        string? previousKey = SelectedScanner?.SettingsKey;
+        var available = _discovered.Concat(_connected.Values).DistinctBy(device => device.SettingsKey, StringComparer.Ordinal).ToArray();
+        _updatingPicker = true;
+        try
+        {
+            DeviceBox.ItemsSource = available;
+            DeviceBox.SelectedItem = available.FirstOrDefault(device => device.SettingsKey == preferredKey) ??
+                available.FirstOrDefault(device => device.SettingsKey == fallbackKey) ?? available.FirstOrDefault();
+        }
+        finally
+        {
+            _updatingPicker = false;
+        }
+        if (firstDisplay || previousKey != SelectedScanner?.SettingsKey) RestoreCaptureSettings();
+        UpdateStartButton();
     }
 
     private bool TrySettingsChange(Action change)
@@ -187,12 +204,43 @@ internal sealed partial class ScanDialog : Window
         UpdateStartButton();
     }
 
-    private void Device_Changed(object? sender, SelectionChangedEventArgs e) => UpdateStartButton();
+    private void Device_Changed(object? sender, SelectionChangedEventArgs e)
+    {
+        if (_updatingPicker) return;
+        RestoreCaptureSettings();
+        UpdateStartButton();
+    }
+
+    private void RestoreCaptureSettings()
+    {
+        if (_captureOptions is not { } preferences) return;
+        var options = CaptureSettings.RegionalDefaults;
+        var previousError = _settingsError;
+        if (!TrySettingsChange(() => options = preferences.Load(SelectedScanner))) ScannerStatus.Text = _settingsError;
+        _settingsError ??= previousError;
+        ApplyCaptureSettings(options);
+    }
+
+    private void ApplyCaptureSettings(CaptureSettings options)
+    {
+        bool updating = _updatingPicker;
+        _updatingPicker = true;
+        try
+        {
+            SourceBox.SelectedItem = Sources.Single(option => option.Value == options.Feed);
+            PaperBox.SelectedItem = options.Paper;
+            ResolutionBox.SelectedItem = Resolutions.Single(option => option.Value == options.Resolution);
+        }
+        finally
+        {
+            _updatingPicker = updating;
+        }
+    }
 
     private void CaptureOptions_Changed(object? sender, SelectionChangedEventArgs e)
     {
-        if (!_captureOptionsReady || _captureOptions is null || ReadCaptureSettings() is not { } options) return;
-        if (!TrySettingsChange(() => _captureOptions.Save(options))) ScannerStatus.Text = _settingsError;
+        if (_updatingPicker || _captureOptions is null || ReadCaptureSettings() is not { } options) return;
+        if (!TrySettingsChange(() => _captureOptions.Save(options, SelectedScanner))) ScannerStatus.Text = _settingsError;
     }
 
     private CaptureSettings? ReadCaptureSettings() =>
@@ -217,8 +265,16 @@ internal sealed partial class ScanDialog : Window
 
     private void Start_Click(object? sender, RoutedEventArgs e)
     {
-        if (DeviceBox.SelectedItem is ScannerDevice scanner && ReadCaptureSettings() is { } options)
+        if (!_checkingDevices && SelectedScanner is { } scanner && ReadCaptureSettings() is { } options)
         {
+            if (_captureOptions is { } preferences)
+            {
+                TrySettingsChange(() =>
+                {
+                    preferences.Save(options, scanner);
+                    preferences.RememberLastScanner(scanner);
+                });
+            }
             Close(new ScanRequest(scanner, options.Feed, options.Paper, options.Resolution));
         }
     }
