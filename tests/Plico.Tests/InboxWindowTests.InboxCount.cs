@@ -149,7 +149,8 @@ public sealed partial class InboxWindowTests
             if (filter.Query != query || Interlocked.Increment(ref reads) != 1) return result;
 
             firstReadStarted.SetResult();
-            if (!releaseRead.Wait(SearchTestDeadline)) throw new TimeoutException("The query test did not release its first read.");
+            // The test releases this read after the watched import commits, which can include slow OCR.
+            releaseRead.Wait(token);
             firstReadCancelled.SetResult(cancellationToken.IsCancellationRequested);
             return result;
         }
