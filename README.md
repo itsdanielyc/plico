@@ -30,6 +30,8 @@ When an import fails, **Import errors** lists the source files and reasons. Fix 
 
 Put a phrase in quotation marks to search its adjacent whole words. For example, "lease renewal" north searches for the phrase together with a word beginning with north.
 
+Use **Sort** to browse by newest added or title A–Z. **Automatic** puts the best matches first during a text search and the most recent documents first while browsing.
+
 Use Ctrl or Shift when selecting rows, or choose **Select shown** to select the loaded results. Use **Tag selected** to apply a tag to the whole selection. The batch control can mark the selection reviewed or return reviewed documents to the inbox.
 
 Use **Edit title** in the preview to change the document's catalog title. Search covers both the title and filename. Select the PDF's filename to open its containing folder.

@@ -59,6 +59,7 @@ internal static class NativeVerification
             VerifyDocumentLocation(window, dialogs, Path.Combine(model.LibraryPath, "PDFs"));
             await VerifyMovedPdfAsync(window, model, dialogs, evidenceDirectory);
             await VerifyPhraseSearchAsync(window, model, evidenceDirectory);
+            await VerifySortAsync(window, model, evidenceDirectory);
             await VerifyBatchReviewAsync(window, model, evidenceDirectory);
             await VerifyOcrLanguageAsync(window, model, dialogs, fixture, evidenceDirectory);
             await VerifyLibraryBackupAsync(window, model, dialogs, evidenceDirectory);
@@ -66,7 +67,7 @@ internal static class NativeVerification
             await VerifyScannerDialogAsync(window, evidenceDirectory);
 
             File.WriteAllText(Path.Combine(evidenceDirectory, "passed.txt"),
-                $"Verified {runtime}. Native window completed multilingual OCR, phrase search, duplicate drop, folder watch, title edit, relocation, batch actions, library backup, and import retry.");
+                $"Verified {runtime}. Native window completed multilingual OCR, phrase search, result sorting, duplicate drop, folder watch, title edit, relocation, batch actions, library backup, and import retry.");
             desktop.Shutdown(0);
         }
         catch (Exception error)
@@ -171,6 +172,30 @@ internal static class NativeVerification
         search.SetCurrentValue(TextBox.TextProperty, "\"new term\" norths");
         await UntilAsync(() => model.SelectedDocument?.Id == document.Id && model.Preview is not null, () => model.Status);
         await CaptureAsync(window, directory, "phrase-search.png");
+    }
+
+    private static async Task VerifySortAsync(MainWindow window, InboxViewModel model, string directory)
+    {
+        model.ShowAllCommand.Execute(null);
+        var list = Control<ListBox>(window, "DocumentList");
+        var sort = Control<ComboBox>(window, "DocumentSortBox");
+        var openDocument = model.SelectedDocument ?? throw new InvalidOperationException("Select a PDF before sorting.");
+        await UntilAsync(() => model.Preview is not null, () => model.PreviewMessage);
+        var openPreview = model.Preview;
+        Require(model.Documents.Count == 2 && model.Documents[0].Id == openDocument.Id,
+            "The newer document should appear first in the default view.");
+
+        var byTitle = model.SortChoices.Single(choice => choice.Order == DocumentSort.Title);
+        sort.SetCurrentValue(ComboBox.SelectedItemProperty, byTitle);
+        Require(model.Documents[1].Id == openDocument.Id && list.SelectedItem is DocumentSummary selected &&
+            selected.Id == openDocument.Id && ReferenceEquals(model.Preview, openPreview),
+            "Title order did not move the open PDF while keeping its preview in place.");
+        await CaptureAsync(window, directory, "sort-results.png");
+
+        var newest = model.SortChoices.Single(choice => choice.Order == DocumentSort.Newest);
+        sort.SetCurrentValue(ComboBox.SelectedItemProperty, newest);
+        Require(model.Documents[0].Id == openDocument.Id, "Newest order did not restore the most recent PDF to the top.");
+        sort.SetCurrentValue(ComboBox.SelectedItemProperty, model.SortChoices[0]);
     }
 
     private static async Task VerifyBatchReviewAsync(MainWindow window, InboxViewModel model, string directory)

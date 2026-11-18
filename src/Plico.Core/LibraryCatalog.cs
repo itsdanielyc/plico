@@ -10,6 +10,8 @@ internal sealed class LibraryCatalog
     private const int SnippetMarker = 30;
     private const int SnippetLeadingCharacters = 20;
     internal const int PageSize = 60;
+    private const string NewestCatalogEntry = "d.id DESC";
+    private const string TitleCollation = "plico_title";
 
     private const string Schema = """
         CREATE TABLE documents(
@@ -193,12 +195,11 @@ internal sealed class LibraryCatalog
         var conditions = new List<string> { "d.is_present = 1" };
         string join = "";
         string match = "''";
-        string order = "d.id DESC";
-        if (expression.Length > 0)
+        bool hasSearch = expression.Length > 0;
+        if (hasSearch)
         {
             join = "JOIN documents_search ON documents_search.rowid = d.id";
             match = $"replace(replace(snippet(documents_search, 1, char({SnippetMarker}), char({SnippetMarker}), ' … ', 18), char(13), ''), char(10), ' ')";
-            order = "documents_search.rank, d.id DESC";
             conditions.Add("documents_search MATCH $expression");
             command.Parameters.AddWithValue("$expression", expression);
         }
@@ -217,8 +218,9 @@ internal sealed class LibraryCatalog
             command.Parameters.AddWithValue("$id", documentId.Value);
         }
 
+        string order = SortOrder(connection, filter.Sort, hasSearch);
         command.CommandText = $"""
-            SELECT d.id, COALESCE(d.display_title, d.title), d.relative_path, d.added_at, d.reviewed, d.page_count, d.has_text,
+            SELECT d.id, COALESCE(d.display_title, d.title) AS display_name, d.relative_path, d.added_at, d.reviewed, d.page_count, d.has_text,
                    (SELECT json_group_array(t.label ORDER BY t.tag_key)
                     FROM document_tags dt JOIN tags t USING (tag_key) WHERE dt.document_id = d.id),
                    {match}
@@ -245,6 +247,23 @@ internal sealed class LibraryCatalog
                 TrimSnippet(results.GetString(8))));
         }
         return new(documents, HasMore: false);
+    }
+
+    private static string SortOrder(SqliteConnection connection, DocumentSort sort, bool hasSearch)
+    {
+        switch (sort)
+        {
+            case DocumentSort.Automatic:
+                return hasSearch ? $"documents_search.rank, {NewestCatalogEntry}" : NewestCatalogEntry;
+            case DocumentSort.Newest:
+                return NewestCatalogEntry;
+            case DocumentSort.Title:
+                // SQLite's built-in case-insensitive collation only folds ASCII.
+                connection.CreateCollation(TitleCollation, StringComparer.InvariantCultureIgnoreCase.Compare);
+                return $"display_name COLLATE {TitleCollation}, {NewestCatalogEntry}";
+            default:
+                throw new ArgumentOutOfRangeException(nameof(sort), sort, "Unknown document sort order.");
+        }
     }
 
     private static string TrimSnippet(string excerpt)

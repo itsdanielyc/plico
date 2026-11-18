@@ -16,4 +16,6 @@ Batch review lives below the document list. The selection count identifies its s
 
 The OCR selector sits beside intake controls. Its current language is visible before a new file or scan begins.
 
+The sort selector sits beside the results count. It applies to the current inbox, tag, or text search. The selected PDF stays open when it is visible in the reordered list.
+
 Keep labels present on actions. Use a polite live region for processing status. Keep the PDF accessible by keyboard and show a visible response for unavailable previews.

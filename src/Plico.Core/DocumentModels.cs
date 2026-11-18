@@ -3,8 +3,12 @@ namespace Plico.Core;
 /// <summary>The bundled model used to recognize text in new scans and imports.</summary>
 public enum OcrLanguage { English, French, German }
 
+/// <summary>The order applied to all matching records before paging.</summary>
+public enum DocumentSort { Automatic, Newest, Title }
+
 /// <summary>A page of results, scoped by inbox status, a tag, or literal search terms.</summary>
-public sealed record DocumentFilter(string Query = "", string? Tag = null, bool InboxOnly = false, int Offset = 0);
+public sealed record DocumentFilter(string Query = "", string? Tag = null, bool InboxOnly = false, int Offset = 0,
+    DocumentSort Sort = DocumentSort.Automatic);
 
 /// <summary>The catalog fields needed to select and open a document.</summary>
 public sealed record DocumentSummary(

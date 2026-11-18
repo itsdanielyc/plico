@@ -4,6 +4,7 @@
 
 - Added a native Windows ARM64 app in ZIP and per-user setup formats.
 - Use **Open backup** from the status bar after saving a library backup.
+- Sort the current view by newest added or title A–Z. Automatic order puts the best matches first during a text search.
 
 ## [0.15.0] - 2026-11-18
 

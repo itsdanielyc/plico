@@ -22,6 +22,45 @@ public static class HeadlessApplication
 public sealed class InboxWindowTests
 {
     [AvaloniaFact]
+    public async Task SortControlReordersResultsAndKeepsTheOpenDocument()
+    {
+        using var temporary = new TemporaryLibrary();
+        using (var library = InboxLibrary.Open(temporary.Path))
+        {
+            BatchFixtures.AddTwoDocuments(library, TestContext.Current.CancellationToken);
+            var documents = library.Find(new DocumentFilter()).Items;
+            library.SetTitle(documents[0].Id, "Zebra lease");
+            library.SetTitle(documents[1].Id, "Alpine lease");
+        }
+
+        using var model = new InboxViewModel(new FixtureDialogs());
+        model.InitializeLibrary(() => temporary.Path);
+        var window = new MainWindow { DataContext = model };
+        window.Show();
+        try
+        {
+            await WaitForPreviewAsync(model);
+            var preview = Assert.IsType<Avalonia.Media.Imaging.Bitmap>(model.Preview);
+            var sort = Assert.IsType<ComboBox>(window.FindControl<ComboBox>("DocumentSortBox"));
+            var list = Assert.IsType<ListBox>(window.FindControl<ListBox>("DocumentList"));
+            var selected = Assert.IsType<DocumentSummary>(list.SelectedItem);
+            Assert.Equal("Zebra lease", selected.Title);
+            var titleOption = Assert.Single(sort.Items, item => item?.ToString() == "Title A–Z");
+
+            sort.SetCurrentValue(ComboBox.SelectedItemProperty, titleOption);
+            await WaitForPreviewAsync(model);
+
+            Assert.Equal(new[] { "Alpine lease", "Zebra lease" }, list.Items.Cast<DocumentSummary>().Select(item => item.Title));
+            Assert.Equal(selected.Id, Assert.IsType<DocumentSummary>(list.SelectedItem).Id);
+            Assert.Same(preview, model.Preview);
+        }
+        finally
+        {
+            window.Close();
+        }
+    }
+
+    [AvaloniaFact]
     public void OpensWithVisibleInboxHeading()
     {
         using var temporary = new TemporaryLibrary();

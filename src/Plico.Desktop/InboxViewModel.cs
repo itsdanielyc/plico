@@ -10,6 +10,10 @@ namespace Plico.Desktop;
 internal sealed partial class InboxViewModel : ObservableObject, IDisposable
 {
     private static readonly TimeSpan SearchDelay = TimeSpan.FromMilliseconds(180);
+    private static readonly SortChoice AutomaticSort = new(DocumentSort.Automatic, "Automatic");
+    private static readonly IReadOnlyList<SortChoice> AvailableSortChoices =
+        [AutomaticSort, new(DocumentSort.Newest, "Newest added"), new(DocumentSort.Title, "Title A–Z")];
+
     private readonly IWorkspaceDialogs _dialogs;
     private readonly Action<string>? _rememberLocation;
     private readonly DispatcherTimer _searchTimer = new() { Interval = SearchDelay };
@@ -18,10 +22,12 @@ internal sealed partial class InboxViewModel : ObservableObject, IDisposable
     private TaskCompletionSource? _operationCompletion;
     private CancellationTokenSource? _previewCancellation;
     private bool _inboxOnly = true;
+    private bool _replacingResults;
     private string? _activeTag;
     private int _pageNumber = 1;
 
     [ObservableProperty] private string _query = "";
+    [ObservableProperty] private SortChoice? _sortOption = AutomaticSort;
     [ObservableProperty] private string _tagInput = "";
     [ObservableProperty] private string _heading = "Inbox";
     [ObservableProperty] private string _resultCount = "0 documents";
@@ -46,6 +52,7 @@ internal sealed partial class InboxViewModel : ObservableObject, IDisposable
     }
 
     public bool HasLibrary => _library is not null;
+    public IReadOnlyList<SortChoice> SortChoices => AvailableSortChoices;
     public bool CanWork => HasLibrary && !IsBusy;
     public bool IsIdle => !IsBusy;
     public bool HasDocuments => Documents.Count > 0;
@@ -134,7 +141,7 @@ internal sealed partial class InboxViewModel : ObservableObject, IDisposable
         var library = RequireLibrary();
         var result = await Task.Run(() => library.Refresh(token), token);
         Tags = library.GetTags();
-        LoadResults();
+        LoadResults(reloadPreview: result.Indexed > 0 || result.Relocated > 0);
         Status = $"{DocumentCount(result.Indexed)} indexed.";
         if (result.Relocated > 0) Status += $" {DocumentCount(result.Relocated)} moved.";
         if (result.Warnings.Count > 0) Status += $" {result.Warnings[0]}";
@@ -322,7 +329,7 @@ internal sealed partial class InboxViewModel : ObservableObject, IDisposable
         LoadResults(preferredId);
     }
 
-    private void LoadResults(long? preferredId = null, bool append = false)
+    private void LoadResults(long? preferredId = null, bool append = false, bool reloadPreview = false)
     {
         _searchTimer.Stop();
         _watchResultsPending = false;
@@ -337,17 +344,35 @@ internal sealed partial class InboxViewModel : ObservableObject, IDisposable
         try
         {
             long? selection = preferredId ?? SelectedDocument?.Id;
-            var page = _library.Find(new DocumentFilter(Query, _activeTag, _inboxOnly && !hasQuery, append ? Documents.Count : 0));
-            Documents = append ? [.. Documents, .. page.Items] : page.Items;
+            var page = _library.Find(new DocumentFilter(Query, _activeTag, _inboxOnly && !hasQuery,
+                append ? Documents.Count : 0, SortOption?.Order ?? DocumentSort.Automatic));
+            ReplaceResults(append ? [.. Documents, .. page.Items] : page.Items, selection, reloadPreview);
             HasMore = page.HasMore;
             ResultCount = HasMore ? $"Showing {DocumentCount(Documents.Count)}" : DocumentCount(Documents.Count);
             if (_activeTag is not null && hasQuery) ResultCount += $" in {_activeTag}";
-            SelectedDocument = Documents.FirstOrDefault(document => document.Id == selection) ?? Documents.FirstOrDefault();
         }
         catch (Exception error)
         {
             Status = error.Message;
         }
+    }
+
+    private void ReplaceResults(IReadOnlyList<DocumentSummary> documents, long? selectedId, bool reloadPreview)
+    {
+        var previous = SelectedDocument;
+        var selected = documents.FirstOrDefault(document => document.Id == selectedId) ?? documents.FirstOrDefault();
+        // Avalonia clears selection while replacing ItemsSource. Preview state should follow the final selection.
+        _replacingResults = true;
+        try
+        {
+            Documents = documents;
+            SelectedDocument = selected;
+        }
+        finally
+        {
+            _replacingResults = false;
+        }
+        UpdateSelection(previous, SelectedDocument, reloadPreview);
     }
 
     private bool UpdateDocument(Action<InboxLibrary, DocumentSummary> update, string success)
@@ -392,6 +417,8 @@ internal sealed partial class InboxViewModel : ObservableObject, IDisposable
         _searchTimer.Start();
     }
 
+    partial void OnSortOptionChanged(SortChoice? value) => LoadResults();
+
     partial void OnDocumentsChanged(IReadOnlyList<DocumentSummary> value)
     {
         OnPropertyChanged(nameof(HasDocuments));
@@ -409,11 +436,17 @@ internal sealed partial class InboxViewModel : ObservableObject, IDisposable
 
     partial void OnSelectedDocumentChanged(DocumentSummary? oldValue, DocumentSummary? newValue)
     {
-        if (oldValue?.Id != newValue?.Id)
+        if (!_replacingResults) UpdateSelection(oldValue, newValue);
+    }
+
+    private void UpdateSelection(DocumentSummary? oldValue, DocumentSummary? newValue, bool reloadPreview = false)
+    {
+        if (oldValue?.Id != newValue?.Id || (newValue is not null && _pageNumber > newValue.PageCount))
         {
             _pageNumber = 1;
-            RequestPreview();
+            reloadPreview = true;
         }
+        if (reloadPreview) RequestPreview();
         OnPropertyChanged(nameof(HasSelection));
         OnPropertyChanged(nameof(ReviewAction));
         OnPropertyChanged(nameof(HasNoSearchableText));
@@ -493,5 +526,11 @@ internal sealed partial class InboxViewModel : ObservableObject, IDisposable
         {
             library?.Dispose();
         }
+    }
+
+    /// <summary>A catalog order and its visible label.</summary>
+    internal sealed record SortChoice(DocumentSort Order, string Label)
+    {
+        public override string ToString() => Label;
     }
 }

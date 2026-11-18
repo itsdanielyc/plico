@@ -145,10 +145,17 @@
                 </Grid>
             </Border>
             <Grid Grid.Row="1" Margin="25,21,25,20" RowDefinitions="Auto,*" RowSpacing="16">
-                <Grid ColumnDefinitions="*,Auto" ColumnSpacing="12">
+                <Grid ColumnDefinitions="*,Auto,Auto" ColumnSpacing="12">
                     <TextBlock x:Name="InboxHeading" Text="{Binding Heading}" FontSize="31" FontWeight="SemiBold"
                                TextTrimming="CharacterEllipsis" AutomationProperties.HeadingLevel="1" />
-                    <TextBlock Grid.Column="1" Classes="muted" Text="{Binding ResultCount}" VerticalAlignment="Bottom" Margin="0,0,0,4" />
+                    <TextBlock Grid.Column="1" Classes="muted" Text="{Binding ResultCount}" VerticalAlignment="Center"
+                               MaxWidth="154" TextTrimming="CharacterEllipsis" ToolTip.Tip="{Binding ResultCount}" />
+                    <StackPanel Grid.Column="2" Orientation="Horizontal" Spacing="6" VerticalAlignment="Center">
+                        <TextBlock Text="Sort" Classes="muted" VerticalAlignment="Center" />
+                        <ComboBox x:Name="DocumentSortBox" ItemsSource="{Binding SortChoices}"
+                                  SelectedItem="{Binding SortOption, Mode=TwoWay}" MinWidth="140"
+                                  IsEnabled="{Binding HasLibrary}" AutomationProperties.Name="Sort documents" />
+                    </StackPanel>
                 </Grid>
                 <Grid Grid.Row="1" ColumnDefinitions="2*,3*" ColumnSpacing="15">
                     <Border CornerRadius="11" Background="#FCFDF8" BorderBrush="#DDE2D7" BorderThickness="1" ClipToBounds="True">
