@@ -54,7 +54,30 @@ internal sealed partial class InboxViewModel
 
         if (report is not null && ShowIndexReport && ReferenceEquals(_library, library))
         {
-            await _dialogs.ShowIndexRefreshReportAsync(report);
+            string? path = await _dialogs.ShowIndexRefreshReportAsync(report);
+            if (path is not null && CanWork && ReferenceEquals(_library, library))
+            {
+                await RestoreFromIndexReportAsync(library, path);
+            }
         }
     }
+
+    private Task RestoreFromIndexReportAsync(InboxLibrary library, string relativePath) =>
+        RunOperationAsync("Choose a matching PDF…", async token =>
+        {
+            string? copyPath = await _dialogs.PickRestorePdfAsync();
+            if (copyPath is null)
+            {
+                Status = "PDF restore cancelled.";
+                return;
+            }
+
+            Status = "Restoring PDF…";
+            var restored = await Task.Run(() => library.RestoreUnavailablePdfAsync(relativePath, copyPath, token), token);
+            Tags = library.GetTags();
+            RefreshInboxCount();
+            RefreshUnavailableCount();
+            Navigate(inboxOnly: !restored.Reviewed, preferredId: restored.Id);
+            Status = "PDF restored.";
+        });
 }

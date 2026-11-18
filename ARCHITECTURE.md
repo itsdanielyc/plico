@@ -39,6 +39,8 @@ An occupied destination can join an external move when its previous document als
 
 The refresh result carries the paths whose records became unavailable in the current transaction. The desktop separately counts all unavailable records when the library opens and after each refresh, using the existing presence index. Opening **Index report** reads those paths from SQLite and shows the latest session notices. Unavailable records retain their metadata so a returning PDF can reuse its ID.
 
+Restoring from a selected copy takes the library’s file-operation lease and stages the source while hashing it. Publication requires the stored PDF digest, a vacant destination, and ordinary parent directories. The catalog updates the original row’s file stamp and presence. If the catalog update is interrupted after publication, the next refresh can match the restored PDF to its existing row.
+
 Schema v5 records the source document and language of each new OCR copy. The source ID, source fingerprint, and language identify an existing copy for reuse. A refresh that indexes changed PDF contents clears their previous import and OCR-copy associations.
 
 Schema v6 indexes the added timestamps of present PDFs. An `added:` filter bounds the lookup with UTC timestamps, then checks the exact local date for candidates near the period edges. This handles clock changes across midnight using the same local dates shown in the list. [SQLite partial indexes](https://sqlite.org/partialindex.html), [.NET time-zone conversion](https://learn.microsoft.com/en-us/dotnet/api/system.timezoneinfo.converttime)

@@ -309,6 +309,22 @@ internal sealed partial class LibraryCatalog
         return paths;
     }
 
+    internal IndexedPdf GetUnavailablePdf(string relativePath)
+    {
+        using var connection = Connect();
+        using var command = connection.CreateCommand();
+        command.CommandText = """
+            SELECT id, modified_ticks, file_bytes, pdf_sha256
+            FROM documents WHERE relative_path = $path AND is_present = 0;
+            """;
+        command.Parameters.AddWithValue("$path", relativePath);
+        using var rows = command.ExecuteReader();
+        if (!rows.Read()) throw new InvalidOperationException("This PDF is no longer marked unavailable. Refresh the index.");
+        var version = new FileVersion(rows.GetInt64(1), rows.GetInt64(2), Present: false);
+        var fingerprint = rows.IsDBNull(3) ? null : rows.GetFieldValue<byte[]>(3);
+        return new IndexedPdf(rows.GetInt64(0), relativePath, version, fingerprint);
+    }
+
     private DocumentPage Query(DocumentFilter filter, long? documentId = null, CancellationToken cancellationToken = default)
     {
         cancellationToken.ThrowIfCancellationRequested();

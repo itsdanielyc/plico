@@ -90,7 +90,7 @@ internal static partial class NativeVerification
             await VerifyExternalSwapAsync(window, model, dialogs, fixture, evidenceDirectory);
 
             File.WriteAllText(Path.Combine(evidenceDirectory, "passed.txt"),
-                $"Verified {runtime}. Native window completed multilingual OCR and correction, oriented JPEG and multi-page TIFF import, PDF combination, page extraction and rotation, phrase, tag, review-status, and text-availability search, query correction, saved search restoration, document-date editing, filtering, and inheritance, result sorting, fit-width and selectable page text previews, match navigation, tag merging and suggestions, duplicate drop, folder watch and inbox counting, title edit, single and batch PDF moves, external relocation and PDF swaps, index reporting and recovery, selected PDF export, library backup, text copy, single and batch OCR copies, and saved import error recovery and retry. {scanRecoveryEvidence}");
+                $"Verified {runtime}. Native window completed multilingual OCR and correction, oriented JPEG and multi-page TIFF import, PDF combination, page extraction and rotation, phrase, tag, review-status, and text-availability search, query correction, saved search restoration, document-date editing, filtering, and inheritance, result sorting, fit-width and selectable page text previews, match navigation, tag merging and suggestions, duplicate drop, folder watch and inbox counting, title edit, single and batch PDF moves, external relocation and PDF swaps, index reporting and PDF restoration, selected PDF export, library backup, text copy, single and batch OCR copies, and saved import error recovery and retry. {scanRecoveryEvidence}");
             desktop.Shutdown(0);
         }
         catch (Exception error)
@@ -1029,6 +1029,8 @@ internal sealed class FixtureDialogs(params string[] documents) : IWorkspaceDial
     internal IReadOnlyList<ImportFailure> InspectedImportFailures { get; private set; } = [];
     internal IReadOnlyList<OcrCopyBatchItem> InspectedOcrCopyResults { get; private set; } = [];
     internal IndexReport? InspectedIndexReport { get; private set; }
+    internal string? IndexPathToRestore { get; set; }
+    internal string? RestoreCandidate { get; set; }
     internal IReadOnlyList<string> SelectedFiles { get; set; } = documents;
     public Task<IReadOnlyList<string>> PickDocumentsAsync() => Task.FromResult(SelectedFiles);
     public Task<string?> PickFolderAsync(string title, string? startFolder = null)
@@ -1060,11 +1062,12 @@ internal sealed class FixtureDialogs(params string[] documents) : IWorkspaceDial
         InspectedOcrCopyResults = results;
         return Task.CompletedTask;
     }
-    public Task ShowIndexRefreshReportAsync(IndexReport report)
+    public Task<string?> ShowIndexRefreshReportAsync(IndexReport report)
     {
         InspectedIndexReport = report;
-        return Task.CompletedTask;
+        return Task.FromResult(IndexPathToRestore);
     }
+    public Task<string?> PickRestorePdfAsync() => Task.FromResult(RestoreCandidate);
     public void OpenPath(string path) => LastOpenedPath = path;
 
     public Task CopyTextAsync(string text)

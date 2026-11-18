@@ -1,5 +1,6 @@
 using Avalonia.Controls;
 using Avalonia.Headless.XUnit;
+using Avalonia.Interactivity;
 using CommunityToolkit.Mvvm.Input;
 using Plico.Core;
 using Plico.Desktop;
@@ -9,6 +10,33 @@ namespace Plico.Tests;
 
 public sealed partial class InboxWindowTests
 {
+    [AvaloniaFact]
+    public async Task IndexReportSelectsAnUnavailablePathForRestore()
+    {
+        const string relativePath = "Filed/Lease Renewal.pdf";
+        var owner = new Window();
+        owner.Show();
+        var dialog = new IndexReportDialog(new IndexReport([relativePath], ["The last index refresh was interrupted."]));
+        var closed = dialog.ShowDialog<string?>(owner);
+        try
+        {
+            var entries = Assert.IsType<ListBox>(dialog.FindControl<ListBox>("IndexReportList"));
+            var restore = Assert.IsType<Button>(dialog.FindControl<Button>("RestorePdfButton"));
+            entries.SelectedIndex = 1;
+            Assert.False(restore.IsEnabled);
+            entries.SelectedIndex = 0;
+            Assert.True(restore.IsEnabled);
+            restore.RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
+            Assert.Equal(relativePath, await closed);
+        }
+        finally
+        {
+            if (dialog.IsVisible) dialog.Close();
+            await closed;
+            owner.Close();
+        }
+    }
+
     [AvaloniaFact]
     public async Task UnavailableIndexPathsSurviveReopeningAndRepeatedRefreshes()
     {
@@ -59,15 +87,22 @@ public sealed partial class InboxWindowTests
             await Assert.IsAssignableFrom<IAsyncRelayCommand>(report.Command).ExecuteAsync(null);
             Assert.Equal(letter, Assert.Single(Assert.IsType<IndexReport>(dialogs.InspectedIndexReport).UnavailablePaths));
 
-            File.Move(holdingPath, original);
-            await model.RefreshIndexCommand.ExecuteAsync(null);
+            dialogs.IndexPathToRestore = letter;
+            await Assert.IsAssignableFrom<IAsyncRelayCommand>(report.Command).ExecuteAsync(null);
+            Assert.Equal("PDF restore cancelled.", model.Status);
+            Assert.True(report.IsVisible);
+            Assert.False(File.Exists(original));
+
+            dialogs.RestoreCandidate = holdingPath;
+            await Assert.IsAssignableFrom<IAsyncRelayCommand>(report.Command).ExecuteAsync(null);
+            Assert.Equal("PDF restored.", model.Status);
             Assert.False(report.IsVisible);
-            model.ShowAllCommand.Execute(null);
             await WaitForPreviewAsync(model);
             var restored = Assert.Single(model.Documents);
             Assert.Equal(id, restored.Id);
             Assert.True(restored.Reviewed);
             Assert.Contains("Housing", restored.Tags);
+            Assert.Equal(File.ReadAllBytes(holdingPath), File.ReadAllBytes(original));
         }
         finally
         {

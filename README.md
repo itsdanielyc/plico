@@ -100,6 +100,8 @@ Refresh also follows a uniquely identifiable PDF that you move or rename inside 
 
 After **Refresh index**, the status shows how many PDFs are unavailable. **Index report** keeps their paths available across launches and displays the latest notices in the current session. Restore the files in the library and refresh again to bring their records back into view.
 
+Select an unavailable entry in **Index report** and choose **Restore PDF…** to use a matching copy. Plico verifies the bytes and copies the PDF to its vacant original path. It creates missing ordinary subfolders and opens the existing catalog record with its metadata.
+
 Plico recognizes exact source files already in the library and reports that it reused the existing document. Existing libraries upgrade automatically. For older entries, repeat detection can also compare an unchanged digital PDF to the file you import.
 
 ### Scanner compatibility

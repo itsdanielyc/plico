@@ -124,7 +124,7 @@ public sealed partial class InboxLibrary
         // The committed intent identifies the exact catalog row if the process exits after the filesystem move.
         _catalog.RecordPdfMove(move);
         File.Move(source.Path, destination, overwrite: false);
-        if (ReadMoveAttributes(source.Path) is not null)
+        if (ReadExistingAttributes(source.Path) is not null)
         {
             throw new IOException("The source PDF is still at its original location. Close any viewer and try the move again.");
         }
@@ -169,7 +169,7 @@ public sealed partial class InboxLibrary
         FileVersion? version;
         try
         {
-            if (ReadMoveAttributes(ResolvePdfPath(move.SourceRelativePath)) is not null)
+            if (ReadExistingAttributes(ResolvePdfPath(move.SourceRelativePath)) is not null)
             {
                 _catalog.ClearPendingPdfMove();
                 return (null, null);
@@ -192,7 +192,7 @@ public sealed partial class InboxLibrary
 
     private FileVersion? CheckMovedPdf(string path, byte[] expectedFingerprint, CancellationToken cancellationToken)
     {
-        if (ReadMoveAttributes(path) is not { } attributes ||
+        if (ReadExistingAttributes(path) is not { } attributes ||
             (attributes & (FileAttributes.Directory | FileAttributes.ReparsePoint)) != 0) return null;
         string parent = ResolveDirectoryLinks(Path.GetDirectoryName(path)!);
         if (!IsAtOrWithinFolder(ResolveDirectoryLinks(PdfDirectory), parent)) return null;
@@ -203,7 +203,7 @@ public sealed partial class InboxLibrary
         return actualFingerprint.AsSpan().SequenceEqual(expectedFingerprint) ? version : null;
     }
 
-    private static FileAttributes? ReadMoveAttributes(string path)
+    private static FileAttributes? ReadExistingAttributes(string path)
     {
         try
         {

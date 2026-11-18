@@ -21,7 +21,8 @@ internal interface IWorkspaceDialogs
     Task<PdfPageCopyRequest?> ChoosePdfPageCopyAsync(DocumentSummary document, int currentPage, PdfPageCopyAction action);
     Task<ImportErrorsAction> ShowImportErrorsAsync(IReadOnlyList<ImportFailure> failures);
     Task ShowOcrCopyBatchResultsAsync(IReadOnlyList<OcrCopyBatchItem> results);
-    Task ShowIndexRefreshReportAsync(IndexReport report);
+    Task<string?> ShowIndexRefreshReportAsync(IndexReport report);
+    Task<string?> PickRestorePdfAsync();
     Task CopyTextAsync(string text);
     void OpenPath(string path);
 }
@@ -33,6 +34,13 @@ internal sealed class WorkspaceDialogs(Window owner) : IWorkspaceDialogs
         Patterns = ["*.pdf", "*.png", "*.jpg", "*.jpeg", "*.tif", "*.tiff", "*.PDF", "*.PNG", "*.JPG", "*.JPEG", "*.TIF", "*.TIFF"],
         MimeTypes = ["application/pdf", "image/png", "image/jpeg", "image/tiff"],
         AppleUniformTypeIdentifiers = ["com.adobe.pdf", "public.png", "public.jpeg", "public.tiff"]
+    };
+
+    private static readonly FilePickerFileType PdfDocuments = new("PDF files")
+    {
+        Patterns = ["*.pdf", "*.PDF"],
+        MimeTypes = ["application/pdf"],
+        AppleUniformTypeIdentifiers = ["com.adobe.pdf"]
     };
 
     public async Task<IReadOnlyList<string>> PickDocumentsAsync()
@@ -92,8 +100,19 @@ internal sealed class WorkspaceDialogs(Window owner) : IWorkspaceDialogs
     public Task ShowOcrCopyBatchResultsAsync(IReadOnlyList<OcrCopyBatchItem> results) =>
         new OcrCopyResultsDialog(results).ShowDialog(owner);
 
-    public Task ShowIndexRefreshReportAsync(IndexReport report) =>
-        new IndexReportDialog(report).ShowDialog(owner);
+    public Task<string?> ShowIndexRefreshReportAsync(IndexReport report) =>
+        new IndexReportDialog(report).ShowDialog<string?>(owner);
+
+    public async Task<string?> PickRestorePdfAsync()
+    {
+        var files = await owner.StorageProvider.OpenFilePickerAsync(new FilePickerOpenOptions
+        {
+            Title = "Choose a matching PDF",
+            AllowMultiple = false,
+            FileTypeFilter = [PdfDocuments]
+        });
+        return files.FirstOrDefault()?.TryGetLocalPath();
+    }
 
     public Task CopyTextAsync(string text) =>
         (owner.Clipboard ?? throw new InvalidOperationException("The clipboard is unavailable.")).SetTextAsync(text);
