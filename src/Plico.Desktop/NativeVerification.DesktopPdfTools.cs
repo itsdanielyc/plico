@@ -51,6 +51,12 @@ internal static partial class NativeVerification
         Require(previewScroll.HorizontalScrollBarVisibility == ScrollBarVisibility.Auto && previewScroll.Viewport.Height >= MinimumPreviewViewport,
             $"The zoomed PDF could not scroll or fit a usable viewport. Preview height {previewScroll.Viewport.Height}.");
         RequireCompactDocumentActions(window);
+        foreach (string actionName in new[] { "FindRelatedButton", "SuggestLocalFilingButton" })
+        {
+            var action = Control<Button>(window, actionName);
+            action.BringIntoView();
+            await UntilAsync(() => IsInsideViewport(action, actions), () => $"The document action {actionName} was outside the compact tray.");
+        }
         var rotate = Control<Button>(window, "RotatePdfPagesButton");
         rotate.BringIntoView();
         await UntilAsync(() => actions.Offset.Y > 0 && IsInsideViewport(rotate, actions),
