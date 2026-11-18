@@ -235,6 +235,7 @@
 | 2026-11-18 | L0, L3, L6 | HEIC, EML, MSG, text and Markdown used the regular intake path. Email included the readable attachment. Original sources survived import and LibreOffice absence was recoverable. | Windows x64 and ARM64, macOS Intel, Ubuntu x64 and ARM64 | `f6e00ce`. Disabling the format handlers failed all five focused cases. Native capture `additional-intake-formats.png`. The package and real LibreOffice runs are separate. [Source CI 44311798663](https://github.com/itsdanielyc/plico/actions/runs/44311798663) |
 | 2026-11-18 | L3 | LibreOffice converted an RTF document to searchable PDF through the normal importer. | GitHub-hosted Ubuntu x64 | [LibreOffice probe 44312588221](https://github.com/itsdanielyc/plico/actions/runs/44312588221), LibreOffice 24.2.7.2, checked out `f6e00ce`. |
 | 2026-11-18 | L0, L3, L6, L7 | Both archive formats passed with the new intake adapters and their native journey. The Apple silicon job completes native coverage across all six release targets when combined with the five source jobs above. | GitHub-hosted macOS Apple silicon, Ubuntu x64 and ARM64 | [Archive matrix 44312378815](https://github.com/itsdanielyc/plico/actions/runs/44312378815) at `f6e00ce`. |
+| 2026-11-18 | L0, L3, L6, L7 | Both package formats passed on all six runners with the additional intake adapters. | GitHub-hosted Windows x64 and ARM64, macOS Intel and Apple silicon, Ubuntu x64 and ARM64 | [Archive matrix 44312378815](https://github.com/itsdanielyc/plico/actions/runs/44312378815) at `f6e00ce`. |
 
 ## Unverified
 
