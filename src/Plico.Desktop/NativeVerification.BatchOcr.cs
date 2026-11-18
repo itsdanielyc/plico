@@ -14,24 +14,24 @@ internal static partial class NativeVerification
         File.Copy(scan, Path.Combine(model.LibraryPath, "PDFs", scanName));
         model.ShowAllCommand.Execute(null);
         await model.RefreshIndexCommand.ExecuteAsync(null);
-        var newSource = model.Documents.Single(document => document.RelativePath == scanName);
-        var priorSource = model.Documents.Single(document => document.Id == priorSourceId);
 
         Control<Button>(window, "WithoutTextButton").Command!.Execute(null);
         Require(model.Heading == "Without text" && model.Query == "text:missing" &&
                 model.Documents.All(document => !document.HasText) &&
                 model.Documents.Any(document => document.Id == priorSourceId) &&
-                model.Documents.Any(document => document.Id == newSource.Id),
+                model.Documents.Any(document => document.RelativePath == scanName),
             "The Without text view did not find the image-only PDFs.");
         await UntilAsync(() => model.Preview is not null, () => model.PreviewMessage);
         await CaptureAsync(window, directory, "without-text.png");
 
+        var newSource = model.Documents.Single(document => document.RelativePath == scanName);
+        var priorSource = model.Documents.Single(document => document.Id == priorSourceId);
         Control<ComboBox>(window, "OcrLanguageBox").SetCurrentValue(ComboBox.SelectedItemProperty, OcrLanguage.English);
         var list = Control<ListBox>(window, "DocumentList");
         list.SelectedItems = new List<DocumentSummary> { priorSource, newSource };
         var create = Control<Button>(window, "CreateSelectedOcrCopiesButton");
         Require(create.IsEffectivelyVisible && create.IsEnabled && create.Command is IAsyncRelayCommand,
-            "The selected PDFs did not offer batch OCR.");
+            $"The selected PDFs did not offer batch OCR. {model.BatchCountLabel}");
         await CaptureAsync(window, directory, "ocr-batch-selection.png");
         long before = model.InboxCount;
         await ((IAsyncRelayCommand)create.Command!).ExecuteAsync(null);
