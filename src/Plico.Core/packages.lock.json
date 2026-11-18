@@ -8,6 +8,18 @@
         "resolved": "2.4.660",
         "contentHash": "Drd0fDFVrR3v19IJtqiDVnjgcVZoGlzFw/CYni1OQ5/xVYvjPNp18E9eu+dH/RmpIUw6Pn/JhE/H+Yc3kHI89A=="
       },
+      "HtmlAgilityPack": {
+        "type": "Direct",
+        "requested": "[1.13.1, )",
+        "resolved": "1.13.1",
+        "contentHash": "wkKKu0oltLJQRBf862+O0yqBAvo+RVisLXFFTlThWCuw1gjATkna1ZKQBcwHUyJUUZhkPUvyxFJcyqXSAvNkag=="
+      },
+      "Markdig": {
+        "type": "Direct",
+        "requested": "[1.6.0, )",
+        "resolved": "1.6.0",
+        "contentHash": "rJEpDfPM8wrfXUgkNejjg2bJN9bciy44uVyRwKUI+92CnSmbaLeJTLPYcCdvgM4RFsKrhs8d2H2hO78yZpMl3g=="
+      },
       "Microsoft.Data.Sqlite": {
         "type": "Direct",
         "requested": "[10.0.15, )",
@@ -17,6 +29,20 @@
           "Microsoft.Data.Sqlite.Core": "10.0.15",
           "SQLitePCLRaw.bundle_e_sqlite3": "2.1.13",
           "SQLitePCLRaw.core": "2.1.13"
+        }
+      },
+      "MsgReader": {
+        "type": "Direct",
+        "requested": "[6.2.1, )",
+        "resolved": "6.2.1",
+        "contentHash": "HdkhMttCMYLZ9mbppspwWBmVIkpo1Lzma8p8IYuaXbc/2L9+QcLc5haEDafphzx2g27d1L+4SmCnuDXZ+K8Nsw==",
+        "dependencies": {
+          "Microsoft.IO.RecyclableMemoryStream": "4.0.1",
+          "Microsoft.Maui.Graphics": "10.0.120",
+          "OpenMcdf": "3.4.0",
+          "RtfPipe": "2.0.7677.4303",
+          "System.Security.Cryptography.Pkcs": "10.0.14",
+          "UTF.Unknown": "2.8.0"
         }
       },
       "NAPS2.Images.Skia": {
@@ -73,6 +99,15 @@
         "dependencies": {
           "Microsoft.Extensions.Logging.Abstractions": "8.0.3",
           "System.Security.Cryptography.Pkcs": "8.0.1"
+        }
+      },
+      "Sdcb.SimdCodecs.Heif": {
+        "type": "Direct",
+        "requested": "[2.0.0, )",
+        "resolved": "2.0.0",
+        "contentHash": "Ix9/1C7mMFF5kSElrhcLGKtrUqB62ZSu/wKcBkCYmrFrJ9jp9+DMsjDCAuK/O/H2KAS55Qta93jdVb4biOYi5A==",
+        "dependencies": {
+          "Sdcb.SimdCodecs.Abstractions": "2.0.0"
         }
       },
       "SkiaSharp": {
@@ -150,6 +185,16 @@
           "Microsoft.Extensions.DependencyInjection.Abstractions": "10.0.10"
         }
       },
+      "Microsoft.IO.RecyclableMemoryStream": {
+        "type": "Transitive",
+        "resolved": "4.0.1",
+        "contentHash": "+AgZ8B7QIcy2MZyqp1eeJlSgt03h0oyPeEhNWb1aAdgV9C0l8HdboJ1yt/DMu9qv7HTOA18WJUzKWB3j/WlTqg=="
+      },
+      "Microsoft.Maui.Graphics": {
+        "type": "Transitive",
+        "resolved": "10.0.120",
+        "contentHash": "Z1ZkDyUIpMPYH84wC8za4n/OcSXIKU6fGc2EfZ0dWGldPjrJtbYLWqFLBSK3QW80/FbpGDsskhaynDUnC+dOlw=="
+      },
       "NAPS2.Escl": {
         "type": "Transitive",
         "resolved": "1.6.1",
@@ -197,6 +242,21 @@
         "type": "Transitive",
         "resolved": "2.0.3",
         "contentHash": "Za/pkCCVuUxD3Q00pTsFd3FRAi1HTBlM8uzDXaPpULMZ6MoqYaJKcE5fJmOz+fqNfQaMxv9dQeJ1GZ9uVtBM8g=="
+      },
+      "OpenMcdf": {
+        "type": "Transitive",
+        "resolved": "3.4.0",
+        "contentHash": "HO/oY3oEUJw1DEcjSxR/dMEhYbJ/psUH1mZ0OFDhqrDaZg/kEPc4Go1U7eRjYgEgsEqujYueE+0+A67VlttemQ=="
+      },
+      "RtfPipe": {
+        "type": "Transitive",
+        "resolved": "2.0.7677.4303",
+        "contentHash": "ek6wuC69GYVJr0b/C5mcgbFUHPLL11iAbUFqQphdBaqSoEjOdSB/HWCID5nneA5exM88UZzOTCJCMpftDYnCZA=="
+      },
+      "Sdcb.SimdCodecs.Abstractions": {
+        "type": "Transitive",
+        "resolved": "2.0.0",
+        "contentHash": "So5Cs1FCOSgKUW8mO5tb5IgO3CUtCb3XJ0tEfmoS3I+2eWVWeUf+85ZZdedbWDtlH+F4CrH54Vi8SoWqyZ2B2A=="
       },
       "SharpZipLib": {
         "type": "Transitive",
@@ -272,6 +332,11 @@
         "type": "Transitive",
         "resolved": "4.6.2",
         "contentHash": "yQgmjfFximrNm9LIV3mL6T5MzjeC+epeE5rl4hXxAlYmxby7RM1dPSkIKXk9HNkl6G54h2JHOmLD46+Pey+IRg=="
+      },
+      "UTF.Unknown": {
+        "type": "Transitive",
+        "resolved": "2.8.0",
+        "contentHash": "bpDbg9Hjuenm/vMhxavOb/cLivRBQxhU4Dc6iRPPoEUM80qlAnRQ7c2niLQJPxLV/XBEGGhda5cNLkcQuHxULA=="
       },
       "ZXing.Net": {
         "type": "Transitive",

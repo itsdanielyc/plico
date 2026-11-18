@@ -49,11 +49,26 @@ internal partial interface IWorkspaceDialogs
 
 internal sealed partial class WorkspaceDialogs(Window owner) : IWorkspaceDialogs
 {
-    private static readonly FilePickerFileType SupportedDocuments = new("PDF and images")
+    private static readonly string[] IntakeExtensions =
+        ["pdf", "png", "jpg", "jpeg", "tif", "tiff", "heic", "heif", "eml", "msg", "txt", "md", "markdown",
+         "doc", "docx", "odt", "rtf", "xls", "xlsx", "ods", "ppt", "pptx", "odp"];
+    private static readonly FilePickerFileType SupportedDocuments = new("Supported documents")
     {
-        Patterns = ["*.pdf", "*.png", "*.jpg", "*.jpeg", "*.tif", "*.tiff", "*.PDF", "*.PNG", "*.JPG", "*.JPEG", "*.TIF", "*.TIFF"],
-        MimeTypes = ["application/pdf", "image/png", "image/jpeg", "image/tiff"],
-        AppleUniformTypeIdentifiers = ["com.adobe.pdf", "public.png", "public.jpeg", "public.tiff"]
+        Patterns = IntakeExtensions.SelectMany(extension => new[] { $"*.{extension}", $"*.{extension.ToUpperInvariant()}" }).ToArray(),
+        MimeTypes = ["application/pdf", "image/png", "image/jpeg", "image/tiff", "image/heic", "image/heif",
+            "message/rfc822", "application/vnd.ms-outlook", "text/plain", "text/markdown", "application/rtf",
+            "application/msword", "application/vnd.ms-excel", "application/vnd.ms-powerpoint",
+            "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+            "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+            "application/vnd.openxmlformats-officedocument.presentationml.presentation",
+            "application/vnd.oasis.opendocument.text", "application/vnd.oasis.opendocument.spreadsheet",
+            "application/vnd.oasis.opendocument.presentation"],
+        AppleUniformTypeIdentifiers = ["com.adobe.pdf", "public.png", "public.jpeg", "public.tiff", "public.heic", "public.heif",
+            "public.email-message", "com.microsoft.outlook-msg", "public.plain-text", "net.daringfireball.markdown", "public.rtf",
+            "com.microsoft.word.doc", "com.microsoft.excel.xls", "com.microsoft.powerpoint.ppt",
+            "org.openxmlformats.wordprocessingml.document", "org.openxmlformats.spreadsheetml.sheet",
+            "org.openxmlformats.presentationml.presentation", "org.oasis-open.opendocument.text",
+            "org.oasis-open.opendocument.spreadsheet", "org.oasis-open.opendocument.presentation"]
     };
 
     private static readonly FilePickerFileType PdfDocuments = new("PDF files")

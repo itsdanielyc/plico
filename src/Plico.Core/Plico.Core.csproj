@@ -1,12 +1,16 @@
 <Project Sdk="Microsoft.NET.Sdk">
   <ItemGroup>
     <PackageReference Include="BitMiracle.LibTiff.NET" />
+    <PackageReference Include="HtmlAgilityPack" />
+    <PackageReference Include="Markdig" />
     <PackageReference Include="Microsoft.Data.Sqlite" />
+    <PackageReference Include="MSGReader" />
     <PackageReference Include="NAPS2.Images.Skia" />
     <PackageReference Include="NAPS2.PdfSharp" />
     <PackageReference Include="NAPS2.Sdk" />
     <PackageReference Include="PdfPig" />
     <PackageReference Include="PDFsharp" />
+    <PackageReference Include="Sdcb.SimdCodecs.Heif" />
     <PackageReference Include="SkiaSharp" />
     <PackageReference Include="SkiaSharp.NativeAssets.Linux" />
     <PackageReference Include="System.Security.Cryptography.Pkcs" />
