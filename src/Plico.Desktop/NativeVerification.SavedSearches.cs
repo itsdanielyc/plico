@@ -18,8 +18,10 @@ internal static partial class NativeVerification
         bool ShowsFiledReceipts() => model.ResultCount.Contains($"in {sidebarTag}", StringComparison.Ordinal) &&
             model.Documents is [{ Title: filedTitle }, { Title: receiptTitle }];
         var sortBox = Control<ComboBox>(window, "DocumentSortBox");
-        var tagButton = window.GetVisualDescendants().OfType<Button>()
-            .Single(button => button.Classes.Contains("rail") && button.DataContext is string tag && tag == sidebarTag);
+        IEnumerable<Button> SidebarTagButtons() => window.GetVisualDescendants().OfType<Button>()
+            .Where(button => button.Classes.Contains("rail") && button.DataContext is TagNavigationItem { Label: sidebarTag });
+        await UntilAsync(() => SidebarTagButtons().Any(), () => "The saved-search tag did not appear in the sidebar.");
+        var tagButton = SidebarTagButtons().Single();
         tagButton.RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
         sortBox.SetCurrentValue(ComboBox.SelectedItemProperty, model.SortChoices.Single(choice => choice.Order == DocumentSort.Title));
         Control<TextBox>(window, "SearchBox").SetCurrentValue(TextBox.TextProperty, query);
