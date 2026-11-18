@@ -1,6 +1,7 @@
 using System.Diagnostics;
 using Avalonia.Controls;
 using Avalonia.Input.Platform;
+using Avalonia.Media.Imaging;
 using Avalonia.Platform.Storage;
 using Plico.Core;
 
@@ -26,6 +27,9 @@ internal interface IWorkspaceDialogs
     Task<PdfVersionDecision?> ChoosePdfVersionAsync(DocumentSummary document, IReadOnlyList<PdfVersion> versions);
     Task<string?> PickPdfAsync(string title);
     Task<string?> GetPdfPasswordAsync(string sourcePath);
+    Task<IReadOnlyList<PdfRedactionRegion>?> MarkPdfRedactionsAsync(int pageCount, int currentPage, Func<int, CancellationToken, Task<Bitmap>> preview);
+    Task<PdfStampRequest?> ChoosePdfStampAsync(int pageCount, int currentPage);
+    Task<PdfCompressionMode?> ChoosePdfCompressionAsync();
     Task<ImportErrorsAction> ShowImportErrorsAsync(IReadOnlyList<ImportFailure> failures);
     Task ShowOcrCopyBatchResultsAsync(IReadOnlyList<OcrCopyBatchItem> results);
     Task<IndexReportDecision?> ShowIndexRefreshReportAsync(IndexReport report);
@@ -122,6 +126,16 @@ internal sealed class WorkspaceDialogs(Window owner) : IWorkspaceDialogs
         new PdfVersionHistoryDialog(document, versions).ShowDialog<PdfVersionDecision?>(owner);
 
     public Task<string?> GetPdfPasswordAsync(string sourcePath) => new UnlockPdfDialog(sourcePath).ShowDialog<string?>(owner);
+
+    public Task<IReadOnlyList<PdfRedactionRegion>?> MarkPdfRedactionsAsync(int pageCount, int currentPage,
+        Func<int, CancellationToken, Task<Bitmap>> preview) =>
+        new PdfRedactionDialog(pageCount, currentPage, preview).ShowDialog<IReadOnlyList<PdfRedactionRegion>?>(owner);
+
+    public Task<PdfStampRequest?> ChoosePdfStampAsync(int pageCount, int currentPage) =>
+        new PdfStampDialog(pageCount, currentPage).ShowDialog<PdfStampRequest?>(owner);
+
+    public Task<PdfCompressionMode?> ChoosePdfCompressionAsync() =>
+        new PdfCompressionDialog().ShowDialog<PdfCompressionMode?>(owner);
 
     public Task<ImportErrorsAction> ShowImportErrorsAsync(IReadOnlyList<ImportFailure> failures) =>
         new ImportErrorsDialog(failures).ShowDialog<ImportErrorsAction>(owner);

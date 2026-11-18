@@ -457,6 +457,10 @@
                                                     <MenuFlyout>
                                                         <MenuItem x:Name="EditPdfPagesItem" Header="Edit pages…" Command="{Binding EditPdfPagesCommand}" />
                                                         <MenuItem x:Name="PdfVersionsItem" Header="Version history…" Command="{Binding ShowPdfVersionsCommand}" />
+                                                        <Separator />
+                                                        <MenuItem Header="Export redacted PDF…" Command="{Binding ExportRedactedPdfCommand}" />
+                                                        <MenuItem Header="Export stamped PDF…" Command="{Binding ExportStampedPdfCommand}" />
+                                                        <MenuItem Header="Export compressed PDF…" Command="{Binding ExportCompressedPdfCommand}" />
                                                     </MenuFlyout>
                                                 </Button.Flyout>
                                             </Button>

@@ -1,0 +1,25 @@
+<Window xmlns="https://github.com/avaloniaui" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        x:Class="Plico.Desktop.PdfStampDialog" Title="Stamp PDF"
+        Width="470" SizeToContent="Height" WindowStartupLocation="CenterOwner" CanResize="False"
+        FontFamily="{StaticResource InterFont}" Background="#F4F5EF">
+    <StackPanel Margin="24" Spacing="10">
+        <TextBlock Text="Stamp text" FontWeight="SemiBold" />
+        <TextBox x:Name="StampText" Text="PAID" AutomationProperties.Name="Stamp text" />
+        <TextBlock Text="Pages" FontWeight="SemiBold" />
+        <TextBox x:Name="StampPages" AutomationProperties.Name="Pages to stamp" />
+        <TextBlock Text="Enter page numbers or ranges, such as 1, 3–5." Foreground="#5C685D" TextWrapping="Wrap" />
+        <TextBlock Text="Position" FontWeight="SemiBold" />
+        <ComboBox x:Name="StampPosition" SelectedIndex="0" HorizontalAlignment="Stretch" AutomationProperties.Name="Stamp position">
+            <ComboBoxItem Content="Top right" />
+            <ComboBoxItem Content="Bottom right" />
+            <ComboBoxItem Content="Top left" />
+            <ComboBoxItem Content="Bottom left" />
+        </ComboBox>
+        <TextBlock x:Name="ValidationNotice" Foreground="#8E4037" TextWrapping="Wrap" AutomationProperties.LiveSetting="Polite" />
+        <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" Spacing="8">
+            <Button Content="Cancel" IsCancel="True" Click="Cancel_Click" />
+            <Button x:Name="ConfirmStamp" Content="Choose destination…" IsDefault="True" Click="Confirm_Click"
+                    Background="#254C37" Foreground="White" />
+        </StackPanel>
+    </StackPanel>
+</Window>
