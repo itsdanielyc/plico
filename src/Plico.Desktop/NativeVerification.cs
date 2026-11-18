@@ -60,6 +60,7 @@ internal static class NativeVerification
             await VerifyTitleEditorAsync(window, model, evidenceDirectory);
             VerifyDocumentLocation(window, dialogs, Path.Combine(model.LibraryPath, "PDFs"));
             await VerifyMovedPdfAsync(window, model, dialogs, evidenceDirectory);
+            await VerifyMoveActionAsync(window, model, dialogs, evidenceDirectory);
             await VerifyPhraseSearchAsync(window, model, evidenceDirectory);
             await VerifySortAsync(window, model, evidenceDirectory);
             await VerifyBatchReviewAsync(window, model, dialogs, evidenceDirectory);
@@ -79,7 +80,7 @@ internal static class NativeVerification
             await VerifyScannerDialogAsync(window, evidenceDirectory);
 
             File.WriteAllText(Path.Combine(evidenceDirectory, "passed.txt"),
-                $"Verified {runtime}. Native window completed multilingual OCR and correction, oriented JPEG and multi-page TIFF import, ordered PDF combination, phrase and tag search, result sorting, fit-width preview, match navigation, tag merging and suggestions, duplicate drop, folder watch, title edit, relocation, batch actions, selected PDF export, library backup, text copy, searchable PDF copy, and import retry.");
+                $"Verified {runtime}. Native window completed multilingual OCR and correction, oriented JPEG and multi-page TIFF import, ordered PDF combination, phrase and tag search, result sorting, fit-width preview, match navigation, tag merging and suggestions, duplicate drop, folder watch, title edit, PDF moves and external relocation, batch actions, selected PDF export, library backup, text copy, searchable PDF copy, and import retry.");
             desktop.Shutdown(0);
         }
         catch (Exception error)
@@ -615,6 +616,33 @@ internal static class NativeVerification
         await CaptureAsync(window, directory, "moved-pdf.png");
     }
 
+    private static async Task VerifyMoveActionAsync(MainWindow window, InboxViewModel model, FixtureDialogs dialogs, string directory)
+    {
+        var selected = model.SelectedDocument ?? throw new InvalidOperationException("Select the filed PDF before using Move to folder.");
+        string query = model.Query;
+        var preview = model.Preview;
+        string pdfs = Path.Combine(model.LibraryPath, "PDFs");
+        string source = Path.Combine(pdfs, selected.RelativePath);
+        string destination = Directory.CreateDirectory(Path.Combine(pdfs, "Filed", "Property")).FullName;
+        var action = Control<Button>(window, "MovePdfButton");
+        Require(action.IsEffectivelyVisible && action.IsEnabled, "Move to folder was unavailable for the filed PDF.");
+        string? previousFolder = dialogs.FolderPath;
+        dialogs.FolderPath = destination;
+        try
+        {
+            await ((IAsyncRelayCommand)action.Command!).ExecuteAsync(action.CommandParameter);
+        }
+        finally
+        {
+            dialogs.FolderPath = previousFolder;
+        }
+        Require(dialogs.LastFolderStart == pdfs && model.Query == query && ReferenceEquals(model.Preview, preview) &&
+            model.SelectedDocument is { RelativePath: "Filed/Property/Housing renewal.pdf" } moved && moved.Id == selected.Id &&
+            File.Exists(Path.Combine(destination, Path.GetFileName(source))) && !File.Exists(source), model.Status);
+        VerifyDocumentLocation(window, dialogs, destination);
+        await CaptureAsync(window, directory, "moved-with-plico.png");
+    }
+
     private static async Task VerifyTitleEditorAsync(MainWindow window, InboxViewModel model, string directory)
     {
         var selected = model.SelectedDocument ?? throw new InvalidOperationException("Select a document before testing title edits.");
@@ -796,6 +824,7 @@ internal static class NativeVerification
 internal sealed class FixtureDialogs(params string[] documents) : IWorkspaceDialogs
 {
     internal string? FolderPath { get; set; }
+    internal string? LastFolderStart { get; private set; }
     internal string? EditedTitle { get; init; }
     internal TagRenameRequest? TagRenameChoice { get; set; }
     internal Func<IReadOnlyList<DocumentSummary>, Task<CombinePdfsRequest?>>? CombineChoice { get; set; }
@@ -805,7 +834,11 @@ internal sealed class FixtureDialogs(params string[] documents) : IWorkspaceDial
     internal IReadOnlyList<ImportFailure> InspectedImportFailures { get; private set; } = [];
     internal IReadOnlyList<string> SelectedFiles { get; set; } = documents;
     public Task<IReadOnlyList<string>> PickDocumentsAsync() => Task.FromResult(SelectedFiles);
-    public Task<string?> PickFolderAsync(string title) => Task.FromResult(FolderPath);
+    public Task<string?> PickFolderAsync(string title, string? startFolder = null)
+    {
+        LastFolderStart = startFolder;
+        return Task.FromResult(FolderPath);
+    }
     public Task<ScanRequest?> PickScannerAsync() => Task.FromResult<ScanRequest?>(null);
     public Task<string?> EditTitleAsync(string currentTitle) => Task.FromResult(EditedTitle);
     public Task<TagRenameRequest?> RenameTagAsync(string currentName, IReadOnlyList<string> catalogNames) => Task.FromResult(TagRenameChoice);

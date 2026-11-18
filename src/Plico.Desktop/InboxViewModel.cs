@@ -264,6 +264,7 @@ internal sealed partial class InboxViewModel : ObservableObject, IDisposable
         Tags = replacement.GetTags();
         Navigate(inboxOnly: true);
         Status = watchNotice is null ? "Library ready." : $"Library ready. {watchNotice}";
+        if (replacement.MoveRecoveryNotice is { } moveNotice) Status += $" {moveNotice}";
     }
 
     private async Task ImportFilesAsync(IReadOnlyList<string> files, CancellationToken token, bool revealAdded = true)

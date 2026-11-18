@@ -23,6 +23,7 @@
 - Use **Create OCR copy** to recognize a PDF’s visible pages again in the selected language. The catalog tracks the source and language for repeat requests.
 - Use filters such as `added:2026-11` to search by the displayed date added. Catalog version 6 indexes those dates.
 - Combine selected PDFs into one searchable inbox document with a title, document order, and source tags.
+- Move a PDF into a library subfolder from its preview. Catalog version 7 records interrupted moves for recovery.
 
 ## [0.15.0] - 2026-11-18
 

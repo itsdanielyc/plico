@@ -52,6 +52,8 @@ Choose **Combine PDFs…** to make a single document from the selection. Set the
 
 Use **Edit title** in the preview to change the document's catalog title. Search covers both the title and filename. Select the PDF's filename to open its containing folder.
 
+Choose **Move to folder…** in the preview to file the PDF within the library’s `PDFs/` directory. Plico keeps its title, tags, and review state with the file. A filename collision gets a numbered name.
+
 Choose **Fit width** in the preview to enlarge the page and scroll through it. Choose **Fit page** to see it all at once.
 
 Choose **Go to match** on a multi-page text result to open the first page that matches the text terms. Terms on separate pages can match the document as a whole.
@@ -66,7 +68,7 @@ When a scan copied into `PDFs/` needs OCR, choose **Create searchable copy** in 
 
 To correct a PDF’s OCR, choose the language in **OCR** and select **Create OCR copy**. Plico renders the visible pages and writes fresh searchable text into a separate PDF with the source tags.
 
-Plico v0.16.0 upgrades the library catalog to version 6. Use a build with version 6 support to open an upgraded library.
+Plico v0.16.0 upgrades the library catalog to version 7. Use a build with version 7 support to open an upgraded library.
 
 To make a copy while Plico is open, choose **Back up library…** and select a destination outside the current library. Plico creates a dated folder with the PDFs and their catalog. **Open backup** shows that folder in the file manager. Choose the folder as a library to reopen it in Plico.
 

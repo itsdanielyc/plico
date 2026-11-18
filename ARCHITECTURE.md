@@ -37,6 +37,8 @@ Schema v5 records the source document and language of each new OCR copy. The sou
 
 Schema v6 indexes the added timestamps of present PDFs. An `added:` filter bounds the lookup with UTC timestamps, then checks the exact local date for candidates near the period edges. This handles clock changes across midnight using the same local dates shown in the list. [SQLite partial indexes](https://sqlite.org/partialindex.html), [.NET time-zone conversion](https://learn.microsoft.com/en-us/dotnet/api/system.timezoneinfo.converttime)
 
+Schema v7 records a pending move with the catalog ID, two relative paths, and the source SHA-256. Plico moves the file within the PDF tree and updates the catalog location and clears the record in one SQLite transaction. After an interruption, the pending move identifies the old catalog record even among identical PDFs. Recovery verifies the destination bytes before updating that record. [.NET file moves](https://learn.microsoft.com/en-us/dotnet/api/system.io.file.move)
+
 Backup copies the PDF tree and takes an online SQLite snapshot under the library's file-operation lease. It validates the file inventory and publishes the staged backup by an atomic directory move inside the selected destination. [Microsoft.Data.Sqlite online backup](https://learn.microsoft.com/en-us/dotnet/standard/data/sqlite/backup)
 
 Selected export reads the chosen catalog paths and file stamps under the same lease. It stages the PDF bytes under the chosen destination, assigns distinct portable filenames, and checks the sources again before publishing the folder. [Directory.Move](https://learn.microsoft.com/en-us/dotnet/api/system.io.directory.move?view=net-10.0)

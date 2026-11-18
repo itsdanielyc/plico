@@ -10,7 +10,7 @@ namespace Plico.Desktop;
 internal interface IWorkspaceDialogs
 {
     Task<IReadOnlyList<string>> PickDocumentsAsync();
-    Task<string?> PickFolderAsync(string title);
+    Task<string?> PickFolderAsync(string title, string? startFolder = null);
     Task<ScanRequest?> PickScannerAsync();
     Task<string?> EditTitleAsync(string currentTitle);
     Task<TagRenameRequest?> RenameTagAsync(string currentName, IReadOnlyList<string> catalogNames);
@@ -40,12 +40,16 @@ internal sealed class WorkspaceDialogs(Window owner) : IWorkspaceDialogs
         return files.Select(file => file.TryGetLocalPath()).OfType<string>().ToArray();
     }
 
-    public async Task<string?> PickFolderAsync(string title)
+    public async Task<string?> PickFolderAsync(string title, string? startFolder = null)
     {
+        using var suggested = startFolder is null
+            ? null
+            : await owner.StorageProvider.TryGetFolderFromPathAsync(new Uri(Path.GetFullPath(startFolder)));
         var folders = await owner.StorageProvider.OpenFolderPickerAsync(new FolderPickerOpenOptions
         {
             Title = title,
-            AllowMultiple = false
+            AllowMultiple = false,
+            SuggestedStartLocation = suggested
         });
         return folders.FirstOrDefault()?.TryGetLocalPath();
     }

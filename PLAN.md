@@ -48,5 +48,6 @@
 | 43 | Correct existing PDF text with a fresh OCR copy | A PDF with poor OCR can be recognized again in the chosen language. The fresh PDF keeps the source pages and tags. A repeat follows the original document, file version, and language. | L0, L3, L4, L6 | Tested locally on Windows x64 and Ubuntu x64 (L0, L3, L4, L6). Hosted matrix pending. |
 | 44 | Filter by date added | `added:` matches the displayed local year, month, or day and combines with tags and text. Calendar boundaries and clock changes are covered. | L0, L3, L4, L6 | Tested locally on Windows x64 and Ubuntu x64 (L0, L3, L4, L6). Hosted matrix pending. |
 | 45 | Combine selected PDFs | The user can title and reorder a selection before creating a searchable PDF. Pages and unique source tags carry over. Cancellation or a source change leaves the originals as the only files. | L0, L3, L4, L6 | Tested locally on Windows x64 and Ubuntu x64 (L0, L3, L4, L6). Hosted matrix pending. |
+| 46 | Move a PDF within the library | The folder picker files the PDF while retaining its catalog record and preview. Occupied names get a suffix, and reopening finishes a confirmed interrupted move even among identical PDFs. | L0, L3, L4, L6 | In progress |
 
 The initial release is followed by focused improvements and fresh evidence.

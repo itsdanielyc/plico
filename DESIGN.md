@@ -14,6 +14,8 @@ The scan picker offers address entry alongside discovery. Connecting shows the d
 
 The preview shows the PDF path below its catalog title. The path opens the document's containing folder in the file manager.
 
+**Move to folder…** opens the system folder picker at the library’s PDF directory. After the move, the path and status show the new location and the preview keeps its current page.
+
 Batch review lives below the document list. The selection count identifies its scope. The preview keeps the individual document's review action.
 
 **Export PDFs…** appears in the batch controls. After the export finishes, the status bar shows the output path and offers **Open export**.

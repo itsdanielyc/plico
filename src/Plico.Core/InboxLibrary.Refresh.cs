@@ -10,11 +10,11 @@ public sealed partial class InboxLibrary
     private sealed record DiskInventory(HashSet<string> Observed, HashSet<string> Unreadable, List<ChangedPdf> Changes);
 
     // Expected O(files + rows + examined bytes) time and O(files + rows + largest parsed document) space.
-    private RefreshResult ReconcileFiles(CancellationToken cancellationToken)
+    private RefreshResult ReconcileFiles(CancellationToken cancellationToken, string? pendingMoveDestination)
     {
         var previous = _catalog.ReadIndexedFiles();
         var warnings = new List<string>();
-        var inventory = DiscoverChanges(previous, warnings, cancellationToken);
+        var inventory = DiscoverChanges(previous, warnings, pendingMoveDestination, cancellationToken);
         var moves = MatchUniqueMoves(previous.Values, inventory);
         int indexed = 0;
         int relocated = 0;
@@ -49,7 +49,7 @@ public sealed partial class InboxLibrary
     }
 
     private DiskInventory DiscoverChanges(IReadOnlyDictionary<string, IndexedPdf> previous, List<string> warnings,
-        CancellationToken cancellationToken)
+        string? pendingMoveDestination, CancellationToken cancellationToken)
     {
         var inventory = new DiskInventory(new(StringComparer.Ordinal), new(StringComparer.Ordinal), []);
         foreach (var path in EnumeratePdfPaths())
@@ -57,6 +57,7 @@ public sealed partial class InboxLibrary
             cancellationToken.ThrowIfCancellationRequested();
             string relativePath = RelativePdfPath(path);
             inventory.Observed.Add(relativePath);
+            if (relativePath == pendingMoveDestination) continue;
             var old = previous.GetValueOrDefault(relativePath);
             try
             {

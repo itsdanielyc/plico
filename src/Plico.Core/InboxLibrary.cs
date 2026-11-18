@@ -64,14 +64,18 @@ public sealed partial class InboxLibrary : IDisposable
         {
             throw new IOException("Plico could not lock this library. Close any other copy that has this folder open.", error);
         }
+        InboxLibrary? library = null;
         try
         {
             var catalog = new LibraryCatalog(Path.Combine(metadata, CatalogFilename));
-            return new InboxLibrary(root, pdfs, metadata, lease, catalog);
+            library = new InboxLibrary(root, pdfs, metadata, lease, catalog);
+            library.MoveRecoveryNotice = library.RecoverPendingPdfMove(CancellationToken.None).Notice;
+            return library;
         }
         catch
         {
-            lease.Dispose();
+            if (library is null) lease.Dispose();
+            else library.Dispose();
             throw;
         }
     }
@@ -235,7 +239,9 @@ public sealed partial class InboxLibrary : IDisposable
         _fileOperations.Wait(cancellationToken);
         try
         {
-            return ReconcileFiles(cancellationToken);
+            var recovery = RecoverPendingPdfMove(cancellationToken);
+            var result = ReconcileFiles(cancellationToken, recovery.PendingDestination);
+            return recovery.Notice is { } notice ? result with { Warnings = [notice, .. result.Warnings] } : result;
         }
         finally
         {
