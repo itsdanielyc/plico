@@ -1,5 +1,10 @@
 # Changelog
 
+## [0.6.0] - 2026-11-18
+
+- Select several documents and mark them reviewed together. A selection of reviewed documents can return to the inbox in one action.
+- **Select shown** selects the current list. A watched import keeps the selection available until you finish the batch.
+
 ## [0.5.0] - 2026-11-18
 
 - **Refresh index** can follow an indexed PDF into a new folder or filename. When the match is unique, it carries over that PDF's title, tags, review state, and duplicate detection.

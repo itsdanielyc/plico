@@ -59,6 +59,26 @@ public sealed partial class MainWindow : Window
         e.Handled = true;
     }
 
+    private void Documents_SelectionChanged(object? sender, SelectionChangedEventArgs e)
+    {
+        if (ViewModel is { } model && sender is ListBox list)
+        {
+            model.SetBatchSelection(list.Selection.SelectedItems.OfType<DocumentSummary>().ToArray());
+        }
+    }
+
+    private void SelectShown_Click(object? sender, RoutedEventArgs e)
+    {
+        if (DocumentList.Selection.Count > 1)
+        {
+            DocumentList.Selection.Clear();
+        }
+        else if (DocumentList.ItemCount > 1)
+        {
+            DocumentList.Selection.SelectRange(0, DocumentList.ItemCount - 1);
+        }
+    }
+
     private void Files_DragOver(object? sender, DragEventArgs e)
     {
         if (!e.DataTransfer.Formats.Contains(DataFormat.File)) return;

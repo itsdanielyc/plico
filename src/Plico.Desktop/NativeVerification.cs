@@ -2,6 +2,7 @@ using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Controls.ApplicationLifetimes;
 using Avalonia.Input;
+using Avalonia.Interactivity;
 using Avalonia.Media.Imaging;
 using Avalonia.Threading;
 using CommunityToolkit.Mvvm.Input;
@@ -51,10 +52,11 @@ internal static class NativeVerification
             await VerifyTitleEditorAsync(window, model, evidenceDirectory);
             VerifyDocumentLocation(window, dialogs, Path.Combine(model.LibraryPath, "PDFs"));
             await VerifyMovedPdfAsync(window, model, dialogs, evidenceDirectory);
+            await VerifyBatchReviewAsync(window, model, evidenceDirectory);
             await VerifyScannerDialogAsync(window, evidenceDirectory);
 
             File.WriteAllText(Path.Combine(evidenceDirectory, "passed.txt"),
-                "Native window completed OCR, review and search, duplicate drop, folder watch, title edit, PDF relocation, and scanner settings display.");
+                "Native window completed OCR, review and search, duplicate drop, folder watch, title edit, PDF relocation, batch review, and scanner settings display.");
             desktop.Shutdown(0);
         }
         catch (Exception error)
@@ -62,6 +64,23 @@ internal static class NativeVerification
             File.WriteAllText(Path.Combine(evidenceDirectory, "error.txt"), error.ToString());
             desktop.Shutdown(1);
         }
+    }
+
+    private static async Task VerifyBatchReviewAsync(MainWindow window, InboxViewModel model, string directory)
+    {
+        model.ShowAllCommand.Execute(null);
+        var select = Control<Button>(window, "SelectShownButton");
+        var review = Control<Button>(window, "BatchReviewButton");
+        Require(select.IsVisible && model.Documents.Count == 2, "The list did not offer batch selection.");
+        select.RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
+        Require(model.HasBatchSelection && review.Command is IAsyncRelayCommand && model.BatchCountLabel == "2 selected",
+            "The window did not select both documents.");
+        await UntilAsync(() => model.Preview is not null, () => model.PreviewMessage);
+        await CaptureAsync(window, directory, "batch-review.png");
+        await ((IAsyncRelayCommand)review.Command!).ExecuteAsync(null);
+        model.ShowInboxCommand.Execute(null);
+        Require(model.Documents.Count == 0 && model.Status == "2 documents marked reviewed.",
+            "Batch review did not remove both selected documents from the inbox.");
     }
 
     private static void VerifyDocumentLocation(MainWindow window, FixtureDialogs dialogs, string expectedFolder)

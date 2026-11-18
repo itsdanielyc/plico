@@ -334,6 +334,26 @@ internal sealed class LibraryCatalog
         }
     }
 
+    internal void SetReviewedDocuments(IReadOnlyList<long> documentIds, bool reviewed)
+    {
+        var uniqueIds = documentIds.Distinct().ToArray();
+        using var connection = Connect();
+        using var transaction = connection.BeginTransaction();
+        using var command = connection.CreateCommand();
+        command.Transaction = transaction;
+        command.CommandText = """
+            UPDATE documents SET reviewed = $reviewed
+            WHERE is_present = 1 AND id IN (SELECT value FROM json_each($ids));
+            """;
+        command.Parameters.AddWithValue("$reviewed", reviewed);
+        command.Parameters.AddWithValue("$ids", JsonSerializer.Serialize(uniqueIds));
+        if (command.ExecuteNonQuery() != uniqueIds.Length)
+        {
+            throw new InvalidOperationException("A selected document is unavailable. Refresh the index and select the documents again.");
+        }
+        transaction.Commit();
+    }
+
     internal Dictionary<string, IndexedPdf> ReadIndexedFiles()
     {
         using var connection = Connect();

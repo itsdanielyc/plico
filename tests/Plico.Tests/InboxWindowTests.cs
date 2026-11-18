@@ -3,6 +3,7 @@ using Avalonia.Controls;
 using Avalonia.Headless;
 using Avalonia.Headless.XUnit;
 using Avalonia.Interactivity;
+using CommunityToolkit.Mvvm.Input;
 using NAPS2.Scan;
 using Plico.Desktop;
 using Plico.Core;
@@ -207,12 +208,7 @@ public sealed class InboxWindowTests
         window.Show();
         try
         {
-            using var previewTimeout = CancellationTokenSource.CreateLinkedTokenSource(TestContext.Current.CancellationToken);
-            previewTimeout.CancelAfter(TimeSpan.FromSeconds(6));
-            while (model.Preview is null && !model.HasPreviewMessage)
-            {
-                await Task.Delay(TimeSpan.FromMilliseconds(25), previewTimeout.Token);
-            }
+            await WaitForPreviewAsync(model);
             var location = Assert.IsType<Button>(window.FindControl<Button>("PdfLocationButton"));
             Assert.True(location.IsVisible);
             Assert.NotNull(location.Command);
@@ -223,6 +219,47 @@ public sealed class InboxWindowTests
         finally
         {
             window.Close();
+        }
+    }
+
+    [AvaloniaFact]
+    public async Task SelectShownCanReviewSeveralDocumentsAtOnce()
+    {
+        using var directory = new TemporaryLibrary();
+        using (var library = InboxLibrary.Open(directory.Path))
+        {
+            ReviewFixtures.AddTwoDocuments(library, TestContext.Current.CancellationToken);
+        }
+        using var model = new InboxViewModel(new FixtureDialogs());
+        model.InitializeLibrary(() => directory.Path);
+        var window = new MainWindow { DataContext = model };
+        window.Show();
+        try
+        {
+            await WaitForPreviewAsync(model);
+            var select = Assert.IsType<Button>(window.FindControl<Button>("SelectShownButton"));
+            select.RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
+            var review = Assert.IsType<Button>(window.FindControl<Button>("BatchReviewButton"));
+            Assert.True(review.IsVisible);
+            var command = Assert.IsAssignableFrom<IAsyncRelayCommand>(review.Command);
+            await command.ExecuteAsync(null);
+
+            Assert.Empty(model.Documents);
+            Assert.Equal("2 documents marked reviewed.", model.Status);
+        }
+        finally
+        {
+            window.Close();
+        }
+    }
+
+    private static async Task WaitForPreviewAsync(InboxViewModel model)
+    {
+        using var previewTimeout = CancellationTokenSource.CreateLinkedTokenSource(TestContext.Current.CancellationToken);
+        previewTimeout.CancelAfter(TimeSpan.FromSeconds(6));
+        while (model.Preview is null && !model.HasPreviewMessage)
+        {
+            await Task.Delay(TimeSpan.FromMilliseconds(25), previewTimeout.Token);
         }
     }
 }

@@ -112,6 +112,13 @@ public sealed partial class InboxLibrary : IDisposable
     /// <summary>Moves a document into or out of the review queue without moving its PDF.</summary>
     public void SetReviewed(long documentId, bool reviewed) => _catalog.SetReviewed(documentId, reviewed);
 
+    /// <summary>Updates the review state of the whole selection in a single transaction.</summary>
+    public void SetReviewedDocuments(IReadOnlyList<long> documentIds, bool reviewed)
+    {
+        ArgumentNullException.ThrowIfNull(documentIds);
+        if (documentIds.Count > 0) _catalog.SetReviewedDocuments(documentIds, reviewed);
+    }
+
     /// <summary>Updates the label and indexes it alongside the PDF filename.</summary>
     public void SetTitle(long documentId, string title)
     {

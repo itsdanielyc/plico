@@ -257,7 +257,7 @@ internal sealed partial class InboxViewModel : ObservableObject, IDisposable
             if (lastAdded is not null)
             {
                 if (revealAdded) Navigate(inboxOnly: true, preferredId: lastAdded.Id);
-                else LoadResults();
+                else RefreshAfterWatch();
             }
         }
 
@@ -313,6 +313,7 @@ internal sealed partial class InboxViewModel : ObservableObject, IDisposable
     private void LoadResults(long? preferredId = null, bool append = false)
     {
         _searchTimer.Stop();
+        _watchResultsPending = false;
         bool hasQuery = !string.IsNullOrWhiteSpace(Query);
         Heading = hasQuery ? "Search results" : _activeTag ?? (_inboxOnly ? "Inbox" : "All documents");
         EmptyMessage = hasQuery || _activeTag is not null ? "No documents match." :
@@ -379,7 +380,11 @@ internal sealed partial class InboxViewModel : ObservableObject, IDisposable
         _searchTimer.Start();
     }
 
-    partial void OnDocumentsChanged(IReadOnlyList<DocumentSummary> value) => OnPropertyChanged(nameof(HasDocuments));
+    partial void OnDocumentsChanged(IReadOnlyList<DocumentSummary> value)
+    {
+        OnPropertyChanged(nameof(HasDocuments));
+        OnPropertyChanged(nameof(HasBatchCandidates));
+    }
     partial void OnTagsChanged(IReadOnlyList<string> value) => OnPropertyChanged(nameof(HasTags));
     partial void OnPreviewMessageChanged(string value) => OnPropertyChanged(nameof(HasPreviewMessage));
 
