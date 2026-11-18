@@ -36,6 +36,7 @@ jobs:
           gh run download "$archives" --pattern 'archive-*' --dir verified
           mkdir dist
           mv "verified/archive-win-x64/Plico-$version-win-x64.zip" dist/
+          mv "verified/archive-win-x64/Plico-$version-win-x64-setup.exe" dist/
           mv "verified/archive-osx-arm64/Plico-$version-osx-arm64.zip" dist/
           mv "verified/archive-linux-x64/Plico-$version-linux-x64.tar.gz" dist/
           (cd dist && sha256sum Plico-* > SHA256SUMS)
@@ -79,13 +80,23 @@ jobs:
           $PSNativeCommandUseErrorActionPreference = $true
           $version = $env:GITHUB_REF_NAME.TrimStart('v')
           $name = "Plico-$version-$env:PLICO_RUNTIME.$env:PLICO_EXTENSION"
-          gh release download $env:GITHUB_REF_NAME --pattern $name --pattern SHA256SUMS --dir incoming
-          $checksum = Get-Content -LiteralPath incoming/SHA256SUMS | Where-Object { $_.EndsWith("  $name") }
-          $archive = Join-Path incoming $name
-          if (-not $checksum -or (Get-FileHash -LiteralPath $archive).Hash -ne ($checksum -split ' +')[0]) {
-              throw "The released archive failed its SHA-256 check."
+          $setup = "Plico-$version-win-x64-setup.exe"
+          $names = @($name)
+          if ($IsWindows) { $names += $setup }
+          $downloadArguments = @('release', 'download', $env:GITHUB_REF_NAME, '--pattern', 'SHA256SUMS', '--dir', 'incoming')
+          foreach ($assetName in $names) { $downloadArguments += @('--pattern', $assetName) }
+          gh @downloadArguments
+          $checksums = Get-Content -LiteralPath incoming/SHA256SUMS
+          foreach ($assetName in $names) {
+              $checksum = $checksums | Where-Object { $_.EndsWith("  $assetName") }
+              if (-not $checksum -or (Get-FileHash -LiteralPath (Join-Path incoming $assetName)).Hash -ne ($checksum -split ' +')[0]) {
+                  throw "$assetName failed its SHA-256 check."
+              }
           }
-          ./scripts/Test-Archive.ps1 -Archive $archive -EvidenceDirectory artifacts/release
+          ./scripts/Test-Archive.ps1 -Archive (Join-Path incoming $name) -EvidenceDirectory artifacts/release/extracted
+          if ($IsWindows) {
+              ./scripts/Test-WindowsInstaller.ps1 -Installer (Join-Path incoming $setup) -EvidenceDirectory artifacts/release/setup
+          }
       - uses: actions/upload-artifact@v7
         if: always()
         with:

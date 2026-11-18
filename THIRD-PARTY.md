@@ -11,5 +11,6 @@ Release archives carry package notices under `licenses/`, in `Contents/Resources
 | PdfPig | Apache 2.0 | [PdfPig](https://github.com/UglyToad/PdfPig/tree/a7bb35662bbbf405efddad50aedc9bcdcf515afc) |
 | SQLite | Public domain | [SQLite copyright](https://sqlite.org/copyright.html) |
 | .NET runtime | MIT and component notices | [.NET Runtime](https://github.com/dotnet/runtime) |
+| NSIS 3.13 Windows setup | NSIS license | [NSIS license](https://nsis.sourceforge.io/License), [compiler release](https://nsis.sourceforge.io/Download) |
 
 The NAPS2 assemblies are separate modules. These assemblies may be replaced with API-compatible builds, including for debugging changes to the LGPL-covered modules. On macOS, a modified bundle can be re-signed with an ad-hoc signature.

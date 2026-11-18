@@ -25,4 +25,4 @@ Folder watch coalesces filesystem events by path and samples pending files until
 
 ## Scope decisions
 
-Keep one catalog per library. An additional database or search daemon would add setup and duplicate state. Keep release archives self-contained. Desktop installer integration can follow as a separate, testable slice.
+Keep one catalog per library. An additional database or search daemon would add setup and duplicate state. Keep release archives self-contained. Windows setup uses the same published application files as the portable archive. It generates its uninstall list from those files and removes directories only when empty.

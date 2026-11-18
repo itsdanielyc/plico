@@ -1,5 +1,13 @@
 # Changelog
 
+## [0.2.1] - 2026-11-18
+
+- Added a per-user Windows setup executable with a Start menu shortcut and an Installed apps entry.
+- Uninstall removes the application files and preserves the PDF library.
+- Portable downloads include a Windows ZIP, macOS app ZIP, and Linux tar.gz.
+
+The Windows setup and executable are unsigned. The macOS app is ad-hoc signed. See the README for first-launch and scanner setup.
+
 ## [0.2.0] - 2026-11-18
 
 - Watch a scanner output folder while Plico is open. New and updated PDFs, PNGs, and JPEGs enter the same OCR and duplicate detection workflow.

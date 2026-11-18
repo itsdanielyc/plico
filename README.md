@@ -8,11 +8,13 @@ Get Plico from [GitHub Releases](https://github.com/itsdanielyc/plico/releases).
 
 | Platform | Launch |
 | --- | --- |
-| Windows 11 x64 | Open `Plico/Plico.exe` from the extracted ZIP |
+| Windows 11 x64 | Run the setup executable and open **Plico** from Start. For the portable ZIP, open `Plico/Plico.exe` after extraction. |
 | macOS 26 on Apple silicon | Move `Plico.app` to Applications and open it |
 | Ubuntu 24.04 x64 | Run `./Plico/Plico` from the extracted tar.gz |
 
-The Windows executable is unsigned. Microsoft Defender SmartScreen may show “Windows protected your PC.” The Mac app is ad-hoc signed and Gatekeeper may require a per-app approval because the build has no notarization. [Microsoft SmartScreen](https://learn.microsoft.com/en-us/windows/apps/package-and-deploy/smartscreen-reputation) · [Apple Gatekeeper](https://support.apple.com/en-us/102445)
+The Windows executable and setup are unsigned. Microsoft Defender SmartScreen may show “Windows protected your PC.” The Mac app is ad-hoc signed and Gatekeeper may require a per-app approval because the build has no notarization. [Microsoft SmartScreen](https://learn.microsoft.com/en-us/windows/apps/package-and-deploy/smartscreen-reputation) · [Apple Gatekeeper](https://support.apple.com/en-us/102445)
+
+Windows setup installs for your user and adds **Plico** to the Start menu and **Installed apps**. Uninstall preserves the library folder and its contents.
 
 On Linux, Plico uses X11 or XWayland. A minimal Ubuntu installation may need `libx11-6`, `libice6`, `libsm6`, `libfontconfig1`, and `libicu74`.
 

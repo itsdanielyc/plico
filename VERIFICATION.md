@@ -13,6 +13,7 @@
 | 2026-11-18 | L7 | Published v0.1.1 archive checksums and repeat-drop journey passed on fresh runners | windows-2025, macos-26 arm64, ubuntu-24.04 x64 | [Release 44216879066](https://github.com/itsdanielyc/plico/actions/runs/44216879066), 3 of 3 green |
 | 2026-11-18 | L0–L1, L3–L4, L6 | Fifteen tests per platform. Watched file rename, rejection of the library output folder, cancellation during intake, and native import without resetting the current search. Negative checks exposed the inverted folder scope, a stop timeout without cancellation, and a disconnected start command. | windows-2025, macos-26 arm64, ubuntu-24.04 x64 | [CI 44217137601](https://github.com/itsdanielyc/plico/actions/runs/44217137601), 3 of 3 green |
 | 2026-11-18 | L7 | v0.2.0 candidate `4ecdaf2` passed the full native journey including file watch after clean extraction. Watch screenshots reviewed. | windows-2025, macos-26 arm64, ubuntu-24.04 x64 | [Archives 44217137450](https://github.com/itsdanielyc/plico/actions/runs/44217137450), 3 of 3 green |
+| 2026-11-18 | L7 | Published v0.2.0 assets passed SHA-256 verification and the watched-folder journey on fresh runners | windows-2025, macos-26 arm64, ubuntu-24.04 x64 | [Release 44217494049](https://github.com/itsdanielyc/plico/actions/runs/44217494049), 3 of 3 green |
 
 ## Unverified
 

@@ -1,6 +1,7 @@
 param(
     [Parameter(Mandatory)][ValidateSet('win-x64', 'osx-arm64', 'linux-x64')][string]$Runtime,
-    [string]$OutputDirectory = 'artifacts/archives'
+    [string]$OutputDirectory = 'artifacts/archives',
+    [string]$WindowsInstallerCompiler
 )
 
 $ErrorActionPreference = 'Stop'
@@ -41,6 +42,9 @@ try {
         tar -czf (Join-Path $output "Plico-$version-$Runtime.tar.gz") -C $stage.FullName Plico
     } else {
         Compress-Archive -Force -LiteralPath $publish -DestinationPath (Join-Path $output "Plico-$version-$Runtime.zip")
+        if ($WindowsInstallerCompiler) {
+            & (Join-Path $PSScriptRoot 'Package-WindowsInstaller.ps1') -Compiler $WindowsInstallerCompiler -PayloadDirectory $publish -OutputDirectory $output -Version $version
+        }
     }
 } finally {
     $systemTemp = [IO.Path]::TrimEndingDirectorySeparator([IO.Path]::GetFullPath([IO.Path]::GetTempPath()))

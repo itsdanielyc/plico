@@ -7,7 +7,7 @@
 | L2/L3 | xUnit and temporary disk libraries | Import and catalog contract, FTS query, persistence and recovery |
 | L4/L5 | Avalonia Headless and native screenshots | Input and selection behaviour, control presence and usable geometry, review screenshots |
 | L6 | Native window plus a fixture picker | App launches, performs import, searches persisted OCR and changes review state |
-| L7 | Extract the exact release archive and run the native journey | Portable install, launch, and cleanup on each Tier 1 target |
+| L7 | Extract each exact release archive and run the native journey. On Windows, also run setup and uninstall in a clean user profile. | Portable launch on each Tier 1 target and Windows setup, Start menu entry, installed launch, and library preservation after removal |
 
 ## Critical journeys
 
