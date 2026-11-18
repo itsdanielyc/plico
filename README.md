@@ -24,7 +24,7 @@ On Linux, Plico uses X11 or XWayland. The Debian package declares its runtime li
 2. Select a document to preview it and add tags. **Mark reviewed** takes it out of the Inbox.
 3. Search by name or document text, including documents you already reviewed. Choose a tag to narrow the results.
 
-Use **Edit title** in the preview to change the document's catalog title. Search covers both the title and filename.
+Use **Edit title** in the preview to change the document's catalog title. Search covers both the title and filename. Select the PDF's filename to open its containing folder.
 
 The library starts under Documents/Plico. Select the library name in the sidebar to choose another folder. **Show PDF folder** opens the `PDFs/` directory. **Refresh index** picks up PDFs that you add, edit, or remove on disk. To move or back up a library with its tags, close Plico and copy the entire directory, including `.plico/`. Digital PDFs with text on every page are copied unchanged.
 

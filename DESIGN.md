@@ -10,4 +10,6 @@ Folder watch uses the Library rail and shows the selected folder beside the stop
 
 The scan picker offers address entry alongside discovery. Connecting shows the device model and selects it so the same paper controls and Scan to inbox action apply.
 
+The preview shows the PDF path below its catalog title. The path opens the document's containing folder in the file manager.
+
 Keep labels present on actions. Use a polite live region for processing status. Keep the PDF accessible by keyboard and show a visible response for unavailable previews.

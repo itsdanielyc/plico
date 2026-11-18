@@ -187,4 +187,42 @@ public sealed class InboxWindowTests
             dialog.Close();
         }
     }
+
+    [AvaloniaFact]
+    public async Task DocumentPathOpensTheContainingFolderForANestedPdf()
+    {
+        using var temporary = new TemporaryLibrary();
+        string expectedFolder;
+        using (var library = InboxLibrary.Open(temporary.Path))
+        {
+            expectedFolder = Directory.CreateDirectory(Path.Combine(library.PdfDirectory, "Home receipts")).FullName;
+            string fixture = Path.Combine(AppContext.BaseDirectory, "fixtures", "Lease Renewal.pdf");
+            File.Copy(fixture, Path.Combine(expectedFolder, "Lease.pdf"));
+            library.Refresh(TestContext.Current.CancellationToken);
+        }
+        var dialogs = new FixtureDialogs();
+        using var model = new InboxViewModel(dialogs);
+        model.InitializeLibrary(() => temporary.Path);
+        var window = new MainWindow { DataContext = model };
+        window.Show();
+        try
+        {
+            using var previewTimeout = CancellationTokenSource.CreateLinkedTokenSource(TestContext.Current.CancellationToken);
+            previewTimeout.CancelAfter(TimeSpan.FromSeconds(6));
+            while (model.Preview is null && !model.HasPreviewMessage)
+            {
+                await Task.Delay(TimeSpan.FromMilliseconds(25), previewTimeout.Token);
+            }
+            var location = Assert.IsType<Button>(window.FindControl<Button>("PdfLocationButton"));
+            Assert.True(location.IsVisible);
+            Assert.NotNull(location.Command);
+            location.Command.Execute(null);
+
+            Assert.Equal(expectedFolder, dialogs.LastOpenedPath);
+        }
+        finally
+        {
+            window.Close();
+        }
+    }
 }

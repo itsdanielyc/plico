@@ -22,11 +22,12 @@ public sealed class App : Application
             {
                 var testLibrary = Directory.CreateTempSubdirectory("plico-verify-");
                 var incoming = Directory.CreateDirectory(Path.Combine(testLibrary.FullName, "Incoming"));
-                var model = new InboxViewModel(new FixtureDialogs(fixture)
+                var dialogs = new FixtureDialogs(fixture)
                 {
                     FolderPath = incoming.FullName,
                     EditedTitle = NativeVerification.EditedDocumentTitle
-                });
+                };
+                var model = new InboxViewModel(dialogs);
                 model.InitializeLibrary(() => testLibrary.FullName);
                 window.DataContext = model;
                 desktop.Exit += (_, _) =>
@@ -35,7 +36,7 @@ public sealed class App : Application
                     testLibrary.Delete(recursive: true);
                 };
                 window.Opened += (_, _) => Dispatcher.UIThread.Post(
-                    () => _ = NativeVerification.RunAsync(desktop, window, model, evidenceDirectory, fixture),
+                    () => _ = NativeVerification.RunAsync(desktop, window, model, dialogs, evidenceDirectory, fixture),
                     DispatcherPriority.Background);
             }
             else

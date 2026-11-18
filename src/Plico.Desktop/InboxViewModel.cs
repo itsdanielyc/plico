@@ -151,6 +151,14 @@ internal sealed partial class InboxViewModel : ObservableObject, IDisposable
     }
 
     [RelayCommand]
+    private void OpenDocumentFolder()
+    {
+        if (SelectedDocument is not { } document) return;
+        OpenPath(() => Path.GetDirectoryName(RequireLibrary().ResolvePdf(document)) ??
+            throw new InvalidDataException("The PDF has no containing folder."));
+    }
+
+    [RelayCommand]
     private Task EditDocumentTitleAsync() => RunOperationAsync("Edit the document title…", async token =>
     {
         if (SelectedDocument is not { } document) return;

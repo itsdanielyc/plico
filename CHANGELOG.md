@@ -1,5 +1,9 @@
 # Changelog
 
+## [0.4.1] - 2026-11-18
+
+- Select a PDF's filename in the preview to open its containing folder. This works for documents you organize into subfolders.
+
 ## [0.4.0] - 2026-11-18
 
 - Open the macOS disk image and drag Plico into Applications.

@@ -49,6 +49,17 @@
             <Setter Property="Foreground" Value="#5C685D" />
             <Setter Property="FontSize" Value="12" />
         </Style>
+        <Style Selector="Button.document-location">
+            <Setter Property="Padding" Value="0,1" />
+            <Setter Property="Background" Value="Transparent" />
+            <Setter Property="BorderThickness" Value="0" />
+            <Setter Property="HorizontalAlignment" Value="Stretch" />
+            <Setter Property="HorizontalContentAlignment" Value="Left" />
+            <Setter Property="Cursor" Value="Hand" />
+        </Style>
+        <Style Selector="Button.document-location:pointerover /template/ ContentPresenter">
+            <Setter Property="Background" Value="#EAF0E5" />
+        </Style>
     </Window.Styles>
 
     <Grid ColumnDefinitions="204,*">
@@ -176,7 +187,11 @@
                                 <Grid ColumnDefinitions="*,Auto" ColumnSpacing="10">
                                     <StackPanel Spacing="4">
                                         <TextBlock Text="{Binding SelectedDocument.Title}" TextTrimming="CharacterEllipsis" FontSize="17" FontWeight="SemiBold" />
-                                        <TextBlock Text="{Binding SelectedDocument.RelativePath}" Classes="muted" TextTrimming="CharacterEllipsis" />
+                                        <Button x:Name="PdfLocationButton" Classes="document-location" Command="{Binding OpenDocumentFolderCommand}"
+                                                ToolTip.Tip="Open containing folder" AutomationProperties.Name="Open PDF's containing folder">
+                                            <TextBlock Text="{Binding SelectedDocument.RelativePath}" Foreground="#386447" FontSize="12"
+                                                       TextDecorations="Underline" TextTrimming="CharacterEllipsis" />
+                                        </Button>
                                     </StackPanel>
                                     <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="5" VerticalAlignment="Top">
                                         <Button x:Name="EditTitleButton" Classes="secondary" Content="Edit title" Command="{Binding EditDocumentTitleCommand}"

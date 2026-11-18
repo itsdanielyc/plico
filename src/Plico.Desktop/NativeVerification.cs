@@ -19,7 +19,8 @@ internal static class NativeVerification
     private static readonly TimeSpan StateCheckInterval = TimeSpan.FromMilliseconds(30);
 
     internal static async Task RunAsync(
-        IClassicDesktopStyleApplicationLifetime desktop, MainWindow window, InboxViewModel model, string evidenceDirectory, string fixture)
+        IClassicDesktopStyleApplicationLifetime desktop, MainWindow window, InboxViewModel model,
+        FixtureDialogs dialogs, string evidenceDirectory, string fixture)
     {
         try
         {
@@ -48,10 +49,11 @@ internal static class NativeVerification
             await VerifyDropAsync(window, model, fixture, evidenceDirectory);
             await VerifyWatchedFolderAsync(window, model, fixture, evidenceDirectory);
             await VerifyTitleEditorAsync(window, model, evidenceDirectory);
+            VerifyDocumentLocation(window, model, dialogs);
             await VerifyScannerDialogAsync(window, evidenceDirectory);
 
             File.WriteAllText(Path.Combine(evidenceDirectory, "passed.txt"),
-                "Native window completed OCR, review and search, duplicate drop, folder watch, title edit, and scanner settings display.");
+                "Native window completed OCR, review and search, duplicate drop, folder watch, title edit, PDF folder selection, and scanner settings display.");
             desktop.Shutdown(0);
         }
         catch (Exception error)
@@ -59,6 +61,15 @@ internal static class NativeVerification
             File.WriteAllText(Path.Combine(evidenceDirectory, "error.txt"), error.ToString());
             desktop.Shutdown(1);
         }
+    }
+
+    private static void VerifyDocumentLocation(MainWindow window, InboxViewModel model, FixtureDialogs dialogs)
+    {
+        var location = Control<Button>(window, "PdfLocationButton");
+        Require(location.IsVisible && location.IsEnabled && location.Command is not null, "The document path did not offer its folder.");
+        location.Command!.Execute(null);
+        Require(dialogs.LastOpenedPath == Path.Combine(model.LibraryPath, "PDFs") && Directory.Exists(dialogs.LastOpenedPath),
+            "The document path did not open the PDF's actual containing folder.");
     }
 
     private static async Task VerifyTitleEditorAsync(MainWindow window, InboxViewModel model, string directory)
@@ -213,9 +224,10 @@ internal sealed class FixtureDialogs(params string[] documents) : IWorkspaceDial
 {
     internal string? FolderPath { get; init; }
     internal string? EditedTitle { get; init; }
+    internal string? LastOpenedPath { get; private set; }
     public Task<IReadOnlyList<string>> PickDocumentsAsync() => Task.FromResult<IReadOnlyList<string>>(documents);
     public Task<string?> PickFolderAsync(string title) => Task.FromResult(FolderPath);
     public Task<ScanRequest?> PickScannerAsync() => Task.FromResult<ScanRequest?>(null);
     public Task<string?> EditTitleAsync(string currentTitle) => Task.FromResult(EditedTitle);
-    public void OpenPath(string path) => throw new InvalidOperationException("The verification fixture does not launch other apps.");
+    public void OpenPath(string path) => LastOpenedPath = path;
 }

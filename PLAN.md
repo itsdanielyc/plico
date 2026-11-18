@@ -14,6 +14,6 @@
 | 9 | Remember scanner addresses | Directly connected scanners reopen without discovery and can be removed from settings; unavailable settings leave capture usable | L1, L3, L4 | Done |
 | 10 | Document titles | Edited titles and original filenames remain searchable; tags and review state survive refresh and reopen | L1, L3, L4, L6 | Done |
 | 11 | macOS and Ubuntu packages | A macOS disk image mounts and copies its app, and Ubuntu installs from a Debian package. Both complete the native journey. Package removal preserves the library. | L7 | Done |
-| 12 | Open a document's folder | Selecting the path opens the actual containing folder, including when a file lives in a subfolder of the library | L3, L4, L6 | Planned |
+| 12 | Open a document's folder | Selecting the path opens the actual containing folder, including when a file lives in a subfolder of the library | L3, L4, L6 | In progress |
 
 The initial release is followed by focused improvements and fresh evidence.
