@@ -33,21 +33,38 @@ internal static class PdfPreviewRenderer
         var importer = new PdfImporter(context);
         var pages = pageSnapshot is null ? importer.Import(path, options, cancellationToken)
             : importer.Import(pageSnapshot, options, cancellationToken);
-        await foreach (var page in pages.WithCancellation(cancellationToken).ConfigureAwait(false))
-        {
-            using (page)
-            {
-                if (page.PostProcessingData.Thumbnail is not { } thumbnail) continue;
-                cancellationToken.ThrowIfCancellationRequested();
-                if (rotation == 0) return thumbnail.SaveToMemoryStream(ImageFileFormat.Png);
-
-                using var snapshotThumbnail = thumbnail.Clone();
-                using var oriented = snapshotThumbnail.PerformTransform(new RotationTransform(rotation));
-                return oriented.SaveToMemoryStream(ImageFileFormat.Png);
-            }
-        }
+        using var preview = await ReadPreviewPageAsync(pages, cancellationToken).ConfigureAwait(false);
         cancellationToken.ThrowIfCancellationRequested();
-        throw new InvalidDataException($"Page {pageNumber} could not be previewed.");
+        if (preview?.PostProcessingData.Thumbnail is not { } thumbnail)
+        {
+            throw new InvalidDataException($"Page {pageNumber} could not be previewed.");
+        }
+        if (rotation == 0) return thumbnail.SaveToMemoryStream(ImageFileFormat.Png);
+
+        using var snapshotThumbnail = thumbnail.Clone();
+        using var oriented = snapshotThumbnail.PerformTransform(new RotationTransform(rotation));
+        return oriented.SaveToMemoryStream(ImageFileFormat.Png);
+    }
+
+    private static async Task<ProcessedImage?> ReadPreviewPageAsync(IAsyncEnumerable<ProcessedImage> pages,
+        CancellationToken cancellationToken)
+    {
+        ProcessedImage? preview = null;
+        try
+        {
+            // NAPS2 delivers the page before its producer closes the PDF. Wait for the producer to finish before moving files.
+            await foreach (var page in pages.WithCancellation(cancellationToken).ConfigureAwait(false))
+            {
+                if (preview is null && page.PostProcessingData.Thumbnail is not null) preview = page;
+                else page.Dispose();
+            }
+            return preview;
+        }
+        catch
+        {
+            preview?.Dispose();
+            throw;
+        }
     }
 
     private static int ReadRotation(string path, int pageNumber) => DocumentProcessor.WithReadablePdf(path, pdf =>

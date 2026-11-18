@@ -26,7 +26,7 @@ public sealed partial class InboxLibrary
             var target = PrepareMoveTarget(folder, cancellationToken);
             var files = _catalog.ReadSelectedFiles([documentId]);
             var source = ResolveSelectedPdfSources(files, cancellationToken, target.PdfRoot).Single();
-            MovePreparedPdf(files.Single(), source, target, null, cancellationToken);
+            await MovePreparedPdfAsync(files.Single(), source, target, null, cancellationToken).ConfigureAwait(false);
             return _catalog.Get(documentId);
         }
         finally
@@ -62,7 +62,7 @@ public sealed partial class InboxLibrary
                 var file = files[index];
                 try
                 {
-                    if (MovePreparedPdf(file, sources[index], target, nextSuffixes, cancellationToken)) moved++;
+                    if (await MovePreparedPdfAsync(file, sources[index], target, nextSuffixes, cancellationToken).ConfigureAwait(false)) moved++;
                     else alreadyInFolder++;
                 }
                 catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
@@ -94,7 +94,7 @@ public sealed partial class InboxLibrary
         return new MoveTarget(pdfRoot, targetFolder);
     }
 
-    private bool MovePreparedPdf(CatalogFileReference file, SelectedPdfSource source, MoveTarget target,
+    private async Task<bool> MovePreparedPdfAsync(CatalogFileReference file, SelectedPdfSource source, MoveTarget target,
         Dictionary<string, int>? nextSuffixes, CancellationToken cancellationToken)
     {
         cancellationToken.ThrowIfCancellationRequested();
@@ -104,25 +104,37 @@ public sealed partial class InboxLibrary
 
         var destination = ChooseMoveName(target, Path.GetFileName(source.Path), nextSuffixes, cancellationToken);
         var fingerprint = FingerprintPdf(source.Path, cancellationToken);
-        VerifySelectedPdfSource(source);
         var move = new PdfMoveIntent(file.Id, file.RelativePath, destination.RelativePath, fingerprint);
-        cancellationToken.ThrowIfCancellationRequested();
+        await _pdfFileAccess.WaitAsync(cancellationToken).ConfigureAwait(false);
+        try
+        {
+            VerifySelectedPdfSource(source);
+            cancellationToken.ThrowIfCancellationRequested();
+            CommitPdfMove(source, destination.Path, move);
+        }
+        finally
+        {
+            _pdfFileAccess.Release();
+        }
+        return true;
+    }
 
+    private void CommitPdfMove(SelectedPdfSource source, string destination, PdfMoveIntent move)
+    {
         // The committed intent identifies the exact catalog row if the process exits after the filesystem move.
         _catalog.RecordPdfMove(move);
-        File.Move(source.Path, destination.Path, overwrite: false);
+        File.Move(source.Path, destination, overwrite: false);
         if (ReadMoveAttributes(source.Path) is not null)
         {
             throw new IOException("The source PDF is still at its original location. Close any viewer and try the move again.");
         }
-        var movedVersion = FileVersion.Read(destination.Path);
-        VerifySelectedPdfSource(new SelectedPdfSource(destination.Path, movedVersion));
-        if (movedVersion != source.Version && !fingerprint.AsSpan().SequenceEqual(FingerprintPdf(destination.Path, CancellationToken.None)))
+        var movedVersion = FileVersion.Read(destination);
+        VerifySelectedPdfSource(new SelectedPdfSource(destination, movedVersion));
+        if (movedVersion != source.Version && !move.Fingerprint.AsSpan().SequenceEqual(FingerprintPdf(destination, CancellationToken.None)))
         {
             throw new IOException("The PDF changed during the move. Refresh the index after saving finishes.");
         }
-        _catalog.Relocate(file.Id, destination.RelativePath, Path.GetFileNameWithoutExtension(destination.Path), movedVersion, move);
-        return true;
+        _catalog.Relocate(move.DocumentId, move.DestinationRelativePath, Path.GetFileNameWithoutExtension(destination), movedVersion, move);
     }
 
     private (string Path, string RelativePath) ChooseMoveName(MoveTarget target, string filename,

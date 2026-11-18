@@ -29,6 +29,8 @@ public sealed partial class InboxLibrary : IDisposable
     private readonly FileStream _libraryLease;
     private readonly DocumentProcessor _processor = new(Path.Combine(AppContext.BaseDirectory, "tessdata"));
     private readonly SemaphoreSlim _fileOperations = new(1);
+    // Windows PDF readers can deny a rename. The managed gate also lets an abandoned preview finish after window close.
+    private readonly SemaphoreSlim _pdfFileAccess = new(1);
 
     private InboxLibrary(string root, string pdfDirectory, string metadataDirectory, FileStream lease, LibraryCatalog catalog)
     {
@@ -118,12 +120,20 @@ public sealed partial class InboxLibrary : IDisposable
         var search = SearchTerms.Compile(query);
         if (!search.IsValid || search.FullTextExpression.Length == 0) return null;
 
-        string path = ResolvePdf(document);
-        var version = FileVersion.Read(path);
-        int? page = PdfPageSearch.FindMatch(path, search.FullTextExpression, anchorPage, direction, cancellationToken);
-        cancellationToken.ThrowIfCancellationRequested();
-        EnsureCurrentFile(path, version);
-        return page;
+        _pdfFileAccess.Wait(cancellationToken);
+        try
+        {
+            string path = ResolvePdf(document);
+            var version = FileVersion.Read(path);
+            int? page = PdfPageSearch.FindMatch(path, search.FullTextExpression, anchorPage, direction, cancellationToken);
+            cancellationToken.ThrowIfCancellationRequested();
+            EnsureCurrentFile(path, version);
+            return page;
+        }
+        finally
+        {
+            _pdfFileAccess.Release();
+        }
     }
 
     /// <summary>Lists the tags used by PDFs currently in the library.</summary>
@@ -207,7 +217,21 @@ public sealed partial class InboxLibrary : IDisposable
     {
         ArgumentOutOfRangeException.ThrowIfLessThan(pageNumber, 1);
         ArgumentOutOfRangeException.ThrowIfGreaterThan(pageNumber, document.PageCount);
-        return PdfPreviewRenderer.RenderPageAsync(ResolvePdf(document), pageNumber, cancellationToken);
+        return RenderPageAsync(document, pageNumber, PdfPreviewRenderer.RenderPageAsync, cancellationToken);
+    }
+
+    internal async Task<MemoryStream> RenderPageAsync(DocumentSummary document, int pageNumber,
+        Func<string, int, CancellationToken, Task<MemoryStream>> render, CancellationToken cancellationToken)
+    {
+        await _pdfFileAccess.WaitAsync(cancellationToken).ConfigureAwait(false);
+        try
+        {
+            return await render(ResolvePdf(document), pageNumber, cancellationToken).ConfigureAwait(false);
+        }
+        finally
+        {
+            _pdfFileAccess.Release();
+        }
     }
 
     /// <summary>Reconciles copied, edited, moved, and missing PDFs with the index.</summary>

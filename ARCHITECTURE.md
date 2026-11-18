@@ -41,6 +41,8 @@ Schema v7 records a pending move with the catalog ID, two relative paths, and th
 
 Batch filing checks the selected paths and file stamps before the first move. Under one library lease it commits each move through the same journal and retains the next numbered filename for each colliding name. Cancellation or an error stops the batch and reports completed moves and remaining work.
 
+Plico waits for its preview and matching-page readers to release their file handles before journaling and moving a PDF. The preview consumes the rendering stream through completion so PDFium closes its input file. The move checks the source stamp again after waiting.
+
 Backup copies the PDF tree and takes an online SQLite snapshot under the library's file-operation lease. It validates the file inventory and publishes the staged backup by an atomic directory move inside the selected destination. [Microsoft.Data.Sqlite online backup](https://learn.microsoft.com/en-us/dotnet/standard/data/sqlite/backup)
 
 Selected export reads the chosen catalog paths and file stamps under the same lease. It stages the PDF bytes under the chosen destination, assigns distinct portable filenames, and checks the sources again before publishing the folder. [Directory.Move](https://learn.microsoft.com/en-us/dotnet/api/system.io.directory.move?view=net-10.0)

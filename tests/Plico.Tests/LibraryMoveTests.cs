@@ -9,6 +9,44 @@ public sealed class LibraryMoveTests
 {
     private static string Fixture => Path.Combine(AppContext.BaseDirectory, "fixtures", "Lease Renewal.pdf");
 
+    [Theory]
+    [InlineData(false)]
+    [InlineData(true)]
+    public async Task FilingWaitsForThePreviewReaderToReleaseThePdf(bool batchMove)
+    {
+        var token = TestContext.Current.CancellationToken;
+        using var temporary = new TemporaryLibrary();
+        using var library = InboxLibrary.Open(temporary.Path);
+        var document = await library.ImportAsync(Fixture, token);
+        var other = await library.ImportAsync(Path.Combine(AppContext.BaseDirectory, "fixtures", "Match Ledger.pdf"), token);
+        string original = library.ResolvePdf(document);
+        string folder = Directory.CreateDirectory(Path.Combine(library.PdfDirectory, "Filed")).FullName;
+        var opened = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+        var release = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+        var previewTask = library.RenderPageAsync(document, 1, async (path, _, cancellationToken) =>
+        {
+            using var reader = File.OpenRead(path);
+            opened.SetResult();
+            await release.Task.WaitAsync(cancellationToken);
+            return new MemoryStream();
+        }, token);
+        await opened.Task.WaitAsync(token);
+        Task move = batchMove
+            ? library.MoveSelectedPdfsAsync([document.Id, other.Id], folder, cancellationToken: token)
+            : library.MovePdfAsync(document.Id, folder, token);
+        bool waited = !move.IsCompleted;
+        release.SetResult();
+        using var preview = await previewTask;
+        var error = await Record.ExceptionAsync(() => move);
+
+        Assert.True(waited, "Filing reached the open PDF before the preview released its reader.");
+        Assert.Null(error);
+        Assert.False(File.Exists(original));
+        var moved = library.Find(new DocumentFilter(), token).Items.Single(item => item.Id == document.Id);
+        Assert.StartsWith("Filed/", moved.RelativePath);
+        Assert.True(File.Exists(library.ResolvePdf(moved)));
+    }
+
     [Fact]
     public async Task MovePdfUsesAnAvailableNameAndKeepsTheCatalogRecord()
     {

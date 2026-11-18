@@ -43,6 +43,7 @@
 30. Extract nonconsecutive and overlapping ranges from a PDF. Verify original order, selected embedded text, source bytes and tags, validation of the title and ranges, cancellation, and a stale page count. Find an extracted page by its OCR match in the native app (L1, L3, L4 and L6).
 31. Rotate a selected receipt page and find it by its OCR text. Confirm that the copy preserves its page order and tags and that the reverse turn restores the page. Check the actual preview pixels for a half turn and a square scan with an invisible text layer. Exercise a cancelled copy and a stale page count (L3, L4 and L6).
 32. Interrupt the loopback feeder after two pages. Check the count before OCR, save the available pages, and search for the receipt. Discard and cancel to check staging cleanup. A jam before the first page reports the scanner error (L3, L4 and L6).
+33. Hold a file reader during a preview, start a single or batch move, then release the reader. Verify that the move waits and updates the original catalog entry (L3 and L6).
 
 Run `dotnet test Plico.slnx -c Release` for the fast suite. Run the native harness from `keel.json` for installed-platform evidence. Visual review starts with per-OS captures and geometry checks. Add pixel baselines when repeatable runner captures justify the maintenance.
 
