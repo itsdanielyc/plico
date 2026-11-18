@@ -71,7 +71,8 @@ internal sealed partial class LibraryCatalog
             WHERE ocr_copy_language IS NOT NULL;
         """;
     private static readonly string[] Migrations =
-        [Schema, FingerprintMigration, DisplayTitleMigration, PdfFingerprintMigration, OcrCopyMigration, AddedDateIndexMigration, PdfMoveMigration];
+        [Schema, FingerprintMigration, DisplayTitleMigration, PdfFingerprintMigration, OcrCopyMigration, AddedDateIndexMigration,
+            PdfMoveMigration, SavedSearchMigration];
 
     private readonly string _connectionString;
 

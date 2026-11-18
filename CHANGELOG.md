@@ -31,6 +31,7 @@
 - Save completed pages as a partial searchable PDF when a scanner fails during capture.
 - Wait for Plico’s own PDF readers before filing a document, so an active preview can finish on Windows.
 - Reduce download and installation size by keeping debugger symbols out of release packages.
+- Save named searches with their sidebar tag and sort order. Catalog version 8 carries these shortcuts into library backups.
 
 ## [0.15.0] - 2026-11-18
 

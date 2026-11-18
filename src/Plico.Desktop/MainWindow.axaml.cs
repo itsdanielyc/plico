@@ -54,6 +54,14 @@ public sealed partial class MainWindow : Window
         if (sender is Button { DataContext: string tag }) ViewModel?.FilterByTag(tag);
     }
 
+    private async void OpenSavedSearch_Click(object? sender, RoutedEventArgs e)
+    {
+        if (ViewModel is { } model && sender is Button { DataContext: SavedSearch search })
+        {
+            await model.OpenSavedSearchAsync(search);
+        }
+    }
+
     private void RemoveTag_Click(object? sender, RoutedEventArgs e)
     {
         if (sender is Button { DataContext: string tag }) ViewModel?.RemoveTag(tag);

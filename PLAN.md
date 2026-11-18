@@ -56,5 +56,6 @@
 | 51 | Recover pages after a scanner error | After delivering pages, an interrupted job offers to save them as a searchable partial PDF. Discard, cancellation, and an error before the first page publish nothing. | L0, L3, L4, L6 | Tested locally on Windows x64 and Ubuntu x64 (L0, L3, L4, L6). Hosted matrix pending. |
 | 52 | File PDFs while previews are loading | A single or batch move waits for Plico’s reader before renaming the file, then verifies the source and completes the journaled move. | L0, L3, L6 | Tested locally on Windows x64 and Ubuntu x64 (L0, L3, L6). Hosted matrix pending. |
 | 53 | Reduce release package size | Portable and setup bundles exclude debugger symbols, carry the same runtime files in both formats, and complete the native app checks. | L6, L7 | Tested the Windows x64 ZIP, both Windows setup payloads, and the Ubuntu x64 and emulated ARM64 tarballs and DEBs. Hosted matrix pending. |
+| 54 | Save a recurring search | A named shortcut reruns the stored query, sidebar tag, and sort. The editor updates or removes a shortcut. Tag changes and backups keep the saved scope. | L0, L3, L4, L6 | Verification in progress. |
 
 The initial release is followed by focused improvements and fresh evidence.

@@ -49,6 +49,7 @@ internal sealed partial class LibraryCatalog
             INSERT INTO tags (tag_key, label) VALUES ($destinationKey, $label) ON CONFLICT(tag_key) DO NOTHING;
             INSERT OR IGNORE INTO document_tags (document_id, tag_key)
             SELECT document_id, $destinationKey FROM document_tags WHERE tag_key = $sourceKey;
+            UPDATE saved_searches SET scope_tag_key = $destinationKey WHERE scope_tag_key = $sourceKey;
             DELETE FROM document_tags WHERE tag_key = $sourceKey;
             DELETE FROM tags WHERE tag_key = $sourceKey;
             """;

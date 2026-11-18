@@ -40,6 +40,8 @@ Use `added:2026`, `added:2026-11`, or `added:2026-11-18` to filter by year, mont
 
 Use `folder:"Filed/Tax Forms"` to search that folder and its subfolders. Use `/` and the spelling and case shown in Plico’s file path. `folder:.` matches PDFs directly in `PDFs/`. Add text, tags, or dates to the same query.
 
+Choose **Save search…** to name the current query. The shortcut appears under **Saved searches** and restores the query, the selected sidebar tag, and the sort order. Open a shortcut and choose **Edit search…** to update it or remove it. The library backup includes saved searches.
+
 Select a sidebar tag and choose **Rename…** to change its label across the library. Enter an existing tag name and choose **Merge tags** to put their documents under that tag.
 
 Start typing in either tag field to reuse a tag from the current library. Use the Down Arrow and Enter to fill in a suggestion, then Enter again to apply it. You can also type a new label.
@@ -76,7 +78,7 @@ When a scan copied into `PDFs/` needs OCR, choose **Create searchable copy** in 
 
 To correct a PDF’s OCR, choose the language in **OCR** and select **Create OCR copy**. Plico renders the visible pages and writes fresh searchable text into a separate PDF with the source tags.
 
-Plico v0.16.0 upgrades the library catalog to version 7. Use a build with version 7 support to open an upgraded library.
+Plico v0.16.0 upgrades the library catalog to version 8. Use a build with version 8 support to open an upgraded library.
 
 To make a copy while Plico is open, choose **Back up library…** and select a destination outside the current library. Plico creates a dated folder with the PDFs and their catalog. **Open backup** shows that folder in the file manager. Choose the folder as a library to reopen it in Plico.
 

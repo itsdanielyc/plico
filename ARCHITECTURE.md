@@ -39,6 +39,8 @@ Schema v6 indexes the added timestamps of present PDFs. An `added:` filter bound
 
 Schema v7 records a pending move with the catalog ID, two relative paths, and the source SHA-256. After Plico moves the file, a SQLite transaction updates the catalog location and clears the move record. After an interruption, the pending move identifies the old catalog record even among identical PDFs. Recovery verifies the destination bytes before updating that record. [.NET file moves](https://learn.microsoft.com/en-us/dotnet/api/system.io.file.move)
 
+Schema v8 stores saved query text, the selected sidebar tag key, and the result order. A normalized name index keeps names unique. Each shortcut reruns its query against current documents. The sidebar tag follows a rename or merge through the same transaction as the document links. The catalog snapshot carries saved searches into a backup.
+
 Batch filing checks the selected paths and file stamps before the first move. Under one library lease it commits each move through the same journal and retains the next numbered filename for each colliding name. Cancellation or an error stops the batch and reports completed moves and remaining work.
 
 Plico waits for its preview and matching-page readers to release their file handles before journaling and moving a PDF. The preview consumes the rendering stream through completion so PDFium closes its input file. The move checks the source stamp again after waiting.

@@ -94,6 +94,9 @@ internal sealed partial class InboxViewModel
 
     partial void OnQueryChanged(string value)
     {
+        OnPropertyChanged(nameof(ShowSaveSearch));
+        if (_restoringSavedSearch) return;
+        ActiveSavedSearch = null;
         ResetPageMatchNavigation();
         CancelTypedSearch();
         OnPropertyChanged(nameof(HasPageMatchAction));
@@ -111,7 +114,12 @@ internal sealed partial class InboxViewModel
 
     private void CancelPageMatchSearch() => _pageMatchCancellation?.Cancel();
 
-    partial void OnSortOptionChanged(SortChoice? value) => LoadResults();
+    partial void OnSortOptionChanged(SortChoice? value)
+    {
+        if (_restoringSavedSearch) return;
+        ActiveSavedSearch = null;
+        LoadResults();
+    }
 
     private void CancelTypedSearch()
     {
@@ -181,7 +189,7 @@ internal sealed partial class InboxViewModel
     {
         _watchResultsPending = false;
         bool hasQuery = !string.IsNullOrWhiteSpace(filter.Query);
-        Heading = hasQuery ? "Search results" : filter.Tag ?? (filter.InboxOnly ? "Inbox" : "All documents");
+        Heading = ActiveSavedSearch?.Name ?? (hasQuery ? "Search results" : filter.Tag ?? (filter.InboxOnly ? "Inbox" : "All documents"));
         EmptyMessage = hasQuery || filter.Tag is not null ? "No documents match." :
             filter.InboxOnly ? "Add a file to start your inbox." : "This library has no documents yet.";
         OnPropertyChanged(nameof(InboxSelected));

@@ -4,7 +4,7 @@ namespace Plico.Core;
 public enum OcrLanguage { English, French, German, Spanish }
 
 /// <summary>The order applied to all matching records before paging.</summary>
-public enum DocumentSort { Automatic, Newest, Title }
+public enum DocumentSort { Automatic = 0, Newest = 1, Title = 2 }
 
 /// <summary>The direction to look for another matching page from the current one.</summary>
 public enum PageMatchDirection { Forward, Backward }
@@ -30,6 +30,9 @@ public sealed record DocumentSummary(
 
 /// <summary>Results in display order and whether there are more at the next offset.</summary>
 public sealed record DocumentPage(IReadOnlyList<DocumentSummary> Items, bool HasMore);
+
+/// <summary>A named query with an optional sidebar tag and the order used when it opens.</summary>
+public sealed record SavedSearch(long Id, string Name, string Query, string? ScopeTag, DocumentSort Sort);
 
 /// <summary>Newly indexed files, recovery of moved PDFs, and files that could not be read.</summary>
 public sealed record RefreshResult(int Indexed, IReadOnlyList<string> Warnings, int Relocated = 0);

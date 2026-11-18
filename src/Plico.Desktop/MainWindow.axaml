@@ -94,29 +94,44 @@
                     <Button x:Name="AllDocumentsButton" Classes="rail" Classes.current="{Binding AllSelected}"
                             Command="{Binding ShowAllCommand}" Content="All documents" />
                 </StackPanel>
-                <Grid Grid.Row="2" RowDefinitions="Auto,*" RowSpacing="6" IsVisible="{Binding HasTags}">
-                    <Grid ColumnDefinitions="*,Auto">
-                        <TextBlock Text="Tags" Foreground="#ACC2B4" FontSize="12" FontWeight="SemiBold"
-                                   VerticalAlignment="Center" Margin="12,0,0,0" />
-                        <Button Grid.Column="1" x:Name="RenameActiveTagButton" Classes="rail" Content="Rename…"
-                                Padding="7,3" IsVisible="{Binding HasActiveTag}" IsEnabled="{Binding CanWork}"
-                                Command="{Binding RenameActiveTagCommand}" AutomationProperties.Name="Rename selected tag" />
-                    </Grid>
-                    <ScrollViewer Grid.Row="1" HorizontalScrollBarVisibility="Disabled">
-                        <ItemsControl ItemsSource="{Binding Tags}">
-                            <ItemsControl.ItemTemplate>
-                                <DataTemplate x:DataType="x:String">
-                                    <Button Classes="rail" Click="FilterTag_Click">
-                                        <StackPanel Orientation="Horizontal" Spacing="9">
-                                            <Ellipse Width="6" Height="6" Fill="#C5DDA6" VerticalAlignment="Center" />
-                                            <TextBlock Text="{Binding}" MaxWidth="130" TextTrimming="CharacterEllipsis" />
-                                        </StackPanel>
-                                    </Button>
-                                </DataTemplate>
-                            </ItemsControl.ItemTemplate>
-                        </ItemsControl>
-                    </ScrollViewer>
-                </Grid>
+                <ScrollViewer Grid.Row="2" HorizontalScrollBarVisibility="Disabled">
+                    <StackPanel Spacing="16">
+                        <StackPanel Spacing="6" IsVisible="{Binding HasSavedSearches}">
+                            <TextBlock Text="Saved searches" Foreground="#ACC2B4" FontSize="12" FontWeight="SemiBold" Margin="12,0,0,0" />
+                            <ItemsControl x:Name="SavedSearchList" ItemsSource="{Binding SavedSearches}" IsEnabled="{Binding CanWork}">
+                                <ItemsControl.ItemTemplate>
+                                    <DataTemplate x:DataType="core:SavedSearch">
+                                        <Button Classes="rail" Click="OpenSavedSearch_Click" ToolTip.Tip="{Binding Query}"
+                                                AutomationProperties.Name="{Binding Name}">
+                                            <TextBlock Text="{Binding Name}" MaxWidth="138" TextTrimming="CharacterEllipsis" />
+                                        </Button>
+                                    </DataTemplate>
+                                </ItemsControl.ItemTemplate>
+                            </ItemsControl>
+                        </StackPanel>
+                        <StackPanel Spacing="6" IsVisible="{Binding HasTags}">
+                            <Grid ColumnDefinitions="*,Auto">
+                                <TextBlock Text="Tags" Foreground="#ACC2B4" FontSize="12" FontWeight="SemiBold"
+                                           VerticalAlignment="Center" Margin="12,0,0,0" />
+                                <Button Grid.Column="1" x:Name="RenameActiveTagButton" Classes="rail" Content="Rename…"
+                                        Padding="7,3" IsVisible="{Binding HasActiveTag}" IsEnabled="{Binding CanWork}"
+                                        Command="{Binding RenameActiveTagCommand}" AutomationProperties.Name="Rename selected tag" />
+                            </Grid>
+                            <ItemsControl ItemsSource="{Binding Tags}">
+                                <ItemsControl.ItemTemplate>
+                                    <DataTemplate x:DataType="x:String">
+                                        <Button Classes="rail" Click="FilterTag_Click">
+                                            <StackPanel Orientation="Horizontal" Spacing="9">
+                                                <Ellipse Width="6" Height="6" Fill="#C5DDA6" VerticalAlignment="Center" />
+                                                <TextBlock Text="{Binding}" MaxWidth="130" TextTrimming="CharacterEllipsis" />
+                                            </StackPanel>
+                                        </Button>
+                                    </DataTemplate>
+                                </ItemsControl.ItemTemplate>
+                            </ItemsControl>
+                        </StackPanel>
+                    </StackPanel>
+                </ScrollViewer>
                 <StackPanel Grid.Row="3" Spacing="3">
                     <TextBlock Text="Library" Foreground="#ACC2B4" FontSize="12" FontWeight="SemiBold" Margin="12,0,0,3" />
                     <Button Classes="rail" Command="{Binding ChooseLibraryCommand}" IsEnabled="{Binding IsIdle}"
@@ -170,12 +185,18 @@
                 </Grid>
             </Border>
             <Grid Grid.Row="1" Margin="25,21,25,20" RowDefinitions="Auto,*" RowSpacing="16">
-                <Grid ColumnDefinitions="*,Auto,Auto" ColumnSpacing="12">
+                <Grid ColumnDefinitions="*,Auto,Auto,Auto" ColumnSpacing="12">
                     <TextBlock x:Name="InboxHeading" Text="{Binding Heading}" FontSize="31" FontWeight="SemiBold"
                                TextTrimming="CharacterEllipsis" AutomationProperties.HeadingLevel="1" />
-                    <TextBlock Grid.Column="1" Classes="muted" Text="{Binding ResultCount}" VerticalAlignment="Center"
+                    <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center">
+                        <Button x:Name="SaveSearchButton" Classes="secondary" Content="Save search…" Command="{Binding SaveSearchCommand}"
+                                IsVisible="{Binding ShowSaveSearch}" IsEnabled="{Binding CanWork}" />
+                        <Button x:Name="EditSavedSearchButton" Classes="secondary" Content="Edit search…" Command="{Binding EditActiveSavedSearchCommand}"
+                                IsVisible="{Binding HasActiveSavedSearch}" IsEnabled="{Binding CanWork}" />
+                    </StackPanel>
+                    <TextBlock Grid.Column="2" Classes="muted" Text="{Binding ResultCount}" VerticalAlignment="Center"
                                MaxWidth="154" TextTrimming="CharacterEllipsis" ToolTip.Tip="{Binding ResultCount}" />
-                    <StackPanel Grid.Column="2" Orientation="Horizontal" Spacing="6" VerticalAlignment="Center">
+                    <StackPanel Grid.Column="3" Orientation="Horizontal" Spacing="6" VerticalAlignment="Center">
                         <TextBlock Text="Sort" Classes="muted" VerticalAlignment="Center" />
                         <ComboBox x:Name="DocumentSortBox" ItemsSource="{Binding SortChoices}"
                                   SelectedItem="{Binding SortOption, Mode=TwoWay}" MinWidth="140"

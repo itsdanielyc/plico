@@ -9,7 +9,7 @@ namespace Plico.Desktop;
 internal sealed partial class InboxViewModel : ObservableObject, IDisposable
 {
     private static readonly SortChoice AutomaticSort = new(DocumentSort.Automatic, "Automatic");
-    private static readonly IReadOnlyList<SortChoice> AvailableSortChoices =
+    internal static readonly IReadOnlyList<SortChoice> AvailableSortChoices =
         [AutomaticSort, new(DocumentSort.Newest, "Newest added"), new(DocumentSort.Title, "Title A–Z")];
 
     private readonly IWorkspaceDialogs _dialogs;
@@ -262,6 +262,7 @@ internal sealed partial class InboxViewModel : ObservableObject, IDisposable
         OnPropertyChanged(nameof(CanStartFolderWatch));
         OnPropertyChanged(nameof(LibraryName));
         Tags = replacement.GetTags();
+        SavedSearches = replacement.GetSavedSearches();
         Navigate(inboxOnly: true);
         Status = watchNotice is null ? "Library ready." : $"Library ready. {watchNotice}";
         if (replacement.MoveRecoveryNotice is { } moveNotice) Status += $" {moveNotice}";
@@ -359,6 +360,7 @@ internal sealed partial class InboxViewModel : ObservableObject, IDisposable
 
     private void Navigate(bool inboxOnly, string? tag = null, long? preferredId = null)
     {
+        ActiveSavedSearch = null;
         _inboxOnly = inboxOnly;
         _activeTag = tag;
         OnPropertyChanged(nameof(HasActiveTag));

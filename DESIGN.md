@@ -38,6 +38,8 @@ The results count shows **Searching…** after a query edit. **Load more** becom
 
 The search box hints at `tag:`, `added:`, and `folder:` filters. Its tooltip gives examples and explains quotation marks for phrases. Date filters use displayed local dates and folder filters use the stored relative path.
 
+**Save search…** names the query and puts it in the sidebar. Opening a shortcut displays its name above the results and restores the selected tag and order. **Edit search…** opens the name, query, and order fields and offers to remove the shortcut.
+
 A selected sidebar tag offers **Rename…**. When the requested name belongs to another tag, the dialog describes the change and offers **Merge tags** as an explicit action. The resulting tag opens after the change.
 
 Both tag fields suggest up to eight names from the current library. The single-document field skips tags already on that PDF. Choosing a suggestion fills in its catalog spelling. **Add**, **Tag selected**, or Enter after closing the suggestions applies the label.
