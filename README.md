@@ -62,6 +62,8 @@ Use **Sort** to browse by newest added, title A–Z, or document date. **Documen
 
 Use Ctrl or Shift when selecting rows, or choose **Select shown** to select the loaded results. Use **Tag selected** to apply a tag to the whole selection. The batch control can mark the selection reviewed or return reviewed documents to the inbox.
 
+Choose **Remove tag…** to remove one tag from the selected PDFs. The chooser shows how many of the selected PDFs carry each tag. Other PDFs keep their tags.
+
 Choose **Move PDFs…** on a selection to file all of them in one library folder. Plico checks the selection before starting and reports what finished if you cancel or it encounters a file error.
 
 With multiple PDFs selected, choose **Export PDFs…** and pick a destination outside the library. Plico creates a dated folder with the selected PDFs. Use **Open export** to see the copies in your file manager.

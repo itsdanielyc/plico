@@ -48,6 +48,7 @@
 - Recover several unavailable PDFs from one folder of matching backups, including renamed files in subfolders.
 - Choose a library folder beside search while keeping other terms and filters.
 - Choose an intake folder for added files, drops, retries, and scans. Plico remembers the choice for each library on the computer.
+- Remove one tag from a selection of PDFs. The chooser shows how many selected PDFs carry each tag.
 
 ## [0.15.0] - 2026-11-18
 

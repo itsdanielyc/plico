@@ -92,7 +92,7 @@ internal static partial class NativeVerification
             await VerifyIntakeFolderAsync(window, model, dialogs, fixture, evidenceDirectory);
 
             File.WriteAllText(Path.Combine(evidenceDirectory, "passed.txt"),
-                $"Verified {runtime}. Native window completed multilingual OCR and correction, oriented JPEG and multi-page TIFF import, PDF combination, page extraction and rotation, phrase, tag, review-status, folder, and text-availability search, query correction, saved search restoration, document-date editing, filtering, and inheritance, result sorting, fit-width and selectable page text previews, match navigation, tag merging and suggestions, duplicate drop, folder watch and inbox counting, title edit, single and batch PDF moves, external relocation and PDF swaps, index reporting and PDF restoration from files and folders, selected PDF export, library backup, text copy, single and batch OCR copies, saved import error recovery and retry, and filing through the chosen intake folder. {scanRecoveryEvidence}");
+                $"Verified {runtime}. Native window completed multilingual OCR and correction, oriented JPEG and multi-page TIFF import, PDF combination, page extraction and rotation, phrase, tag, review-status, folder, and text-availability search, query correction, saved search restoration, document-date editing, filtering, and inheritance, result sorting, fit-width and selectable page text previews, match navigation, tag merging, suggestions, and removal from selected PDFs, duplicate drop, folder watch and inbox counting, title edit, single and batch PDF moves, external relocation and PDF swaps, index reporting and PDF restoration from files and folders, selected PDF export, library backup, text copy, single and batch OCR copies, saved import error recovery and retry, and filing through the chosen intake folder. {scanRecoveryEvidence}");
             desktop.Shutdown(0);
         }
         catch (Exception error)
@@ -726,6 +726,7 @@ internal static partial class NativeVerification
         Require(model.Documents.All(document => document.Tags.Contains(batchTag)),
             "The tag did not attach to both selected PDFs.");
         await CaptureAsync(window, directory, "batch-review.png");
+        await VerifyBatchTagRemovalAsync(window, model, dialogs, batchTag, directory);
         await VerifySelectedExportAsync(window, model, dialogs, directory);
         await ((IAsyncRelayCommand)review.Command!).ExecuteAsync(null);
         model.ShowInboxCommand.Execute(null);
@@ -1021,6 +1022,7 @@ internal sealed class FixtureDialogs(params string[] documents) : IWorkspaceDial
     internal Func<DateOnly?, Task<DocumentDateEdit?>>? DocumentDateChoice { get; set; }
     internal Func<SavedSearchDraft, string?, bool, Task<SavedSearchDecision?>>? SavedSearchChoice { get; set; }
     internal TagRenameRequest? TagRenameChoice { get; set; }
+    internal Func<IReadOnlyList<BatchTagOption>, Task<string?>>? TagRemovalChoice { get; set; }
     internal Func<IReadOnlyList<DocumentSummary>, Task<CombinePdfsRequest?>>? CombineChoice { get; set; }
     internal Func<DocumentSummary, int, PdfPageCopyAction, Task<PdfPageCopyRequest?>>? PageCopyChoice { get; set; }
     internal ScanRequest? ScannerChoice { get; set; }
@@ -1050,6 +1052,8 @@ internal sealed class FixtureDialogs(params string[] documents) : IWorkspaceDial
     public Task<SavedSearchDecision?> EditSavedSearchAsync(SavedSearchDraft draft, string? scopeTag, bool editing) =>
         SavedSearchChoice?.Invoke(draft, scopeTag, editing) ?? Task.FromResult<SavedSearchDecision?>(null);
     public Task<TagRenameRequest?> RenameTagAsync(string currentName, IReadOnlyList<string> catalogNames) => Task.FromResult(TagRenameChoice);
+    public Task<string?> ChooseTagToRemoveAsync(IReadOnlyList<BatchTagOption> options) =>
+        TagRemovalChoice?.Invoke(options) ?? Task.FromResult<string?>(null);
     public Task<CombinePdfsRequest?> OrderPdfCombinationAsync(IReadOnlyList<DocumentSummary> selectedDocuments) =>
         CombineChoice?.Invoke(selectedDocuments) ?? Task.FromResult<CombinePdfsRequest?>(null);
     public Task<PdfPageCopyRequest?> ChoosePdfPageCopyAsync(DocumentSummary document, int currentPage, PdfPageCopyAction action) =>

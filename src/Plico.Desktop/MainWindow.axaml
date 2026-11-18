@@ -293,6 +293,10 @@
                                                     Content="Tag selected" Click="ApplyBatchTag_Click" />
                                         </Grid>
                                         <WrapPanel Orientation="Horizontal" HorizontalAlignment="Right">
+                                            <Button x:Name="RemoveBatchTagButton" Classes="secondary" Content="Remove tag…"
+                                                    Click="RemoveBatchTag_Click" IsVisible="{Binding HasTaggedBatchSelection}"
+                                                    IsEnabled="{Binding CanWork}" AutomationProperties.Name="Remove a tag from the selected PDFs"
+                                                    Margin="6,0,0,4" Padding="10,7" />
                                             <Button x:Name="CreateSelectedOcrCopiesButton" Classes="secondary" Content="Create OCR copies"
                                                     Command="{Binding CreateSelectedOcrCopiesCommand}" IsEnabled="{Binding CanWork}"
                                                     AutomationProperties.Name="Create OCR copies of the selected PDFs" Margin="6,0,0,4" Padding="10,7" />

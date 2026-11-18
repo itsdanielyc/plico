@@ -68,6 +68,8 @@ A selected sidebar tag offers **Rename…**. When the requested name belongs to 
 
 Both tag fields suggest up to eight names from the current library. The single-document field skips tags already on that PDF. Choosing a suggestion fills in its catalog spelling. **Add**, **Tag selected**, or Enter after closing the suggestions applies the label.
 
+**Remove tag…** appears when a selection contains tagged PDFs. Its chooser sorts the tags on that selection by name and shows a document count for each. Confirming removes the chosen assignments and keeps the matching results selected.
+
 The preview shows the whole page by default. **Fit width** fills the available reading width and allows vertical scrolling. Page navigation stays visible and starts each new page at the top.
 
 **Go to match** sits beneath the preview header actions for multi-page text results. After the first jump, **Previous match** and **Next match** move from the page currently in view. The status bar reports the page number or when there are no more matches in that direction.

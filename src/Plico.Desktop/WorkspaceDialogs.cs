@@ -17,6 +17,7 @@ internal interface IWorkspaceDialogs
     Task<DocumentDateEdit?> EditDocumentDateAsync(DateOnly? currentDate);
     Task<SavedSearchDecision?> EditSavedSearchAsync(SavedSearchDraft draft, string? scopeTag, bool editing);
     Task<TagRenameRequest?> RenameTagAsync(string currentName, IReadOnlyList<string> catalogNames);
+    Task<string?> ChooseTagToRemoveAsync(IReadOnlyList<BatchTagOption> options);
     Task<CombinePdfsRequest?> OrderPdfCombinationAsync(IReadOnlyList<DocumentSummary> selectedDocuments);
     Task<PdfPageCopyRequest?> ChoosePdfPageCopyAsync(DocumentSummary document, int currentPage, PdfPageCopyAction action);
     Task<ImportErrorsAction> ShowImportErrorsAsync(IReadOnlyList<ImportFailure> failures);
@@ -87,6 +88,9 @@ internal sealed class WorkspaceDialogs(Window owner) : IWorkspaceDialogs
 
     public Task<TagRenameRequest?> RenameTagAsync(string currentName, IReadOnlyList<string> catalogNames) =>
         new TagRenameDialog(currentName, catalogNames).ShowDialog<TagRenameRequest?>(owner);
+
+    public Task<string?> ChooseTagToRemoveAsync(IReadOnlyList<BatchTagOption> options) =>
+        new BatchTagRemovalDialog(options).ShowDialog<string?>(owner);
 
     public Task<CombinePdfsRequest?> OrderPdfCombinationAsync(IReadOnlyList<DocumentSummary> selectedDocuments) =>
         new CombinePdfsDialog(selectedDocuments).ShowDialog<CombinePdfsRequest?>(owner);

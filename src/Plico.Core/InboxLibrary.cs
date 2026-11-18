@@ -197,6 +197,18 @@ public sealed partial class InboxLibrary : IDisposable
     /// <summary>Removes a tag from one document.</summary>
     public void RemoveTag(long documentId, string tag) => _catalog.RemoveTag(documentId, tag);
 
+    /// <summary>Removes a tag from the selection in one catalog transaction.</summary>
+    /// <param name="documentIds">The catalog IDs of the selected, present documents.</param>
+    /// <param name="tag">The tag label, matched by its normalized catalog key.</param>
+    /// <param name="cancellationToken">Cancels the removal before it commits.</param>
+    /// <returns>The number of documents that had the tag removed.</returns>
+    /// <exception cref="InvalidOperationException">A selected document is unavailable.</exception>
+    public int RemoveTagFromDocuments(IReadOnlyList<long> documentIds, string tag, CancellationToken cancellationToken = default)
+    {
+        ArgumentNullException.ThrowIfNull(documentIds);
+        return documentIds.Count == 0 ? 0 : _catalog.RemoveTagFromDocuments(documentIds, tag, cancellationToken);
+    }
+
     /// <summary>Moves a document into or out of the review queue without moving its PDF.</summary>
     public void SetReviewed(long documentId, bool reviewed) => _catalog.SetReviewed(documentId, reviewed);
 

@@ -597,12 +597,7 @@ internal sealed partial class LibraryCatalog
         using var transaction = connection.BeginTransaction();
         using var command = connection.CreateCommand();
         command.Transaction = transaction;
-        command.CommandText = """
-            SELECT count(*) FROM documents
-            WHERE is_present = 1 AND id IN (SELECT value FROM json_each($ids));
-            """;
-        int expected = BindSelection(command, documentIds);
-        RequireSelection((long)command.ExecuteScalar()!, expected);
+        BindAndRequirePresentSelection(command, documentIds);
 
         command.CommandText = """
             INSERT INTO tags (tag_key, label) VALUES ($tag, $label) ON CONFLICT(tag_key) DO NOTHING;
@@ -613,6 +608,36 @@ internal sealed partial class LibraryCatalog
         command.Parameters.AddWithValue("$label", label);
         command.ExecuteNonQuery();
         transaction.Commit();
+    }
+
+    internal int RemoveTagFromDocuments(IReadOnlyList<long> documentIds, string tag, CancellationToken cancellationToken)
+    {
+        cancellationToken.ThrowIfCancellationRequested();
+        string tagKey = SearchTerms.TagKey(tag);
+        using var connection = Connect();
+        using var transaction = connection.BeginTransaction();
+        using var command = connection.CreateCommand();
+        command.Transaction = transaction;
+        BindAndRequirePresentSelection(command, documentIds);
+        command.CommandText = """
+            DELETE FROM document_tags
+            WHERE tag_key = $tag AND document_id IN (SELECT value FROM json_each($ids));
+            """;
+        command.Parameters.AddWithValue("$tag", tagKey);
+        int changed = command.ExecuteNonQuery();
+        cancellationToken.ThrowIfCancellationRequested();
+        transaction.Commit();
+        return changed;
+    }
+
+    private static void BindAndRequirePresentSelection(SqliteCommand command, IReadOnlyList<long> documentIds)
+    {
+        command.CommandText = """
+            SELECT count(*) FROM documents
+            WHERE is_present = 1 AND id IN (SELECT value FROM json_each($ids));
+            """;
+        int expected = BindSelection(command, documentIds);
+        RequireSelection((long)command.ExecuteScalar()!, expected);
     }
 
     private static int BindSelection(SqliteCommand command, IReadOnlyList<long> documentIds)

@@ -16,6 +16,7 @@ internal sealed partial class InboxViewModel
     public bool HasBatchCandidates => Documents.Count > 1;
     public bool HasResultActions => HasBatchCandidates || HasDeferredWatchResults;
     public bool HasBatchSelection => _batchSelection.Count > 1;
+    public bool HasTaggedBatchSelection => HasBatchSelection && _batchSelection.Any(document => document.Tags.Count > 0);
     public string BatchCountLabel => $"{_batchSelection.Count} selected";
     public string SelectShownAction => HasBatchSelection ? "Clear selection" : "Select shown";
     public string BatchReviewAction => AllSelectedAreReviewed ? "Return selected to inbox" : "Mark selected reviewed";
@@ -25,6 +26,7 @@ internal sealed partial class InboxViewModel
     {
         _batchSelection = selectedDocuments;
         OnPropertyChanged(nameof(HasBatchSelection));
+        OnPropertyChanged(nameof(HasTaggedBatchSelection));
         OnPropertyChanged(nameof(BatchCountLabel));
         OnPropertyChanged(nameof(SelectShownAction));
         OnPropertyChanged(nameof(BatchReviewAction));
@@ -93,5 +95,44 @@ internal sealed partial class InboxViewModel
             BatchTagInput = "";
             Status = $"Tag applied to {DocumentCount(selectedIds.Length)}.";
         });
+    }
+
+    internal Task RemoveSelectedTagAsync()
+    {
+        if (!HasTaggedBatchSelection) return Task.CompletedTask;
+        var selectedDocuments = _batchSelection;
+        return RunOperationAsync("Choose a tag to remove…", async token =>
+        {
+            var library = RequireLibrary();
+            string? tag = await _dialogs.ChooseTagToRemoveAsync(GetBatchTagOptions(selectedDocuments));
+            if (tag is null)
+            {
+                Status = "Tag removal cancelled.";
+                return;
+            }
+
+            var selectedIds = selectedDocuments.Select(document => document.Id).ToArray();
+            int changed = await Task.Run(() => library.RemoveTagFromDocuments(selectedIds, tag, token), token);
+            Tags = library.GetTags();
+            LoadResults();
+            Status = changed == 0 ? "The selected documents no longer have that tag." : $"Tag removed from {DocumentCount(changed)}.";
+        });
+    }
+
+    // O(t + u log u) time and O(u) space for t selected tag assignments and u unique labels.
+    private static BatchTagOption[] GetBatchTagOptions(IReadOnlyList<DocumentSummary> documents)
+    {
+        var assignmentCounts = new Dictionary<string, int>(StringComparer.Ordinal);
+        foreach (var document in documents)
+        {
+            foreach (string label in document.Tags)
+            {
+                assignmentCounts[label] = assignmentCounts.GetValueOrDefault(label) + 1;
+            }
+        }
+
+        return assignmentCounts.OrderBy(entry => entry.Key, StringComparer.OrdinalIgnoreCase)
+            .Select(entry => new BatchTagOption(entry.Key, entry.Value))
+            .ToArray();
     }
 }

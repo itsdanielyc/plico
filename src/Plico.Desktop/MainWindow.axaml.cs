@@ -111,6 +111,9 @@ public sealed partial class MainWindow : Window
 
     private async void ApplyBatchTag_Click(object? sender, RoutedEventArgs e) => await ApplyBatchTagAsync();
 
+    private async void RemoveBatchTag_Click(object? sender, RoutedEventArgs e) =>
+        await UpdateBatchTagsAsync(static model => model.RemoveSelectedTagAsync());
+
     private async void BatchTag_KeyDown(object? sender, KeyEventArgs e)
     {
         if (e.Key != Key.Enter) return;
@@ -118,13 +121,16 @@ public sealed partial class MainWindow : Window
         await ApplyBatchTagAsync();
     }
 
-    private async Task ApplyBatchTagAsync()
+    private Task ApplyBatchTagAsync() => UpdateBatchTagsAsync(static model => model.ApplySelectedTagAsync());
+
+    private async Task UpdateBatchTagsAsync(Func<InboxViewModel, Task> update)
     {
         if (ViewModel is not { CanWork: true, HasBatchSelection: true } model) return;
+        var originalDocuments = model.Documents;
         var selectedIds = DocumentList.Selection.SelectedItems.OfType<DocumentSummary>()
             .Select(document => document.Id).ToHashSet();
-        await model.ApplySelectedTagAsync();
-        if (ReferenceEquals(ViewModel, model))
+        await update(model);
+        if (ReferenceEquals(ViewModel, model) && !ReferenceEquals(model.Documents, originalDocuments))
         {
             DocumentList.SelectedItems = model.Documents.Where(document => selectedIds.Contains(document.Id)).ToList();
         }

@@ -1,0 +1,31 @@
+<Window xmlns="https://github.com/avaloniaui" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:local="using:Plico.Desktop" x:Class="Plico.Desktop.BatchTagRemovalDialog"
+        Title="Remove tag" Width="424" SizeToContent="Height" CanResize="False" WindowStartupLocation="CenterOwner"
+        FontFamily="{StaticResource InterFont}" Background="#F4F5EF">
+    <StackPanel Margin="24" Spacing="12">
+        <TextBlock Text="Choose a tag from the selected PDFs." FontSize="15" FontWeight="SemiBold" TextWrapping="Wrap" />
+        <ListBox x:Name="BatchTagChoices" MaxHeight="210" Background="#FCFDF8" BorderBrush="#DDE2D7" BorderThickness="1"
+                 ScrollViewer.HorizontalScrollBarVisibility="Disabled" AutomationProperties.Name="Tags on the selected PDFs"
+                 SelectionChanged="TagChoice_Changed">
+            <ListBox.Styles>
+                <Style Selector="ListBoxItem">
+                    <Setter Property="Padding" Value="10,8" />
+                    <Setter Property="HorizontalContentAlignment" Value="Stretch" />
+                </Style>
+            </ListBox.Styles>
+            <ListBox.ItemTemplate>
+                <DataTemplate x:DataType="local:BatchTagOption">
+                    <Grid ColumnDefinitions="*,Auto" ColumnSpacing="12">
+                        <TextBlock Text="{Binding Label}" TextTrimming="CharacterEllipsis" ToolTip.Tip="{Binding Label}" />
+                        <TextBlock Grid.Column="1" Text="{Binding CountLabel}" Foreground="#5C685D" />
+                    </Grid>
+                </DataTemplate>
+            </ListBox.ItemTemplate>
+        </ListBox>
+        <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" Spacing="8">
+            <Button x:Name="CancelTagRemovalButton" Content="Cancel" IsCancel="True" Click="Cancel_Click" Padding="13,7" />
+            <Button x:Name="ConfirmTagRemovalButton" Content="Remove tag" IsEnabled="False" IsDefault="True"
+                    Click="Remove_Click" Padding="13,7" Background="#254C37" Foreground="White" />
+        </StackPanel>
+    </StackPanel>
+</Window>
