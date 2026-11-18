@@ -238,6 +238,16 @@
           "SQLitePCLRaw.core": "2.1.13"
         }
       },
+      "Microsoft.IO.RecyclableMemoryStream": {
+        "type": "Transitive",
+        "resolved": "4.0.1",
+        "contentHash": "+AgZ8B7QIcy2MZyqp1eeJlSgt03h0oyPeEhNWb1aAdgV9C0l8HdboJ1yt/DMu9qv7HTOA18WJUzKWB3j/WlTqg=="
+      },
+      "Microsoft.Maui.Graphics": {
+        "type": "Transitive",
+        "resolved": "10.0.120",
+        "contentHash": "Z1ZkDyUIpMPYH84wC8za4n/OcSXIKU6fGc2EfZ0dWGldPjrJtbYLWqFLBSK3QW80/FbpGDsskhaynDUnC+dOlw=="
+      },
       "Microsoft.Testing.Extensions.Telemetry": {
         "type": "Transitive",
         "resolved": "1.9.1",
@@ -333,6 +343,21 @@
         "resolved": "2.0.3",
         "contentHash": "Za/pkCCVuUxD3Q00pTsFd3FRAi1HTBlM8uzDXaPpULMZ6MoqYaJKcE5fJmOz+fqNfQaMxv9dQeJ1GZ9uVtBM8g=="
       },
+      "OpenMcdf": {
+        "type": "Transitive",
+        "resolved": "3.4.0",
+        "contentHash": "HO/oY3oEUJw1DEcjSxR/dMEhYbJ/psUH1mZ0OFDhqrDaZg/kEPc4Go1U7eRjYgEgsEqujYueE+0+A67VlttemQ=="
+      },
+      "RtfPipe": {
+        "type": "Transitive",
+        "resolved": "2.0.7677.4303",
+        "contentHash": "ek6wuC69GYVJr0b/C5mcgbFUHPLL11iAbUFqQphdBaqSoEjOdSB/HWCID5nneA5exM88UZzOTCJCMpftDYnCZA=="
+      },
+      "Sdcb.SimdCodecs.Abstractions": {
+        "type": "Transitive",
+        "resolved": "2.0.0",
+        "contentHash": "So5Cs1FCOSgKUW8mO5tb5IgO3CUtCb3XJ0tEfmoS3I+2eWVWeUf+85ZZdedbWDtlH+F4CrH54Vi8SoWqyZ2B2A=="
+      },
       "SharpZipLib": {
         "type": "Transitive",
         "resolved": "1.4.2",
@@ -418,6 +443,11 @@
         "resolved": "0.94.1",
         "contentHash": "11YMr7FnAbL83bQmVxlhbIKHvSLxjO81D12Ej0QMSGXMDTxNA9MTOa4MQxx43nv5el/efuPHwzyrj6a5ha2gug=="
       },
+      "UTF.Unknown": {
+        "type": "Transitive",
+        "resolved": "2.8.0",
+        "contentHash": "bpDbg9Hjuenm/vMhxavOb/cLivRBQxhU4Dc6iRPPoEUM80qlAnRQ7c2niLQJPxLV/XBEGGhda5cNLkcQuHxULA=="
+      },
       "xunit.analyzers": {
         "type": "Transitive",
         "resolved": "1.27.0",
@@ -499,7 +529,7 @@
           "CommunityToolkit.Mvvm": "[8.4.2, )",
           "NAPS2.Pdfium.Binaries": "[1.3.0, )",
           "NAPS2.Tesseract.Binaries": "[1.5.0, )",
-          "Plico.Core": "[0.16.1, )",
+          "Plico.Core": "[0.17.0, )",
           "SkiaSharp.NativeAssets.Linux": "[4.156.0, )"
         }
       },
@@ -507,12 +537,16 @@
         "type": "Project",
         "dependencies": {
           "BitMiracle.LibTiff.NET": "[2.4.660, )",
+          "HtmlAgilityPack": "[1.13.1, )",
+          "MSGReader": "[6.2.1, )",
+          "Markdig": "[1.6.0, )",
           "Microsoft.Data.Sqlite": "[10.0.15, )",
           "NAPS2.Images.Skia": "[1.6.1, )",
           "NAPS2.PdfSharp": "[1.0.2, )",
           "NAPS2.Sdk": "[1.6.1, )",
           "PDFsharp": "[6.2.4, )",
           "PdfPig": "[0.1.16, )",
+          "Sdcb.SimdCodecs.Heif": "[2.0.0, )",
           "SkiaSharp": "[4.156.0, )",
           "SkiaSharp.NativeAssets.Linux": "[4.156.0, )",
           "System.Security.Cryptography.Pkcs": "[10.0.15, )"
@@ -562,6 +596,18 @@
         "resolved": "8.4.2",
         "contentHash": "WadCzGEc2U+3e20avRLng4qNtt4zoOGWrdUISqJWrHe3/FSnrYjuM5Sb4yQb09LhkBXrrI4Zt3dLKgRMbItsrg=="
       },
+      "HtmlAgilityPack": {
+        "type": "CentralTransitive",
+        "requested": "[1.13.1, )",
+        "resolved": "1.13.1",
+        "contentHash": "wkKKu0oltLJQRBf862+O0yqBAvo+RVisLXFFTlThWCuw1gjATkna1ZKQBcwHUyJUUZhkPUvyxFJcyqXSAvNkag=="
+      },
+      "Markdig": {
+        "type": "CentralTransitive",
+        "requested": "[1.6.0, )",
+        "resolved": "1.6.0",
+        "contentHash": "rJEpDfPM8wrfXUgkNejjg2bJN9bciy44uVyRwKUI+92CnSmbaLeJTLPYcCdvgM4RFsKrhs8d2H2hO78yZpMl3g=="
+      },
       "Microsoft.Data.Sqlite": {
         "type": "CentralTransitive",
         "requested": "[10.0.15, )",
@@ -571,6 +617,20 @@
           "Microsoft.Data.Sqlite.Core": "10.0.15",
           "SQLitePCLRaw.bundle_e_sqlite3": "2.1.13",
           "SQLitePCLRaw.core": "2.1.13"
+        }
+      },
+      "MsgReader": {
+        "type": "CentralTransitive",
+        "requested": "[6.2.1, )",
+        "resolved": "6.2.1",
+        "contentHash": "HdkhMttCMYLZ9mbppspwWBmVIkpo1Lzma8p8IYuaXbc/2L9+QcLc5haEDafphzx2g27d1L+4SmCnuDXZ+K8Nsw==",
+        "dependencies": {
+          "Microsoft.IO.RecyclableMemoryStream": "4.0.1",
+          "Microsoft.Maui.Graphics": "10.0.120",
+          "OpenMcdf": "3.4.0",
+          "RtfPipe": "2.0.7677.4303",
+          "System.Security.Cryptography.Pkcs": "10.0.14",
+          "UTF.Unknown": "2.8.0"
         }
       },
       "NAPS2.Images.Skia": {
@@ -625,6 +685,15 @@
         "contentHash": "GhTr9F1uOYXHCIEOB5PXIgqn5a8WLsJL2m0eewTA0IvY1j6N4HGXHKKmEyB90/N6vrjmYamf41V9zbmdW2HY3g==",
         "dependencies": {
           "System.Security.Cryptography.Pkcs": "8.0.1"
+        }
+      },
+      "Sdcb.SimdCodecs.Heif": {
+        "type": "CentralTransitive",
+        "requested": "[2.0.0, )",
+        "resolved": "2.0.0",
+        "contentHash": "Ix9/1C7mMFF5kSElrhcLGKtrUqB62ZSu/wKcBkCYmrFrJ9jp9+DMsjDCAuK/O/H2KAS55Qta93jdVb4biOYi5A==",
+        "dependencies": {
+          "Sdcb.SimdCodecs.Abstractions": "2.0.0"
         }
       },
       "SkiaSharp": {

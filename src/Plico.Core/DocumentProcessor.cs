@@ -1,5 +1,6 @@
 using System.Runtime.CompilerServices;
 using System.Text;
+using Markdig;
 using NAPS2.Images;
 using NAPS2.Images.Skia;
 using NAPS2.Images.Transforms;
@@ -26,10 +27,17 @@ internal sealed class DocumentProcessor(string dataDirectory)
         ".png", ".jpg", ".jpeg"
     };
     private static readonly FileFormatTransform RenderForOcr = new(ImageFileFormat.Png);
+    private static readonly MarkdownPipeline MarkdownPipeline = new MarkdownPipelineBuilder().UseAdvancedExtensions().DisableHtml().Build();
 
     internal static bool IsPdf(string extension) => string.Equals(extension, PdfExtension, StringComparison.OrdinalIgnoreCase);
 
-    internal static bool SupportsExtension(string extension) => IsPdf(extension) || IsTiff(extension) || ImageExtensions.Contains(extension);
+    internal static bool SupportsExtension(string extension)
+    {
+        string normalized = extension.ToLowerInvariant();
+        return IsPdf(normalized) || IsTiff(normalized) || ImageExtensions.Contains(normalized) ||
+            ImportFormats.IsText(normalized) || ImportFormats.IsEmail(normalized) ||
+            ImportFormats.IsHeif(normalized) || ImportFormats.IsOffice(normalized);
+    }
 
     private static bool IsTiff(string extension) => string.Equals(extension, ".tif", StringComparison.OrdinalIgnoreCase) ||
         string.Equals(extension, ".tiff", StringComparison.OrdinalIgnoreCase);
@@ -38,15 +46,33 @@ internal sealed class DocumentProcessor(string dataDirectory)
         OcrLanguage language, CancellationToken cancellationToken)
     {
         string stagingDirectory = Path.GetDirectoryName(outputPath)!;
-        string extension = Path.GetExtension(stagedSource);
-        bool isPdf = IsPdf(extension);
+        string extension = Path.GetExtension(stagedSource).ToLowerInvariant();
+        if (ImportFormats.IsText(extension))
+        {
+            WriteTextSource(stagedSource, outputPath, extension, cancellationToken);
+            return new(ReadPdf(outputPath, cancellationToken), CopiedSource: false);
+        }
+        if (ImportFormats.IsEmail(extension))
+        {
+            await EmailPdfConverter.WriteAsync(stagedSource, outputPath,
+                async (input, output, token) => { await PrepareAsync(input, output, language, token).ConfigureAwait(false); },
+                cancellationToken).ConfigureAwait(false);
+            return new(ReadPdf(outputPath, cancellationToken), CopiedSource: false);
+        }
+        bool originalWasPdf = IsPdf(extension);
+        bool office = ImportFormats.IsOffice(extension);
+        if (office)
+        {
+            stagedSource = await OfficePdfConverter.ConvertAsync(stagedSource, stagingDirectory, cancellationToken).ConfigureAwait(false);
+        }
+        bool isPdf = originalWasPdf || office;
         if (isPdf)
         {
             var existing = ReadPdf(stagedSource, cancellationToken);
             if (existing.HasTextOnEveryPage)
             {
                 File.Move(stagedSource, outputPath);
-                return new(existing, CopiedSource: true);
+                return new(existing, CopiedSource: originalWasPdf);
             }
         }
 
@@ -57,6 +83,10 @@ internal sealed class DocumentProcessor(string dataDirectory)
             tiffPageCount = TiffPdfConverter.Convert(stagedSource, normalizedPdf, cancellationToken);
             stagedSource = normalizedPdf;
             isPdf = true;
+        }
+        else if (ImportFormats.IsHeif(extension))
+        {
+            stagedSource = HeifPreparation.ToPng(stagedSource, stagingDirectory, cancellationToken);
         }
         else if (!isPdf)
         {
@@ -73,6 +103,19 @@ internal sealed class DocumentProcessor(string dataDirectory)
             throw new InvalidDataException("The searchable PDF is missing pages from the TIFF scan.");
         }
         return new(text, CopiedSource: false);
+    }
+
+    private static void WriteTextSource(string source, string output, string extension, CancellationToken cancellationToken)
+    {
+        cancellationToken.ThrowIfCancellationRequested();
+        if (extension == ImportFormats.PlainText)
+        {
+            TextPdfWriter.Write(output, File.ReadLines(source), cancellationToken);
+            return;
+        }
+        string markdown = File.ReadAllText(source);
+        string plain = Markdig.Markdown.ToPlainText(markdown, MarkdownPipeline);
+        TextPdfWriter.Write(output, plain.ReplaceLineEndings("\n").Split('\n'), cancellationToken);
     }
 
     /// <summary>Creates fresh OCR from the visible PDF pages, including pages that already contain text.</summary>

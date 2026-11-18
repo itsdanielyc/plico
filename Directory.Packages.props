@@ -9,8 +9,11 @@
     <PackageVersion Include="Avalonia.Headless.XUnit" Version="$(AvaloniaVersion)" />
     <PackageVersion Include="Avalonia.Themes.Fluent" Version="$(AvaloniaVersion)" />
     <PackageVersion Include="BitMiracle.LibTiff.NET" Version="2.4.660" />
+    <PackageVersion Include="HtmlAgilityPack" Version="1.13.1" />
+    <PackageVersion Include="Markdig" Version="1.6.0" />
     <PackageVersion Include="Microsoft.Data.Sqlite" Version="10.0.15" />
     <PackageVersion Include="Microsoft.NET.Test.Sdk" Version="18.12.0" />
+    <PackageVersion Include="MSGReader" Version="6.2.1" />
     <PackageVersion Include="NAPS2.Images.Skia" Version="1.6.1" />
     <PackageVersion Include="NAPS2.Pdfium.Binaries" Version="1.3.0" />
     <PackageVersion Include="NAPS2.PdfSharp" Version="1.0.2" />
@@ -18,6 +21,7 @@
     <PackageVersion Include="NAPS2.Tesseract.Binaries" Version="1.5.0" />
     <PackageVersion Include="PdfPig" Version="0.1.16" />
     <PackageVersion Include="PDFsharp" Version="6.2.4" />
+    <PackageVersion Include="Sdcb.SimdCodecs.Heif" Version="2.0.0" />
     <PackageVersion Include="SkiaSharp" Version="4.156.0" />
     <PackageVersion Include="SkiaSharp.NativeAssets.Linux" Version="4.156.0" />
     <PackageVersion Include="System.Security.Cryptography.Pkcs" Version="10.0.15" />

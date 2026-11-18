@@ -11,6 +11,9 @@ Release archives carry package notices in `licenses/` on Windows and Linux and i
 | English, French, German, and Spanish OCR models | Apache 2.0 | [tessdata_fast 4.1.0](https://github.com/tesseract-ocr/tessdata_fast/tree/65727574dfcd264acbb0c3e07860e4e9e9b22185), `tessdata/LICENSE` |
 | PdfPig | Apache 2.0 | [PdfPig](https://github.com/UglyToad/PdfPig/tree/a7bb35662bbbf405efddad50aedc9bcdcf515afc) |
 | LibTiff.Net 2.4.660 | LibTiff.Net license and component notices. Copyright © 2008–2024 Bit Miracle | [Package](https://www.nuget.org/packages/BitMiracle.LibTiff.NET/2.4.660), [repository notice](https://github.com/itsdanielyc/plico/blob/v0.16.1/assets/notices/BitMiracle.LibTiff.NET-2.4.660.txt), [upstream notice](https://github.com/BitMiracle/libtiff.net/blob/cc084734b8fdceff0c32b62fd74cf3a93c384fed/license.txt) |
+| Sdcb.SimdCodecs.Heif 2.0.0 | MIT and upstream HEVC notices | [Corresponding decoder sources](https://github.com/sdcb/SimdCodecs/tree/3b439310b01417551633ec871e0301040b88d0ac/src/Sdcb.SimdCodecs.Heif) |
+| Markdig 1.6.0 | BSD 2-Clause | [Corresponding Markdown parser sources](https://github.com/xoofx/markdig/tree/8b4ffd59be3c5d7e80b5c097ec384e7c583ceb0f) |
+| MSGReader 6.2.1 and HtmlAgilityPack 1.13.1 | MIT and transitive package notices | [MSGReader sources](https://github.com/Sicos1977/MSGReader/tree/4f8d779b8c23f3f3587cd9de703c255cce7ccdf2), [HtmlAgilityPack](https://github.com/zzzprojects/html-agility-pack) |
 | SQLite | Public domain | [SQLite copyright](https://sqlite.org/copyright.html) |
 | .NET runtime | MIT and component notices | [.NET Runtime](https://github.com/dotnet/runtime) |
 | NSIS 3.13 Windows setup | NSIS license | [NSIS license](https://nsis.sourceforge.io/License), [compiler release](https://nsis.sourceforge.io/Download) |
