@@ -261,3 +261,7 @@ The capture lane keeps one mergeable change per slice. The ASN slice follows the
 The coordinating branch applied these slices and ran the release archive workflow on the combined code. [Integrated archive matrix 44313667653](https://github.com/itsdanielyc/plico/actions/runs/44313667653) at `fe4c6fb`.
 
 The Linux and macOS builds of the bundled Tesseract executable omit its orientation mode. Commit 4f0a1fe adds recognition scoring for those builds. The coordinating branch included it in the next candidate. [Integrated archive matrix 44314711962](https://github.com/itsdanielyc/plico/actions/runs/44314711962) at 5157ba8.
+
+The preceding integrated Windows ARM64 archive job passed the solution suite and exited during native rendering after the sort capture. The crash was in Avalonia's compositor at `SkiaSharp.sk_pathop_tight_bounds`. [Windows ARM64 job](https://github.com/itsdanielyc/plico/actions/runs/44314711962/job/134837667091)
+
+The current combined candidate includes the PDF fixture path correction and the capture changes. [Integrated archive matrix 44315392704](https://github.com/itsdanielyc/plico/actions/runs/44315392704) at `214a416`.
