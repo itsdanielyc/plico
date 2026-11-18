@@ -38,6 +38,7 @@
 25. Combine `added:`, tag clauses, and text. Verify a leap day, unfinished dates, overlapping periods, and a clock rollback that repeats part of a date. Confirm that the native preview still jumps to the matched text page (L3, L4 and L6).
 26. Select PDFs, change their order, and combine them. Find a page by its embedded OCR text and verify the copied tags and source bytes. Exercise repeated IDs, cancellation during copying, and a source change (L3, L4 and L6).
 27. Use **Move to folder…** to file a PDF while retaining its search and preview. Exercise a collision, a reserved catalog path, picker cancellation, and an interrupted catalog write. Reopen to verify correct recovery among identical PDFs and rejection of unrelated destination bytes (L3, L4 and L6).
+28. Search a folder with descendants and a similarly named sibling. Check quoted paths, literal wildcard characters, exact case, top-level files, and a combination with tag, date, and text clauses. Confirm that page matching still uses the document text (L3, L4 and L6).
 
 Run `dotnet test Plico.slnx -c Release` for the fast suite. Run the native harness from `keel.json` for installed-platform evidence. Visual review starts with per-OS captures and geometry checks. Add pixel baselines when repeatable runner captures justify the maintenance.
 

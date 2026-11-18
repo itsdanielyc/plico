@@ -149,8 +149,8 @@
             <Border Background="#FCFDF8" BorderBrush="#DDE2D7" BorderThickness="0,0,0,1" Padding="25,16">
                 <Grid ColumnDefinitions="*,Auto,Auto,Auto" ColumnSpacing="10">
                     <TextBox x:Name="SearchBox" Text="{Binding Query, Mode=TwoWay}" MaxLength="256"
-                             PlaceholderText="Search documents, tag:… or added:…" AutomationProperties.Name="Search documents"
-                             ToolTip.Tip="Use tag:&quot;Home insurance&quot; or added:2026-11. Put exact phrases in quotation marks."
+                             PlaceholderText="Search text, tag:…, added:…, folder:…" AutomationProperties.Name="Search documents"
+                             ToolTip.Tip="Use tag:tax, added:2026-11, or folder:&quot;Filed/Property&quot;. Put exact phrases in quotation marks."
                              VerticalContentAlignment="Center" CornerRadius="8" MinHeight="38">
                         <TextBox.InnerLeftContent>
                             <PathIcon Width="15" Height="15" Margin="11,0,1,0" Foreground="#536459"

@@ -9,18 +9,21 @@ internal static partial class SearchTerms
     internal const int MaximumQueryLength = 256;
     internal const int MaximumTagLength = 48;
     internal const string FtsTokenizer = "unicode61 remove_diacritics 2";
+    internal const string RootFolderScope = ".";
+    internal const char FolderSeparator = '/';
     private const string TagPrefix = "tag:";
     private const string AddedPrefix = "added:";
+    private const string FolderPrefix = "folder:";
     private const int YearLength = 4;
     private const int MonthLength = 7;
     private const int DayLength = 10;
     private const string IsoDayFormat = "yyyy-MM-dd";
     private const string WordPattern = @"[\p{L}\p{M}\p{N}]+";
     private const string QueryPattern = "\"[^\"]*\"|“[^”]*”|" + WordPattern;
-    private static readonly CompiledSearch InvalidSearch = new("", [], null, IsValid: false);
+    private static readonly CompiledSearch InvalidSearch = new("", [], null, null, IsValid: false);
 
     internal readonly record struct CompiledSearch(string FullTextExpression, IReadOnlyCollection<string> TagKeys,
-        AddedDatePeriod? AddedPeriod, bool IsValid);
+        AddedDatePeriod? AddedPeriod, string? FolderPath, bool IsValid);
 
     internal readonly record struct AddedDatePeriod(DateOnly FirstDay, DateOnly LastDay)
     {
@@ -34,10 +37,12 @@ internal static partial class SearchTerms
     {
         ArgumentOutOfRangeException.ThrowIfGreaterThan(query.Length, MaximumQueryLength);
         if (!query.Contains(TagPrefix, StringComparison.OrdinalIgnoreCase) &&
-            !query.Contains(AddedPrefix, StringComparison.OrdinalIgnoreCase)) return CompileParts(query, query, [], null);
+            !query.Contains(AddedPrefix, StringComparison.OrdinalIgnoreCase) &&
+            !query.Contains(FolderPrefix, StringComparison.OrdinalIgnoreCase)) return CompileParts(query, query, [], null, null);
 
         HashSet<string>? tagKeys = null;
         AddedDatePeriod? addedPeriod = null;
+        string? folderPath = null;
         var text = new StringBuilder(query.Length);
         int textStart = 0;
         for (int cursor = 0; cursor < query.Length;)
@@ -61,6 +66,13 @@ internal static partial class SearchTerms
                     addedPeriod = period;
                     clauseEnd = end;
                 }
+                else if (remaining.StartsWith(FolderPrefix, StringComparison.OrdinalIgnoreCase))
+                {
+                    if (ReadFolderClause(query, cursor + FolderPrefix.Length) is not { } folder) return InvalidSearch;
+                    folderPath = folderPath is null ? folder.Path : IntersectFolderPaths(folderPath, folder.Path);
+                    if (folderPath is null) return InvalidSearch;
+                    clauseEnd = folder.End;
+                }
             }
             if (clauseEnd > cursor)
             {
@@ -80,17 +92,18 @@ internal static partial class SearchTerms
             cursor++;
         }
 
-        if (textStart == 0) return CompileParts(query, query, [], null);
+        if (textStart == 0) return CompileParts(query, query, [], null, null);
         text.Append(query.AsSpan(textStart));
-        return CompileParts(query, text.ToString(), tagKeys is not null ? tagKeys : [], addedPeriod);
+        return CompileParts(query, text.ToString(), tagKeys is not null ? tagKeys : [], addedPeriod, folderPath);
     }
 
     private static CompiledSearch CompileParts(string originalQuery, string textQuery, IReadOnlyCollection<string> tagKeys,
-        AddedDatePeriod? addedPeriod)
+        AddedDatePeriod? addedPeriod, string? folderPath)
     {
         string expression = FullTextExpression(textQuery);
-        bool isValid = expression.Length > 0 || tagKeys.Count > 0 || addedPeriod.HasValue || string.IsNullOrWhiteSpace(originalQuery);
-        return new CompiledSearch(expression, tagKeys, addedPeriod, isValid);
+        bool isValid = expression.Length > 0 || tagKeys.Count > 0 || addedPeriod.HasValue || folderPath is not null ||
+            string.IsNullOrWhiteSpace(originalQuery);
+        return new CompiledSearch(expression, tagKeys, addedPeriod, folderPath, isValid);
     }
 
     private static AddedDatePeriod? ParseAddedPeriod(string value)
@@ -114,11 +127,7 @@ internal static partial class SearchTerms
 
     private static (string Key, int End)? ReadTagClause(string query, int start)
     {
-        if (start == query.Length || char.IsWhiteSpace(query[start])) return null;
-        var value = ClosingQuote(query[start]) is char closingQuote
-            ? ReadQuotedTag(query, start + 1, closingQuote)
-            : ReadBareValue(query, start);
-        if (value is not { } tag) return null;
+        if (ReadFilterValue(query, start) is not { } tag) return null;
         try
         {
             return (TagKey(tag.Label), tag.End);
@@ -130,6 +139,34 @@ internal static partial class SearchTerms
         }
     }
 
+    private static (string Path, int End)? ReadFolderClause(string query, int start)
+    {
+        if (ReadFilterValue(query, start) is not { } value) return null;
+        if (value.Label == RootFolderScope) return (RootFolderScope, value.End);
+        if (value.Label.Any(char.IsControl) ||
+            value.Label.Split(FolderSeparator).Any(part => part is "" or "." or "..")) return null;
+        return (value.Label, value.End);
+    }
+
+    private static string? IntersectFolderPaths(string first, string second)
+    {
+        if (first == second) return first;
+        if (first == RootFolderScope || second == RootFolderScope) return null;
+        if (IsChildFolder(second, first)) return second;
+        return IsChildFolder(first, second) ? first : null;
+    }
+
+    private static bool IsChildFolder(string path, string parent) => path.Length > parent.Length &&
+        path[parent.Length] == FolderSeparator && path.StartsWith(parent, StringComparison.Ordinal);
+
+    private static (string Label, int End)? ReadFilterValue(string query, int start)
+    {
+        if (start == query.Length || char.IsWhiteSpace(query[start])) return null;
+        return ClosingQuote(query[start]) is char closingQuote
+            ? ReadQuotedValue(query, start + 1, closingQuote)
+            : ReadBareValue(query, start);
+    }
+
     private static (string Label, int End) ReadBareValue(string query, int start)
     {
         int end = start;
@@ -137,7 +174,7 @@ internal static partial class SearchTerms
         return (query[start..end], end);
     }
 
-    private static (string Label, int End)? ReadQuotedTag(string query, int start, char closingQuote)
+    private static (string Label, int End)? ReadQuotedValue(string query, int start, char closingQuote)
     {
         var label = new StringBuilder();
         for (int cursor = start; cursor < query.Length; cursor++)

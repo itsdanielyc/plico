@@ -25,8 +25,10 @@ public sealed partial class InboxWindowTests
             var document = await library.ImportAsync(fixture, TestContext.Current.CancellationToken);
             Assert.Equal(2, document.PageCount);
             library.AddTag(document.Id, "Workshop receipts");
+            string filingFolder = Directory.CreateDirectory(Path.Combine(library.PdfDirectory, "Workshop Receipts")).FullName;
+            await library.MovePdfAsync(document.Id, filingFolder, TestContext.Current.CancellationToken);
             string addedDay = document.AddedAt.LocalDateTime.ToString("yyyy-MM-dd", CultureInfo.InvariantCulture);
-            receiptQuery = $"WRENCH470 tag:\"Workshop receipts\" added:{addedDay}";
+            receiptQuery = $"WRENCH470 tag:\"Workshop receipts\" added:{addedDay} folder:\"Workshop Receipts\"";
         }
 
         using var model = new InboxViewModel(new FixtureDialogs());

@@ -283,6 +283,7 @@ internal sealed partial class LibraryCatalog
         }
         using var command = connection.CreateCommand();
         var conditions = new List<string> { "d.is_present = 1" };
+        string from = ScopeDocumentRows(command, conditions, search.FolderPath);
         string join = "";
         string match = "''";
         bool hasSearch = search.FullTextExpression.Length > 0;
@@ -330,7 +331,7 @@ internal sealed partial class LibraryCatalog
                    (SELECT json_group_array(t.label ORDER BY t.tag_key)
                     FROM document_tags dt JOIN tags t USING (tag_key) WHERE dt.document_id = d.id),
                    {match}
-            FROM documents d {join}
+            FROM {from} {join}
             WHERE {string.Join(" AND ", conditions)}
             ORDER BY {order}
             LIMIT $limit OFFSET $offset;

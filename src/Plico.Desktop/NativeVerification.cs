@@ -142,11 +142,11 @@ internal static class NativeVerification
         var jump = Control<Button>(window, "GoToMatchButton");
         var search = Control<TextBox>(window, "SearchBox");
         string addedDay = document.AddedAt.LocalDateTime.ToString("yyyy-MM-dd", CultureInfo.InvariantCulture);
-        string filters = $"tag:{TestTag} tag:\"{reviewTag}\" added:{addedDay}";
+        string filters = $"tag:{TestTag} tag:\"{reviewTag}\" added:{addedDay} folder:.";
         search.SetCurrentValue(TextBox.TextProperty, filters);
         await UntilAsync(() => model.Heading == "Search results" && model.Documents.Count == 1, () => model.Status);
         Require(model.SelectedDocument?.Id == document.Id && !jump.IsVisible,
-            "Tag and date filters did not isolate the mixed PDF.");
+            "Tag, date, and root-folder filters did not isolate the mixed PDF.");
 
         search.SetCurrentValue(TextBox.TextProperty, $"{ReceiptKeyword} {filters}");
         await UntilAsync(() => model.Documents.Count == 1 && jump.IsVisible && jump.IsEnabled, () => model.Status);
@@ -641,6 +641,10 @@ internal static class NativeVerification
             File.Exists(Path.Combine(destination, Path.GetFileName(source))) && !File.Exists(source), model.Status);
         VerifyDocumentLocation(window, dialogs, destination);
         await CaptureAsync(window, directory, "moved-with-plico.png");
+        Control<TextBox>(window, "SearchBox").SetCurrentValue(TextBox.TextProperty, $"{LetterKeyword} folder:Filed/Property");
+        await UntilAsync(() => model.ResultCount == "1 document" && model.SelectedDocument is { } found && found.Id == selected.Id &&
+            found.Match.Contains(LetterKeyword, StringComparison.OrdinalIgnoreCase), () => model.Status);
+        await CaptureAsync(window, directory, "folder-search.png");
     }
 
     private static async Task VerifyTitleEditorAsync(MainWindow window, InboxViewModel model, string directory)
