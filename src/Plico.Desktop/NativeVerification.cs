@@ -89,6 +89,7 @@ internal static partial class NativeVerification
             await VerifyRotatePagesAsync(window, model, dialogs, evidenceDirectory);
             await VerifyScannerDialogAsync(window, evidenceDirectory);
             string scanRecoveryEvidence = await VerifyScanRecoveryAsync(window, model, dialogs, evidenceDirectory);
+            await VerifyManualDuplexDialogAsync(window, evidenceDirectory);
             await VerifySavedSearchAsync(window, model, dialogs, evidenceDirectory);
             await VerifyDocumentDateAsync(window, model, dialogs, evidenceDirectory);
             await VerifyBatchOcrAsync(window, model, fixture, evidenceDirectory, priorOcrSource);
@@ -1103,6 +1104,8 @@ internal sealed partial class FixtureDialogs(params string[] documents) : IWorks
     public Task<ScanRequest?> PickScannerAsync() => Task.FromResult(ScannerChoice);
     public Task<bool> ConfirmPartialScanAsync(ScanInterruption interruption, CancellationToken cancellationToken) =>
         PartialScanChoice?.Invoke(interruption, cancellationToken) ?? Task.FromResult(false);
+    public Task<ManualDuplexDecision> ChooseDuplexActionAsync(ManualDuplexPrompt prompt, CancellationToken cancellationToken) =>
+        Task.FromResult(ManualDuplexDecision.SaveForLater);
     public Task<string?> EditTitleAsync(string currentTitle) => Task.FromResult(EditedTitle);
     public Task<DocumentDateEdit?> EditDocumentDateAsync(DateOnly? currentDate) =>
         DocumentDateChoice?.Invoke(currentDate) ?? Task.FromResult<DocumentDateEdit?>(null);

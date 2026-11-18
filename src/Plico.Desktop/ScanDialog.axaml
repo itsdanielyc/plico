@@ -77,6 +77,13 @@
                 </StackPanel>
             </StackPanel>
         </Expander>
+        <Expander Header="Batch separators" HorizontalAlignment="Stretch" HorizontalContentAlignment="Stretch">
+            <StackPanel Spacing="6">
+                <CheckBox x:Name="SplitScanBatch" Content="Split at PATCH-T separator sheets" />
+                <TextBox x:Name="CustomSeparatorBarcode" PlaceholderText="Additional separator barcode value (optional)"
+                         AutomationProperties.Name="Additional separator barcode value" />
+            </StackPanel>
+        </Expander>
         <TextBlock x:Name="ScannerStatus" TextWrapping="Wrap" Foreground="{DynamicResource FaintInk}" FontSize="12"
                    AutomationProperties.LiveSetting="Polite" />
         <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" Spacing="8">

@@ -14,6 +14,7 @@ internal partial interface IWorkspaceDialogs
     Task<string?> PickFolderAsync(string title, string? startFolder = null);
     Task<ScanRequest?> PickScannerAsync();
     Task<bool> ConfirmPartialScanAsync(ScanInterruption interruption, CancellationToken cancellationToken);
+    Task<ManualDuplexDecision> ChooseDuplexActionAsync(ManualDuplexPrompt prompt, CancellationToken cancellationToken);
     Task<string?> EditTitleAsync(string currentTitle);
     Task<DocumentDateEdit?> EditDocumentDateAsync(DateOnly? currentDate);
     Task<DocumentDateEdit?> EditBatchDocumentDatesAsync(DateOnly? commonDate, int documentCount);
@@ -92,6 +93,9 @@ internal sealed partial class WorkspaceDialogs(Window owner) : IWorkspaceDialogs
 
     public Task<bool> ConfirmPartialScanAsync(ScanInterruption interruption, CancellationToken cancellationToken) =>
         new ScanInterruptedDialog(interruption).ShowDecisionAsync(owner, cancellationToken);
+
+    public Task<ManualDuplexDecision> ChooseDuplexActionAsync(ManualDuplexPrompt prompt, CancellationToken cancellationToken) =>
+        new ManualDuplexDialog(prompt).ShowDecisionAsync(owner, cancellationToken);
 
     public Task<string?> EditTitleAsync(string currentTitle) =>
         new DocumentTitleDialog(currentTitle).ShowDialog<string?>(owner);

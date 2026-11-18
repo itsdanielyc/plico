@@ -37,7 +37,7 @@ public sealed record ScannerDevice
 }
 
 /// <summary>Capture from the scanner's preferred source, its bed, or its feeder.</summary>
-public enum ScanFeed { Automatic, Flatbed, Feeder, Duplex }
+public enum ScanFeed { Automatic, Flatbed, Feeder, Duplex, ManualDuplex }
 
 /// <summary>The physical page format requested from the scanner.</summary>
 public enum ScanPaper { A4, Letter }
@@ -70,7 +70,11 @@ public sealed record ScanCleanup(ScanColour Colour = ScanColour.Colour, bool Exc
 
 /// <summary>Capture parameters chosen by the user in the native desktop window.</summary>
 public sealed record ScanRequest(ScannerDevice Device, ScanFeed Feed, ScanPaper Paper,
-    ScanResolution Resolution = ScanResolution.Standard, ScanCleanup? Cleanup = null);
+    ScanResolution Resolution = ScanResolution.Standard, ScanCleanup? Cleanup = null, ScanBatchOptions? Batch = null)
+{
+    /// <summary>Whether the scan can produce multiple documents or needs a second feeder pass.</summary>
+    public bool RequiresBatchCapture => Feed == ScanFeed.ManualDuplex || Batch?.SplitOnSeparators == true;
+}
 
 /// <summary>Discovered scanners and actionable messages from unavailable drivers.</summary>
 public sealed record ScanDiscovery(IReadOnlyList<ScannerDevice> Devices, IReadOnlyList<string> Warnings);
@@ -163,7 +167,7 @@ public static class Scanners
             {
                 ScanFeed.Automatic => PaperSource.Auto,
                 ScanFeed.Flatbed => PaperSource.Flatbed,
-                ScanFeed.Feeder => PaperSource.Feeder,
+                ScanFeed.Feeder or ScanFeed.ManualDuplex => PaperSource.Feeder,
                 ScanFeed.Duplex => PaperSource.Duplex,
                 _ => throw new ArgumentOutOfRangeException(nameof(request), "Unknown paper source.")
             },
@@ -173,13 +177,15 @@ public static class Scanners
                 ScanColour.BlackAndWhite => BitDepth.BlackAndWhite,
                 _ => BitDepth.Color
             },
-            ExcludeBlankPages = cleanup.ExcludeBlankPages,
+            // Keeping one-sided sheets in their original positions is required for duplex pairing.
+            ExcludeBlankPages = cleanup.ExcludeBlankPages && request.Feed != ScanFeed.ManualDuplex,
             AutoDeskew = cleanup.Deskew,
             AutoCrop = cleanup.Crop,
             FlipDuplexedPages = request.Feed == ScanFeed.Duplex && cleanup.FlipBackSides,
             Brightness = cleanup.Brightness,
             Contrast = cleanup.Contrast,
-            BrightnessContrastAfterScan = cleanup.Brightness != 0 || cleanup.Contrast != 0
+            BrightnessContrastAfterScan = cleanup.Brightness != 0 || cleanup.Contrast != 0,
+            BarcodeDetectionOptions = ScanBatchPages.BarcodeOptions(request.Batch)
         };
     }
 

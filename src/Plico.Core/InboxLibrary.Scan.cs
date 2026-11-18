@@ -37,8 +37,13 @@ public sealed partial class InboxLibrary
             cancellationToken, language, destinationFolder);
     }
 
-    private static Func<ScanningContext, CancellationToken, IAsyncEnumerable<ProcessedImage>> CreateScanSource(ScanRequest request)
+    private static Func<ScanningContext, CancellationToken, IAsyncEnumerable<ProcessedImage>> CreateScanSource(ScanRequest request,
+        bool allowBatch = false)
     {
+        if (request.RequiresBatchCapture && !allowBatch)
+        {
+            throw new ArgumentException("Use the scan batch operation for separators or manual duplex.", nameof(request));
+        }
         var options = Scanners.CaptureOptions(request);
         return (context, token) => new ScanController(context).Scan(options, token);
     }

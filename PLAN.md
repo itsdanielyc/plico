@@ -121,3 +121,4 @@ The intake lane owns format adapters, scanner and phone capture. The PDF and des
 | Slice | Done when | Levels | Status |
 |---|---|---|---|
 | #16 Phone inbox | A second per-library folder watches phone transfers while scanner intake continues. Empty files wait for contents. Each watch can stop, resume, catch up, and opt in to catch-up on open. The setup guide covers phone delivery. | L0, L3, L4, L6 | Hosted verification pending |
+| #12 Batch splitting and manual duplex | Scanner batches omit PATCH-T and configured separators. Manual duplex matches reverse-order backs to fronts and can resume after closing the library or correcting a count mismatch. | L0, L1, L3, L6 | Hosted verification pending |
