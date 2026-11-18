@@ -22,6 +22,7 @@
 - Choose Spanish OCR for scans, imports, and searchable copies. The Spanish model runs locally and comes bundled with Plico.
 - Use **Create OCR copy** to recognize a PDF’s visible pages again in the selected language. The catalog tracks the source and language for repeat requests.
 - Use filters such as `added:2026-11` to search by the displayed date added. Catalog version 6 indexes those dates.
+- Combine selected PDFs into one searchable inbox document with a title, document order, and source tags.
 
 ## [0.15.0] - 2026-11-18
 

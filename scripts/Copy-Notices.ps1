@@ -19,7 +19,7 @@ foreach ($library in $assets.libraries.GetEnumerator()) {
     }
     if ($null -eq $packagePath) { continue }
     $notices = @(Get-ChildItem -LiteralPath $packagePath -File | Where-Object {
-        $_.Name -match '^(license|third.party.notices|notice|ofl|copying)([.-_]|$)'
+        $_.Name -match '^(licen[cs]e|third.party.notices|notice|ofl|copying)([.-_]|$)'
     })
     $packageName = $library.Key -replace '/', '-'
     $supplement = Join-Path $supplementDirectory "$packageName.txt"

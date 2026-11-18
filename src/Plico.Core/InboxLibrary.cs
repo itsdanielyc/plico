@@ -269,13 +269,14 @@ public sealed partial class InboxLibrary : IDisposable
     }
 
     private DocumentSummary CommitPdf(string stagedPdf, string title, PdfText text, CancellationToken cancellationToken,
-        byte[]? sourceFingerprint = null, byte[]? pdfFingerprint = null, OcrCopySource? ocrCopySource = null)
+        byte[]? sourceFingerprint = null, byte[]? pdfFingerprint = null, OcrCopySource? ocrCopySource = null,
+        IReadOnlyList<long>? tagSourceIds = null)
     {
         var version = FileVersion.Read(stagedPdf);
         var fingerprint = pdfFingerprint ?? FingerprintPdf(stagedPdf, cancellationToken);
         cancellationToken.ThrowIfCancellationRequested();
         string publishedPdf = PublishPdf(stagedPdf, title);
-        long id = _catalog.Upsert(RelativePdfPath(publishedPdf), title, text, version, fingerprint, sourceFingerprint, ocrCopySource);
+        long id = _catalog.Upsert(RelativePdfPath(publishedPdf), title, text, version, fingerprint, sourceFingerprint, ocrCopySource, tagSourceIds);
         return _catalog.Get(id);
     }
 

@@ -48,7 +48,7 @@ public sealed partial class LibraryTests
         var documents = library.Find(new DocumentFilter(), token).Items;
         var selectedIds = documents.Select(document => document.Id).ToArray();
         using var cancellation = CancellationTokenSource.CreateLinkedTokenSource(token);
-        var progress = new InlineExportProgress(copied =>
+        var progress = new InlinePdfProgress(copied =>
         {
             if (copied == 1) cancellation.Cancel();
         });
@@ -61,7 +61,7 @@ public sealed partial class LibraryTests
 
         string firstPath = library.ResolvePdf(documents[0]);
         DateTime firstTimestamp = File.GetLastWriteTimeUtc(firstPath);
-        var editAfterCopy = new InlineExportProgress(copied =>
+        var editAfterCopy = new InlinePdfProgress(copied =>
         {
             if (copied == selectedIds.Length) File.SetLastWriteTimeUtc(firstPath, firstTimestamp.AddMinutes(5));
         });
@@ -76,7 +76,7 @@ public sealed partial class LibraryTests
         Assert.True(File.Exists(firstPath));
     }
 
-    private sealed record InlineExportProgress(Action<int> Callback) : IProgress<int>
+    private sealed record InlinePdfProgress(Action<int> Callback) : IProgress<int>
     {
         public void Report(int value) => Callback(value);
     }

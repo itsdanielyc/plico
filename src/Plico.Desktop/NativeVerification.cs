@@ -75,10 +75,11 @@ internal static class NativeVerification
             await VerifyTagSuggestionAsync(window, model, evidenceDirectory);
             await VerifyAdjacentMatchesAsync(window, model, dialogs, fixture, evidenceDirectory);
             await VerifyOrientedJpegAsync(window, model, dialogs, fixture, evidenceDirectory);
+            await VerifyCombinedPdfsAsync(window, model, dialogs, evidenceDirectory);
             await VerifyScannerDialogAsync(window, evidenceDirectory);
 
             File.WriteAllText(Path.Combine(evidenceDirectory, "passed.txt"),
-                $"Verified {runtime}. Native window completed multilingual OCR and correction, oriented JPEG and multi-page TIFF import, phrase and tag search, result sorting, fit-width preview, match navigation, tag merging and suggestions, duplicate drop, folder watch, title edit, relocation, batch actions, selected PDF export, library backup, text copy, searchable PDF copy, and import retry.");
+                $"Verified {runtime}. Native window completed multilingual OCR and correction, oriented JPEG and multi-page TIFF import, ordered PDF combination, phrase and tag search, result sorting, fit-width preview, match navigation, tag merging and suggestions, duplicate drop, folder watch, title edit, relocation, batch actions, selected PDF export, library backup, text copy, searchable PDF copy, and import retry.");
             desktop.Shutdown(0);
         }
         catch (Exception error)
@@ -290,6 +291,65 @@ internal static class NativeVerification
             selected.Match.Contains(ReceiptKeyword, StringComparison.OrdinalIgnoreCase) && model.Preview is not null, () => model.Status);
         Require(model.Preview!.PixelSize.Width < model.Preview.PixelSize.Height, "The imported photo was still sideways.");
         await CaptureAsync(window, directory, "upright-jpeg.png");
+    }
+
+    private static async Task VerifyCombinedPdfsAsync(MainWindow window, InboxViewModel model, FixtureDialogs dialogs, string directory)
+    {
+        const string receiptTitle = "Sideways receipt";
+        const string ledgerTitle = "Match Ledger";
+        const string packetTitle = "Paperwork packet";
+        const string packetTag = "Packet";
+        Require(model.SelectedDocument?.Title == receiptTitle, "The receipt must be open before testing PDF combination.");
+        Control<AutoCompleteBox>(window, "TagBox").SetCurrentValue(AutoCompleteBox.TextProperty, packetTag);
+        Control<Button>(window, "AddTagButton").Command!.Execute(null);
+        model.ShowAllCommand.Execute(null);
+        var selected = model.Documents.Where(document => document.Title is receiptTitle or ledgerTitle).ToList();
+        Require(selected.Count == 2 && selected[0].Title == receiptTitle, "The ordered PDF fixtures were unavailable.");
+        Control<ListBox>(window, "DocumentList").SelectedItems = selected;
+        var action = Control<Button>(window, "CombinePdfsButton");
+        Require(model.HasBatchSelection && action.IsEffectivelyVisible && action.IsEnabled, "The PDF selection did not offer combination.");
+
+        dialogs.CombineChoice = documents => ConfirmCombineOrderAsync(window, documents, packetTitle, directory);
+        try
+        {
+            await ((IAsyncRelayCommand)action.Command!).ExecuteAsync(action.CommandParameter);
+        }
+        finally
+        {
+            dialogs.CombineChoice = null;
+        }
+        var packet = model.SelectedDocument;
+        Require(packet is { Title: packetTitle, HasText: true, PageCount: 6, Reviewed: false } && packet.Tags.Contains(packetTag),
+            $"The combined PDF did not open with its source pages and tag. {model.Status}");
+
+        Control<TextBox>(window, "SearchBox").SetCurrentValue(TextBox.TextProperty, ReceiptKeyword);
+        var jump = Control<Button>(window, "GoToMatchButton");
+        await UntilAsync(() => model.SelectedDocument?.Id == packet!.Id && jump.IsVisible && jump.IsEnabled, () => model.Status);
+        await ((IAsyncRelayCommand)jump.Command!).ExecuteAsync(jump.CommandParameter);
+        await UntilAsync(() => model.PageLabel == "6 / 6" && model.Preview is not null, () => model.Status);
+        await CaptureAsync(window, directory, "combined-pdfs.png");
+    }
+
+    private static async Task<CombinePdfsRequest?> ConfirmCombineOrderAsync(Window owner, IReadOnlyList<DocumentSummary> documents,
+        string title, string directory)
+    {
+        var dialog = new CombinePdfsDialog(documents);
+        var response = dialog.ShowDialog<CombinePdfsRequest?>(owner);
+        try
+        {
+            var down = Control<Button>(dialog, "MoveDownButton");
+            Require(down.IsEnabled, "The first source PDF could not be moved in the order dialog.");
+            down.RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
+            Control<TextBox>(dialog, "TitleBox").Text = title;
+            await CaptureAsync(dialog, directory, "combine-order.png");
+            Control<Button>(dialog, "ConfirmCombineButton").RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
+            return await response;
+        }
+        finally
+        {
+            if (dialog.IsVisible) dialog.Close();
+            await response;
+        }
     }
 
     private static async Task VerifyTagSuggestionAsync(MainWindow window, InboxViewModel model, string directory)
@@ -738,6 +798,7 @@ internal sealed class FixtureDialogs(params string[] documents) : IWorkspaceDial
     internal string? FolderPath { get; set; }
     internal string? EditedTitle { get; init; }
     internal TagRenameRequest? TagRenameChoice { get; set; }
+    internal Func<IReadOnlyList<DocumentSummary>, Task<CombinePdfsRequest?>>? CombineChoice { get; set; }
     internal string? LastOpenedPath { get; private set; }
     internal string? LastCopiedText { get; private set; }
     internal ImportErrorsAction ImportErrorsChoice { get; set; }
@@ -748,6 +809,8 @@ internal sealed class FixtureDialogs(params string[] documents) : IWorkspaceDial
     public Task<ScanRequest?> PickScannerAsync() => Task.FromResult<ScanRequest?>(null);
     public Task<string?> EditTitleAsync(string currentTitle) => Task.FromResult(EditedTitle);
     public Task<TagRenameRequest?> RenameTagAsync(string currentName, IReadOnlyList<string> catalogNames) => Task.FromResult(TagRenameChoice);
+    public Task<CombinePdfsRequest?> OrderPdfCombinationAsync(IReadOnlyList<DocumentSummary> selectedDocuments) =>
+        CombineChoice?.Invoke(selectedDocuments) ?? Task.FromResult<CombinePdfsRequest?>(null);
     public Task<ImportErrorsAction> ShowImportErrorsAsync(IReadOnlyList<ImportFailure> failures)
     {
         InspectedImportFailures = failures;

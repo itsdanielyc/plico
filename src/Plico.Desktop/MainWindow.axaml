@@ -241,9 +241,13 @@
                                             <Button Grid.Column="1" x:Name="ApplyBatchTagButton" Classes="secondary"
                                                     Content="Tag selected" Click="ApplyBatchTag_Click" />
                                         </Grid>
-                                        <Button x:Name="ExportSelectedPdfsButton" Classes="secondary" HorizontalAlignment="Right"
-                                                Content="Export PDFs…" Command="{Binding ExportSelectedPdfsCommand}"
-                                                IsEnabled="{Binding CanWork}" AutomationProperties.Name="Export selected PDFs" />
+                                        <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" Spacing="6">
+                                            <Button x:Name="CombinePdfsButton" Classes="secondary" Content="Combine PDFs…"
+                                                    Command="{Binding CombinePdfsCommand}" IsEnabled="{Binding CanWork}" />
+                                            <Button x:Name="ExportSelectedPdfsButton" Classes="secondary"
+                                                    Content="Export PDFs…" Command="{Binding ExportSelectedPdfsCommand}"
+                                                    IsEnabled="{Binding CanWork}" AutomationProperties.Name="Export selected PDFs" />
+                                        </StackPanel>
                                     </StackPanel>
                                 </Border>
                             </StackPanel>

@@ -1,0 +1,41 @@
+<Window xmlns="https://github.com/avaloniaui" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:core="using:Plico.Core" x:Class="Plico.Desktop.CombinePdfsDialog" Title="Combine PDFs"
+        Width="530" Height="430" MinWidth="460" MinHeight="360" WindowStartupLocation="CenterOwner"
+        FontFamily="{StaticResource InterFont}" Background="#F4F5EF">
+    <Grid Margin="24" RowDefinitions="Auto,*,Auto" RowSpacing="14">
+        <StackPanel Spacing="6">
+            <TextBlock Text="Document title" FontWeight="SemiBold" />
+            <TextBox x:Name="TitleBox" AutomationProperties.Name="Combined document title" />
+        </StackPanel>
+        <Grid Grid.Row="1" RowDefinitions="Auto,*" RowSpacing="6">
+            <TextBlock Text="Document order" FontWeight="SemiBold" />
+            <Grid Grid.Row="1" ColumnDefinitions="*,Auto" ColumnSpacing="8">
+                <ListBox x:Name="SourceList" AutomationProperties.Name="Documents in output order"
+                         Background="#FCFDF8" BorderBrush="#DDE2D7" BorderThickness="1" CornerRadius="8">
+                    <ListBox.ItemTemplate>
+                        <DataTemplate x:DataType="core:DocumentSummary">
+                            <StackPanel Spacing="3" Margin="3,4">
+                                <TextBlock Text="{Binding Title}" FontWeight="SemiBold" TextTrimming="CharacterEllipsis" />
+                                <TextBlock Text="{Binding RelativePath}" Foreground="#5C685D" FontSize="12"
+                                           TextTrimming="CharacterEllipsis" />
+                            </StackPanel>
+                        </DataTemplate>
+                    </ListBox.ItemTemplate>
+                </ListBox>
+                <StackPanel Grid.Column="1" Spacing="6">
+                    <Button x:Name="MoveUpButton" Content="Move up" Click="MoveUp_Click" HorizontalAlignment="Stretch" />
+                    <Button x:Name="MoveDownButton" Content="Move down" Click="MoveDown_Click" HorizontalAlignment="Stretch" />
+                </StackPanel>
+            </Grid>
+        </Grid>
+        <StackPanel Grid.Row="2" Spacing="8">
+            <TextBlock x:Name="ValidationMessage" IsVisible="False" Foreground="#8E4037" FontSize="12"
+                       TextWrapping="Wrap" AutomationProperties.LiveSetting="Polite" />
+            <StackPanel Orientation="Horizontal" Spacing="8" HorizontalAlignment="Right">
+                <Button Content="Cancel" IsCancel="True" Click="Cancel_Click" Padding="14,7" />
+                <Button x:Name="ConfirmCombineButton" Content="Combine PDFs" IsDefault="True" Click="Combine_Click"
+                        Background="#254C37" Foreground="White" Padding="14,7" />
+            </StackPanel>
+        </StackPanel>
+    </Grid>
+</Window>

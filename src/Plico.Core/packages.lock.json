@@ -29,6 +29,16 @@
           "SkiaSharp": "4.156.0"
         }
       },
+      "NAPS2.PdfSharp": {
+        "type": "Direct",
+        "requested": "[1.0.2, )",
+        "resolved": "1.0.2",
+        "contentHash": "Eapb5d75M1NqAffpDq2uw6IBQu1yWcu87ClPvKoJwin5IwuvmV1Tkvrr67Di8C7fAldBko0hcpVTZ0vkFXaL2A==",
+        "dependencies": {
+          "SharpZipLib": "1.3.3",
+          "SixLabors.Fonts": "1.0.0-beta17"
+        }
+      },
       "NAPS2.Sdk": {
         "type": "Direct",
         "requested": "[1.6.1, )",
@@ -166,15 +176,6 @@
         "type": "Transitive",
         "resolved": "1.0.1",
         "contentHash": "gTUekPpglFMgcCKQ6cOcXsnuOR/Y3hMp2dTo8jlrRRzBQ7ASregm262rkyDxD5KeZ7LxmjT5NXX1tg+JUUZg9A=="
-      },
-      "NAPS2.PdfSharp": {
-        "type": "Transitive",
-        "resolved": "1.0.2",
-        "contentHash": "Eapb5d75M1NqAffpDq2uw6IBQu1yWcu87ClPvKoJwin5IwuvmV1Tkvrr67Di8C7fAldBko0hcpVTZ0vkFXaL2A==",
-        "dependencies": {
-          "SharpZipLib": "1.3.3",
-          "SixLabors.Fonts": "1.0.0-beta17"
-        }
       },
       "NAPS2.Wia": {
         "type": "Transitive",

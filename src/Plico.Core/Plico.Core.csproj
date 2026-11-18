@@ -3,6 +3,7 @@
     <PackageReference Include="BitMiracle.LibTiff.NET" />
     <PackageReference Include="Microsoft.Data.Sqlite" />
     <PackageReference Include="NAPS2.Images.Skia" />
+    <PackageReference Include="NAPS2.PdfSharp" />
     <PackageReference Include="NAPS2.Sdk" />
     <PackageReference Include="PdfPig" />
     <PackageReference Include="SkiaSharp" />

@@ -6,6 +6,7 @@ Release archives carry package notices under `licenses/`, in `Contents/Resources
 | --- | --- | --- |
 | Avalonia and bundled Inter fonts | MIT and SIL Open Font License | [Avalonia](https://github.com/AvaloniaUI/Avalonia), [Inter](https://github.com/rsms/inter) |
 | NAPS2 SDK and image modules 1.6.1 | LGPL 2.1 or later | [Corresponding SDK sources](https://github.com/cyanfish/naps2/tree/c6c762214293097c522fc1b7656f106fbb66a7f2) |
+| NAPS2 PDFsharp 1.0.2 | MIT | [Corresponding PDFsharp sources](https://github.com/cyanfish/naps2-pdfsharp/tree/8d30f069e6cef9ee9b001372a94432de7f6a3146), packaged `LICENCE.md` |
 | PDFium and Tesseract binaries | See each redistributed package's license and upstream component notices | [PDFium build](https://github.com/cyanfish/naps2-pdfium/tree/2b189e0edae6c0b4f9bdd97681bde8eea8b44661), [Tesseract build](https://github.com/cyanfish/naps2-tesseract/tree/638c2e40b54eb2b30b00898e12a514448462da63) |
 | English, French, German, and Spanish OCR models | Apache 2.0 | [tessdata_fast 4.1.0](https://github.com/tesseract-ocr/tessdata_fast/tree/65727574dfcd264acbb0c3e07860e4e9e9b22185), `tessdata/LICENSE` |
 | PdfPig | Apache 2.0 | [PdfPig](https://github.com/UglyToad/PdfPig/tree/a7bb35662bbbf405efddad50aedc9bcdcf515afc) |

@@ -115,10 +115,12 @@ internal sealed partial class LibraryCatalog
     }
 
     internal long Upsert(string relativePath, string title, PdfText text, FileVersion version,
-        byte[] pdfFingerprint, byte[]? sourceFingerprint = null, OcrCopySource? ocrCopySource = null)
+        byte[] pdfFingerprint, byte[]? sourceFingerprint = null, OcrCopySource? ocrCopySource = null,
+        IReadOnlyList<long>? tagSourceIds = null)
     {
+        tagSourceIds ??= ocrCopySource is { } origin ? [origin.DocumentId] : null;
         using var connection = Connect();
-        using var transaction = ocrCopySource.HasValue ? connection.BeginTransaction() : null;
+        using var transaction = tagSourceIds is { Count: > 0 } ? connection.BeginTransaction() : null;
         using var command = connection.CreateCommand();
         command.Transaction = transaction;
         command.CommandText = """
@@ -147,15 +149,16 @@ internal sealed partial class LibraryCatalog
         command.Parameters.Add("$ocrSource", SqliteType.Integer).Value = (object?)ocrCopySource?.DocumentId ?? DBNull.Value;
         command.Parameters.Add("$ocrLanguage", SqliteType.Text).Value = (object?)ocrCopySource?.Language.ToString() ?? DBNull.Value;
         long documentId = (long)command.ExecuteScalar()!;
-        if (ocrCopySource is { } source)
+        if (tagSourceIds is { Count: > 0 })
         {
             command.CommandText = """
                 INSERT OR IGNORE INTO document_tags (document_id, tag_key)
-                SELECT $copy, tag_key FROM document_tags WHERE document_id = $original;
+                SELECT $copy, dt.tag_key FROM json_each($ids) source
+                JOIN document_tags dt ON dt.document_id = source.value;
                 """;
             command.Parameters.Clear();
             command.Parameters.AddWithValue("$copy", documentId);
-            command.Parameters.AddWithValue("$original", source.DocumentId);
+            BindSelection(command, tagSourceIds);
             command.ExecuteNonQuery();
             transaction!.Commit();
         }
@@ -514,9 +517,14 @@ internal sealed partial class LibraryCatalog
 
     private static int BindSelection(SqliteCommand command, IReadOnlyList<long> documentIds)
     {
-        var uniqueIds = documentIds.Distinct().ToArray();
+        var seen = new HashSet<long>();
+        var uniqueIds = new List<long>(documentIds.Count);
+        foreach (long id in documentIds)
+        {
+            if (seen.Add(id)) uniqueIds.Add(id);
+        }
         command.Parameters.AddWithValue("$ids", JsonSerializer.Serialize(uniqueIds));
-        return uniqueIds.Length;
+        return uniqueIds.Count;
     }
 
     private static void RequireSelection(long matched, int expected)

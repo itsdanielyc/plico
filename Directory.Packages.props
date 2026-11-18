@@ -13,6 +13,7 @@
     <PackageVersion Include="Microsoft.NET.Test.Sdk" Version="18.12.0" />
     <PackageVersion Include="NAPS2.Images.Skia" Version="1.6.1" />
     <PackageVersion Include="NAPS2.Pdfium.Binaries" Version="1.3.0" />
+    <PackageVersion Include="NAPS2.PdfSharp" Version="1.0.2" />
     <PackageVersion Include="NAPS2.Sdk" Version="1.6.1" />
     <PackageVersion Include="NAPS2.Tesseract.Binaries" Version="1.5.0" />
     <PackageVersion Include="PdfPig" Version="0.1.16" />

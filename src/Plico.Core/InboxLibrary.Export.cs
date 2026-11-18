@@ -7,9 +7,9 @@ public sealed partial class InboxLibrary
     private const string ExportStagePrefix = ".plico-export-";
     private const string ExportFolderLabel = "Plico export";
     private const string ExportSourceChanged = "A selected PDF changed while it was being copied. Refresh the index and export it again.";
-    private const string ExportSourceUnavailable = "Export uses ordinary files in the library’s PDF folder. Refresh the index and select the PDFs again.";
+    private const string SelectedSourceUnavailable = "Choose ordinary files in the library’s PDF folder. Refresh the index and select the PDFs again.";
 
-    private readonly record struct ExportSource(string Path, FileVersion Version);
+    private readonly record struct SelectedPdfSource(string Path, FileVersion Version);
 
     /// <summary>Copies selected PDFs to a new folder under an existing destination outside the library.</summary>
     /// <param name="documentIds">The selected catalog IDs. Repeated IDs are copied once.</param>
@@ -28,7 +28,7 @@ public sealed partial class InboxLibrary
         string? stage = null;
         try
         {
-            var sources = ResolveExportSources(_catalog.ReadSelectedFiles(documentIds), cancellationToken);
+            var sources = ResolveSelectedPdfSources(_catalog.ReadSelectedFiles(documentIds), cancellationToken);
             stage = CreateCopyStage(target, ExportStagePrefix);
             var nextSuffixes = new Dictionary<string, int>(StringComparer.OrdinalIgnoreCase);
             var allocatedNames = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
@@ -45,7 +45,7 @@ public sealed partial class InboxLibrary
             foreach (var source in sources)
             {
                 cancellationToken.ThrowIfCancellationRequested();
-                VerifyExportSource(source);
+                VerifySelectedPdfSource(source);
             }
             return new ExportResult(PublishCopyFolder(stage, target, ExportFolderLabel, cancellationToken), sources.Count);
         }
@@ -56,9 +56,9 @@ public sealed partial class InboxLibrary
         }
     }
 
-    private List<ExportSource> ResolveExportSources(IReadOnlyList<CatalogFileReference> files, CancellationToken cancellationToken)
+    private List<SelectedPdfSource> ResolveSelectedPdfSources(IReadOnlyList<CatalogFileReference> files, CancellationToken cancellationToken)
     {
-        var sources = new List<ExportSource>(files.Count);
+        var sources = new List<SelectedPdfSource>(files.Count);
         var canonicalParents = new Dictionary<string, string>(StringComparer.Ordinal);
         string pdfDirectory = ResolveDirectoryLinks(PdfDirectory);
         foreach (var file in files)
@@ -72,17 +72,17 @@ public sealed partial class InboxLibrary
                 canonicalParents.Add(parent, resolvedParent);
             }
             string source = Path.Combine(resolvedParent, Path.GetFileName(path));
-            if (!IsAtOrWithinFolder(pdfDirectory, resolvedParent)) throw new IOException(ExportSourceUnavailable);
-            var selected = new ExportSource(source, file.Version);
-            VerifyExportSource(selected);
+            if (!IsAtOrWithinFolder(pdfDirectory, resolvedParent)) throw new IOException(SelectedSourceUnavailable);
+            var selected = new SelectedPdfSource(source, file.Version);
+            VerifySelectedPdfSource(selected);
             sources.Add(selected);
         }
         return sources;
     }
 
-    private static void VerifyExportSource(ExportSource source)
+    private static void VerifySelectedPdfSource(SelectedPdfSource source)
     {
-        if ((File.GetAttributes(source.Path) & FileAttributes.ReparsePoint) != 0) throw new IOException(ExportSourceUnavailable);
+        if ((File.GetAttributes(source.Path) & FileAttributes.ReparsePoint) != 0) throw new IOException(SelectedSourceUnavailable);
         EnsureCurrentFile(source.Path, source.Version);
     }
 

@@ -14,6 +14,7 @@ internal interface IWorkspaceDialogs
     Task<ScanRequest?> PickScannerAsync();
     Task<string?> EditTitleAsync(string currentTitle);
     Task<TagRenameRequest?> RenameTagAsync(string currentName, IReadOnlyList<string> catalogNames);
+    Task<CombinePdfsRequest?> OrderPdfCombinationAsync(IReadOnlyList<DocumentSummary> selectedDocuments);
     Task<ImportErrorsAction> ShowImportErrorsAsync(IReadOnlyList<ImportFailure> failures);
     Task CopyTextAsync(string text);
     void OpenPath(string path);
@@ -59,6 +60,9 @@ internal sealed class WorkspaceDialogs(Window owner) : IWorkspaceDialogs
 
     public Task<TagRenameRequest?> RenameTagAsync(string currentName, IReadOnlyList<string> catalogNames) =>
         new TagRenameDialog(currentName, catalogNames).ShowDialog<TagRenameRequest?>(owner);
+
+    public Task<CombinePdfsRequest?> OrderPdfCombinationAsync(IReadOnlyList<DocumentSummary> selectedDocuments) =>
+        new CombinePdfsDialog(selectedDocuments).ShowDialog<CombinePdfsRequest?>(owner);
 
     public Task<ImportErrorsAction> ShowImportErrorsAsync(IReadOnlyList<ImportFailure> failures) =>
         new ImportErrorsDialog(failures).ShowDialog<ImportErrorsAction>(owner);

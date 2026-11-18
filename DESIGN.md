@@ -18,6 +18,8 @@ Batch review lives below the document list. The selection count identifies its s
 
 **Export PDFs…** appears in the batch controls. After the export finishes, the status bar shows the output path and offers **Open export**.
 
+**Combine PDFs…** opens a title and order dialog. It starts with the visible results order and lets the user move documents before creating the new inbox PDF.
+
 The OCR selector sits beside intake controls. Its current language is visible before a new file or scan begins.
 
 The sort selector sits beside the results count. It applies to the current inbox, tag, or text search. The selected PDF stays open when it is visible in the reordered list.
