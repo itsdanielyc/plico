@@ -570,7 +570,9 @@ internal static class NativeVerification
 
         string letter = Path.Combine(Path.GetDirectoryName(fixture)!, "Lease Renewal.pdf");
         string incoming = Path.Combine(model.WatchedFolderPath, "Scanner output.pdf");
-        File.Copy(letter, incoming);
+        string temporaryScan = Path.ChangeExtension(incoming, ".part");
+        File.Copy(letter, temporaryScan);
+        File.Move(temporaryScan, incoming);
         await UntilAsync(() => !model.IsBusy && model.Status == "1 document added.", () => model.Status);
         Require(model.Query == ReceiptKeyword && model.SelectedDocument?.Reviewed == true && File.Exists(incoming),
             "A watched import changed the current view or consumed the source file.");

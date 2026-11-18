@@ -30,18 +30,14 @@ internal sealed partial class InboxViewModel
             return;
         }
         token.ThrowIfCancellationRequested();
-        StartWatch(folder);
+        await StartWatchAsync(folder, token);
     });
 
     [RelayCommand]
     private Task ResumeFolderWatchAsync()
     {
         if (RememberedWatchFolder is not { } folder || IsWatchingFolder) return Task.CompletedTask;
-        return RunOperationAsync("Resuming folder watch…", _ =>
-        {
-            StartWatch(folder);
-            return Task.CompletedTask;
-        });
+        return RunOperationAsync("Resuming folder watch…", token => StartWatchAsync(folder, token));
     }
 
     [RelayCommand]
@@ -63,10 +59,17 @@ internal sealed partial class InboxViewModel
         });
     }
 
-    private void StartWatch(string folder)
+    private async Task StartWatchAsync(string folder, CancellationToken cancellationToken)
     {
         var library = RequireLibrary();
-        var watch = FolderWatch.Start(folder, library.PdfDirectory, ImportWatchedFilesAsync);
+        Status = "Checking the scanner output folder…";
+        var watch = await Task.Run(() => FolderWatch.Start(folder, library.PdfDirectory, ImportWatchedFilesAsync, cancellationToken),
+            cancellationToken);
+        if (cancellationToken.IsCancellationRequested)
+        {
+            await watch.DisposeAsync();
+            cancellationToken.ThrowIfCancellationRequested();
+        }
         _folderWatch = watch;
         RememberedWatchFolder = watch.Folder;
         NotifyWatchChanged();

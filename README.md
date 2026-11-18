@@ -81,6 +81,8 @@ Plico remembers the chosen folder for the current library. **Resume folder watch
 
 Choose **Import existing files** while a watch is active to pick up files already in that folder, including scans saved while Plico was closed.
 
+If the operating system reports lost notifications, Plico checks the folder again and queues scans that appeared or changed during the watch. **Import existing files** is still available for older files.
+
 ## Development
 
 Use the .NET SDK in [global.json](global.json).

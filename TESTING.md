@@ -31,6 +31,7 @@
 18. Change a tag’s capitalization, rename one that belongs to a temporarily missing PDF, and merge into an existing tag. Check that a forced database error rolls back all links and that the dialog requires an explicit merge action (L3, L4 and L6).
 19. Import `Scanner pages.TIFF`, which contains a Group 4 page and a rotated LZW page. Search both pages by embedded OCR text, check the second page’s physical size, and verify that a truncated source publishes no PDF. Check the decoder notices in the archives (L3, L6 and L7).
 20. Type an accented tag prefix and choose a suggestion with the keyboard. Verify that the next Enter applies the stored label. Create a new tag, apply an existing tag to a selection, and check the suggestions again after switching libraries (L4, L6).
+21. Save a scan between the watch inventory and subscription. Simulate lost filesystem notifications and save a new scan and an updated scan. Verify that both arrive, an unchanged older PDF stays outside intake, and the next filesystem notification works (L3, L6).
 
 Run `dotnet test Plico.slnx -c Release` for the fast suite. Run the native harness from `keel.json` for installed-platform evidence. Visual review starts with per-OS captures and geometry checks. Add pixel baselines when repeatable runner captures justify the maintenance.
 

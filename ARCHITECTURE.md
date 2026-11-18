@@ -59,6 +59,8 @@ The picker saves the three typed capture choices together as one local settings 
 
 Folder watch coalesces filesystem events by path and samples pending files until two consecutive observations agree. It stays idle without pending events. Ready files wait for the current desktop operation, then use the same snapshot and duplicate checks as manual import. Watching stops with the active window or when the library changes. [.NET FileSystemWatcher](https://learn.microsoft.com/en-us/dotnet/api/system.io.filesystemwatcher)
 
+The watcher records top-level scan sizes and modification times before it subscribes. It reconciles once after subscription to catch arrivals during startup, and again when the operating system reports lost notifications. Only new or changed paths join the readiness queue. A backend that needs to restart is rearmed before reconciliation. A failed restart or unreadable folder is reported to the desktop. [.NET notification buffer overflow](https://learn.microsoft.com/en-us/dotnet/api/system.io.internalbufferoverflowexception?view=net-10.0)
+
 The last watch folder is saved in local settings under the normalized library path. Reopening a library offers the saved folder as an explicit resume action.
 
 The watch can also queue files already in its folder. It gathers supported top-level paths before adding them to the same readiness queue used by filesystem events. Cancellation during the directory scan leaves the queue untouched by that request.

@@ -16,6 +16,7 @@
 - Select a sidebar tag to rename it or merge its documents into an existing tag.
 - Import TIFF scans as searchable PDFs, including multi-page files.
 - Reuse existing tags with suggestions when tagging one PDF or a selection.
+- Recover new and updated scans after watched-folder notifications are interrupted.
 
 ## [0.15.0] - 2026-11-18
 
