@@ -5,6 +5,8 @@
         x:Class="Plico.Desktop.MainWindow" x:DataType="local:InboxViewModel"
         Title="Plico" Width="1180" Height="760" MinWidth="900" MinHeight="590"
         FontFamily="{StaticResource InterFont}" Foreground="#1F3027" Background="#F4F5EF"
+        DragDrop.AllowDrop="True" DragDrop.DragEnter="Files_DragOver" DragDrop.DragOver="Files_DragOver"
+        DragDrop.DragLeave="Files_DragLeave" DragDrop.Drop="Files_Dropped"
         WindowStartupLocation="CenterScreen">
     <Window.Styles>
         <Style Selector="Button">
@@ -221,5 +223,10 @@
                 </Grid>
             </Border>
         </Grid>
+        <Border Grid.Column="1" x:Name="DropTarget" IsVisible="False" IsHitTestVisible="False" Margin="19"
+                Background="#E6F0E2" BorderBrush="#5F8A62" BorderThickness="2" CornerRadius="13">
+            <TextBlock Text="Drop PDFs or images to add them" HorizontalAlignment="Center" VerticalAlignment="Center"
+                       FontWeight="SemiBold" FontSize="23" Foreground="#294735" />
+        </Border>
     </Grid>
 </Window>

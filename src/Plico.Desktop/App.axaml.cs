@@ -30,7 +30,7 @@ public sealed class App : Application
                     testLibrary.Delete(recursive: true);
                 };
                 window.Opened += (_, _) => Dispatcher.UIThread.Post(
-                    () => _ = NativeVerification.RunAsync(desktop, window, model, evidenceDirectory),
+                    () => _ = NativeVerification.RunAsync(desktop, window, model, evidenceDirectory, fixture),
                     DispatcherPriority.Background);
             }
             else

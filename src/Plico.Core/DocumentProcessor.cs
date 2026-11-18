@@ -24,34 +24,29 @@ internal sealed class DocumentProcessor(string dataDirectory)
         ".png", ".jpg", ".jpeg"
     };
 
-    internal async Task<PdfText> PrepareAsync(string sourcePath, string outputPath, CancellationToken cancellationToken)
-    {
-        var extension = Path.GetExtension(sourcePath);
-        var isPdf = string.Equals(extension, PdfExtension, StringComparison.OrdinalIgnoreCase);
-        if (!isPdf && !ImageExtensions.Contains(extension))
-        {
-            throw new InvalidDataException("Choose a PDF, PNG, or JPEG file.");
-        }
+    internal static bool IsPdf(string extension) => string.Equals(extension, PdfExtension, StringComparison.OrdinalIgnoreCase);
 
+    internal static bool SupportsExtension(string extension) => IsPdf(extension) || ImageExtensions.Contains(extension);
+
+    internal async Task<PdfText> PrepareAsync(string stagedSource, string outputPath, CancellationToken cancellationToken)
+    {
         string stagingDirectory = Path.GetDirectoryName(outputPath)!;
-        using var context = CreateCaptureContext(stagingDirectory);
+        bool isPdf = IsPdf(Path.GetExtension(stagedSource));
         if (isPdf)
         {
-            string snapshot = Path.Combine(stagingDirectory, "original.pdf");
-            File.Copy(sourcePath, snapshot);
-            var existing = ReadPdf(snapshot, cancellationToken);
+            var existing = ReadPdf(stagedSource, cancellationToken);
             if (existing.HasTextOnEveryPage)
             {
-                File.Move(snapshot, outputPath);
+                File.Move(stagedSource, outputPath);
                 return existing;
             }
-
-            var pages = new PdfImporter(context).Import(snapshot, progress: cancellationToken);
-            return await ExportAsync(context, pages, outputPath, cancellationToken).ConfigureAwait(false);
         }
 
-        var images = new ImageImporter(context).Import(sourcePath, progress: cancellationToken);
-        return await ExportAsync(context, images, outputPath, cancellationToken).ConfigureAwait(false);
+        using var context = CreateCaptureContext(stagingDirectory);
+        var pages = isPdf
+            ? new PdfImporter(context).Import(stagedSource, progress: cancellationToken)
+            : new ImageImporter(context).Import(stagedSource, progress: cancellationToken);
+        return await ExportAsync(context, pages, outputPath, cancellationToken).ConfigureAwait(false);
     }
 
     internal async Task<PdfText> ExportAsync(

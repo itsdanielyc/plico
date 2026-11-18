@@ -98,6 +98,16 @@ internal sealed partial class InboxViewModel : ObservableObject, IDisposable
         await ImportFilesAsync(files, token);
     });
 
+    internal Task ImportDroppedFilesAsync(IReadOnlyList<string> files, bool hasSupportedFile)
+    {
+        if (!hasSupportedFile)
+        {
+            Status = "Drop a PDF, PNG, or JPEG document.";
+            return Task.CompletedTask;
+        }
+        return RunOperationAsync("Importing dropped files…", token => ImportFilesAsync(files, token));
+    }
+
     [RelayCommand]
     private Task ChooseLibraryAsync() => RunOperationAsync("Choose a library folder…", async _ =>
     {
@@ -185,6 +195,7 @@ internal sealed partial class InboxViewModel : ObservableObject, IDisposable
         var failures = new List<string>();
         DocumentSummary? lastAdded = null;
         int added = 0;
+        int alreadyPresent = 0;
         int unreadable = 0;
         try
         {
@@ -195,7 +206,13 @@ internal sealed partial class InboxViewModel : ObservableObject, IDisposable
                 Status = $"Processing {filename}…";
                 try
                 {
-                    lastAdded = await Task.Run(() => library.ImportAsync(file, token), token);
+                    var result = await Task.Run(() => library.ImportFileAsync(file, token), token);
+                    if (!result.Added)
+                    {
+                        alreadyPresent++;
+                        continue;
+                    }
+                    lastAdded = result.Document;
                     added++;
                     if (!lastAdded.HasText) unreadable++;
                 }
@@ -210,9 +227,12 @@ internal sealed partial class InboxViewModel : ObservableObject, IDisposable
             if (lastAdded is not null) Navigate(inboxOnly: true, preferredId: lastAdded.Id);
         }
 
-        Status = $"{DocumentCount(added)} added.";
-        if (unreadable > 0) Status += $" No text recognized in {DocumentCount(unreadable)}.";
-        if (failures.Count > 0) Status += $" {failures.Count} failed. {failures[0]}";
+        var outcomes = new List<string>();
+        if (added > 0) outcomes.Add($"{DocumentCount(added)} added.");
+        if (alreadyPresent > 0) outcomes.Add($"{DocumentCount(alreadyPresent)} already in the library.");
+        if (unreadable > 0) outcomes.Add($"No text recognized in {DocumentCount(unreadable)}.");
+        if (failures.Count > 0) outcomes.Add($"{failures.Count} failed. {failures[0]}");
+        Status = string.Join(" ", outcomes);
     }
 
     private async Task RunOperationAsync(string workingStatus, Func<CancellationToken, Task> operation)

@@ -6,8 +6,10 @@ namespace Plico.Core;
 /// <summary>Maintains the transactionally updated local catalog and FTS index.</summary>
 internal sealed class LibraryCatalog
 {
-    private const int SchemaVersion = 1;
+    private const int SchemaVersion = 2;
     private const int ConnectionTimeoutSeconds = 5;
+    private const int SnippetMarker = 30;
+    private const int SnippetLeadingCharacters = 20;
     internal const int PageSize = 60;
 
     private const string Schema = """
@@ -50,6 +52,12 @@ internal sealed class LibraryCatalog
         END;
         """;
 
+    private const string FingerprintMigration = """
+        ALTER TABLE documents ADD COLUMN source_sha256 BLOB;
+        CREATE INDEX documents_source_sha256 ON documents(source_sha256) WHERE source_sha256 IS NOT NULL;
+        CREATE INDEX documents_legacy_file_bytes ON documents(file_bytes) WHERE source_sha256 IS NULL AND is_present = 1;
+        """;
+
     private readonly string _connectionString;
 
     internal LibraryCatalog(string path)
@@ -70,7 +78,13 @@ internal sealed class LibraryCatalog
         var version = (long)command.ExecuteScalar()!;
         if (version == 0)
         {
-            command.CommandText = $"{Schema}\nPRAGMA user_version = {SchemaVersion};";
+            command.CommandText = Schema;
+            command.ExecuteNonQuery();
+            version = 1;
+        }
+        if (version == 1)
+        {
+            command.CommandText = $"{FingerprintMigration}\nPRAGMA user_version = {SchemaVersion};";
             command.ExecuteNonQuery();
         }
         else if (version != SchemaVersion)
@@ -80,16 +94,17 @@ internal sealed class LibraryCatalog
         migration.Commit();
     }
 
-    internal long Upsert(string relativePath, string title, PdfText text, FileVersion version)
+    internal long Upsert(string relativePath, string title, PdfText text, FileVersion version, byte[]? sourceFingerprint = null)
     {
         using var connection = Connect();
         using var command = connection.CreateCommand();
         command.CommandText = """
-            INSERT INTO documents (title, relative_path, added_at, modified_ticks, file_bytes, page_count, has_text, body)
-            VALUES ($title, $path, $added, $modified, $bytes, $pages, $hasText, $text)
+            INSERT INTO documents (title, relative_path, added_at, modified_ticks, file_bytes, page_count, has_text, body, source_sha256)
+            VALUES ($title, $path, $added, $modified, $bytes, $pages, $hasText, $text, $source)
             ON CONFLICT(relative_path) DO UPDATE SET
                 title = excluded.title, modified_ticks = excluded.modified_ticks, file_bytes = excluded.file_bytes,
-                page_count = excluded.page_count, has_text = excluded.has_text, body = excluded.body, is_present = 1
+                page_count = excluded.page_count, has_text = excluded.has_text, body = excluded.body, is_present = 1,
+                source_sha256 = excluded.source_sha256
             RETURNING id;
             """;
         command.Parameters.AddWithValue("$title", title);
@@ -100,7 +115,52 @@ internal sealed class LibraryCatalog
         command.Parameters.AddWithValue("$pages", text.PageCount);
         command.Parameters.AddWithValue("$hasText", text.Body.Length > 0);
         command.Parameters.AddWithValue("$text", text.Body);
+        command.Parameters.AddWithValue("$source", sourceFingerprint is null ? DBNull.Value : sourceFingerprint);
         return (long)command.ExecuteScalar()!;
+    }
+
+    internal bool ReservesPath(string relativePath)
+    {
+        using var connection = Connect();
+        using var command = connection.CreateCommand();
+        command.CommandText = "SELECT EXISTS(SELECT 1 FROM documents WHERE relative_path = $path);";
+        command.Parameters.AddWithValue("$path", relativePath);
+        return (long)command.ExecuteScalar()! == 1;
+    }
+
+    internal IReadOnlyList<ImportCandidate> FindSource(byte[] fingerprint) =>
+        ReadImportCandidates("source_sha256 = $value", fingerprint);
+
+    internal IReadOnlyList<ImportCandidate> FindLegacyPdfs(long fileBytes) =>
+        ReadImportCandidates("source_sha256 IS NULL AND file_bytes = $value", fileBytes);
+
+    internal void RecordSource(long id, byte[] fingerprint)
+    {
+        using var connection = Connect();
+        using var command = connection.CreateCommand();
+        command.CommandText = "UPDATE documents SET source_sha256 = $source WHERE id = $id;";
+        command.Parameters.AddWithValue("$source", fingerprint);
+        command.Parameters.AddWithValue("$id", id);
+        command.ExecuteNonQuery();
+    }
+
+    private IReadOnlyList<ImportCandidate> ReadImportCandidates(string condition, object value)
+    {
+        using var connection = Connect();
+        using var command = connection.CreateCommand();
+        command.CommandText = $"""
+            SELECT id, relative_path, modified_ticks, file_bytes FROM documents
+            WHERE is_present = 1 AND {condition} ORDER BY id DESC;
+            """;
+        command.Parameters.AddWithValue("$value", value);
+        using var reader = command.ExecuteReader();
+        var candidates = new List<ImportCandidate>();
+        while (reader.Read())
+        {
+            candidates.Add(new(reader.GetInt64(0), reader.GetString(1),
+                new FileVersion(reader.GetInt64(2), reader.GetInt64(3), Present: true)));
+        }
+        return candidates;
     }
 
     internal DocumentSummary Get(long documentId) => Query(new DocumentFilter(), documentId).Items.Single();
@@ -125,7 +185,7 @@ internal sealed class LibraryCatalog
         if (expression.Length > 0)
         {
             join = "JOIN documents_search ON documents_search.rowid = d.id";
-            match = "replace(replace(snippet(documents_search, 1, '', '', ' … ', 18), char(13), ''), char(10), ' ')";
+            match = $"replace(replace(snippet(documents_search, 1, char({SnippetMarker}), char({SnippetMarker}), ' … ', 18), char(13), ''), char(10), ' ')";
             order = "documents_search.rank, d.id DESC";
             conditions.Add("documents_search MATCH $expression");
             command.Parameters.AddWithValue("$expression", expression);
@@ -170,9 +230,21 @@ internal sealed class LibraryCatalog
                 DateTimeOffset.FromUnixTimeSeconds(results.GetInt64(3)), results.GetBoolean(4),
                 results.GetInt32(5), results.GetBoolean(6),
                 JsonSerializer.Deserialize<string[]>(results.GetString(7)) ?? [],
-                results.GetString(8)));
+                TrimSnippet(results.GetString(8))));
         }
         return new(documents, HasMore: false);
+    }
+
+    private static string TrimSnippet(string excerpt)
+    {
+        const char marker = (char)SnippetMarker;
+        int matchStart = excerpt.IndexOf(marker);
+        if (matchStart < 0) return "";
+        if (matchStart <= SnippetLeadingCharacters) return excerpt.Replace(marker.ToString(), "").Trim();
+
+        int wordBreak = excerpt.IndexOf(' ', matchStart - SnippetLeadingCharacters);
+        int start = wordBreak >= 0 && wordBreak < matchStart ? wordBreak + 1 : matchStart;
+        return "… " + excerpt[start..].Replace(marker.ToString(), "").Trim();
     }
 
     internal IReadOnlyList<string> Tags()

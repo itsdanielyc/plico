@@ -21,7 +21,12 @@ public sealed record DocumentPage(IReadOnlyList<DocumentSummary> Items, bool Has
 /// <summary>Files reindexed from disk and any files that could not be read.</summary>
 public sealed record RefreshResult(int Indexed, IReadOnlyList<string> Warnings);
 
+/// <summary>The existing or newly created catalog entry for a supplied file.</summary>
+public sealed record FileImportResult(DocumentSummary Document, bool Added);
+
 internal sealed record PdfText(string Body, int PageCount, bool HasTextOnEveryPage);
+
+internal readonly record struct ImportCandidate(long Id, string RelativePath, FileVersion Version);
 
 internal readonly record struct FileVersion(long LastModifiedTicks, long Length, bool Present)
 {

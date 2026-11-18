@@ -6,7 +6,7 @@ using NAPS2.Scan;
 namespace Plico.Core;
 
 /// <summary>Keeps searchable PDFs and their portable catalog consistent within one local library.</summary>
-public sealed class InboxLibrary : IDisposable
+public sealed partial class InboxLibrary : IDisposable
 {
     private const string PdfFolderName = "PDFs";
     private const string MetadataFolderName = ".plico";
@@ -72,9 +72,8 @@ public sealed class InboxLibrary : IDisposable
     }
 
     /// <summary>Imports a copy, recognizes scan-only pages and indexes the resulting document.</summary>
-    public Task<DocumentSummary> ImportAsync(string sourcePath, CancellationToken cancellationToken = default) =>
-        StoreAsync(Path.GetFileNameWithoutExtension(sourcePath),
-            (output, token) => _processor.PrepareAsync(sourcePath, output, token), cancellationToken);
+    public async Task<DocumentSummary> ImportAsync(string sourcePath, CancellationToken cancellationToken = default) =>
+        (await ImportFileAsync(sourcePath, cancellationToken).ConfigureAwait(false)).Document;
 
     /// <summary>Captures a scan job as a single searchable PDF in the inbox.</summary>
     public Task<DocumentSummary> ScanAsync(ScanRequest request, CancellationToken cancellationToken = default)
@@ -88,10 +87,12 @@ public sealed class InboxLibrary : IDisposable
         string title,
         Func<ScanningContext, CancellationToken, IAsyncEnumerable<ProcessedImage>> capture,
         CancellationToken cancellationToken) =>
-        StoreAsync(title, async (output, token) =>
+        InStageAsync(async (stage, token) =>
         {
-            using var context = DocumentProcessor.CreateCaptureContext(Path.GetDirectoryName(output)!);
-            return await _processor.ExportAsync(context, capture(context, token), output, token).ConfigureAwait(false);
+            using var context = DocumentProcessor.CreateCaptureContext(stage);
+            string output = Path.Combine(stage, StagedPdfName);
+            var text = await _processor.ExportAsync(context, capture(context, token), output, token).ConfigureAwait(false);
+            return CommitPdf(output, title, text, token);
         }, cancellationToken);
 
     /// <summary>Returns a bounded page of results for the selected filters.</summary>
@@ -110,9 +111,11 @@ public sealed class InboxLibrary : IDisposable
     public void SetReviewed(long documentId, bool reviewed) => _catalog.SetReviewed(documentId, reviewed);
 
     /// <summary>Resolves the catalog path within the portable PDF directory.</summary>
-    public string ResolvePdf(DocumentSummary document)
+    public string ResolvePdf(DocumentSummary document) => ResolvePdfPath(document.RelativePath);
+
+    private string ResolvePdfPath(string relativePath)
     {
-        var path = Path.GetFullPath(Path.Combine(PdfDirectory, document.RelativePath));
+        var path = Path.GetFullPath(Path.Combine(PdfDirectory, relativePath));
         var relative = Path.GetRelativePath(PdfDirectory, path);
         if (relative is "." or ".." || Path.IsPathRooted(relative) ||
             relative.StartsWith($"..{Path.DirectorySeparatorChar}", StringComparison.Ordinal))
@@ -188,9 +191,8 @@ public sealed class InboxLibrary : IDisposable
         _fileOperations.Dispose();
     }
 
-    internal async Task<DocumentSummary> StoreAsync(
-        string title,
-        Func<string, CancellationToken, Task<PdfText>> prepare,
+    private async Task<TResult> InStageAsync<TResult>(
+        Func<string, CancellationToken, Task<TResult>> operation,
         CancellationToken cancellationToken)
     {
         await _fileOperations.WaitAsync(cancellationToken).ConfigureAwait(false);
@@ -198,19 +200,23 @@ public sealed class InboxLibrary : IDisposable
         try
         {
             Directory.CreateDirectory(stage);
-            string stagedPdf = Path.Combine(stage, "ready.pdf");
-            var text = await prepare(stagedPdf, cancellationToken).ConfigureAwait(false);
-            var version = FileVersion.Read(stagedPdf);
-            cancellationToken.ThrowIfCancellationRequested();
-            string publishedPdf = PublishPdf(stagedPdf, title);
-            long id = _catalog.Upsert(RelativePdfPath(publishedPdf), title, text, version);
-            return _catalog.Get(id);
+            return await operation(stage, cancellationToken).ConfigureAwait(false);
         }
         finally
         {
             TryRemoveStage(stage);
             _fileOperations.Release();
         }
+    }
+
+    private DocumentSummary CommitPdf(string stagedPdf, string title, PdfText text, CancellationToken cancellationToken,
+        byte[]? sourceFingerprint = null)
+    {
+        var version = FileVersion.Read(stagedPdf);
+        cancellationToken.ThrowIfCancellationRequested();
+        string publishedPdf = PublishPdf(stagedPdf, title);
+        long id = _catalog.Upsert(RelativePdfPath(publishedPdf), title, text, version, sourceFingerprint);
+        return _catalog.Get(id);
     }
 
     private static string EnsureLibraryDirectory(string root, string folder)
@@ -226,7 +232,7 @@ public sealed class InboxLibrary : IDisposable
     private string RelativePdfPath(string path) =>
         Path.GetRelativePath(PdfDirectory, path).Replace(Path.DirectorySeparatorChar, '/');
 
-    // O(k) attempts for k occupied names and O(1) file buffers because staging and PDFs share a volume.
+    // O(k log n) catalog lookups for k occupied names among n entries. The move uses a constant file buffer.
     private string PublishPdf(string stagedPdf, string title)
     {
         string stem = PortableStem(title);
@@ -234,6 +240,7 @@ public sealed class InboxLibrary : IDisposable
         {
             string name = duplicate == 1 ? stem : $"{stem} ({duplicate.ToString(CultureInfo.InvariantCulture)})";
             string destination = Path.Combine(PdfDirectory, name + DocumentProcessor.PdfExtension);
+            if (_catalog.ReservesPath(RelativePdfPath(destination))) continue;
             try
             {
                 File.Move(stagedPdf, destination, overwrite: false);

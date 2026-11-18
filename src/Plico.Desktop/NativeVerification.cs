@@ -1,6 +1,7 @@
 using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Controls.ApplicationLifetimes;
+using Avalonia.Input;
 using Avalonia.Media.Imaging;
 using Avalonia.Threading;
 using CommunityToolkit.Mvvm.Input;
@@ -16,7 +17,7 @@ internal static class NativeVerification
     private static readonly TimeSpan StateCheckInterval = TimeSpan.FromMilliseconds(30);
 
     internal static async Task RunAsync(
-        IClassicDesktopStyleApplicationLifetime desktop, MainWindow window, InboxViewModel model, string evidenceDirectory)
+        IClassicDesktopStyleApplicationLifetime desktop, MainWindow window, InboxViewModel model, string evidenceDirectory, string fixture)
     {
         try
         {
@@ -42,9 +43,10 @@ internal static class NativeVerification
                     document.Match.Contains(ReceiptKeyword, StringComparison.OrdinalIgnoreCase),
                 "The reviewed and tagged PDF was not found by OCR text.");
             await CaptureAsync(window, evidenceDirectory, "search.png");
+            await VerifyDropAsync(window, model, fixture, evidenceDirectory);
 
             File.WriteAllText(Path.Combine(evidenceDirectory, "passed.txt"),
-                "Native window imported an image, rendered the searchable PDF, tagged it, marked it reviewed, and found it by its text.");
+                "Native window imported and previewed a searchable PDF, tagged and reviewed it, found it by text, and skipped a dropped duplicate.");
             desktop.Shutdown(0);
         }
         catch (Exception error)
@@ -52,6 +54,33 @@ internal static class NativeVerification
             File.WriteAllText(Path.Combine(evidenceDirectory, "error.txt"), error.ToString());
             desktop.Shutdown(1);
         }
+    }
+
+    private static async Task VerifyDropAsync(MainWindow window, InboxViewModel model, string fixture, string directory)
+    {
+        using var file = await window.StorageProvider.TryGetFileFromPathAsync(new Uri(Path.GetFullPath(fixture)));
+        if (file is null) throw new InvalidOperationException("The native file provider could not open the drop fixture.");
+        using var transfer = new DataTransfer();
+        transfer.Add(DataTransferItem.CreateFile(file));
+        var pointer = new Point(window.Bounds.Width / 2, window.Bounds.Height / 2);
+        var over = new DragEventArgs(DragDrop.DragOverEvent, transfer, window, pointer, KeyModifiers.None)
+        {
+            DragEffects = DragDropEffects.Copy
+        };
+        window.RaiseEvent(over);
+        Require(over.DragEffects == DragDropEffects.Copy && Control<Border>(window, "DropTarget").IsVisible,
+            "The native drop target did not offer to copy the file.");
+        await CaptureAsync(window, directory, "drop-target.png");
+        var drop = new DragEventArgs(DragDrop.DropEvent, transfer, window, pointer, KeyModifiers.None)
+        {
+            DragEffects = DragDropEffects.Copy
+        };
+        window.RaiseEvent(drop);
+        await UntilAsync(() => !model.IsBusy && model.Status.Contains("already in the library", StringComparison.Ordinal),
+            () => model.Status);
+        Require(model.SelectedDocument is { Reviewed: true } document && document.Tags.Contains(TestTag) &&
+                !Control<Border>(window, "DropTarget").IsVisible && File.Exists(fixture),
+            "Dropping a repeat altered the existing document or moved the source.");
     }
 
     private static T Control<T>(Window window, string name) where T : Control =>
