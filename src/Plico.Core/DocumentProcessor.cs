@@ -206,7 +206,7 @@ internal sealed class DocumentProcessor(string dataDirectory)
             throw new FileNotFoundException($"The bundled {language} OCR data is missing. Extract a fresh copy of Plico.", modelFile);
         }
         if (recognition.AutoOrient)
-            captured = await TesseractOrientation.OrientAsync(context, captured, dataDirectory, cancellationToken).ConfigureAwait(false);
+            captured = await TesseractOrientation.OrientAsync(context, captured, dataDirectory, languageCode, cancellationToken).ConfigureAwait(false);
         context.OcrEngine = tesseract ? TesseractOcrEngine.Bundled(dataDirectory) : new RapidOcrEngine();
         if (!await new PdfExporter(context).Export(
             outputPath, captured, exportSettings ?? new PdfExportParams { Metadata = new PdfMetadata { Creator = "Plico" } },

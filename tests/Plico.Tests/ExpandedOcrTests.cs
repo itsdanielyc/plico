@@ -1,4 +1,5 @@
 using Plico.Core;
+using SkiaSharp;
 using UglyToad.PdfPig;
 using Xunit;
 
@@ -27,6 +28,23 @@ public sealed class ExpandedOcrTests
         var page = pdf.GetPage(1);
         Assert.True(page.Height > page.Width, $"Expected a portrait PDF, got {page.Width} × {page.Height}.");
         Assert.Contains("original certificate", library.ReadIndexedText(result.Document.Id), StringComparison.OrdinalIgnoreCase);
+    }
+
+    [Fact]
+    public async Task OrientationWorksWithoutOsdAndLeavesAnEmptyPageAlone()
+    {
+        using var temporary = new TemporaryLibrary();
+        var token = TestContext.Current.CancellationToken;
+        string original = Path.Combine(AppContext.BaseDirectory, "fixtures", "Sideways orientation.png");
+        using var sideways = SKBitmap.Decode(original);
+        string models = Path.Combine(AppContext.BaseDirectory, "tessdata");
+        string executable = TesseractOrientation.FindExecutable();
+        string intermediate = Path.Combine(temporary.Path, "orientation.png");
+        Assert.Equal(270, await TesseractOrientation.EstimateFromRecognitionAsync(executable, sideways, intermediate, models, "eng", token));
+
+        using var blank = new SKBitmap(360, 480);
+        blank.Erase(SKColors.White);
+        Assert.Equal(0, await TesseractOrientation.EstimateFromRecognitionAsync(executable, blank, intermediate, models, "eng", token));
     }
 
     [Fact]
