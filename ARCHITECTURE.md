@@ -131,6 +131,8 @@ The last watch folder is saved in local settings under the normalized library pa
 
 The watch can also queue files already in its folder. It gathers supported top-level paths before adding them to the same readiness queue used by filesystem events. Cancellation during the directory scan leaves the queue untouched by that request.
 
+Resume and catch up starts the remembered watch and checks existing files in one desktop operation. The desktop publishes the active watch after queuing finishes and disposes a watcher if startup fails or is cancelled. Queued files use the established stability and duplicate checks.
+
 ## Scope decisions
 
 Keep one catalog per library. An additional database or search daemon would add setup and duplicate state. Each installer uses the same published application files as its portable archive. Windows setup generates an uninstall list from those files and removes directories only when empty. The macOS disk image carries the signed app and an Applications link. The Ubuntu package owns the application, launcher, and desktop entry. The library belongs to the user.

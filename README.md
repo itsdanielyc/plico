@@ -137,9 +137,9 @@ If your scanner software saves to a folder, choose **Watch a folder…** under *
 
 The number beside **Inbox** is the total awaiting review. Watched imports update it while you work in other views. Use **Refresh results** below the document list when an arrival has been held for your current selection or loaded pages.
 
-Plico remembers the chosen folder for the current library. **Resume folder watch** starts watching it again when you are ready.
+Plico remembers the chosen folder for the current library. **Resume folder watch** starts watching it again. **Resume and catch up** also checks files already in that folder, including scans saved while Plico was closed.
 
-Choose **Import existing files** while a watch is active to pick up files already in that folder, including scans saved while Plico was closed.
+Choose **Import existing files** while a watch is active to check its current files again. Exact copies already in the library are skipped.
 
 If the operating system reports lost notifications, Plico checks the folder again and queues scans that appeared or changed during the watch. **Import existing files** is still available for older files.
 

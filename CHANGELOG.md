@@ -54,6 +54,7 @@
 - Export the previewed PDF directly to a folder and open its destination from the status bar.
 - Keep your place in a review queue and preserve loaded pages when a review removes results.
 - Keep separate paper and resolution settings for each scanner and reselect the last scanner you started with.
+- Resume a saved folder watch and check existing scans in one action.
 
 ## [0.15.0] - 2026-11-18
 

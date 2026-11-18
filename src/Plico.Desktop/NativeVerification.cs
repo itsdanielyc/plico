@@ -94,9 +94,10 @@ internal static partial class NativeVerification
             await VerifyBatchTagPagingAsync(window, model, fixture, evidenceDirectory);
             await VerifyBatchDocumentDatesAsync(window, model, dialogs, evidenceDirectory);
             await VerifyReviewPositionAsync(window, model, evidenceDirectory);
+            await VerifyWatchCatchUpAsync(window, model, fixture, evidenceDirectory);
 
             File.WriteAllText(Path.Combine(evidenceDirectory, "passed.txt"),
-                $"Verified {runtime}. Native window completed multilingual OCR and correction, oriented JPEG and multi-page TIFF import, PDF combination, page extraction and rotation, phrase, tag, review-status, folder, and text-availability search, query correction, saved search restoration, single and batch document-date editing, date filtering and inheritance, result sorting, continued review across loaded results, fit-width and selectable page text previews, match navigation, tag merging, suggestions, and edits across loaded result pages, duplicate drop, folder watch and inbox counting, title edit, single and batch PDF moves, external relocation and PDF swaps, index reporting and PDF restoration from files and folders, single and batch PDF export, library backup, text copy, single and batch OCR copies, saved import error recovery and retry, per-scanner capture option restoration, and filing through the chosen intake folder. {scanRecoveryEvidence}");
+                $"Verified {runtime}. Native window completed multilingual OCR and correction, oriented JPEG and multi-page TIFF import, PDF combination, page extraction and rotation, phrase, tag, review-status, folder, and text-availability search, query correction, saved search restoration, single and batch document-date editing, date filtering and inheritance, result sorting, continued review across loaded results, fit-width and selectable page text previews, match navigation, tag merging, suggestions, and edits across loaded result pages, duplicate drop, folder watch, catch-up and inbox counting, title edit, single and batch PDF moves, external relocation and PDF swaps, index reporting and PDF restoration from files and folders, single and batch PDF export, library backup, text copy, single and batch OCR copies, saved import error recovery and retry, per-scanner capture option restoration, and filing through the chosen intake folder. {scanRecoveryEvidence}");
             desktop.Shutdown(0);
         }
         catch (Exception error)
@@ -955,13 +956,15 @@ internal static partial class NativeVerification
         await CaptureAsync(window, directory, "watched-folder.png");
         string originalFolder = model.WatchedFolderPath;
         await ((IAsyncRelayCommand)stop.Command!).ExecuteAsync(null);
-        Require(!model.IsWatchingFolder && !existing.IsVisible, "The folder watch did not stop.");
+        Require(!model.IsWatchingFolder && existing.IsVisible && Equals(existing.Content, "Resume and catch up"),
+            "The stopped watch did not offer catch-up for its remembered folder.");
         var resume = Control<Button>(window, "ResumeFolderWatchButton");
         Require(resume.IsVisible && resume.Command is IAsyncRelayCommand, "The native window did not offer the remembered folder.");
         await CaptureAsync(window, directory, "resume-watch.png");
         await ((IAsyncRelayCommand)resume.Command!).ExecuteAsync(null);
         Require(model.IsWatchingFolder && model.WatchedFolderPath == originalFolder, "The watch did not resume its previous folder.");
-        Require(existing.IsVisible && existing.IsEnabled && existing.Command is IAsyncRelayCommand,
+        Require(existing.IsVisible && existing.IsEnabled && Equals(existing.Content, "Import existing files") &&
+                existing.Command is IAsyncRelayCommand,
             "The resumed watch did not offer to import existing files.");
         await ((IAsyncRelayCommand)existing.Command!).ExecuteAsync(null);
         await UntilAsync(() => !model.IsBusy && model.Status == "1 document already in the library.", () => model.Status);

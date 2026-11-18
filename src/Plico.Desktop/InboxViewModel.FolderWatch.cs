@@ -14,6 +14,8 @@ internal sealed partial class InboxViewModel
     public bool IsWatchingFolder => _folderWatch is not null;
     public bool CanStartFolderWatch => CanWork && !IsWatchingFolder;
     public bool CanOfferResumeFolderWatch => RememberedWatchFolder is not null && !IsWatchingFolder;
+    public bool CanOfferImportWatchFiles => IsWatchingFolder || CanOfferResumeFolderWatch;
+    public string ImportWatchFilesLabel => IsWatchingFolder ? "Import existing files" : "Resume and catch up";
     public string WatchedFolderPath => _folderWatch?.Folder ?? "";
     public string WatchedFolderName => IsWatchingFolder
         ? new DirectoryInfo(WatchedFolderPath).Name
@@ -34,16 +36,18 @@ internal sealed partial class InboxViewModel
     });
 
     [RelayCommand]
-    private Task ResumeFolderWatchAsync()
+    private Task ResumeFolderWatchAsync() => ResumeRememberedWatchAsync(queueExistingFiles: false);
+
+    private Task ResumeRememberedWatchAsync(bool queueExistingFiles)
     {
         if (RememberedWatchFolder is not { } folder || IsWatchingFolder) return Task.CompletedTask;
-        return RunOperationAsync("Resuming folder watch…", token => StartWatchAsync(folder, token));
+        return RunOperationAsync("Resuming folder watch…", token => StartWatchAsync(folder, token, queueExistingFiles));
     }
 
     [RelayCommand]
     private Task ImportWatchFolderFilesAsync()
     {
-        if (_folderWatch is not { } watch) return Task.CompletedTask;
+        if (_folderWatch is not { } watch) return ResumeRememberedWatchAsync(queueExistingFiles: true);
         return RunOperationAsync("Checking the watched folder…", async token =>
         {
             try
@@ -59,21 +63,33 @@ internal sealed partial class InboxViewModel
         });
     }
 
-    private async Task StartWatchAsync(string folder, CancellationToken cancellationToken)
+    private async Task StartWatchAsync(string folder, CancellationToken cancellationToken, bool queueExistingFiles = false)
     {
         var library = RequireLibrary();
         Status = "Checking the scanner output folder…";
         var watch = await Task.Run(() => FolderWatch.Start(folder, library.PdfDirectory, ImportWatchedFilesAsync, cancellationToken),
             cancellationToken);
-        if (cancellationToken.IsCancellationRequested)
+        int queued = 0;
+        try
+        {
+            cancellationToken.ThrowIfCancellationRequested();
+            if (queueExistingFiles)
+            {
+                Status = "Checking existing files…";
+                queued = await Task.Run(() => watch.QueueExistingFiles(cancellationToken), cancellationToken);
+            }
+            cancellationToken.ThrowIfCancellationRequested();
+        }
+        catch
         {
             await watch.DisposeAsync();
-            cancellationToken.ThrowIfCancellationRequested();
+            throw;
         }
         _folderWatch = watch;
         RememberedWatchFolder = watch.Folder;
         NotifyWatchChanged();
         Status = $"Watching for new or updated files in {WatchedFolderName}.";
+        if (queued > 0) Status += $" {DocumentCount(queued)} queued for the folder watch.";
         _ = ObserveWatchAsync(watch);
         try
         {
@@ -99,7 +115,11 @@ internal sealed partial class InboxViewModel
         }
     }
 
-    partial void OnRememberedWatchFolderChanged(string? value) => OnPropertyChanged(nameof(CanOfferResumeFolderWatch));
+    partial void OnRememberedWatchFolderChanged(string? value)
+    {
+        OnPropertyChanged(nameof(CanOfferResumeFolderWatch));
+        OnPropertyChanged(nameof(CanOfferImportWatchFiles));
+    }
 
     [RelayCommand]
     private async Task StopFolderWatchAsync()
@@ -147,6 +167,8 @@ internal sealed partial class InboxViewModel
         OnPropertyChanged(nameof(IsWatchingFolder));
         OnPropertyChanged(nameof(CanStartFolderWatch));
         OnPropertyChanged(nameof(CanOfferResumeFolderWatch));
+        OnPropertyChanged(nameof(CanOfferImportWatchFiles));
+        OnPropertyChanged(nameof(ImportWatchFilesLabel));
         OnPropertyChanged(nameof(WatchedFolderPath));
         OnPropertyChanged(nameof(WatchedFolderName));
     }
