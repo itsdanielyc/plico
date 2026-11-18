@@ -1,5 +1,6 @@
 using System.Globalization;
 using Avalonia.Controls;
+using Avalonia.Input;
 using Avalonia.Interactivity;
 using Plico.Core;
 
@@ -22,11 +23,17 @@ internal sealed partial class ScanDialog : Window
     ];
 
     private readonly Func<CancellationToken, Task<ScanDiscovery>> _discover;
+    private readonly Func<string, CancellationToken, Task<ScannerDevice>> _connect;
     private readonly CancellationTokenSource _lifetime = new();
+    private readonly HashSet<ScannerDevice> _connected = [];
+    private IReadOnlyList<ScannerDevice> _discovered = [];
+    private bool _checkingDevices;
 
-    internal ScanDialog(Func<CancellationToken, Task<ScanDiscovery>> discover)
+    internal ScanDialog(Func<CancellationToken, Task<ScanDiscovery>> discover,
+        Func<string, CancellationToken, Task<ScannerDevice>>? connect = null)
     {
         _discover = discover;
+        _connect = connect ?? Scanners.ConnectAsync;
         InitializeComponent();
         SourceBox.ItemsSource = Sources;
         SourceBox.SelectedItem = Sources[0];
@@ -48,23 +55,29 @@ internal sealed partial class ScanDialog : Window
     }
 
     private async void Refresh_Click(object? sender, RoutedEventArgs e) => await DiscoverAsync();
+    private async void Connect_Click(object? sender, RoutedEventArgs e) => await ConnectAsync();
+
+    private async void Address_KeyDown(object? sender, KeyEventArgs e)
+    {
+        if (e.Key != Key.Enter) return;
+        e.Handled = true;
+        await ConnectAsync();
+    }
 
     private async Task DiscoverAsync()
     {
         var token = _lifetime.Token;
         ScannerDevice? previouslySelected = DeviceBox.SelectedItem as ScannerDevice;
-        RefreshButton.IsEnabled = false;
-        StartButton.IsEnabled = false;
+        SetCheckingDevices(true);
         ScannerStatus.Text = "Looking for scanners…";
         try
         {
             var result = await _discover(token);
             if (token.IsCancellationRequested) return;
-            DeviceBox.ItemsSource = result.Devices;
-            DeviceBox.SelectedItem = result.Devices.FirstOrDefault(device => device == previouslySelected)
-                ?? result.Devices.FirstOrDefault();
+            _discovered = result.Devices;
+            ShowDevices(previouslySelected);
             ScannerStatus.Text = result.Warnings.Count > 0 ? string.Join(Environment.NewLine, result.Warnings) :
-                result.Devices.Count == 0 ? "No scanner found. Connect a supported scanner and choose Refresh." :
+                DeviceBox.SelectedItem is null ? "No scanner found. Connect one by address or choose Refresh." :
                 "Pages from this scan will be saved as one PDF.";
         }
         catch (OperationCanceledException) when (token.IsCancellationRequested) { }
@@ -74,21 +87,57 @@ internal sealed partial class ScanDialog : Window
         }
         finally
         {
-            if (!token.IsCancellationRequested)
-            {
-                RefreshButton.IsEnabled = true;
-                UpdateStartButton();
-            }
+            if (!token.IsCancellationRequested) SetCheckingDevices(false);
         }
+    }
+
+    private async Task ConnectAsync()
+    {
+        if (_checkingDevices) return;
+        var token = _lifetime.Token;
+        SetCheckingDevices(true);
+        ScannerStatus.Text = "Connecting to the scanner…";
+        try
+        {
+            var scanner = await _connect(AddressBox.Text ?? "", token);
+            if (token.IsCancellationRequested) return;
+            _connected.Add(scanner);
+            ShowDevices(scanner);
+            ScannerStatus.Text = $"Connected to {scanner.Name}.";
+        }
+        catch (OperationCanceledException) when (token.IsCancellationRequested) { }
+        catch (Exception error)
+        {
+            if (!token.IsCancellationRequested) ScannerStatus.Text = error.Message;
+        }
+        finally
+        {
+            if (!token.IsCancellationRequested) SetCheckingDevices(false);
+        }
+    }
+
+    private void ShowDevices(ScannerDevice? preferred)
+    {
+        var available = _discovered.Concat(_connected).Distinct().ToArray();
+        DeviceBox.ItemsSource = available;
+        DeviceBox.SelectedItem = available.FirstOrDefault(device => device == preferred) ?? available.FirstOrDefault();
+    }
+
+    private void SetCheckingDevices(bool checking)
+    {
+        _checkingDevices = checking;
+        RefreshButton.IsEnabled = !checking;
+        ConnectButton.IsEnabled = !checking;
+        UpdateStartButton();
     }
 
     private void Device_Changed(object? sender, SelectionChangedEventArgs e) => UpdateStartButton();
 
     private void UpdateStartButton()
     {
-        if (StartButton is not null && RefreshButton is not null)
+        if (StartButton is not null && DeviceBox is not null)
         {
-            StartButton.IsEnabled = RefreshButton.IsEnabled && DeviceBox.SelectedItem is ScannerDevice;
+            StartButton.IsEnabled = !_checkingDevices && DeviceBox.SelectedItem is ScannerDevice;
         }
     }
 

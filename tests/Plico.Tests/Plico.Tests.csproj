@@ -15,5 +15,6 @@
   </ItemGroup>
   <ItemGroup>
     <None Include="../fixtures/*" Link="fixtures/%(Filename)%(Extension)" CopyToOutputDirectory="PreserveNewest" />
+    <FrameworkReference Include="Microsoft.AspNetCore.App" />
   </ItemGroup>
 </Project>

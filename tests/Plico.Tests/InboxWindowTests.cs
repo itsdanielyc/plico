@@ -2,6 +2,8 @@ using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Headless;
 using Avalonia.Headless.XUnit;
+using Avalonia.Interactivity;
+using NAPS2.Scan;
 using Plico.Desktop;
 using Plico.Core;
 using Xunit;
@@ -57,6 +59,39 @@ public sealed class InboxWindowTests
             Assert.Equal(missingDriver, status.Text);
             Assert.False(capture.IsEnabled);
             Assert.True(refresh.IsEnabled);
+        }
+        finally
+        {
+            dialog.Close();
+        }
+    }
+
+    [AvaloniaFact]
+    public void ManualScannerStaysSelectedWhenDiscoveryIsRefreshed()
+    {
+        const string address = "192.0.2.54";
+        var device = new ScannerDevice(new ScanDevice(Driver.Escl, $"http://{address}/eSCL", "Office scanner"));
+        string? connectedAddress = null;
+        var dialog = new ScanDialog(_ => Task.FromResult(new ScanDiscovery([], [])), (entered, _) =>
+        {
+            connectedAddress = entered;
+            return Task.FromResult(device);
+        });
+        dialog.Show();
+        try
+        {
+            var addressBox = Assert.IsType<TextBox>(dialog.FindControl<TextBox>("AddressBox"));
+            var connect = Assert.IsType<Button>(dialog.FindControl<Button>("ConnectButton"));
+            var refresh = Assert.IsType<Button>(dialog.FindControl<Button>("RefreshButton"));
+            var start = Assert.IsType<Button>(dialog.FindControl<Button>("StartButton"));
+            var devices = Assert.IsType<ComboBox>(dialog.FindControl<ComboBox>("DeviceBox"));
+            addressBox.Text = address;
+            connect.RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
+            refresh.RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
+
+            Assert.Equal(address, connectedAddress);
+            Assert.Equal(device, devices.SelectedItem);
+            Assert.True(start.IsEnabled);
         }
         finally
         {

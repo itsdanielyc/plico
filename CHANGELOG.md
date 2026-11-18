@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.3.0] - 2026-11-18
+
+- Connect an eSCL scanner by hostname, IP address, or its full scanner URL from the Scan dialog.
+- The dialog reads the scanner's model before enabling capture and keeps connected scanners available when you refresh discovery.
+
+Downloads include Windows setup and ZIP, a macOS app ZIP, and a Linux tar.gz. See the README for platform and first-launch details.
+
 ## [0.2.1] - 2026-11-18
 
 - Added a per-user Windows setup executable with a Start menu shortcut and an Installed apps entry.

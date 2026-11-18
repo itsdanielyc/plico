@@ -46,15 +46,35 @@ internal static class NativeVerification
             await CaptureAsync(window, evidenceDirectory, "search.png");
             await VerifyDropAsync(window, model, fixture, evidenceDirectory);
             await VerifyWatchedFolderAsync(window, model, fixture, evidenceDirectory);
+            await VerifyScannerDialogAsync(window, evidenceDirectory);
 
             File.WriteAllText(Path.Combine(evidenceDirectory, "passed.txt"),
-                "Native window completed OCR, tag and review, full-text search, duplicate drop, and watched-folder import.");
+                "Native window completed OCR, review and search, duplicate drop, folder watch, and displayed the scanner address controls.");
             desktop.Shutdown(0);
         }
         catch (Exception error)
         {
             File.WriteAllText(Path.Combine(evidenceDirectory, "error.txt"), error.ToString());
             desktop.Shutdown(1);
+        }
+    }
+
+    private static async Task VerifyScannerDialogAsync(Window owner, string directory)
+    {
+        var dialog = new ScanDialog(_ => Task.FromResult(new ScanDiscovery([], [])));
+        var result = dialog.ShowDialog<ScanRequest?>(owner);
+        try
+        {
+            var address = Control<TextBox>(dialog, "AddressBox");
+            var connect = Control<Button>(dialog, "ConnectButton");
+            Require(address.IsVisible && connect.IsEnabled && !Control<Button>(dialog, "StartButton").IsEnabled,
+                "The native scanner dialog did not offer address entry.");
+            await CaptureAsync(dialog, directory, "scanner-address.png");
+        }
+        finally
+        {
+            dialog.Close();
+            await result;
         }
     }
 
