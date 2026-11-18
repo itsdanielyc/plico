@@ -22,6 +22,7 @@ internal static class TesseractOrientation
     private const int MaximumWordWeight = 12;
     private const double MinimumWordConfidence = 60;
     private const double MinimumScoreLead = 1.25;
+    private const int SampleJpegQuality = 96;
     private static readonly TimeSpan PageTimeout = TimeSpan.FromSeconds(25);
     private static readonly int[] QuarterTurns = [0, 90, 180, 270];
     private static int _osdUnavailable;
@@ -39,7 +40,7 @@ internal static class TesseractOrientation
         foreach (var page in pages)
         {
             cancellationToken.ThrowIfCancellationRequested();
-            string input = Path.Combine(context.TempFolderPath, Path.GetRandomFileName() + ".png");
+            string input = Path.Combine(context.TempFolderPath, Path.GetRandomFileName() + ".jpg");
             try
             {
                 using var rendered = (SkiaImage)context.ImageContext.Render(page);
@@ -59,7 +60,7 @@ internal static class TesseractOrientation
     {
         if (Volatile.Read(ref _osdUnavailable) == 0)
         {
-            rendered.Save(input, ImageFileFormat.Png);
+            WriteJpeg(rendered.Bitmap, input);
             var result = await RunTesseractAsync(executable, input, models, ["--dpi", "300", "--psm", "0"], cancellationToken)
                 .ConfigureAwait(false);
             if (result.ExitCode == 0) return ReadRotation(result.Text);
@@ -116,10 +117,16 @@ internal static class TesseractOrientation
             var frame = SKRect.Create(-sampleWidth / 2f, -sampleHeight / 2f, sampleWidth, sampleHeight);
             canvas.DrawImage(raster, frame, new SKSamplingOptions(SKFilterMode.Linear));
         }
-        using var png = sample.Encode(SKEncodedImageFormat.Png, quality: 100)
+        WriteJpeg(sample, input);
+    }
+
+    private static void WriteJpeg(SKBitmap sample, string input)
+    {
+        // The Intel Mac bundle's Leptonica and libpng versions disagree about PNG input.
+        using var jpeg = sample.Encode(SKEncodedImageFormat.Jpeg, SampleJpegQuality)
             ?? throw new IOException("Plico could not encode an orientation sample.");
         using var output = File.Create(input);
-        png.SaveTo(output);
+        jpeg.SaveTo(output);
     }
 
     private static OrientationScore ScoreSample(string tsv, int degrees)
