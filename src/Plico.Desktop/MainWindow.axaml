@@ -178,7 +178,11 @@
                                         <TextBlock Text="{Binding SelectedDocument.Title}" TextTrimming="CharacterEllipsis" FontSize="17" FontWeight="SemiBold" />
                                         <TextBlock Text="{Binding SelectedDocument.RelativePath}" Classes="muted" TextTrimming="CharacterEllipsis" />
                                     </StackPanel>
-                                    <Button Grid.Column="1" Classes="secondary" Content="Open PDF" Command="{Binding OpenPdfCommand}" VerticalAlignment="Top" />
+                                    <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="5" VerticalAlignment="Top">
+                                        <Button x:Name="EditTitleButton" Classes="secondary" Content="Edit title" Command="{Binding EditDocumentTitleCommand}"
+                                                IsEnabled="{Binding CanWork}" />
+                                        <Button Classes="secondary" Content="Open PDF" Command="{Binding OpenPdfCommand}" />
+                                    </StackPanel>
                                 </Grid>
                                 <Border Grid.Row="1" Background="#EAEFE6" CornerRadius="8" Padding="12" ClipToBounds="True">
                                     <Grid RowDefinitions="*,Auto" RowSpacing="7">

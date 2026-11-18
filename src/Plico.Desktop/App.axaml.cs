@@ -22,7 +22,11 @@ public sealed class App : Application
             {
                 var testLibrary = Directory.CreateTempSubdirectory("plico-verify-");
                 var incoming = Directory.CreateDirectory(Path.Combine(testLibrary.FullName, "Incoming"));
-                var model = new InboxViewModel(new FixtureDialogs(fixture) { FolderPath = incoming.FullName });
+                var model = new InboxViewModel(new FixtureDialogs(fixture)
+                {
+                    FolderPath = incoming.FullName,
+                    EditedTitle = NativeVerification.EditedDocumentTitle
+                });
                 model.InitializeLibrary(() => testLibrary.FullName);
                 window.DataContext = model;
                 desktop.Exit += (_, _) =>

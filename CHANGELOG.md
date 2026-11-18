@@ -1,5 +1,10 @@
 # Changelog
 
+## [0.3.2] - 2026-11-18
+
+- Edit a document's title from its preview. Search recognizes the edited title, PDF filename, and document text.
+- Catalog titles, tags, and review state survive reindexing the PDF.
+
 ## [0.3.1] - 2026-11-18
 
 - Plico remembers the addresses of scanners you connect to and offers them the next time you open Scan.

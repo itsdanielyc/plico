@@ -13,6 +13,8 @@ public sealed partial class InboxLibrary : IDisposable
     private const string StagePrefix = "import-";
     private const int MaximumStemBytes = 180;
     private const string NonPortableFileCharacters = "<>:\"/\\|?*";
+    /// <summary>The maximum user-supplied catalog title length.</summary>
+    public const int MaximumTitleLength = 160;
 
     private static readonly HashSet<string> ReservedWindowsFileNames = new(StringComparer.OrdinalIgnoreCase)
     {
@@ -109,6 +111,26 @@ public sealed partial class InboxLibrary : IDisposable
 
     /// <summary>Moves a document into or out of the review queue without moving its PDF.</summary>
     public void SetReviewed(long documentId, bool reviewed) => _catalog.SetReviewed(documentId, reviewed);
+
+    /// <summary>Updates the label and indexes it alongside the PDF filename.</summary>
+    public void SetTitle(long documentId, string title)
+    {
+        string displayTitle = NormalizeTitle(title);
+        string filename = Path.GetFileNameWithoutExtension(_catalog.Get(documentId).RelativePath);
+        _catalog.SetTitle(documentId, displayTitle, filename);
+    }
+
+    /// <summary>Validates and normalizes a title entered in the desktop app.</summary>
+    public static string NormalizeTitle(string title)
+    {
+        ArgumentNullException.ThrowIfNull(title);
+        string cleaned = title.Trim().Normalize(NormalizationForm.FormC);
+        if (cleaned.Length is 0 or > MaximumTitleLength || cleaned.Any(char.IsControl))
+        {
+            throw new ArgumentException($"Enter a title of 1 to {MaximumTitleLength} printable characters.", nameof(title));
+        }
+        return cleaned;
+    }
 
     /// <summary>Resolves the catalog path within the portable PDF directory.</summary>
     public string ResolvePdf(DocumentSummary document) => ResolvePdfPath(document.RelativePath);

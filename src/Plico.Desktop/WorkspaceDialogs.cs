@@ -11,6 +11,7 @@ internal interface IWorkspaceDialogs
     Task<IReadOnlyList<string>> PickDocumentsAsync();
     Task<string?> PickFolderAsync(string title);
     Task<ScanRequest?> PickScannerAsync();
+    Task<string?> EditTitleAsync(string currentTitle);
     void OpenPath(string path);
 }
 
@@ -47,6 +48,9 @@ internal sealed class WorkspaceDialogs(Window owner) : IWorkspaceDialogs
     public Task<ScanRequest?> PickScannerAsync() =>
         new ScanDialog(Scanners.DiscoverAsync, settings: new SavedScannerStore(ApplicationSettings.DirectoryPath))
             .ShowDialog<ScanRequest?>(owner);
+
+    public Task<string?> EditTitleAsync(string currentTitle) =>
+        new DocumentTitleDialog(currentTitle).ShowDialog<string?>(owner);
 
     public void OpenPath(string path)
     {

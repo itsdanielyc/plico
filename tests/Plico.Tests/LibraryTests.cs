@@ -193,6 +193,7 @@ public sealed class LibraryTests
                 DROP INDEX documents_source_sha256;
                 DROP INDEX documents_legacy_file_bytes;
                 ALTER TABLE documents DROP COLUMN source_sha256;
+                ALTER TABLE documents DROP COLUMN display_title;
                 PRAGMA user_version = 1;
                 """;
             command.ExecuteNonQuery();
@@ -227,6 +228,51 @@ public sealed class LibraryTests
         Assert.NotEqual(original.Id, imported.Document.Id);
         Assert.False(imported.Document.Reviewed);
         Assert.Empty(imported.Document.Tags);
+    }
+
+    [Fact]
+    public async Task EditedTitleRemainsSearchableByBothNamesAfterARefresh()
+    {
+        var token = TestContext.Current.CancellationToken;
+        using var temporary = new TemporaryLibrary();
+        string source = Path.Combine(temporary.Path, "Binder88.pdf");
+        File.Copy(Fixture(Letter), source);
+        long id;
+        using (var library = InboxLibrary.Open(temporary.Path))
+        {
+            var document = await library.ImportAsync(source, token);
+            id = document.Id;
+            library.AddTag(id, "Rent");
+            library.SetReviewed(id, true);
+            library.SetTitle(id, "  October housing  ");
+            var named = Assert.Single(library.Find(new DocumentFilter(Query: "October")).Items);
+            Assert.Equal("October housing", named.Title);
+            Assert.Equal(document.RelativePath, named.RelativePath);
+            Assert.Equal(File.ReadAllBytes(source), File.ReadAllBytes(library.ResolvePdf(named)));
+
+            File.Copy(Fixture(Mixed), library.ResolvePdf(named), overwrite: true);
+            Assert.Equal(1, library.Refresh(token).Indexed);
+        }
+
+        using var reopened = InboxLibrary.Open(temporary.Path);
+        var found = Assert.Single(reopened.Find(new DocumentFilter(Query: "Binder88", Tag: "rent")).Items);
+        Assert.Equal("October housing", found.Title);
+        Assert.Equal(id, found.Id);
+        Assert.True(found.Reviewed);
+        Assert.Equal(2, found.PageCount);
+        Assert.Single(reopened.Find(new DocumentFilter(Query: "October NORTHSTAR")).Items);
+    }
+
+    [Fact]
+    public async Task InvalidTitleLeavesTheDocumentSearchable()
+    {
+        using var temporary = new TemporaryLibrary();
+        using var library = InboxLibrary.Open(temporary.Path);
+        var document = await library.ImportAsync(Fixture(Letter), TestContext.Current.CancellationToken);
+
+        Assert.Throws<ArgumentException>(() => library.SetTitle(document.Id, "    "));
+        Assert.Throws<ArgumentException>(() => library.SetTitle(document.Id, "Broken\nTitle"));
+        Assert.Equal(document.Title, Assert.Single(library.Find(new DocumentFilter(Query: LetterKeyword)).Items).Title);
     }
 
     private static string Fixture(string name) => Path.Combine(AppContext.BaseDirectory, "fixtures", name);

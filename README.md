@@ -24,6 +24,8 @@ On Linux, Plico uses X11 or XWayland. A minimal Ubuntu installation may need `li
 2. Select a document to preview it and add tags. **Mark reviewed** takes it out of the Inbox.
 3. Search by name or document text, including documents you already reviewed. Choose a tag to narrow the results.
 
+Use **Edit title** in the preview to change the document's catalog title. Search covers both the title and filename.
+
 The library starts under Documents/Plico. Select the library name in the sidebar to choose another folder. **Show PDF folder** opens the `PDFs/` directory. **Refresh index** picks up PDFs that you add, edit, or remove on disk. To move or back up a library with its tags, close Plico and copy the entire directory, including `.plico/`. Digital PDFs with text on every page are copied unchanged.
 
 Plico recognizes exact source files already in the library and reports that it reused the existing document. Existing libraries upgrade automatically. For older entries, repeat detection can also compare an unchanged digital PDF to the file you import.

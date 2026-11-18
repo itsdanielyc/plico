@@ -11,6 +11,7 @@ namespace Plico.Desktop;
 
 internal static class NativeVerification
 {
+    internal const string EditedDocumentTitle = "October housing";
     private const string ReceiptKeyword = "WRENCH470";
     private const string TestTag = "Workshop";
     private const string LetterKeyword = "NORTHSTAR";
@@ -46,10 +47,11 @@ internal static class NativeVerification
             await CaptureAsync(window, evidenceDirectory, "search.png");
             await VerifyDropAsync(window, model, fixture, evidenceDirectory);
             await VerifyWatchedFolderAsync(window, model, fixture, evidenceDirectory);
+            await VerifyTitleEditorAsync(window, model, evidenceDirectory);
             await VerifyScannerDialogAsync(window, evidenceDirectory);
 
             File.WriteAllText(Path.Combine(evidenceDirectory, "passed.txt"),
-                "Native window completed OCR, review and search, duplicate drop, folder watch, and displayed the scanner address controls.");
+                "Native window completed OCR, review and search, duplicate drop, folder watch, title edit, and scanner settings display.");
             desktop.Shutdown(0);
         }
         catch (Exception error)
@@ -57,6 +59,35 @@ internal static class NativeVerification
             File.WriteAllText(Path.Combine(evidenceDirectory, "error.txt"), error.ToString());
             desktop.Shutdown(1);
         }
+    }
+
+    private static async Task VerifyTitleEditorAsync(MainWindow window, InboxViewModel model, string directory)
+    {
+        var selected = model.SelectedDocument ?? throw new InvalidOperationException("Select a document before testing title edits.");
+        var dialog = new DocumentTitleDialog(selected.Title);
+        var result = dialog.ShowDialog<string?>(window);
+        try
+        {
+            Require(Control<TextBox>(dialog, "TitleBox").Text == selected.Title,
+                "The title editor did not show the selected document's title.");
+            await CaptureAsync(dialog, directory, "edit-title.png");
+        }
+        finally
+        {
+            dialog.Close();
+            await result;
+        }
+
+        var edit = Control<Button>(window, "EditTitleButton");
+        Require(edit.IsEnabled && edit.Command is IAsyncRelayCommand, "The title edit control was unavailable.");
+        await ((IAsyncRelayCommand)edit.Command!).ExecuteAsync(null);
+        Require(model.SelectedDocument?.Title == EditedDocumentTitle, "The updated title did not appear in the results.");
+        var search = Control<TextBox>(window, "SearchBox");
+        search.SetCurrentValue(TextBox.TextProperty, "fixture-not-found");
+        await UntilAsync(() => model.Documents.Count == 0, () => model.Status);
+        search.SetCurrentValue(TextBox.TextProperty, "Scanner output");
+        await UntilAsync(() => model.SelectedDocument?.Title == EditedDocumentTitle && model.Preview is not null, () => model.PreviewMessage);
+        await CaptureAsync(window, directory, "edited-title.png");
     }
 
     private static async Task VerifyScannerDialogAsync(Window owner, string directory)
@@ -181,8 +212,10 @@ internal static class NativeVerification
 internal sealed class FixtureDialogs(params string[] documents) : IWorkspaceDialogs
 {
     internal string? FolderPath { get; init; }
+    internal string? EditedTitle { get; init; }
     public Task<IReadOnlyList<string>> PickDocumentsAsync() => Task.FromResult<IReadOnlyList<string>>(documents);
     public Task<string?> PickFolderAsync(string title) => Task.FromResult(FolderPath);
     public Task<ScanRequest?> PickScannerAsync() => Task.FromResult<ScanRequest?>(null);
+    public Task<string?> EditTitleAsync(string currentTitle) => Task.FromResult(EditedTitle);
     public void OpenPath(string path) => throw new InvalidOperationException("The verification fixture does not launch other apps.");
 }

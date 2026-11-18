@@ -151,6 +151,22 @@ internal sealed partial class InboxViewModel : ObservableObject, IDisposable
     }
 
     [RelayCommand]
+    private Task EditDocumentTitleAsync() => RunOperationAsync("Edit the document title…", async token =>
+    {
+        if (SelectedDocument is not { } document) return;
+        var title = await _dialogs.EditTitleAsync(document.Title);
+        if (title is null)
+        {
+            Status = "Title editor closed.";
+            return;
+        }
+        var library = RequireLibrary();
+        await Task.Run(() => library.SetTitle(document.Id, title), token);
+        LoadResults(document.Id);
+        Status = "Title saved.";
+    });
+
+    [RelayCommand]
     private void AddTag()
     {
         if (string.IsNullOrWhiteSpace(TagInput)) return;

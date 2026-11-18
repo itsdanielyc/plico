@@ -6,7 +6,6 @@ namespace Plico.Core;
 /// <summary>Maintains the transactionally updated local catalog and FTS index.</summary>
 internal sealed class LibraryCatalog
 {
-    private const int SchemaVersion = 2;
     private const int ConnectionTimeoutSeconds = 5;
     private const int SnippetMarker = 30;
     private const int SnippetLeadingCharacters = 20;
@@ -58,6 +57,9 @@ internal sealed class LibraryCatalog
         CREATE INDEX documents_legacy_file_bytes ON documents(file_bytes) WHERE source_sha256 IS NULL AND is_present = 1;
         """;
 
+    private const string DisplayTitleMigration = "ALTER TABLE documents ADD COLUMN display_title TEXT;";
+    private static readonly string[] Migrations = [Schema, FingerprintMigration, DisplayTitleMigration];
+
     private readonly string _connectionString;
 
     internal LibraryCatalog(string path)
@@ -71,25 +73,29 @@ internal sealed class LibraryCatalog
         }.ToString();
 
         using var connection = Connect();
+        Migrate(connection);
+    }
+
+    private static void Migrate(SqliteConnection connection)
+    {
         using var migration = connection.BeginTransaction();
         using var command = connection.CreateCommand();
         command.Transaction = migration;
         command.CommandText = "PRAGMA user_version";
         var version = (long)command.ExecuteScalar()!;
-        if (version == 0)
-        {
-            command.CommandText = Schema;
-            command.ExecuteNonQuery();
-            version = 1;
-        }
-        if (version == 1)
-        {
-            command.CommandText = $"{FingerprintMigration}\nPRAGMA user_version = {SchemaVersion};";
-            command.ExecuteNonQuery();
-        }
-        else if (version != SchemaVersion)
+        if (version < 0 || version > Migrations.Length)
         {
             throw new InvalidDataException($"This library uses catalog version {version}. Open it with a version of Plico that supports that catalog.");
+        }
+        for (int step = (int)version; step < Migrations.Length; step++)
+        {
+            command.CommandText = Migrations[step];
+            command.ExecuteNonQuery();
+        }
+        if (version != Migrations.Length)
+        {
+            command.CommandText = $"PRAGMA user_version = {Migrations.Length};";
+            command.ExecuteNonQuery();
         }
         migration.Commit();
     }
@@ -102,7 +108,9 @@ internal sealed class LibraryCatalog
             INSERT INTO documents (title, relative_path, added_at, modified_ticks, file_bytes, page_count, has_text, body, source_sha256)
             VALUES ($title, $path, $added, $modified, $bytes, $pages, $hasText, $text, $source)
             ON CONFLICT(relative_path) DO UPDATE SET
-                title = excluded.title, modified_ticks = excluded.modified_ticks, file_bytes = excluded.file_bytes,
+                title = CASE WHEN documents.display_title IS NULL THEN excluded.title
+                             ELSE documents.display_title || char(10) || excluded.title END,
+                modified_ticks = excluded.modified_ticks, file_bytes = excluded.file_bytes,
                 page_count = excluded.page_count, has_text = excluded.has_text, body = excluded.body, is_present = 1,
                 source_sha256 = excluded.source_sha256
             RETURNING id;
@@ -163,7 +171,8 @@ internal sealed class LibraryCatalog
         return candidates;
     }
 
-    internal DocumentSummary Get(long documentId) => Query(new DocumentFilter(), documentId).Items.Single();
+    internal DocumentSummary Get(long documentId) => Query(new DocumentFilter(), documentId).Items.SingleOrDefault() ??
+        throw new InvalidOperationException("This document is no longer in the library.");
 
     internal DocumentPage Find(DocumentFilter filter) => Query(filter);
 
@@ -206,7 +215,7 @@ internal sealed class LibraryCatalog
         }
 
         command.CommandText = $"""
-            SELECT d.id, d.title, d.relative_path, d.added_at, d.reviewed, d.page_count, d.has_text,
+            SELECT d.id, COALESCE(d.display_title, d.title), d.relative_path, d.added_at, d.reviewed, d.page_count, d.has_text,
                    (SELECT json_group_array(t.label ORDER BY t.tag_key)
                     FROM document_tags dt JOIN tags t USING (tag_key) WHERE dt.document_id = d.id),
                    {match}
@@ -297,6 +306,24 @@ internal sealed class LibraryCatalog
         using var command = connection.CreateCommand();
         command.CommandText = "UPDATE documents SET reviewed = $reviewed WHERE id = $id AND is_present = 1;";
         command.Parameters.AddWithValue("$reviewed", reviewed);
+        command.Parameters.AddWithValue("$id", documentId);
+        if (command.ExecuteNonQuery() == 0)
+        {
+            throw new InvalidOperationException("This document is no longer in the library.");
+        }
+    }
+
+    internal void SetTitle(long documentId, string displayTitle, string filename)
+    {
+        using var connection = Connect();
+        using var command = connection.CreateCommand();
+        command.CommandText = """
+            UPDATE documents SET display_title = $display, title = $searchTitle
+            WHERE id = $id AND is_present = 1;
+            """;
+        bool usesFilename = string.Equals(displayTitle, filename, StringComparison.Ordinal);
+        command.Parameters.AddWithValue("$display", usesFilename ? DBNull.Value : displayTitle);
+        command.Parameters.AddWithValue("$searchTitle", usesFilename ? filename : $"{displayTitle}\n{filename}");
         command.Parameters.AddWithValue("$id", documentId);
         if (command.ExecuteNonQuery() == 0)
         {
