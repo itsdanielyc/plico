@@ -13,15 +13,17 @@ internal static partial class NativeVerification
         const string savedName = "Filed receipts";
         const string sidebarTag = "Packet";
         const string filedTitle = "Paperwork packet";
+        const string receiptTitle = "Sideways receipt";
         string query = $"{ReceiptKeyword} folder:Filed/Packets";
+        bool ShowsFiledReceipts() => model.ResultCount.Contains($"in {sidebarTag}", StringComparison.Ordinal) &&
+            model.Documents is [{ Title: filedTitle }, { Title: receiptTitle }];
         var sortBox = Control<ComboBox>(window, "DocumentSortBox");
         var tagButton = window.GetVisualDescendants().OfType<Button>()
-            .First(button => button.DataContext is string tag && tag == sidebarTag);
+            .Single(button => button.Classes.Contains("rail") && button.DataContext is string tag && tag == sidebarTag);
         tagButton.RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
         sortBox.SetCurrentValue(ComboBox.SelectedItemProperty, model.SortChoices.Single(choice => choice.Order == DocumentSort.Title));
         Control<TextBox>(window, "SearchBox").SetCurrentValue(TextBox.TextProperty, query);
-        await UntilAsync(() => model.ResultCount.Contains($"in {sidebarTag}", StringComparison.Ordinal) &&
-            model.Documents is [{ Title: filedTitle }], () => model.ResultCount);
+        await UntilAsync(ShowsFiledReceipts, () => model.ResultCount);
 
         dialogs.SavedSearchChoice = (draft, scopeTag, editing) =>
         {
@@ -52,8 +54,7 @@ internal static partial class NativeVerification
             .Single(button => button.DataContext is SavedSearch { Name: savedName });
         shortcut.RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
         await UntilAsync(() => model.Heading == savedName && model.Preview is not null, () => model.Status);
-        Require(model.Query == query && model.SortOption?.Order == DocumentSort.Title &&
-                model.ResultCount.Contains($"in {sidebarTag}", StringComparison.Ordinal) && model.Documents is [{ Title: filedTitle }],
+        Require(model.Query == query && model.SortOption?.Order == DocumentSort.Title && ShowsFiledReceipts(),
             "Opening the saved search did not restore its query, scope, and order.");
         await CaptureAsync(window, directory, "saved-search.png");
     }
