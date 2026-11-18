@@ -1,9 +1,9 @@
-name: Verify orientation and native launch on Intel Macs
+name: Verify capture and native launch on Intel Macs
 on:
   workflow_dispatch:
     inputs:
       source_sha:
-        description: Exact OCR commit to verify
+        description: Exact capture commit to verify
         required: true
         type: string
 permissions:
@@ -28,7 +28,7 @@ jobs:
         with:
           global-json-file: global.json
       - run: dotnet restore Plico.slnx --locked-mode
-      - run: dotnet test Plico.slnx -c Release --no-restore --filter 'FullyQualifiedName~ExpandedOcrTests|FullyQualifiedName~OcrLanguageTests'
+      - run: dotnet test Plico.slnx -c Release --no-restore --filter 'FullyQualifiedName~ExpandedOcrTests|FullyQualifiedName~OcrLanguageTests|FullyQualifiedName~InterruptedFeederCanSaveCompletedPagesOrDiscardThem'
       - name: Launch the native Plico window
         shell: pwsh
         env:
