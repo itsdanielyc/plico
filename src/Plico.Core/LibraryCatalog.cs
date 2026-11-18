@@ -455,6 +455,15 @@ internal sealed class LibraryCatalog
         transaction.Commit();
     }
 
+    internal void BackupTo(string destination)
+    {
+        using var source = Connect();
+        var settings = new SqliteConnectionStringBuilder { DataSource = destination, Pooling = false };
+        using var backup = new SqliteConnection(settings.ToString());
+        backup.Open();
+        source.BackupDatabase(backup);
+    }
+
     private SqliteConnection Connect()
     {
         var connection = new SqliteConnection(_connectionString);

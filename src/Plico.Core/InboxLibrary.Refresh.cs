@@ -52,14 +52,7 @@ public sealed partial class InboxLibrary
         CancellationToken cancellationToken)
     {
         var inventory = new DiskInventory(new(StringComparer.Ordinal), new(StringComparer.Ordinal), []);
-        var options = new EnumerationOptions
-        {
-            RecurseSubdirectories = true,
-            AttributesToSkip = FileAttributes.ReparsePoint,
-            IgnoreInaccessible = false,
-            MatchCasing = MatchCasing.CaseInsensitive
-        };
-        foreach (var path in Directory.EnumerateFiles(PdfDirectory, "*.pdf", options))
+        foreach (var path in EnumeratePdfPaths())
         {
             cancellationToken.ThrowIfCancellationRequested();
             string relativePath = RelativePdfPath(path);
@@ -81,6 +74,14 @@ public sealed partial class InboxLibrary
         }
         return inventory;
     }
+
+    private IEnumerable<string> EnumeratePdfPaths() => Directory.EnumerateFiles(PdfDirectory, "*.pdf", new EnumerationOptions
+    {
+        RecurseSubdirectories = true,
+        AttributesToSkip = FileAttributes.ReparsePoint,
+        IgnoreInaccessible = false,
+        MatchCasing = MatchCasing.CaseInsensitive
+    });
 
     private static Dictionary<string, IndexedPdf> MatchUniqueMoves(IEnumerable<IndexedPdf> previous, DiskInventory inventory)
     {

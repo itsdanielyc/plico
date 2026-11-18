@@ -1,5 +1,11 @@
 # Changelog
 
+## [0.13.0] - 2026-11-18
+
+- Back up your open library into a new folder containing the PDFs and a catalog snapshot.
+- Open the backup as a library to use its titles, tags, review state, and full-text search.
+- Cancel a backup from the status bar to clear its staging copy.
+
 ## [0.12.0] - 2026-11-18
 
 - Choose 150, 300, or 600 dpi when scanning. Plico sends the selected resolution with the paper source and size.

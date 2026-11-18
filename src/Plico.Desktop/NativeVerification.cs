@@ -55,16 +55,40 @@ internal static class NativeVerification
             await VerifyPhraseSearchAsync(window, model, evidenceDirectory);
             await VerifyBatchReviewAsync(window, model, evidenceDirectory);
             await VerifyOcrLanguageAsync(window, model, dialogs, fixture, evidenceDirectory);
+            await VerifyLibraryBackupAsync(window, dialogs, evidenceDirectory);
             await VerifyScannerDialogAsync(window, evidenceDirectory);
 
             File.WriteAllText(Path.Combine(evidenceDirectory, "passed.txt"),
-                "Native window completed English and French OCR, phrase search, duplicate drop, folder watch, title edit, relocation, batch actions, and scanner settings display.");
+                "Native window completed multilingual OCR, phrase search, duplicate drop, folder watch, title edit, relocation, batch actions, library backup, and scanner settings display.");
             desktop.Shutdown(0);
         }
         catch (Exception error)
         {
             File.WriteAllText(Path.Combine(evidenceDirectory, "error.txt"), error.ToString());
             desktop.Shutdown(1);
+        }
+    }
+
+    private static async Task VerifyLibraryBackupAsync(MainWindow window, FixtureDialogs dialogs, string evidenceDirectory)
+    {
+        var destination = Directory.CreateTempSubdirectory("plico-verify-backup-");
+        try
+        {
+            dialogs.FolderPath = destination.FullName;
+            var button = Control<Button>(window, "BackUpLibraryButton");
+            Require(button.IsEnabled && button.Command is IAsyncRelayCommand, "The library backup action was unavailable.");
+            await ((IAsyncRelayCommand)button.Command!).ExecuteAsync(null);
+            var backupFolder = Directory.EnumerateDirectories(destination.FullName).Single();
+            using var backup = InboxLibrary.Open(backupFolder);
+            var receipt = backup.Find(new DocumentFilter(Query: ReceiptKeyword, Tag: TestTag)).Items.Single();
+            var invoice = backup.Find(new DocumentFilter(Query: "Règlement")).Items.Single();
+            Require(receipt.Reviewed && File.Exists(backup.ResolvePdf(receipt)) && File.Exists(backup.ResolvePdf(invoice)),
+                "The backed-up library lost a PDF or its catalog state.");
+            await CaptureAsync(window, evidenceDirectory, "library-backup.png");
+        }
+        finally
+        {
+            destination.Delete(recursive: true);
         }
     }
 
@@ -308,7 +332,7 @@ internal static class NativeVerification
 /// <summary>A labelled fixture picker for verification with the same real library used by normal launches.</summary>
 internal sealed class FixtureDialogs(params string[] documents) : IWorkspaceDialogs
 {
-    internal string? FolderPath { get; init; }
+    internal string? FolderPath { get; set; }
     internal string? EditedTitle { get; init; }
     internal string? LastOpenedPath { get; private set; }
     internal IReadOnlyList<string> SelectedFiles { get; set; } = documents;

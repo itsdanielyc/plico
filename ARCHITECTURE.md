@@ -23,6 +23,8 @@ Schema v3 stores an optional display title. The FTS title field includes the dis
 
 Schema v4 stores the SHA-256 digest of the published PDF. Refresh pairs a unique absent catalog path with a unique new path when those PDF bytes match. It updates the path and filename search terms on the same catalog record. Matching duplicates are treated as separate files, and unchanged indexed files need only a file stamp check.
 
+Backup copies the PDF tree and takes an online SQLite snapshot under the library's file-operation lease. It validates the file inventory and publishes the staged backup by an atomic directory move inside the selected destination. [Microsoft.Data.Sqlite online backup](https://learn.microsoft.com/en-us/dotnet/standard/data/sqlite/backup)
+
 Search uses a bounded page of document records and SQLite FTS5. The UI never loads every document body to filter results. Tagged or reviewed documents remain in the same filesystem location.
 
 Search input is compiled into a parameterized FTS5 expression. Ordinary words are prefix terms, and completed quoted phrases use adjacent whole tokens. [SQLite FTS5 query syntax](https://www.sqlite.org/fts5.html#full_text_query_syntax)

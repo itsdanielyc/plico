@@ -10,6 +10,7 @@ public sealed partial class InboxLibrary : IDisposable
 {
     private const string PdfFolderName = "PDFs";
     private const string MetadataFolderName = ".plico";
+    private const string CatalogFilename = "catalog.sqlite3";
     private const string StagePrefix = "import-";
     private const int MaximumStemBytes = 180;
     private const string NonPortableFileCharacters = "<>:\"/\\|?*";
@@ -63,7 +64,7 @@ public sealed partial class InboxLibrary : IDisposable
         }
         try
         {
-            var catalog = new LibraryCatalog(Path.Combine(metadata, "catalog.sqlite3"));
+            var catalog = new LibraryCatalog(Path.Combine(metadata, CatalogFilename));
             return new InboxLibrary(root, pdfs, metadata, lease, catalog);
         }
         catch

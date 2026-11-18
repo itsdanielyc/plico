@@ -24,6 +24,12 @@ public sealed record DocumentPage(IReadOnlyList<DocumentSummary> Items, bool Has
 /// <summary>Newly indexed files, recovery of moved PDFs, and files that could not be read.</summary>
 public sealed record RefreshResult(int Indexed, IReadOnlyList<string> Warnings, int Relocated = 0);
 
+/// <summary>The portable backup folder and number of PDFs copied into it.</summary>
+public sealed record BackupResult(string Location, int PdfCount);
+
+/// <summary>The number of PDFs copied so far and the total in the backup.</summary>
+public readonly record struct BackupProgress(int Copied, int Total);
+
 /// <summary>The existing or newly created catalog entry for a supplied file.</summary>
 public sealed record FileImportResult(DocumentSummary Document, bool Added);
 

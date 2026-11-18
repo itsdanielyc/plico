@@ -103,6 +103,8 @@
                     </Button>
                     <Button Classes="rail" Content="Show PDF folder" Command="{Binding OpenPdfFolderCommand}" IsEnabled="{Binding HasLibrary}" />
                     <Button Classes="rail" Content="Refresh index" Command="{Binding RefreshIndexCommand}" IsEnabled="{Binding CanWork}" />
+                    <Button x:Name="BackUpLibraryButton" Classes="rail" Content="Back up library…"
+                            Command="{Binding BackUpLibraryCommand}" IsEnabled="{Binding CanWork}" />
                     <Button x:Name="StartFolderWatchButton" Classes="rail" Content="Watch a folder…"
                             Command="{Binding StartFolderWatchCommand}" IsVisible="{Binding !IsWatchingFolder}"
                             IsEnabled="{Binding CanStartFolderWatch}" />

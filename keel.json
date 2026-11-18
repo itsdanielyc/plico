@@ -11,7 +11,7 @@
     "lint": "dotnet build Plico.slnx -c Release",
     "unit": "dotnet test Plico.slnx -c Release",
     "contracts": null,
-    "integration": "dotnet test Plico.slnx -c Release --filter \"FullyQualifiedName~LibraryTests|FullyQualifiedName~LibraryMoveTests|FullyQualifiedName~LibraryReviewTests|FullyQualifiedName~LibraryBatchTagTests|FullyQualifiedName~FolderWatchTests|FullyQualifiedName~NetworkScannerTests|FullyQualifiedName~SavedScannerTests|FullyQualifiedName~OcrLanguageTests|FullyQualifiedName~ScanOptionsTests\"",
+    "integration": "dotnet test Plico.slnx -c Release --filter \"FullyQualifiedName~LibraryTests|FullyQualifiedName~LibraryMoveTests|FullyQualifiedName~LibraryReviewTests|FullyQualifiedName~LibraryBatchTagTests|FullyQualifiedName~LibraryBackupTests|FullyQualifiedName~FolderWatchTests|FullyQualifiedName~NetworkScannerTests|FullyQualifiedName~SavedScannerTests|FullyQualifiedName~OcrLanguageTests|FullyQualifiedName~ScanOptionsTests\"",
     "ui": "dotnet test Plico.slnx -c Release --filter FullyQualifiedName~InboxWindowTests",
     "build": "dotnet build Plico.slnx -c Release",
     "e2e": "pwsh -File scripts/Test-Native.ps1 -Executable <path-to-Plico> -EvidenceDirectory artifacts/native",
