@@ -100,3 +100,9 @@ The v0.17.0 commit `ef4bdb6` passed source, archive, and published download chec
 ## Release scope
 
 Ruling for v0.17.0. Implement the brief’s first nine ranked items together on the six current platforms. Add managed PDFsharp for AES protection and retain the existing native dependencies. This covers offline capture, review, retrieval and export. Later work includes structured fields and reminders, separator sheets and manual duplex, versions, additional drivers, household export, phone intake, migration, formats, OCR engines, similarity, optional language models, PDF editing and desktop polish. Those slices require their own storage, driver or platform decisions.
+
+## Capture and intake
+
+| Slice | Done when | Levels | Status |
+|---|---|---|---|
+| #12 Batch splitting and manual duplex | Scanner batches omit PATCH-T and configured separators. Manual duplex matches reverse-order backs to fronts and can resume after closing the library or correcting a count mismatch. | L0, L1, L3, L6 | Hosted verification pending |

@@ -34,7 +34,8 @@ internal sealed partial class ScanDialog : Window
         new("Automatic", ScanFeed.Automatic),
         new("Flatbed", ScanFeed.Flatbed),
         new("Feeder · one-sided", ScanFeed.Feeder),
-        new("Feeder · two-sided", ScanFeed.Duplex)
+        new("Feeder · two-sided", ScanFeed.Duplex),
+        new("Feeder · manual duplex", ScanFeed.ManualDuplex)
     ];
     private static readonly ResolutionOption[] Resolutions =
         Enum.GetValues<ScanResolution>().Select(value => new ResolutionOption(value)).ToArray();
@@ -345,7 +346,10 @@ internal sealed partial class ScanDialog : Window
                     preferences.RememberLastScanner(scanner);
                 });
             }
-            Close(new ScanRequest(scanner, options.Feed, options.Paper, options.Resolution, options.Cleanup));
+            var batch = SplitScanBatch.IsChecked == true
+                ? new ScanBatchOptions(true, CustomSeparatorBarcode.Text?.Trim())
+                : null;
+            Close(new ScanRequest(scanner, options.Feed, options.Paper, options.Resolution, options.Cleanup, batch));
         }
     }
 }

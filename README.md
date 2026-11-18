@@ -145,6 +145,10 @@ The scan picker opens on the last scanner you started with when it is available.
 
 If the scanner reports an error after delivering pages, choose **Save partial PDF** or **Discard**. A saved partial scan opens in the inbox with searchable text from the pages that arrived.
 
+Choose **Batch separators** in the scan dialog to split at PATCH-T sheets. An optional custom barcode value acts as a second separator. Put a separator between documents. Plico files the document pages and skips the separator sheets.
+
+Choose **Feeder · manual duplex** for a one-sided feeder. Scan all fronts, then turn the stack over so the last front is the first sheet for the back-side pass. Keep every sheet in both passes, including blanks. **Finish later** saves the fronts in this library. Choose manual duplex again to continue. If the back pass has the wrong number of pages, reload the full stack and retry.
+
 If your scanner software saves to a folder, choose **Watch a folder…** under **Library** and select its output folder. Plico imports new or updated PDFs and images after they settle. The watch covers files directly inside that folder and lasts while Plico is open. **Stop watching** ends intake. Your scanner's source files remain in the output folder.
 
 The number beside **Inbox** is the total awaiting review. Watched imports update it while you work in other views. Use **Refresh results** below the document list when an arrival has been held for your current selection or loaded pages.
