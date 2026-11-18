@@ -42,13 +42,12 @@ public sealed partial class InboxWindowTests
             var textScroll = Assert.IsType<ScrollViewer>(window.FindControl<ScrollViewer>("PageTextScroll"));
             var pdfScroll = Assert.IsType<ScrollViewer>(window.FindControl<ScrollViewer>("PreviewScroll"));
             var fit = Assert.IsType<Button>(window.FindControl<Button>("PreviewFitButton"));
-            var pageNavigation = Assert.IsType<StackPanel>(window.FindControl<StackPanel>("PreviewPageNavigation"));
+            var pageNavigation = Assert.IsAssignableFrom<Panel>(window.FindControl<Panel>("PreviewPageNavigation"));
+            var copy = Assert.IsType<Button>(window.FindControl<Button>("CopyDocumentTextButton"));
             Assert.Equal("Read text", toggle.Content);
             Assert.True(toggle.IsVisible && toggle.IsEnabled && pdfScroll.IsVisible && fit.IsVisible);
             Assert.False(textScroll.IsVisible);
-            var navigationRight = Assert.IsType<Point>(pageNavigation.TranslatePoint(new Point(pageNavigation.Bounds.Width, 0), window));
-            var textToggleLeft = Assert.IsType<Point>(toggle.TranslatePoint(default, window));
-            Assert.True(navigationRight.X <= textToggleLeft.X, "The page navigation overlaps the text action at the minimum window width.");
+            AssertPageNavigationFits(window, pageNavigation, copy, toggle);
 
             toggle.Command!.Execute(null);
             await WaitForAsync(() => text.Text?.Contains(letterKeyword, StringComparison.OrdinalIgnoreCase) == true);
@@ -93,5 +92,25 @@ public sealed partial class InboxWindowTests
         {
             window.Close();
         }
+    }
+
+    private static void AssertPageNavigationFits(Window window, Panel navigation, Button copy, Button read)
+    {
+        var previous = Assert.IsType<Button>(navigation.Children[0]);
+        var label = Assert.IsType<TextBlock>(navigation.Children[1]);
+        var next = Assert.IsType<Button>(navigation.Children[2]);
+        string originalPageLabel = Assert.IsType<string>(label.Text);
+        foreach (string pageLabel in new[] { originalPageLabel, "987 / 1000" })
+        {
+            label.SetCurrentValue(TextBlock.TextProperty, pageLabel);
+            window.UpdateLayout();
+            var copyRight = Assert.IsType<Point>(copy.TranslatePoint(new Point(copy.Bounds.Width, 0), window));
+            var previousLeft = Assert.IsType<Point>(previous.TranslatePoint(default, window));
+            var nextRight = Assert.IsType<Point>(next.TranslatePoint(new Point(next.Bounds.Width, 0), window));
+            var readLeft = Assert.IsType<Point>(read.TranslatePoint(default, window));
+            Assert.True(copyRight.X <= previousLeft.X, $"Previous page overlaps Copy text at page {pageLabel}.");
+            Assert.True(nextRight.X <= readLeft.X, $"Next page overlaps Read text at page {pageLabel}.");
+        }
+        label.SetCurrentValue(TextBlock.TextProperty, originalPageLabel);
     }
 }
