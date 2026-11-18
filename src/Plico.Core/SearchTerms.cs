@@ -7,6 +7,7 @@ internal static partial class SearchTerms
 {
     internal const int MaximumQueryLength = 256;
     internal const int MaximumTagLength = 48;
+    internal const string FtsTokenizer = "unicode61 remove_diacritics 2";
     private const string WordPattern = @"[\p{L}\p{M}\p{N}]+";
     private const string QueryPattern = "\"[^\"]*\"|“[^”]*”|" + WordPattern;
 

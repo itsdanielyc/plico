@@ -66,10 +66,11 @@ internal static class NativeVerification
             await VerifyLibraryBackupAsync(window, model, dialogs, evidenceDirectory);
             await VerifyImportErrorsAsync(window, model, dialogs, fixture, evidenceDirectory);
             await VerifyPreviewFitAsync(window, model, evidenceDirectory);
+            await VerifyGoToMatchAsync(window, model, evidenceDirectory);
             await VerifyScannerDialogAsync(window, evidenceDirectory);
 
             File.WriteAllText(Path.Combine(evidenceDirectory, "passed.txt"),
-                $"Verified {runtime}. Native window completed multilingual OCR, phrase search, result sorting, fit-width preview, duplicate drop, folder watch, title edit, relocation, batch actions, library backup, text copy, and import retry.");
+                $"Verified {runtime}. Native window completed multilingual OCR, phrase search, result sorting, fit-width preview, match navigation, duplicate drop, folder watch, title edit, relocation, batch actions, library backup, text copy, and import retry.");
             desktop.Shutdown(0);
         }
         catch (Exception error)
@@ -116,6 +117,22 @@ internal static class NativeVerification
             "The copied text did not contain the selected PDF's accented text.");
     }
 
+    private static async Task VerifyGoToMatchAsync(MainWindow window, InboxViewModel model, string directory)
+    {
+        var document = model.SelectedDocument ?? throw new InvalidOperationException("The mixed PDF was not selected.");
+        model.PreviousPageCommand.Execute(null);
+        Require(model.PageLabel == "1 / 2", "Search match navigation needs the first page of the mixed PDF.");
+        Control<TextBox>(window, "SearchBox").SetCurrentValue(TextBox.TextProperty, ReceiptKeyword);
+        var jump = Control<Button>(window, "GoToMatchButton");
+        await UntilAsync(() => jump.IsVisible && jump.IsEnabled, () => model.Status);
+        Require(model.SelectedDocument?.Id == document.Id && jump.Command is IAsyncRelayCommand,
+            "The mixed PDF’s search result did not offer a matching page.");
+
+        await ((IAsyncRelayCommand)jump.Command!).ExecuteAsync(jump.CommandParameter);
+        await UntilAsync(() => model.PageLabel == "2 / 2" && model.Preview is not null, () => model.Status);
+        await CaptureAsync(window, directory, "matching-page.png");
+    }
+
     private static async Task VerifyImportErrorsAsync(MainWindow window, InboxViewModel model, FixtureDialogs dialogs,
         string fixture, string directory)
     {
@@ -144,6 +161,7 @@ internal static class NativeVerification
             }
 
             File.Copy(Path.Combine(Path.GetDirectoryName(fixture)!, "Mixed Pages.pdf"), damaged, overwrite: true);
+            Control<ComboBox>(window, "OcrLanguageBox").SetCurrentValue(ComboBox.SelectedItemProperty, OcrLanguage.English);
             dialogs.ImportErrorsChoice = ImportErrorsAction.Retry;
             await ((IAsyncRelayCommand)errors.Command!).ExecuteAsync(null);
             await UntilAsync(() => model.SelectedDocument?.Title == "Check import" && model.Preview is not null, () => model.Status);

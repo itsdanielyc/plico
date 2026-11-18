@@ -2,6 +2,7 @@ using System.ComponentModel;
 using Avalonia.Controls;
 using Avalonia.Headless.XUnit;
 using Avalonia.Threading;
+using CommunityToolkit.Mvvm.Input;
 using Plico.Core;
 using Plico.Desktop;
 using Xunit;
@@ -11,6 +12,53 @@ namespace Plico.Tests;
 public sealed partial class InboxWindowTests
 {
     private static readonly TimeSpan SearchTestDeadline = TimeSpan.FromSeconds(6);
+
+    [AvaloniaFact]
+    public async Task GoToMatchOpensTheMatchingOcrPageFromTheCurrentResults()
+    {
+        const string receiptQuery = "WRENCH470";
+        using var temporary = new TemporaryLibrary();
+        using (var library = InboxLibrary.Open(temporary.Path))
+        {
+            string fixture = Path.Combine(AppContext.BaseDirectory, "fixtures", "Mixed Pages.pdf");
+            var document = await library.ImportAsync(fixture, TestContext.Current.CancellationToken);
+            Assert.Equal(2, document.PageCount);
+        }
+
+        using var model = new InboxViewModel(new FixtureDialogs());
+        model.InitializeLibrary(() => temporary.Path);
+        var window = new MainWindow { DataContext = model };
+        window.Show();
+        try
+        {
+            await WaitForPreviewAsync(model);
+            var goToMatch = Assert.IsType<Button>(window.FindControl<Button>("GoToMatchButton"));
+            Assert.False(goToMatch.IsVisible);
+            Assert.Equal("1 / 2", model.PageLabel);
+            var searchBox = Assert.IsType<TextBox>(window.FindControl<TextBox>("SearchBox"));
+            searchBox.SetCurrentValue(TextBox.TextProperty, receiptQuery);
+
+            await WaitForAsync(() => goToMatch.IsVisible && goToMatch.IsEnabled);
+            await Assert.IsAssignableFrom<IAsyncRelayCommand>(goToMatch.Command).ExecuteAsync(goToMatch.CommandParameter);
+            await WaitForPreviewAsync(model);
+
+            Assert.Equal("2 / 2", model.PageLabel);
+            Assert.NotNull(model.Preview);
+            Assert.Equal("Match on page 2.", model.Status);
+            searchBox.SetCurrentValue(TextBox.TextProperty, "NORTHSTAR WRENCH470");
+
+            Assert.False(goToMatch.IsVisible);
+            await WaitForAsync(() => goToMatch.IsVisible && goToMatch.IsEnabled);
+            await Assert.IsAssignableFrom<IAsyncRelayCommand>(goToMatch.Command).ExecuteAsync(goToMatch.CommandParameter);
+
+            Assert.Equal("0 matching pages.", model.Status);
+            Assert.Equal("2 / 2", model.PageLabel);
+        }
+        finally
+        {
+            window.Close();
+        }
+    }
 
     [AvaloniaFact]
     public async Task NewQueryCancelsTheBackgroundSearchAndOnlyPublishesItsOwnResults()

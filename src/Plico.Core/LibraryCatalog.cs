@@ -16,7 +16,7 @@ internal sealed class LibraryCatalog
     private const string TitleCollation = "plico_title";
     private const string DocumentUnavailableMessage = "This document is no longer in the library.";
 
-    private const string Schema = """
+    private const string Schema = $$"""
         CREATE TABLE documents(
             id INTEGER PRIMARY KEY,
             title TEXT NOT NULL,
@@ -42,7 +42,7 @@ internal sealed class LibraryCatalog
         ) WITHOUT ROWID;
         CREATE INDEX document_tags_by_tag ON document_tags(tag_key, document_id);
         CREATE VIRTUAL TABLE documents_search USING fts5(
-            title, body, content='documents', content_rowid='id', tokenize='unicode61 remove_diacritics 2'
+            title, body, content='documents', content_rowid='id', tokenize='{{SearchTerms.FtsTokenizer}}'
         );
         CREATE TRIGGER documents_insert AFTER INSERT ON documents BEGIN
             INSERT INTO documents_search (rowid, title, body) VALUES (new.id, new.title, new.body);

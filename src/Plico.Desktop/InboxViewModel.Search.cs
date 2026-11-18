@@ -1,4 +1,5 @@
 using Avalonia.Threading;
+using CommunityToolkit.Mvvm.Input;
 using Plico.Core;
 
 namespace Plico.Desktop;
@@ -10,10 +11,47 @@ internal sealed partial class InboxViewModel
     private readonly SemaphoreSlim _searchSlot = new(initialCount: 1, maxCount: 1);
     private readonly Func<InboxLibrary, DocumentFilter, CancellationToken, DocumentPage> _searchDocuments;
     private CancellationTokenSource? _searchCancellation;
+    private string? _appliedQuery;
+
+    public bool HasPageMatchAction => !string.IsNullOrWhiteSpace(Query) && Query == _appliedQuery &&
+        SelectedDocument is { HasText: true, PageCount: > 1, Match.Length: > 0 };
+
+    [RelayCommand]
+    private Task GoToMatchAsync()
+    {
+        if (!HasPageMatchAction || SelectedDocument is not { } document) return Task.CompletedTask;
+        string query = Query;
+        int startingPage = _pageNumber;
+        return RunOperationAsync("Finding a matching page…", async token =>
+        {
+            var library = RequireLibrary();
+            int? match = await Task.Run(() => library.FindFirstMatchingPage(document, query, token), token);
+            token.ThrowIfCancellationRequested();
+            if (!ReferenceEquals(_library, library) || Query != query || SelectedDocument?.Id != document.Id ||
+                _pageNumber != startingPage)
+            {
+                Status = "Search or preview changed.";
+                return;
+            }
+            if (match is not int page)
+            {
+                Status = "0 matching pages.";
+                return;
+            }
+            if (page > document.PageCount)
+            {
+                Status = "Refresh the index to see the PDF’s new pages.";
+                return;
+            }
+            ShowPreviewPage(page);
+            Status = $"Match on page {page}.";
+        });
+    }
 
     partial void OnQueryChanged(string value)
     {
         CancelTypedSearch();
+        OnPropertyChanged(nameof(HasPageMatchAction));
         if (_library is null) return;
         HasMore = false;
         ResultCount = "Searching…";
@@ -100,6 +138,7 @@ internal sealed partial class InboxViewModel
     private void ApplyResultPage(DocumentFilter filter, DocumentPage page, long? preferredId = null, bool reloadPreview = false)
     {
         long? selection = preferredId ?? SelectedDocument?.Id;
+        _appliedQuery = filter.Query;
         ReplaceResults(filter.Offset > 0 ? [.. Documents, .. page.Items] : page.Items, selection, reloadPreview);
         HasMore = page.HasMore;
         ResultCount = HasMore ? $"Showing {DocumentCount(Documents.Count)}" : DocumentCount(Documents.Count);
@@ -108,6 +147,8 @@ internal sealed partial class InboxViewModel
 
     private void ReportResultFailure(Exception error)
     {
+        _appliedQuery = null;
+        OnPropertyChanged(nameof(HasPageMatchAction));
         HasMore = false;
         ResultCount = "Results unavailable";
         Status = error.Message;

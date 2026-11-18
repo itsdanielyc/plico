@@ -9,6 +9,7 @@ using UglyToad.PdfPig.Core;
 using UglyToad.PdfPig.DocumentLayoutAnalysis.TextExtractor;
 using UglyToad.PdfPig.Exceptions;
 using ReadablePdf = UglyToad.PdfPig.PdfDocument;
+using ReadablePage = UglyToad.PdfPig.Content.Page;
 
 namespace Plico.Core;
 
@@ -99,32 +100,34 @@ internal sealed class DocumentProcessor(string dataDirectory)
     };
 
     // O(pages + text length) time and O(text length) retained text, in addition to PDF parser state.
-    internal static PdfText ReadPdf(string path, CancellationToken cancellationToken)
+    internal static PdfText ReadPdf(string path, CancellationToken cancellationToken) => WithReadablePdf(path, pdf =>
+    {
+        bool everyPageHasText = true;
+        var text = new StringBuilder();
+        foreach (var page in pdf.GetPages())
+        {
+            cancellationToken.ThrowIfCancellationRequested();
+            string pageText = ReadPageText(page);
+            if (pageText.Length == 0)
+            {
+                everyPageHasText = false;
+                continue;
+            }
+            if (text.Length > 0) text.AppendLine();
+            text.Append(pageText);
+        }
+        return new PdfText(text.ToString(), pdf.NumberOfPages, everyPageHasText);
+    });
+
+    internal static string ReadPageText(ReadablePage page) => ContentOrderTextExtractor.GetText(page).Trim();
+
+    internal static TResult WithReadablePdf<TResult>(string path, Func<ReadablePdf, TResult> read)
     {
         try
         {
             using var pdf = ReadablePdf.Open(path);
-            if (pdf.NumberOfPages == 0)
-            {
-                throw new InvalidDataException("This PDF has no pages.");
-            }
-
-            bool everyPageHasText = true;
-            var text = new StringBuilder();
-            foreach (var page in pdf.GetPages())
-            {
-                cancellationToken.ThrowIfCancellationRequested();
-                string pageText = ContentOrderTextExtractor.GetText(page).Trim();
-                if (pageText.Length == 0)
-                {
-                    everyPageHasText = false;
-                    continue;
-                }
-                if (text.Length > 0) text.AppendLine();
-                text.Append(pageText);
-            }
-
-            return new(text.ToString(), pdf.NumberOfPages, everyPageHasText);
+            if (pdf.NumberOfPages == 0) throw new InvalidDataException("This PDF has no pages.");
+            return read(pdf);
         }
         catch (PdfDocumentEncryptedException error)
         {

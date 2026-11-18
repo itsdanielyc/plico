@@ -446,14 +446,16 @@ internal sealed partial class InboxViewModel : ObservableObject, IDisposable
         OnPropertyChanged(nameof(HasSelection));
         OnPropertyChanged(nameof(ReviewAction));
         OnPropertyChanged(nameof(HasNoSearchableText));
+        OnPropertyChanged(nameof(HasPageMatchAction));
         NotifyPageChanged();
     }
 
-    private void NavigatePage(int direction)
+    private void NavigatePage(int direction) => ShowPreviewPage(_pageNumber + direction);
+
+    private void ShowPreviewPage(int pageNumber)
     {
-        int target = _pageNumber + direction;
-        if (target < 1 || target > SelectedDocument?.PageCount) return;
-        _pageNumber = target;
+        if (SelectedDocument is not { } document || pageNumber < 1 || pageNumber > document.PageCount || pageNumber == _pageNumber) return;
+        _pageNumber = pageNumber;
         NotifyPageChanged();
         RequestPreview();
     }

@@ -86,6 +86,23 @@ public sealed class LibraryTests
     }
 
     [Fact]
+    public async Task MatchingPageUsesEmbeddedTextAndKeepsQueryTermsOnTheSamePage()
+    {
+        using var temporary = new TemporaryLibrary();
+        using var library = InboxLibrary.Open(temporary.Path);
+        var token = TestContext.Current.CancellationToken;
+        var document = await library.ImportAsync(Fixture(Mixed), token);
+        library.SetTitle(document.Id, "December archive");
+
+        Assert.Equal(2, library.FindFirstMatchingPage(document, "\"wrench470\"", token));
+        Assert.Equal(1, library.FindFirstMatchingPage(document, "\"new term\" norths", token));
+        Assert.Single(library.Find(new DocumentFilter(Query: "norths wrench"), token).Items);
+        Assert.Null(library.FindFirstMatchingPage(document, "norths wrench", token));
+        Assert.Null(library.FindFirstMatchingPage(document, "December archive", token));
+        Assert.Throws<OperationCanceledException>(() => library.FindFirstMatchingPage(document, "wrench", new CancellationToken(true)));
+    }
+
+    [Fact]
     public async Task MalformedPdfDoesNotPublishAFileOrRow()
     {
         using var temporary = new TemporaryLibrary();

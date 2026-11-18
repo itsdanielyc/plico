@@ -35,7 +35,9 @@ Search input is compiled into a parameterized FTS5 expression. Ordinary words ar
 
 Typed search uses a single background reader for results. Editing the query cancels the previous read and gives the newest request control of the results. SQLite checks cancellation during the read so an abandoned query can release the reader slot. [SQLite progress callbacks](https://www.sqlite.org/c3ref/progress_handler.html)
 
-The runtime carries English, French, and German Tesseract models. The app captures the selected language for each import batch or scan. PDF parsing and text extraction use PDFium. Scanner discovery uses the supported local OS driver and eSCL on the local network. Platform requirements and support are versioned in the release notes.
+Match navigation reads the selected PDF in the background. A scratch FTS5 index uses the catalog’s query compiler and tokenizer, holds the text index for one page, and stops at the first matching page. The desktop checks that the search, selected document, and preview page are still current before applying the jump. [FTS5 contentless indexes](https://sqlite.org/fts5.html#the_delete_all_command)
+
+The runtime carries English, French, and German Tesseract models. The app captures the selected language for each import batch or scan. PDFium renders previews and PdfPig extracts embedded text. Scanner discovery uses the supported local OS driver and eSCL on the local network. Platform requirements and support are versioned in the release notes.
 
 Direct scanner addresses are stored in per-user settings. A short write lease and atomic replacement preserve entries when separate Plico instances save them. The scanner picker reconstructs saved entries locally and checks the device when it starts a scan.
 

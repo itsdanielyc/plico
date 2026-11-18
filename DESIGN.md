@@ -24,6 +24,8 @@ The results count shows **Searching…** after a query edit. **Load more** becom
 
 The preview shows the whole page by default. **Fit width** fills the available reading width and allows vertical scrolling. Page navigation stays visible and starts each new page at the top.
 
+**Go to match** sits beneath the preview header actions for multi-page text results. It opens the first page that matches the complete search and reports its page number in the status bar.
+
 **Copy text** sits beside the page controls when the selected PDF has searchable text. The status bar confirms a successful copy.
 
 Keep labels present on actions. Use a polite live region for processing status. Keep the PDF accessible by keyboard and show a visible response for unavailable previews.

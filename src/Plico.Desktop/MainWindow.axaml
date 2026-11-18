@@ -244,10 +244,17 @@
                                                        TextDecorations="Underline" TextTrimming="CharacterEllipsis" />
                                         </Button>
                                     </StackPanel>
-                                    <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="5" VerticalAlignment="Top">
-                                        <Button x:Name="EditTitleButton" Classes="secondary" Content="Edit title" Command="{Binding EditDocumentTitleCommand}"
-                                                IsEnabled="{Binding CanWork}" />
-                                        <Button Classes="secondary" Content="Open PDF" Command="{Binding OpenPdfCommand}" />
+                                    <StackPanel Grid.Column="1" Spacing="4" VerticalAlignment="Top">
+                                        <StackPanel Orientation="Horizontal" Spacing="5">
+                                            <Button x:Name="EditTitleButton" Classes="secondary" Content="Edit title" Command="{Binding EditDocumentTitleCommand}"
+                                                    IsEnabled="{Binding CanWork}" />
+                                            <Button Classes="secondary" Content="Open PDF" Command="{Binding OpenPdfCommand}" />
+                                        </StackPanel>
+                                        <Button x:Name="GoToMatchButton" Classes="secondary" Content="Go to match"
+                                                HorizontalAlignment="Right" Padding="8,3" Command="{Binding GoToMatchCommand}"
+                                                IsVisible="{Binding HasPageMatchAction}" IsEnabled="{Binding CanWork}"
+                                                AutomationProperties.Name="Go to matching page"
+                                                ToolTip.Tip="Go to the first page that matches the full search" />
                                     </StackPanel>
                                 </Grid>
                                 <Border Grid.Row="1" Background="#EAEFE6" CornerRadius="8" Padding="12" ClipToBounds="True">
