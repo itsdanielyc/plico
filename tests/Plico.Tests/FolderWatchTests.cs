@@ -1,3 +1,4 @@
+using System.Collections.Concurrent;
 using System.Threading.Channels;
 using Plico.Core;
 using Xunit;
@@ -23,11 +24,19 @@ public sealed class FolderWatchTests
 
         var delivered = Channel.CreateUnbounded<IReadOnlyList<string>>();
         var source = new InterruptibleWatcher(incoming.Path);
+        var notifications = new ConcurrentQueue<(WatcherChangeTypes Change, string Path)>();
+        void RecordNotification(object _, FileSystemEventArgs change) =>
+            notifications.Enqueue((change.ChangeType, change.FullPath));
+        source.Created += RecordNotification;
+        source.Changed += RecordNotification;
+        source.Renamed += RecordNotification;
         await using var watch = FolderWatch.Start(incoming.Path, destination.Path,
             (paths, token) => delivered.Writer.WriteAsync(paths, token).AsTask(), _ => source, TestContext.Current.CancellationToken);
         string beforeInterruption = Path.Combine(incoming.Path, "Before interruption.pdf");
         File.Copy(fixture, beforeInterruption);
-        Assert.Equal(beforeInterruption, Assert.Single(await NextBatchAsync(delivered.Reader, watch)));
+        var firstBatch = await NextBatchAsync(delivered.Reader, watch);
+        Assert.True(firstBatch.Count == 1 && firstBatch[0] == beforeInterruption,
+            $"Expected only {beforeInterruption}. Delivered [{string.Join(", ", firstBatch)}] after notifications [{string.Join(", ", notifications)}].");
 
         source.EnableRaisingEvents = false;
         string missed = Path.Combine(incoming.Path, "Missed scan.pdf");
