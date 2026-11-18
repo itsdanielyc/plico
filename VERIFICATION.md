@@ -7,6 +7,7 @@
 | 2026-11-18 | L7 | First self-contained archives extract and complete the native OCR journey at commit `9103a34` | windows-2025, macos-26 arm64, ubuntu-24.04 x64 | [Archives 44215272646](https://github.com/itsdanielyc/plico/actions/runs/44215272646), 3 of 3 green |
 | 2026-11-18 | L0–L1, L3–L4, L6 | Nine tests per platform. Synthetic scanner capture produces one searchable multipage PDF; scanner picker disables capture without a device. Negative checks observed one page instead of two and capture incorrectly enabled before restoring the implementation. | windows-2025, macos-26 arm64, ubuntu-24.04 x64 | [CI 44215773716](https://github.com/itsdanielyc/plico/actions/runs/44215773716), 3 of 3 green |
 | 2026-11-18 | L7 | Release candidate `09b1e1e` extracts, launches, imports an image, previews its searchable PDF, applies a tag, marks it reviewed, and retrieves it by OCR text. macOS bundle signature verified. Screenshots reviewed. | windows-2025, macos-26 arm64, ubuntu-24.04 x64 | [Archives 44215774059](https://github.com/itsdanielyc/plico/actions/runs/44215774059), 3 of 3 green |
+| 2026-11-18 | L7 | Published v0.1.0 assets downloaded by separate runners, verified with SHA-256 and exercised through import, preview, tag, review and OCR search | windows-2025, macos-26 arm64, ubuntu-24.04 x64 | [Release 44216082364](https://github.com/itsdanielyc/plico/actions/runs/44216082364), 3 of 3 green |
 
 ## Unverified
 
