@@ -133,3 +133,7 @@ Items 10–23 shipped in the v0.18.0 prerelease at `0b3dcd9`. Fresh runners veri
 | #17 Additional import formats | HEIC still photos, email, text and Markdown become searchable PDFs. Readable attachments travel with email. Office uses a private local LibreOffice process and reports a recoverable error when it is unavailable. | L0, L3, L6, L7 | Verified in the combined packages |
 | #18 Library migration | Paperless-ngx, Evernote ENEX, and Mariner Paperless import through source-keyed metadata writes. Forward links resolve after documents are indexed. Originals and local assignments survive retries, and the report carries unresolved source values. | L0, L3, L6 | Verified in the combined packages |
 | #19 OCR languages, orientation and RapidOCR | Four additional packaged Tesseract models are selectable. Optional orientation rotates confident sideways pages before OCR. RapidOCR writes a searchable layer on its supported targets and Tesseract is available on all six. Repeated OCR copies distinguish engine and orientation choices. | L0, L1, L3, L6, L7 | Verified in the combined packages |
+
+## Post-v0.18.0 maintenance
+
+Duplex backup, move and version recovery, Trash purge, OCR copy reuse, watch lifecycle, archive-number search, filing suggestions, and redaction file handling were tested locally on Windows x64 and Ubuntu x64 (L0, L1, L3, L4, L6). Verification on Windows ARM64, Ubuntu ARM64, and both Macs is pending. [Verification ledger](VERIFICATION.md)
