@@ -198,6 +198,12 @@
                                     <MenuItem Header="Save label sheets…" Command="{Binding PrintArchiveLabelsCommand}" />
                                     <MenuItem Header="Save a PATCH-T separator…" Command="{Binding PrintSeparatorSheetCommand}" />
                                 </MenuItem>
+                                <MenuItem Header="Migrate a library">
+                                    <MenuItem Header="Paperless-ngx folder…" Command="{Binding MigratePaperlessFolderCommand}" />
+                                    <MenuItem Header="Paperless-ngx ZIP…" Command="{Binding MigratePaperlessZipCommand}" />
+                                    <MenuItem Header="Evernote ENEX…" Command="{Binding MigrateEvernoteCommand}" />
+                                    <MenuItem Header="Mariner Paperless…" Command="{Binding MigrateMarinerCommand}" />
+                                </MenuItem>
                                 <Separator />
                                 <MenuItem Header="{translation:Tr RefreshIndex}" Command="{Binding RefreshIndexCommand}" />
                                 <MenuItem Header="{translation:Tr MetadataDefinitions}" Command="{Binding ManageMetadataCommand}" />

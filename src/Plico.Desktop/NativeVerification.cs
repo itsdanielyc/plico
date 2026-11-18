@@ -114,6 +114,7 @@ internal static partial class NativeVerification
             await VerifyPdfDerivativesAsync(window, model, dialogs, evidenceDirectory);
             await VerifyDesktopPdfToolsAsync(window, model, dialogs, evidenceDirectory, fixture);
             await VerifyAdditionalIntakeAsync(window, model, dialogs, fixture, evidenceDirectory);
+            await VerifyMigrationAsync(window, model, dialogs, evidenceDirectory);
             await VerifyPhoneInboxAsync(window, model, dialogs, fixture, evidenceDirectory);
 
             File.WriteAllText(Path.Combine(evidenceDirectory, "passed.txt"),
@@ -1070,6 +1071,8 @@ internal static partial class NativeVerification
 internal sealed partial class FixtureDialogs(params string[] documents) : IWorkspaceDialogs
 {
     internal string? FolderPath { get; set; }
+    internal string? MigrationSource { get; set; }
+    internal LibraryMigrationReport? MigrationReport { get; private set; }
     internal string? LastFolderStart { get; private set; }
     internal int FolderPickerCalls { get; private set; }
     internal string? EditedTitle { get; init; }
@@ -1105,6 +1108,12 @@ internal sealed partial class FixtureDialogs(params string[] documents) : IWorks
         return Task.FromResult(FolderPath);
     }
     public Task<ScanRequest?> PickScannerAsync() => Task.FromResult(ScannerChoice);
+    public Task<string?> PickMigrationSourceAsync(LibraryMigrationFormat format, bool isFolder) => Task.FromResult(MigrationSource);
+    public Task ShowMigrationReportAsync(LibraryMigrationReport report)
+    {
+        MigrationReport = report;
+        return Task.CompletedTask;
+    }
     public Task<bool> ConfirmPartialScanAsync(ScanInterruption interruption, CancellationToken cancellationToken) =>
         PartialScanChoice?.Invoke(interruption, cancellationToken) ?? Task.FromResult(false);
     public Task<ManualDuplexDecision> ChooseDuplexActionAsync(ManualDuplexPrompt prompt, CancellationToken cancellationToken) =>
