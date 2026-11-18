@@ -91,6 +91,8 @@ Folder watch coalesces filesystem events by path and samples pending files until
 
 The desktop reads the pending review count through the inbox index after publishing documents, changing review state, or refreshing the catalog. Watched arrivals refresh an active query through the background search reader. Extra result pages and batch selections defer automatic list replacement. A first page refresh also defers when it would displace the open PDF.
 
+The query compiler strips review-status clauses before building the text expression. The catalog binds the review state as an indexed predicate. An explicit Inbox view and a reviewed clause have an empty intersection. Saved searches store the clause as part of their existing query text.
+
 The watcher records top-level scan sizes and modification times before it subscribes. It reconciles once after subscription to catch arrivals during startup, and again when the operating system reports lost notifications. Only new or changed paths join the readiness queue. A backend that needs to restart is rearmed before reconciliation. A failed restart or unreadable folder is reported to the desktop. [.NET notification buffer overflow](https://learn.microsoft.com/en-us/dotnet/api/system.io.internalbufferoverflowexception?view=net-10.0)
 
 The last watch folder is saved in local settings under the normalized library path. Reopening a library offers the saved folder as an explicit resume action.

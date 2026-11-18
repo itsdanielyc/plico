@@ -14,7 +14,7 @@ internal static partial class NativeVerification
         const string sidebarTag = "Packet";
         const string filedTitle = "Paperwork packet";
         const string receiptTitle = "Sideways receipt";
-        string query = $"{ReceiptKeyword} folder:Filed/Packets";
+        string query = $"{ReceiptKeyword} folder:Filed/Packets status:inbox";
         bool ShowsFiledReceipts() => model.ResultCount.Contains($"in {sidebarTag}", StringComparison.Ordinal) &&
             model.Documents is [{ Title: filedTitle }, { Title: receiptTitle }];
         var sortBox = Control<ComboBox>(window, "DocumentSortBox");
@@ -57,6 +57,23 @@ internal static partial class NativeVerification
         Require(model.Query == query && model.SortOption?.Order == DocumentSort.Title && ShowsFiledReceipts(),
             "Opening the saved search did not restore its query, scope, and order.");
         await CaptureAsync(window, directory, "saved-search.png");
+
+        var receipt = model.Documents.Single(document => document.Title == receiptTitle);
+        var documents = Control<ListBox>(window, "DocumentList");
+        documents.SetCurrentValue(ListBox.SelectedItemProperty, receipt);
+        long countBeforeReview = model.InboxCount;
+        Control<Button>(window, "ReviewButton").Command!.Execute(null);
+        Require(model.Heading == savedName && model.Query == query && model.InboxCount == countBeforeReview - 1 &&
+                model.Documents is [{ Title: filedTitle }], "Reviewing the receipt did not remove it from the saved Inbox search.");
+
+        string reviewedQuery = query.Replace("status:inbox", "status:reviewed", StringComparison.Ordinal);
+        Control<TextBox>(window, "SearchBox").SetCurrentValue(TextBox.TextProperty, reviewedQuery);
+        await UntilAsync(() => model.Documents is [{ Title: receiptTitle, Reviewed: true }] && model.Preview is not null, () => model.Status);
+        await CaptureAsync(window, directory, "reviewed-search.png");
+
+        shortcut.RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
+        await UntilAsync(() => model.Query == query && model.Heading == savedName &&
+            model.Documents is [{ Title: filedTitle }] && model.Preview is not null, () => model.Status);
     }
 
     private static async Task<SavedSearchDecision?> ConfirmSavedSearchAsync(Window owner, SavedSearchDraft draft, string? scopeTag,

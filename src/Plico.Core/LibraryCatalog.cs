@@ -284,7 +284,7 @@ internal sealed partial class LibraryCatalog
         cancellationToken.ThrowIfCancellationRequested();
         ArgumentOutOfRangeException.ThrowIfNegative(filter.Offset);
         var search = SearchTerms.Compile(filter.Query);
-        if (!search.IsValid)
+        if (!search.IsValid || (filter.InboxOnly && search.Reviewed == true))
         {
             return new([], HasMore: false);
         }
@@ -309,9 +309,10 @@ internal sealed partial class LibraryCatalog
             conditions.Add("documents_search MATCH $expression");
             command.Parameters.AddWithValue("$expression", search.FullTextExpression);
         }
-        if (filter.InboxOnly)
+        if (filter.InboxOnly || search.Reviewed.HasValue)
         {
-            conditions.Add("d.reviewed = 0");
+            conditions.Add("d.reviewed = $reviewed");
+            command.Parameters.AddWithValue("$reviewed", search.Reviewed.GetValueOrDefault());
         }
         if (filter.Tag is not null)
         {

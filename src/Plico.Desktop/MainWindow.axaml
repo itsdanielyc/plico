@@ -171,8 +171,8 @@
             <Border Background="#FCFDF8" BorderBrush="#DDE2D7" BorderThickness="0,0,0,1" Padding="25,16">
                 <Grid ColumnDefinitions="*,Auto,Auto,Auto" ColumnSpacing="10">
                     <TextBox x:Name="SearchBox" Text="{Binding Query, Mode=TwoWay}" MaxLength="256"
-                             PlaceholderText="Search text, tag:…, dated:…, added:…, folder:…" AutomationProperties.Name="Search documents"
-                             ToolTip.Tip="Use dated:2024-02 for a document date and added:2026-11 for the date added. Combine them with tag:tax, folder:&quot;Filed/Property&quot;, or a quoted phrase."
+                             PlaceholderText="Search text, status:…, tag:…, dated:…" AutomationProperties.Name="Search documents"
+                             ToolTip.Tip="Use status:inbox for the review queue or status:reviewed for reviewed PDFs.&#10;dated:2024-02 matches the document date. added:2026-11 matches the date added.&#10;Use tag:tax, folder:&quot;Filed/Property&quot;, and quoted phrases in the same query."
                              VerticalContentAlignment="Center" CornerRadius="8" MinHeight="38">
                         <TextBox.InnerLeftContent>
                             <PathIcon Width="15" Height="15" Margin="11,0,1,0" Foreground="#536459"

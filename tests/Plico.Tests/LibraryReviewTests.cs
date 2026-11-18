@@ -49,6 +49,45 @@ public sealed class LibraryReviewTests
         library.Refresh(token);
         Assert.Equal(1, library.CountUnreviewedDocuments());
     }
+
+    [Fact]
+    public void ReviewStatusSearchCombinesWithTextTagsDatesAndFolders()
+    {
+        var token = TestContext.Current.CancellationToken;
+        using var directory = new TemporaryLibrary();
+        using var library = InboxLibrary.Open(directory.Path);
+        BatchFixtures.AddTwoDocuments(library, token);
+        var documents = library.Find(new DocumentFilter(), token).Items;
+        var reviewed = documents[0];
+        var pending = documents[1];
+        library.SetReviewed(reviewed.Id, true);
+        foreach (var document in documents)
+        {
+            library.AddTag(document.Id, "Property");
+            library.SetDocumentDate(document.Id, new DateOnly(2024, 2, 29));
+        }
+
+        const string common = "northstar tag:property dated:2024-02 folder:.";
+        var inbox = Assert.Single(library.Find(new DocumentFilter(Query: $"{common} STATUS:Inbox"), token).Items);
+        var archive = Assert.Single(library.Find(new DocumentFilter(Query: $"{common} status:reviewed STATUS:REVIEWED"), token).Items);
+        Assert.Equal(pending.Id, inbox.Id);
+        Assert.Equal(reviewed.Id, archive.Id);
+        Assert.Contains("NORTHSTAR", archive.Match, StringComparison.OrdinalIgnoreCase);
+        Assert.Equal(reviewed.Id, Assert.Single(library.Find(new DocumentFilter(Query: "status:reviewed"), token).Items).Id);
+        Assert.Empty(library.Find(new DocumentFilter(Query: "status:reviewed", InboxOnly: true), token).Items);
+        Assert.Equal(pending.Id, Assert.Single(library.Find(new DocumentFilter(Query: "status:inbox", InboxOnly: true), token).Items).Id);
+
+        foreach (string invalid in new[] { "status:", "status:unknown", "status:inbox status:reviewed", "status:\"inbox\"" })
+        {
+            Assert.Empty(library.Find(new DocumentFilter(Query: invalid), token).Items);
+        }
+
+        library.SetTitle(pending.Id, "Status reviewed notice");
+        Assert.Equal(pending.Id, Assert.Single(library.Find(new DocumentFilter(Query: "\"status:reviewed\""), token).Items).Id);
+        library.SetReviewed(pending.Id, true);
+        Assert.Empty(library.Find(new DocumentFilter(Query: "status:inbox"), token).Items);
+        Assert.Equal(2, library.Find(new DocumentFilter(Query: "status:reviewed"), token).Items.Count);
+    }
 }
 
 internal static class BatchFixtures

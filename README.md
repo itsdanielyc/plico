@@ -36,6 +36,8 @@ Put a phrase in quotation marks to search its adjacent whole words. For example,
 
 Use `tag:tax` to require an exact tag. Use `tag:tax tag:"Home insurance" renewal` to require both tags and match renewal in the document. Tags ignore case. Use a backslash to include the closing quote or a backslash inside a quoted tag.
 
+Use `status:inbox` to find PDFs waiting for review and `status:reviewed` to find reviewed PDFs. Save a query such as `renewal tag:property status:inbox` to return to a review queue that updates as you mark documents reviewed.
+
 Use `added:2026`, `added:2026-11`, or `added:2026-11-18` to filter by year, month, or day added. The date follows the local date shown beside each document. Combine filters and text with a query such as `receipt tag:tax added:2026-11`.
 
 Choose **Set document date…** under a PDF’s filename to record the date on the paperwork. Enter it as `YYYY-MM-DD`, or save a blank field to clear it. Use `dated:2024`, `dated:2024-02`, or `dated:2024-02-29` to find PDFs by that date. The filter works with `added:`, tags, folders, and text.

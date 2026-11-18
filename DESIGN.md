@@ -36,11 +36,13 @@ The sort selector sits beside the results count. It applies to the current inbox
 
 The results count shows **Searching…** after a query edit. **Load more** becomes available when the current search has a next page.
 
-The search box hints at `tag:`, `dated:`, `added:`, and `folder:` filters. Its tooltip gives examples and explains quotation marks for phrases. `added:` uses the displayed local intake date. Folder filters use the stored relative path.
+The search box hints at review status, tags, and dates. Its tooltip gives examples for `status:inbox`, `status:reviewed`, and the existing filters. `added:` uses the displayed local intake date. Folder filters use the stored relative path.
 
 The preview’s document date opens an editor with a year-month-day field. Saving a blank field clears the date. The list labels the document date and intake date so both are visible when filled.
 
 **Save search…** names the query and puts it in the sidebar. Opening a shortcut displays its name above the results and restores the selected tag and order. **Edit search…** opens the name, query, and order fields and offers to remove the shortcut.
+
+A saved Inbox search updates as you mark documents reviewed. The next matching PDF stays available in the same search.
 
 A selected sidebar tag offers **Rename…**. When the requested name belongs to another tag, the dialog describes the change and offers **Merge tags** as an explicit action. The resulting tag opens after the change.
 

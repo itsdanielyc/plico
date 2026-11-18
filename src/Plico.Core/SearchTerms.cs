@@ -15,16 +15,19 @@ internal static partial class SearchTerms
     private const string AddedPrefix = "added:";
     private const string DatedPrefix = "dated:";
     private const string FolderPrefix = "folder:";
+    private const string StatusPrefix = "status:";
+    private const string InboxStatus = "inbox";
+    private const string ReviewedStatus = "reviewed";
     private const int YearLength = 4;
     private const int MonthLength = 7;
     private const int DayLength = 10;
     private const string IsoDayFormat = "yyyy-MM-dd";
     private const string WordPattern = @"[\p{L}\p{M}\p{N}]+";
     private const string QueryPattern = "\"[^\"]*\"|“[^”]*”|" + WordPattern;
-    private static readonly CompiledSearch InvalidSearch = new("", [], null, null, null, IsValid: false);
+    private static readonly CompiledSearch InvalidSearch = new("", [], null, null, null, null, IsValid: false);
 
     internal readonly record struct CompiledSearch(string FullTextExpression, IReadOnlyCollection<string> TagKeys,
-        DatePeriod? AddedPeriod, DatePeriod? DocumentPeriod, string? FolderPath, bool IsValid);
+        DatePeriod? AddedPeriod, DatePeriod? DocumentPeriod, string? FolderPath, bool? Reviewed, bool IsValid);
 
     internal readonly record struct DatePeriod(DateOnly FirstDay, DateOnly LastDay)
     {
@@ -40,12 +43,14 @@ internal static partial class SearchTerms
         if (!query.Contains(TagPrefix, StringComparison.OrdinalIgnoreCase) &&
             !query.Contains(AddedPrefix, StringComparison.OrdinalIgnoreCase) &&
             !query.Contains(DatedPrefix, StringComparison.OrdinalIgnoreCase) &&
+            !query.Contains(StatusPrefix, StringComparison.OrdinalIgnoreCase) &&
             !query.Contains(FolderPrefix, StringComparison.OrdinalIgnoreCase)) return CompileParts(query, query, [], null, null, null);
 
         HashSet<string>? tagKeys = null;
         DatePeriod? addedPeriod = null;
         DatePeriod? documentPeriod = null;
         string? folderPath = null;
+        bool? reviewed = null;
         var text = new StringBuilder(query.Length);
         int textStart = 0;
         for (int cursor = 0; cursor < query.Length;)
@@ -77,6 +82,11 @@ internal static partial class SearchTerms
                     if (folderPath is null) return InvalidSearch;
                     clauseEnd = folder.End;
                 }
+                else if (remaining.StartsWith(StatusPrefix, StringComparison.OrdinalIgnoreCase))
+                {
+                    if (ReadReviewClause(query, cursor + StatusPrefix.Length, reviewed) is not { } status) return InvalidSearch;
+                    (reviewed, clauseEnd) = status;
+                }
             }
             if (clauseEnd > cursor)
             {
@@ -98,16 +108,25 @@ internal static partial class SearchTerms
 
         if (textStart == 0) return CompileParts(query, query, [], null, null, null);
         text.Append(query.AsSpan(textStart));
-        return CompileParts(query, text.ToString(), tagKeys is not null ? tagKeys : [], addedPeriod, documentPeriod, folderPath);
+        return CompileParts(query, text.ToString(), tagKeys is not null ? tagKeys : [], addedPeriod, documentPeriod, folderPath, reviewed);
     }
 
     private static CompiledSearch CompileParts(string originalQuery, string textQuery, IReadOnlyCollection<string> tagKeys,
-        DatePeriod? addedPeriod, DatePeriod? documentPeriod, string? folderPath)
+        DatePeriod? addedPeriod, DatePeriod? documentPeriod, string? folderPath, bool? reviewed = null)
     {
         string expression = FullTextExpression(textQuery);
-        bool isValid = expression.Length > 0 || tagKeys.Count > 0 || addedPeriod.HasValue || documentPeriod.HasValue || folderPath is not null ||
-            string.IsNullOrWhiteSpace(originalQuery);
-        return new CompiledSearch(expression, tagKeys, addedPeriod, documentPeriod, folderPath, isValid);
+        bool isValid = expression.Length > 0 || tagKeys.Count > 0 || addedPeriod.HasValue || documentPeriod.HasValue ||
+            folderPath is not null || reviewed.HasValue || string.IsNullOrWhiteSpace(originalQuery);
+        return new CompiledSearch(expression, tagKeys, addedPeriod, documentPeriod, folderPath, reviewed, isValid);
+    }
+
+    private static (bool Reviewed, int End)? ReadReviewClause(string query, int start, bool? previous)
+    {
+        var (value, end) = ReadBareValue(query, start);
+        bool inbox = value.Equals(InboxStatus, StringComparison.OrdinalIgnoreCase);
+        if (!inbox && !value.Equals(ReviewedStatus, StringComparison.OrdinalIgnoreCase)) return null;
+        bool reviewed = !inbox;
+        return previous.HasValue && previous.Value != reviewed ? null : (reviewed, end);
     }
 
     private static (DatePeriod Period, int End)? ReadDateClause(string query, int start, DatePeriod? previous)

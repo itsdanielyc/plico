@@ -77,6 +77,8 @@ public sealed partial class InboxWindowTests
             await WaitForAsync(() => !model.IsBusy && model.Status == "1 document added.");
 
             Assert.Equal(initialCount + 1, model.InboxCount);
+            // First-page deferral is decided after the background query reads the updated catalog.
+            await WaitForAsync(() => model.HasDeferredWatchResults || model.Documents.Any(document => document.Title == "New receipt"));
             Assert.Equal(shownIds, model.Documents.Select(document => document.Id));
             Assert.Equal(open.Id, model.SelectedDocument?.Id);
             Assert.Same(preview, model.Preview);

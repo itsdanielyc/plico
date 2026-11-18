@@ -86,7 +86,7 @@ internal static partial class NativeVerification
             await VerifyDocumentDateAsync(window, model, dialogs, evidenceDirectory);
 
             File.WriteAllText(Path.Combine(evidenceDirectory, "passed.txt"),
-                $"Verified {runtime}. Native window completed multilingual OCR and correction, oriented JPEG and multi-page TIFF import, PDF combination, page extraction and rotation, phrase and tag search, saved search restoration, document-date editing, filtering, and inheritance, result sorting, fit-width preview, match navigation, tag merging and suggestions, duplicate drop, folder watch and inbox counting, title edit, single and batch PDF moves, external relocation, selected PDF export, library backup, text copy, searchable PDF copy, and import retry. {scanRecoveryEvidence}");
+                $"Verified {runtime}. Native window completed multilingual OCR and correction, oriented JPEG and multi-page TIFF import, PDF combination, page extraction and rotation, phrase, tag, and review-status search, saved search restoration, document-date editing, filtering, and inheritance, result sorting, fit-width preview, match navigation, tag merging and suggestions, duplicate drop, folder watch and inbox counting, title edit, single and batch PDF moves, external relocation, selected PDF export, library backup, text copy, searchable PDF copy, and import retry. {scanRecoveryEvidence}");
             desktop.Shutdown(0);
         }
         catch (Exception error)

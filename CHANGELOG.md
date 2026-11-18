@@ -35,6 +35,7 @@
 - Set, clear, sort, and filter by document date. Catalog version 9 stores it with the PDF’s library record.
 - Carry document dates into new OCR, rotated, and extracted copies. A combined PDF inherits a date shared by every source.
 - See the pending review count beside Inbox. Watched imports keep the current preview and loaded pages in view and offer a results refresh when needed.
+- Search and save review queues with `status:inbox` and find completed reviews with `status:reviewed`.
 
 ## [0.15.0] - 2026-11-18
 
