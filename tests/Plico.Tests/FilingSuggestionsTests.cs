@@ -35,6 +35,35 @@ public sealed class FilingSuggestionsTests
         Assert.Equal(new FilingAmount(1237.00m, "EUR"), fields.Amount);
     }
 
+    [Theory]
+    [InlineData("Total -125.50 EUR", "EUR")]
+    [InlineData("Total -£125.50", "GBP")]
+    [InlineData("Total: £-125.50", "GBP")]
+    public void KeepsTheSignOfACreditWhenItsMinusFollowsTheTotalLabel(string text, string currency)
+    {
+        var fields = FilingFieldExtractor.Read(text, CultureInfo.GetCultureInfo("en-GB"));
+        Assert.Equal(new FilingAmount(-125.50m, currency), fields.Amount);
+    }
+
+    [Theory]
+    [InlineData(OcrLanguage.Italian, "28 febbraio 2026", "Scadenza: 15 marzo 2026")]
+    [InlineData(OcrLanguage.Portuguese, "28 de fevereiro de 2026", "Vencimento: 15 de março de 2026")]
+    [InlineData(OcrLanguage.Dutch, "28 februari 2026", "Vervaldatum: 15 maart 2026")]
+    [InlineData(OcrLanguage.Polish, "28 lutego 2026", "Termin płatności: 15 marca 2026")]
+    public void FilingDatesUseTheRecognizedLanguageOnAnEnglishDesktop(OcrLanguage language, string issued, string due)
+    {
+        using var directory = new TemporaryLibrary();
+        using var library = InboxLibrary.Open(directory.Path);
+        var catalog = new LibraryCatalog(Path.Combine(directory.Path, ".plico", "catalog.sqlite3"));
+        long id = catalog.Upsert("Invoice.pdf", "Invoice", new PdfText(issued + "\n" + due, 1, true),
+            new FileVersion(1, 100, true), new byte[32], recognizedLanguage: language);
+        var locale = CultureInfo.GetCultureInfo("en-US");
+        var filing = Assert.Single(library.SuggestFiling([id], OcrLanguage.English, locale, TestContext.Current.CancellationToken));
+        Assert.Equal(new DateOnly(2026, 2, 28), Assert.Single(filing.Fields.DocumentDates));
+        Assert.Equal(new DateOnly(2026, 3, 15), Assert.Single(filing.Fields.DueDates));
+        Assert.Equal(filing.Fields.DueDates, library.SuggestDueDates(id, OcrLanguage.English, locale));
+    }
+
     [Fact]
     public void RulesAndReviewedExamplesSuggestTagsWithoutFilingUntilConfirmed()
     {

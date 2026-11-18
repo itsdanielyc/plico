@@ -122,7 +122,8 @@ internal sealed partial class LibraryCatalog
         }
     }
 
-    internal IEnumerable<FilingInput> ReadFilingInputs(IReadOnlyList<long> ids, CancellationToken token)
+    internal IEnumerable<FilingInput> ReadFilingInputs(IReadOnlyList<long> ids, CancellationToken token,
+        int maximumCharacters = FilingFieldExtractor.MaximumTextCharacters)
     {
         using var connection = Connect();
         using var command = connection.CreateCommand();
@@ -134,7 +135,7 @@ internal sealed partial class LibraryCatalog
             WHERE d.is_present = 1 ORDER BY selection.key;
             """;
         int count = BindSelection(command, ids);
-        command.Parameters.AddWithValue("$length", FilingFieldExtractor.MaximumTextCharacters);
+        command.Parameters.AddWithValue("$length", maximumCharacters);
         using var rows = command.ExecuteReader();
         int available = 0;
         while (rows.Read())

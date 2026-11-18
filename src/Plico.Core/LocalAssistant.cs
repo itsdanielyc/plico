@@ -39,7 +39,7 @@ public sealed partial class InboxLibrary
     {
         ArgumentNullException.ThrowIfNull(model);
         ArgumentNullException.ThrowIfNull(culture);
-        var source = _catalog.ReadSimilaritySource(documentId);
+        var source = _catalog.ReadFilingInputs([documentId], cancellationToken, LibraryCatalog.MaximumSourceCharacters).Single();
         if (string.IsNullOrWhiteSpace(source.Text)) throw new InvalidOperationException("Create searchable text for this PDF before asking the model.");
         var definitions = GetMetadataDefinitions();
         string payload = JsonSerializer.Serialize(new
@@ -51,7 +51,7 @@ public sealed partial class InboxLibrary
         string answer = await model.CompleteAsync([new("system", FilingPrompt), new("user", payload)],
             jsonObject: true, cancellationToken).ConfigureAwait(false);
         var edit = ParseFilingProposal(documentId, answer, definitions);
-        return new(edit, FilingFieldExtractor.Read(source.Text, FilingFieldExtractor.DateCulture(language, culture)));
+        return new(edit, FilingFieldExtractor.Read(source.Text, FilingFieldExtractor.DateCulture(source.Language ?? language, culture)));
     }
 
     /// <summary>Asks a local model about one document or the nearest matches across the present library.</summary>
