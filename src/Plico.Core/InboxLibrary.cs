@@ -30,18 +30,21 @@ public sealed partial class InboxLibrary : IDisposable
     private readonly string _metadataDirectory;
     private readonly LibraryCatalog _catalog;
     private readonly FileStream _libraryLease;
+    private readonly TryClaimPdfPath _claimPdfPath;
     private readonly DocumentProcessor _processor = new(Path.Combine(AppContext.BaseDirectory, "tessdata"));
     private readonly SemaphoreSlim _fileOperations = new(1);
     // Windows PDF readers can deny a rename. The managed gate also lets an abandoned preview finish after window close.
     private readonly SemaphoreSlim _pdfFileAccess = new(1);
 
-    private InboxLibrary(string root, string pdfDirectory, string metadataDirectory, FileStream lease, LibraryCatalog catalog)
+    private InboxLibrary(string root, string pdfDirectory, string metadataDirectory, FileStream lease, LibraryCatalog catalog,
+        TryClaimPdfPath claimPdfPath)
     {
         RootPath = root;
         PdfDirectory = pdfDirectory;
         _metadataDirectory = metadataDirectory;
         _libraryLease = lease;
         _catalog = catalog;
+        _claimPdfPath = claimPdfPath;
     }
 
     /// <summary>The directory users copy to move the library and its organization.</summary>
@@ -51,8 +54,12 @@ public sealed partial class InboxLibrary : IDisposable
     public string PdfDirectory { get; }
 
     /// <summary>Opens a library in an existing directory and takes its exclusive writer lease.</summary>
-    public static InboxLibrary Open(string directory)
+    public static InboxLibrary Open(string directory) => Open(directory, PdfFilePublication.TryClaim);
+
+    /// <summary>Opens a library with a supplied no-replace filesystem claim.</summary>
+    internal static InboxLibrary Open(string directory, TryClaimPdfPath claimPdfPath)
     {
+        ArgumentNullException.ThrowIfNull(claimPdfPath);
         string root = Path.GetFullPath(directory);
         if (!Directory.Exists(root)) throw new DirectoryNotFoundException($"The library folder is unavailable. {root}");
 
@@ -71,7 +78,7 @@ public sealed partial class InboxLibrary : IDisposable
         try
         {
             var catalog = new LibraryCatalog(Path.Combine(metadata, CatalogFilename));
-            library = new InboxLibrary(root, pdfs, metadata, lease, catalog);
+            library = new InboxLibrary(root, pdfs, metadata, lease, catalog, claimPdfPath);
             library.MoveRecoveryNotice = library.RecoverPendingPdfMove(CancellationToken.None).Notice;
             return library;
         }
@@ -357,7 +364,7 @@ public sealed partial class InboxLibrary : IDisposable
             throw new IOException("The intake folder changed during processing. Select it again and retry.");
         }
         cancellationToken.ThrowIfCancellationRequested();
-        string publishedPdf = PublishPdf(stagedPdf, title, target);
+        string publishedPdf = PublishPdf(stagedPdf, title, target, cancellationToken);
         long id = _catalog.Upsert(RelativePdfPath(publishedPdf), title, text, version, fingerprint, sourceFingerprint, ocrCopySource, metadataSourceIds);
         return _catalog.Get(id);
     }
@@ -375,24 +382,17 @@ public sealed partial class InboxLibrary : IDisposable
     private string RelativePdfPath(string path) =>
         Path.GetRelativePath(PdfDirectory, path).Replace(Path.DirectorySeparatorChar, '/');
 
-    // O(k log n) catalog lookups for k occupied names among n entries. The move uses a constant file buffer.
-    private string PublishPdf(string stagedPdf, string title, string destinationFolder)
+    // O(k log n) time for k candidate paths among n catalog entries, with constant extra space.
+    private string PublishPdf(string stagedPdf, string title, string destinationFolder, CancellationToken cancellationToken)
     {
         string stem = PortableStem(title);
         for (int duplicate = 1; ; duplicate++)
         {
+            cancellationToken.ThrowIfCancellationRequested();
             string name = NumberedName(stem, duplicate);
             string destination = Path.Combine(destinationFolder, name + DocumentProcessor.PdfExtension);
             if (_catalog.ReservesPath(RelativePdfPath(destination))) continue;
-            try
-            {
-                File.Move(stagedPdf, destination, overwrite: false);
-                return destination;
-            }
-            catch (IOException) when (Path.Exists(destination))
-            {
-                // An existing file or a concurrent external copy can take the name between attempts.
-            }
+            if (_claimPdfPath(stagedPdf, destination, allowHardLink: true)) return destination;
         }
     }
 

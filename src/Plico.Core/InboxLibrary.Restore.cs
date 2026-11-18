@@ -43,7 +43,7 @@ public sealed partial class InboxLibrary
                 if (ReadExistingAttributes(destination) is not null) throw new IOException(RestoreOccupied);
                 var stagedVersion = FileVersion.Read(snapshot);
                 token.ThrowIfCancellationRequested();
-                File.Move(snapshot, destination, overwrite: false);
+                if (!_claimPdfPath(snapshot, destination, allowHardLink: true)) throw new IOException(RestoreOccupied);
 
                 // An interruption after publication leaves the verified PDF for the next index refresh.
                 var restoredVersion = FileVersion.Read(destination);

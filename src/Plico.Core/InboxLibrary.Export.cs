@@ -135,14 +135,14 @@ public sealed partial class InboxLibrary
         PortableStem(Path.GetFileNameWithoutExtension(source).Normalize(NormalizationForm.FormC));
 
     // O(k) path checks and constant space for k occupied names.
-    private static string PublishExportedPdf(string stagedPdf, string target, string stem, CancellationToken cancellationToken)
+    private string PublishExportedPdf(string stagedPdf, string target, string stem, CancellationToken cancellationToken)
     {
         for (int sequence = 1; ; sequence++)
         {
             cancellationToken.ThrowIfCancellationRequested();
             string path = Path.Combine(target, NumberedName(stem, sequence) + DocumentProcessor.PdfExtension);
             if (Path.Exists(path)) continue;
-            if (StagedPdfPublication.TryPublish(stagedPdf, path)) return path;
+            if (_claimPdfPath(stagedPdf, path, allowHardLink: true)) return path;
         }
     }
 }

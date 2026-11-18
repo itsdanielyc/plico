@@ -75,6 +75,39 @@ public sealed partial class LibraryTests
     }
 
     [Fact]
+    public async Task RestoreKeepsAPdfThatArrivesAtTheOriginalPathDuringPublication()
+    {
+        var token = TestContext.Current.CancellationToken;
+        using var temporary = new TemporaryLibrary();
+        string? occupiedPath = null;
+        using var library = InboxLibrary.Open(temporary.Path, (source, destination, allowHardLink) =>
+        {
+            if (destination == occupiedPath)
+            {
+                File.Copy(Fixture(Mixed), destination);
+                occupiedPath = null;
+            }
+            return PdfFilePublication.TryClaim(source, destination, allowHardLink);
+        });
+        var original = await library.ImportAsync(Fixture(Letter), token);
+        string restorePath = library.ResolvePdf(original);
+        File.Delete(restorePath);
+        library.Refresh(token);
+        occupiedPath = restorePath;
+
+        var error = await Assert.ThrowsAsync<IOException>(() => library.RestoreUnavailablePdfAsync(original.RelativePath, Fixture(Letter), token));
+
+        Assert.Contains("already occupies", error.Message, StringComparison.Ordinal);
+        Assert.Equal(File.ReadAllBytes(Fixture(Mixed)), File.ReadAllBytes(restorePath));
+        Assert.Equal(original.RelativePath, Assert.Single(library.ReadUnavailablePaths(token)));
+
+        File.Delete(restorePath);
+        var restored = await library.RestoreUnavailablePdfAsync(original.RelativePath, Fixture(Letter), token);
+        Assert.Equal(original.Id, restored.Id);
+        Assert.Equal(File.ReadAllBytes(Fixture(Letter)), File.ReadAllBytes(restorePath));
+    }
+
+    [Fact]
     public async Task RestorePreservesTheVerifiedPdfWhenTheCatalogUpdateFails()
     {
         var token = TestContext.Current.CancellationToken;

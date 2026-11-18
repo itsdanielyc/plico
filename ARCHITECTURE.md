@@ -13,7 +13,7 @@ Desktop uses the Core library API. Core owns no UI controls or file pickers. The
 
 A library is a user-selected directory. `PDFs/` holds ordinary PDFs. `.plico/catalog.sqlite3` holds tags, reviewed state, paths relative to `PDFs/`, and indexed text. SQLite schema changes carry an explicit user version. Close the app before copying the library so the files and catalog represent the same point in time.
 
-Import renders into private staging and checks the processed PDF before moving it into `PDFs/` with `File.Move` and overwrite disabled. An interrupted index write leaves a readable PDF that can be picked up on refresh. Plico preserves the selected source files. Catalog updates and full-text index triggers run together in SQLite transactions.
+Import renders into private staging and checks the processed PDF before claiming its filename in `PDFs/` with an atomic no-replace operation. An interrupted index write leaves a readable PDF that can be picked up on refresh. Plico preserves the selected source files. Catalog updates and full-text index triggers run together in SQLite transactions. [PDF filename claims](docs/adr/006-pdf-filename-claims.md)
 
 Creating a searchable copy reads an indexed PDF into private staging under the file-operation lease. For a PDF with existing text, NAPS2 renders its visible pages for fresh OCR. A new copy must contain text and have the indexed PDF’s page count. Inserting the copy, its source and language, and its metadata uses one catalog transaction. [NAPS2 PDF exporter](https://github.com/cyanfish/naps2/blob/c6c762214293097c522fc1b7656f106fbb66a7f2/NAPS2.Sdk/Pdf/PdfExporter.cs)
 
@@ -47,7 +47,7 @@ An occupied destination can join an external move when its previous document als
 
 The refresh result carries the paths whose records became unavailable in the current transaction. The desktop separately counts all unavailable records when the library opens and after each refresh, using the existing presence index. Opening **Index report** reads those paths from SQLite and shows the latest session notices. Unavailable records retain their metadata so a returning PDF can reuse its ID.
 
-Restoring from a selected copy takes the library’s file-operation lease and stages the source while hashing it. Publication requires the stored PDF digest, a vacant destination, and ordinary parent directories. The catalog updates the original row’s file stamp and presence. If the catalog update is interrupted after publication, the next refresh can match the restored PDF to its existing row.
+Restoring from a selected copy takes the library’s file-operation lease and stages the source while hashing it. Publication requires the stored PDF digest, ordinary parent directories, and an exclusive claim on the original path. A competing file leaves the record unavailable. The catalog updates the original row’s file stamp and presence after the claim succeeds. If the catalog update is interrupted after publication, the next refresh can match the restored PDF to its existing row.
 
 Folder restoration scans a selected directory tree, skips linked entries, and hashes candidates with sizes present among the missing records. Matching finishes before any writes. Each match uses the single-file restore operation, which rechecks the record and hashes the staged copy. Completed restores survive cancellation and failures on other paths.
 
@@ -67,7 +67,7 @@ Schema v10 adds a partial index on text presence and descending ID for present P
 
 Publishing a PDF copy reads its initial document date in the same catalog transaction that copies its tags. The date comes from a single source or a date shared by every source in a packet. The inserted copy has its own date field for future edits.
 
-Batch filing checks the selected paths and file stamps before the first move. Under one library lease it commits each move through the same journal and retains the next numbered filename for each colliding name. Cancellation or an error stops the batch and reports completed moves and remaining work.
+Batch filing checks the selected paths and file stamps before the first move. Under one library lease it commits each move through the same journal and retains the next numbered filename for each colliding name. If an external file takes a journaled candidate, the operation clears that intent before trying the next name. Cancellation or an error stops the batch and reports completed moves and remaining work.
 
 Plico waits for its preview and matching-page readers to release their file handles before journaling and moving a PDF. The preview consumes the rendering stream through completion so PDFium closes its input file. The move checks the source stamp again after waiting.
 

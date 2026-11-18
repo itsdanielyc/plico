@@ -8,22 +8,26 @@ namespace Plico.Tests;
 public sealed partial class LibraryTests
 {
     [Fact]
-    public async Task ImportIntoAFolderAvoidsOccupiedNamesAndPreservesDuplicateDetection()
+    public async Task ImportIntoAFolderAvoidsLateFilenameCollisionsAndPreservesDuplicateDetection()
     {
         var token = TestContext.Current.CancellationToken;
         using var temporary = new TemporaryLibrary();
-        using var library = InboxLibrary.Open(temporary.Path);
+        string? occupiedPath = null;
+        using var library = InboxLibrary.Open(temporary.Path, (source, destination, allowHardLink) =>
+        {
+            if (destination == occupiedPath) File.Copy(Fixture(Mixed), destination);
+            return PdfFilePublication.TryClaim(source, destination, allowHardLink);
+        });
         string filed = Directory.CreateDirectory(Path.Combine(library.PdfDirectory, "Filed", "Receipts")).FullName;
         string other = Directory.CreateDirectory(Path.Combine(library.PdfDirectory, "Other")).FullName;
-        string existing = Path.Combine(filed, Letter);
-        File.WriteAllText(existing, "Existing file");
+        occupiedPath = Path.Combine(filed, Letter);
 
         var imported = await library.ImportFileAsync(Fixture(Letter), token, OcrLanguage.English, filed);
         var duplicate = await library.ImportFileAsync(Fixture(Letter), token, OcrLanguage.English, other);
 
         Assert.True(imported.Added);
         Assert.Equal("Filed/Receipts/Lease Renewal (2).pdf", imported.Document.RelativePath);
-        Assert.Equal("Existing file", File.ReadAllText(existing));
+        Assert.Equal(File.ReadAllBytes(Fixture(Mixed)), File.ReadAllBytes(occupiedPath));
         Assert.Equal(File.ReadAllBytes(Fixture(Letter)), File.ReadAllBytes(library.ResolvePdf(imported.Document)));
         Assert.False(duplicate.Added);
         Assert.Equal(imported.Document.Id, duplicate.Document.Id);
