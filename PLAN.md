@@ -92,18 +92,18 @@
 | 87 | Export archival and password-protected copies | The PDF export dialog offers separate PDF/A and password-protected formats. Both retain usable text, and the source remains unchanged. | L0, L3, L4, L6, L7 | Released in v0.17.0 |
 | 88 | Review dates and tags suggested from OCR | The reviewer can request suggestions again for a single PDF or a selection. Local date and field extraction considers locale and check digits. Explicit rules and reviewed tags provide suggestions the reviewer can apply. | L0, L1, L3, L4, L6, L7 | Released in v0.17.0 |
 | 89 | Check integrity and export portable metadata | The integrity report identifies missing, unreadable, changed and unindexed PDFs. JSON and CSV carry catalog metadata, and an optional PDF export embeds metadata in XMP. | L0, L3, L4, L6, L7 | Released in v0.17.0 |
-| Gap 15 | Export a household binder | Select and order PDFs, export one searchable file with contents and bookmarks, and keep the library and existing exports intact. | L0, L3, L4, L6 | Hosted verification pending |
-| Gap 13 | Keep PDF versions and edit pages | Reorder, delete, rotate, split, and unlock PDFs. The active file and catalog identity survive editing and restoration. Backups and Trash account for archived versions. | L0, L3, L4, L6 | Hosted verification pending |
-| Gap 22 | Export redacted, stamped, and compressed PDFs | Mark areas visually, export redacted pixels with fresh OCR, stamp selected pages, and export a smaller PDF when lossless or scan optimization saves space. | L0, L3, L4, L6 | Hosted verification pending |
-| Gap 23 | Desktop appearance, PDF navigation and Open With | Save theme and UI language, navigate with thumbnails and physical page zoom, and accept PDF Open With requests on Windows, macOS and Ubuntu. | L0, L1, L3, L4, L6, L7 | Hosted verification pending |
+| Gap 15 | Export a household binder | Select and order PDFs, export one searchable file with contents and bookmarks, and keep the library and existing exports intact. | L0, L3, L4, L6 | Verified in the combined packages |
+| Gap 13 | Keep PDF versions and edit pages | Reorder, delete, rotate, split, and unlock PDFs. The active file and catalog identity survive editing and restoration. Backups and Trash account for archived versions. | L0, L3, L4, L6 | Verified in the combined packages |
+| Gap 22 | Export redacted, stamped, and compressed PDFs | Mark areas visually, export redacted pixels with fresh OCR, stamp selected pages, and export a smaller PDF when lossless or scan optimization saves space. | L0, L3, L4, L6 | Verified in the combined packages |
+| Gap 23 | Desktop appearance, PDF navigation and Open With | Save theme and UI language, navigate with thumbnails and physical page zoom, and accept PDF Open With requests on Windows, macOS and Ubuntu. | L0, L1, L3, L4, L6, L7 | Verified in the combined packages |
 
 The v0.16.1 commit `00fcd70` passed main CI, archive verification, and published download checks on all six release targets. [Main CI](https://github.com/itsdanielyc/plico/actions/runs/44290738615) · [Archive matrix](https://github.com/itsdanielyc/plico/actions/runs/44289495647) · [Published checks](https://github.com/itsdanielyc/plico/actions/runs/44290747869)
 
 The v0.17.0 commit `ef4bdb6` passed source, archive, and published download checks on all six release targets. [Source CI](https://github.com/itsdanielyc/plico/actions/runs/44306110240) · [Archive matrix](https://github.com/itsdanielyc/plico/actions/runs/44306110918) · [Published checks](https://github.com/itsdanielyc/plico/actions/runs/44307377962)
 
-## Release scope
+## v0.17.0 scope
 
-Ruling for v0.17.0. Implement the brief’s first nine ranked items together on the six current platforms. Add managed PDFsharp for AES protection and retain the existing native dependencies. This covers offline capture, review, retrieval and export. Later work includes structured fields and reminders, separator sheets and manual duplex, versions, additional drivers, household export, phone intake, migration, formats, OCR engines, similarity, optional language models, PDF editing and desktop polish. Those slices require their own storage, driver or platform decisions.
+The release covered the brief’s first nine ranked items on all six targets. It added managed PDFsharp for AES protection and kept the existing native dependencies. The following sections track the remaining ranked items.
 
 ## Structured metadata, reminders and local search
 
@@ -116,16 +116,18 @@ Ruling for v0.17.0. Implement the brief’s first nine ranked items together on 
 
 The intake lane owns format adapters, scanner and phone capture. The PDF and desktop lane owns versioned editing, binder export, PDF tools and desktop polish. The coordinator registers catalog migrations and integrates shared call sites and release evidence. [Capture and intake handoff](docs/handoff/capture-intake.md)
 
-The integrated catalog registers structured metadata at v13, archive serial numbers at v14, and PDF versions at v15. Deadlines, embeddings, and local filing undo follow in that order. The integration branch keeps the independently tested feature commits and verifies the combined packages before release.
+The integrated catalog registers structured metadata at v13, archive serial numbers at v14, and PDF versions at v15. Deadlines, embeddings, and local filing undo follow in that order.
+
+The combined commit `34c6976` passed the solution suite and both package journeys on all six release targets. Items 10–23 are recorded under Unreleased. The local model check also passed against Ollama with real embedding and chat models. [Combined package matrix](https://github.com/itsdanielyc/plico/actions/runs/44321028400) · [Live model check](https://github.com/itsdanielyc/plico/actions/runs/44317149133)
 
 ## Capture and intake
 
 | Slice | Done when | Levels | Status |
 |---|---|---|---|
-| #16 Phone inbox | A second per-library folder watches phone transfers while scanner intake continues. Empty files wait for contents. Each watch can stop, resume, catch up, and opt in to catch-up on open. The setup guide covers phone delivery. | L0, L3, L4, L6 | Hosted verification pending |
-| #12 Batch splitting and manual duplex | Scanner batches omit PATCH-T and configured separators. Manual duplex matches reverse-order backs to fronts and can resume after closing the library or correcting a count mismatch. | L0, L1, L3, L6 | Hosted verification pending |
-| #12 Archive serial numbers and label sheets | Numbered labels start new scan documents. Fixed-size label sheets and separators can be printed. Exact lookup reaches the reserved number, and a conflicting capture is filed without taking another document's number. | L0, L3, L6 | Hosted verification pending |
-| #14 Windows TWAIN and macOS USB scanners | Local TWAIN and Image Capture entries appear beside the current sources. The native macOS helper can discover scanners from both builds and packages. Physical scans require a device. | L0, L1, L6, L7 | Hosted verification pending |
-| #17 Additional import formats | HEIC still photos, email, text and Markdown become searchable PDFs. Readable attachments travel with email. Office uses a private local LibreOffice process and reports a recoverable error when it is unavailable. | L0, L3, L6, L7 | Hosted verification pending |
-| #18 Library migration | Paperless-ngx, Evernote ENEX, and Mariner Paperless import through source-keyed metadata writes. Forward links resolve after documents are indexed. Originals and local assignments survive retries, and the report carries unresolved source values. | L0, L3, L6 | Hosted verification pending |
-| #19 OCR languages, orientation and RapidOCR | Four additional packaged Tesseract models are selectable. Optional orientation rotates confident sideways pages before OCR. RapidOCR writes a searchable layer on its supported targets and Tesseract is available on all six. Repeated OCR copies distinguish engine and orientation choices. | L0, L1, L3, L6, L7 | Hosted verification pending |
+| #16 Phone inbox | A second per-library folder watches phone transfers while scanner intake continues. Empty files wait for contents. Each watch can stop, resume, catch up, and opt in to catch-up on open. The setup guide covers phone delivery. | L0, L3, L4, L6 | Verified in the combined packages |
+| #12 Batch splitting and manual duplex | Scanner batches omit PATCH-T and configured separators. Manual duplex matches reverse-order backs to fronts and can resume after closing the library or correcting a count mismatch. | L0, L1, L3, L6 | Verified in the combined packages |
+| #12 Archive serial numbers and label sheets | Numbered labels start new scan documents. Fixed-size label sheets and separators can be printed. Exact lookup reaches the reserved number, and a conflicting capture is filed without taking another document's number. | L0, L3, L6 | Verified in the combined packages |
+| #14 Windows TWAIN and macOS USB scanners | Local TWAIN and Image Capture entries appear beside the current sources. The native macOS helper can discover scanners from both builds and packages. Physical scans require a device. | L0, L1, L6, L7 | Package discovery verified on both Macs. Physical scanner testing remains open. |
+| #17 Additional import formats | HEIC still photos, email, text and Markdown become searchable PDFs. Readable attachments travel with email. Office uses a private local LibreOffice process and reports a recoverable error when it is unavailable. | L0, L3, L6, L7 | Verified in the combined packages |
+| #18 Library migration | Paperless-ngx, Evernote ENEX, and Mariner Paperless import through source-keyed metadata writes. Forward links resolve after documents are indexed. Originals and local assignments survive retries, and the report carries unresolved source values. | L0, L3, L6 | Verified in the combined packages |
+| #19 OCR languages, orientation and RapidOCR | Four additional packaged Tesseract models are selectable. Optional orientation rotates confident sideways pages before OCR. RapidOCR writes a searchable layer on its supported targets and Tesseract is available on all six. Repeated OCR copies distinguish engine and orientation choices. | L0, L1, L3, L6, L7 | Verified in the combined packages |

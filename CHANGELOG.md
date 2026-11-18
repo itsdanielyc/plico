@@ -1,5 +1,16 @@
 # Changelog
 
+## Unreleased
+
+- Added correspondents and aliases, document types, notes, typed custom fields, and coloured tag hierarchies.
+- Added document deadlines, in-app reminders, and calendar export with alarms.
+- Added scan batch separators, manual duplex, archive serial labels, TWAIN discovery, macOS Image Capture, and a second watched folder for phone intake.
+- Added HEIC, email, text, Markdown, and LibreOffice-backed imports, plus migration from Paperless-ngx, Evernote, and Mariner Paperless.
+- Added PDF version history, page editing, searchable household binders, redaction, stamps, and compression.
+- Added more OCR languages, automatic orientation, and optional RapidOCR. Intel Macs use Tesseract.
+- Added related documents, opt-in semantic search, reviewable local filing suggestions, and document chat through a configured loopback model.
+- Added dark mode, English and French interface text, page thumbnails, zoom, and PDF Open With registration.
+
 ## [0.17.0] - 2026-11-18
 
 The Windows executable and setup are unsigned. The macOS app is ad-hoc signed and has no Apple notarization. [First-launch instructions](https://github.com/itsdanielyc/plico/blob/main/README.md#download)
