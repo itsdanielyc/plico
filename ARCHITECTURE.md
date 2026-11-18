@@ -111,7 +111,7 @@ Direct scanner addresses are stored in per-user settings. A short write lease an
 
 Capture options use separate local files keyed by a hash of the driver and device identifier. A missing or invalid device entry uses the existing shared options or the regional defaults. Submitting a scan saves that device's capture options and updates the most recently started scanner key.
 
-The desktop records unresolved import errors by source path. After each completed or cancelled batch with changes, it atomically replaces the snapshot in the user’s settings folder. The normalized library path supplies the key, so each library reopens with its own local source paths. Retrying uses the regular snapshot, OCR, and duplicate checks. A successful or duplicate import clears that source’s error. The settings write completes before an explicit clear removes the list from view.
+The desktop records unresolved import errors by source path, including whether the latest attempt came from the folder watch. After each completed or cancelled batch with changes, it atomically replaces the snapshot in the user’s settings folder. The normalized library path supplies the key, so each library reopens with its own local source paths. A mixed retry uses the current manual and watched intake destinations in one batch with the regular snapshot, OCR, and duplicate checks. Older reports use the manual route. A successful or duplicate import clears that source’s error. The settings write completes before an explicit clear removes the list from view.
 
 The picker saves the three typed capture choices together as one local settings file. A read with invalid values uses the regional defaults until the user selects a valid configuration.
 

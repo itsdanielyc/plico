@@ -128,7 +128,7 @@ internal sealed partial class InboxViewModel : ObservableObject, IDisposable
             Status = "No files selected.";
             return;
         }
-        await ImportFilesAsync(files, token, destinationFolder: IntakeDestination(RequireLibrary()));
+        await ImportFilesAsync(files, token);
     });
 
     internal Task ImportDroppedFilesAsync(IReadOnlyList<string> files, bool hasSupportedFile)
@@ -138,8 +138,7 @@ internal sealed partial class InboxViewModel : ObservableObject, IDisposable
             Status = "Drop a PDF, PNG, JPEG, or TIFF document.";
             return Task.CompletedTask;
         }
-        return RunOperationAsync("Importing dropped files…",
-            token => ImportFilesAsync(files, token, destinationFolder: IntakeDestination(RequireLibrary())));
+        return RunOperationAsync("Importing dropped files…", token => ImportFilesAsync(files, token));
     }
 
     [RelayCommand]
@@ -292,11 +291,17 @@ internal sealed partial class InboxViewModel : ObservableObject, IDisposable
         return true;
     }
 
-    private async Task ImportFilesAsync(IReadOnlyList<string> files, CancellationToken token, bool revealAdded = true,
-        string? destinationFolder = null)
+    private Task ImportFilesAsync(IReadOnlyList<string> files, CancellationToken token,
+        ImportOrigin origin = ImportOrigin.Manual, bool revealAdded = true) =>
+        ImportFilesAsync(files.Select(sourcePath => (sourcePath, origin)), token, revealAdded);
+
+    private async Task ImportFilesAsync(IEnumerable<(string SourcePath, ImportOrigin Origin)> files,
+        CancellationToken token, bool revealAdded = true)
     {
         var library = RequireLibrary();
         var language = RecognitionLanguage;
+        string? manualDestination = IntakeDestination(library);
+        string? watchedDestination = IncludeWatchedScans ? manualDestination : null;
         var failures = new List<ImportFailure>();
         bool reportChanged = false;
         string? saveWarning = null;
@@ -306,15 +311,16 @@ internal sealed partial class InboxViewModel : ObservableObject, IDisposable
         int unreadable = 0;
         try
         {
-            foreach (string file in files)
+            foreach (var (sourcePath, origin) in files)
             {
                 token.ThrowIfCancellationRequested();
-                string filename = Path.GetFileName(file);
+                string filename = Path.GetFileName(sourcePath);
                 Status = $"Processing {filename}…";
                 try
                 {
-                    var result = await Task.Run(() => library.ImportFileAsync(file, token, language, destinationFolder), token);
-                    reportChanged |= _unresolvedImports.Remove(file);
+                    string? destination = origin == ImportOrigin.FolderWatch ? watchedDestination : manualDestination;
+                    var result = await Task.Run(() => library.ImportFileAsync(sourcePath, token, language, destination), token);
+                    reportChanged |= _unresolvedImports.Remove(sourcePath);
                     if (!result.Added)
                     {
                         alreadyPresent++;
@@ -326,9 +332,9 @@ internal sealed partial class InboxViewModel : ObservableObject, IDisposable
                 }
                 catch (Exception error) when (error is not OperationCanceledException)
                 {
-                    var failure = new ImportFailure(file, error.Message);
+                    var failure = new ImportFailure(sourcePath, error.Message, origin);
                     failures.Add(failure);
-                    _unresolvedImports[file] = failure;
+                    _unresolvedImports[sourcePath] = failure;
                     reportChanged = true;
                 }
             }

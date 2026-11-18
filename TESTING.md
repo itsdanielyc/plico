@@ -71,6 +71,7 @@
 58. Pause a remembered watch containing an imported PDF and a new scan. Use **Resume and catch up** to verify one new import, duplicate detection, continued watching, and the saved review view. Try catch-up with an unavailable folder and confirm the action stays available for retry (L4 and L6).
 59. Enable **Catch up on open**, close and reopen the window with a scan in the saved folder, then disable the choice and check another open. Switch to a library with its own preference and reselect an open library after stopping its watch. Open an enabled library with a missing source and verify manual resume remains available (L4 and L6).
 60. Select a custom intake folder and enable **Include watched scans**. Reopen the library and check the destination of a waiting scan, an exact repeat already filed at the PDF root, and the sidebar at minimum height. Remove the destination and confirm the source stays available for retry from the import error list (L4 and L6).
+61. Save one failed added file and one failed watched scan. Retry them after reopening and changing the watched intake choice, including an unsuccessful retry before the sources are repaired. Check both resulting paths, the combined count, and an older report with only path and reason (L4 and L6).
 
 Run `dotnet test Plico.slnx -c Release` for the fast suite. Run the native harness from `keel.json` for installed-platform evidence. Visual review starts with per-OS captures and geometry checks. Add pixel baselines when repeatable runner captures justify the maintenance.
 

@@ -2,7 +2,7 @@ using System.Text.Json;
 
 namespace Plico.Desktop;
 
-/// <summary>Stores each library’s unresolved source paths in the local user’s settings.</summary>
+/// <summary>Stores each library’s unresolved imports in the local user’s settings.</summary>
 internal sealed class ImportFailureStore(string directory)
 {
     private static readonly JsonSerializerOptions Serialization = new()
@@ -21,7 +21,7 @@ internal sealed class ImportFailureStore(string directory)
             var failures = JsonSerializer.Deserialize<ImportFailure[]>(file, Serialization);
             if (failures is null || failures.Any(failure => !IsValid(failure)))
             {
-                throw new JsonException("The saved import errors contain an invalid source or reason.");
+                throw new JsonException("The saved import errors contain an invalid source, reason, or origin.");
             }
             return failures;
         }
@@ -35,7 +35,8 @@ internal sealed class ImportFailureStore(string directory)
         ApplicationSettings.WriteAtomically(PathFor(libraryRoot), JsonSerializer.Serialize(failures, Serialization));
 
     private static bool IsValid(ImportFailure? failure) =>
-        failure is { SourcePath: { } path, Reason: not null } && !path.Contains('\0') && Path.IsPathFullyQualified(path);
+        failure is { SourcePath: { } path, Reason: not null, Origin: ImportOrigin.Manual or ImportOrigin.FolderWatch } &&
+        !path.Contains('\0') && Path.IsPathFullyQualified(path);
 
     private string PathFor(string libraryRoot) => Path.Combine(_directory, $"import-errors-{ApplicationSettings.LibraryKey(libraryRoot)}.json");
 }

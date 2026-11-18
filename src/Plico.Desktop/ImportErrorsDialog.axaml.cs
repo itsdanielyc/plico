@@ -3,8 +3,11 @@ using Avalonia.Interactivity;
 
 namespace Plico.Desktop;
 
-/// <summary>Shows the source path and reason for an unresolved import error.</summary>
-internal sealed record ImportFailure(string SourcePath, string Reason)
+/// <summary>Identifies which intake settings apply to a file import.</summary>
+internal enum ImportOrigin { Manual = 0, FolderWatch = 1 }
+
+/// <summary>Preserves the source, reason, and intake route for an unresolved import.</summary>
+internal sealed record ImportFailure(string SourcePath, string Reason, ImportOrigin Origin = ImportOrigin.Manual)
 {
     public string Filename => Path.GetFileName(SourcePath);
 }
