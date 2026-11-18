@@ -4,7 +4,7 @@ A local paperwork inbox for Windows, macOS, and Linux. Scan or import documents 
 
 ## Download
 
-Get Plico from [GitHub Releases](https://github.com/itsdanielyc/plico/releases). The archives include the .NET runtime and English, French, and German OCR models. Extract the entire archive before launching.
+Get Plico from [GitHub Releases](https://github.com/itsdanielyc/plico/releases). The archives include the .NET runtime and English, French, German, and Spanish OCR models. Extract the entire archive before launching.
 
 | Platform | Launch |
 | --- | --- |

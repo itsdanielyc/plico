@@ -96,6 +96,7 @@ internal sealed class DocumentProcessor(string dataDirectory)
             OcrLanguage.English => "eng",
             OcrLanguage.French => "fra",
             OcrLanguage.German => "deu",
+            OcrLanguage.Spanish => "spa",
             _ => throw new ArgumentOutOfRangeException(nameof(language), language, "Unknown OCR language.")
         };
         string modelFile = Path.Combine(dataDirectory, $"{languageCode}.traineddata");

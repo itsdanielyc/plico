@@ -12,7 +12,7 @@
 ## Critical journeys
 
 1. Import a digital PDF with selectable text and find it after reopening the library. Inspect damaged inputs and retry repaired files through the desktop (L3, L4 and L6).
-2. Import image-only documents with the bundled OCR languages and verify accents in the embedded text. Check quoted search and the language preference (L3, L4 and L6).
+2. Import image-only documents with the bundled OCR languages and verify accents in the embedded text. Select Spanish for `Spanish Receipt.png` and search for `pequeño`. Verify the saved language preference and check that the package contains `tessdata/spa.traineddata` and `tessdata/LICENSE` (L3, L4 and L6).
 3. Tag and filter a document. Tag a selection and mark it reviewed or return it to the inbox. An unavailable document cancels the batch (L3, L4 and L6).
 4. Start each published bundle and make a portable backup. Open its folder and reopen its catalog. Cancellation clears staging, and switching libraries clears the backup shortcut (L3, L4, L6 and L7).
 5. Discover scanners from the real shell. Physical feed, duplex and flatbed checks require a compatible device (manual).

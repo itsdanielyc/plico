@@ -19,6 +19,7 @@
 - Recover new and updated scans after watched-folder notifications are interrupted.
 - Move between matching pages in a PDF with **Previous match** and **Next match**.
 - Apply JPEG photo orientation before creating the PDF and running OCR.
+- Choose Spanish OCR for scans, imports, and searchable copies. The Spanish model runs locally and comes bundled with Plico.
 
 ## [0.15.0] - 2026-11-18
 

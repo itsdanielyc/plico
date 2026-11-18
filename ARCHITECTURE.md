@@ -51,7 +51,7 @@ Typed search uses a single background reader for results. Editing the query canc
 
 Match navigation reads the selected PDF in the background. A scratch FTS5 index uses the catalog’s query compiler and tokenizer and holds the text index for one page. A matching-page step starts beside the current preview page and stops at the closest hit in the requested direction. Changing the search, selection, or preview page cancels a pending jump. [FTS5 contentless indexes](https://sqlite.org/fts5.html#the_delete_all_command)
 
-The runtime carries English, French, and German Tesseract models. The app captures the selected language for each import batch or scan. PDFium renders previews and PdfPig extracts embedded text. Scanner discovery uses the supported local OS driver and eSCL on the local network. Platform requirements and support are versioned in the release notes.
+The runtime carries English, French, German, and Spanish Tesseract models. The app captures the selected language for each import batch or scan. PDFium renders previews and PdfPig extracts embedded text. Scanner discovery uses the supported local OS driver and eSCL on the local network. Platform requirements and support are versioned in the release notes.
 
 Direct scanner addresses are stored in per-user settings. A short write lease and atomic replacement preserve entries when separate Plico instances save them. The scanner picker reconstructs saved entries locally and checks the device when it starts a scan.
 

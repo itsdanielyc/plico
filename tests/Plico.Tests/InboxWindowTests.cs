@@ -456,8 +456,9 @@ public sealed partial class InboxWindowTests
         {
             var languages = Assert.IsType<ComboBox>(window.FindControl<ComboBox>("OcrLanguageBox"));
             Assert.Equal(OcrLanguage.German, languages.SelectedItem);
-            languages.SetCurrentValue(ComboBox.SelectedItemProperty, OcrLanguage.French);
-            Assert.Equal(OcrLanguage.French, saved);
+            Assert.Contains(OcrLanguage.Spanish, languages.Items.OfType<OcrLanguage>());
+            languages.SetCurrentValue(ComboBox.SelectedItemProperty, OcrLanguage.Spanish);
+            Assert.Equal(OcrLanguage.Spanish, saved);
         }
         finally
         {

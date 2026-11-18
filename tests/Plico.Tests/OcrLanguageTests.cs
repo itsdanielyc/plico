@@ -11,6 +11,7 @@ public sealed class OcrLanguageTests
     [Theory]
     [InlineData("Facture française.png", OcrLanguage.French, "Règlement")]
     [InlineData("Deutsche Rechnung.png", OcrLanguage.German, "Überweisung")]
+    [InlineData("Spanish Receipt.png", OcrLanguage.Spanish, "pequeño")]
     public async Task BundledLanguagesProduceSearchablePdfs(string filename, OcrLanguage language, string accentedWord)
     {
         using var directory = new TemporaryLibrary();
@@ -23,14 +24,16 @@ public sealed class OcrLanguageTests
         Assert.Equal(imported.Document.Id, Assert.Single(library.Find(new DocumentFilter(Query: accentedWord), TestContext.Current.CancellationToken).Items).Id);
     }
 
-    [Fact]
-    public void OcrLanguageChoiceReopensFromLocalSettings()
+    [Theory]
+    [InlineData(OcrLanguage.German)]
+    [InlineData(OcrLanguage.Spanish)]
+    public void OcrLanguageChoiceReopensFromLocalSettings(OcrLanguage language)
     {
         using var directory = new TemporaryLibrary();
         var preference = new OcrLanguagePreference(directory.Path);
         Assert.Equal(OcrLanguage.English, preference.Load());
-        preference.Save(OcrLanguage.German);
+        preference.Save(language);
 
-        Assert.Equal(OcrLanguage.German, new OcrLanguagePreference(directory.Path).Load());
+        Assert.Equal(language, new OcrLanguagePreference(directory.Path).Load());
     }
 }

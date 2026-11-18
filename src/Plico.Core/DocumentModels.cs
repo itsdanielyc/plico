@@ -1,7 +1,7 @@
 namespace Plico.Core;
 
 /// <summary>The bundled model used to recognize text in new scans and imports.</summary>
-public enum OcrLanguage { English, French, German }
+public enum OcrLanguage { English, French, German, Spanish }
 
 /// <summary>The order applied to all matching records before paging.</summary>
 public enum DocumentSort { Automatic, Newest, Title }
