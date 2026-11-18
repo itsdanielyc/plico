@@ -99,6 +99,8 @@ public sealed partial class InboxWindowTests
             await WaitForAsync(() => model.IsWatchingFolder && model.InboxCount == 1 && !model.IsBusy);
             Assert.Equal(second.Path, model.LibraryPath);
             Assert.Equal(Path.GetFileName(secondSource.Path), model.WatchedFolderName);
+            await WaitForAsync(() => model.Documents.Count == 1);
+            await WaitForPreviewAsync(model);
             await model.StopFolderWatchCommand.ExecuteAsync(null);
             await model.ChooseLibraryCommand.ExecuteAsync(null);
             Assert.Equal("Library already open.", model.Status);
