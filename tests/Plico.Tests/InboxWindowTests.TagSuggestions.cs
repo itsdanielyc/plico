@@ -1,4 +1,6 @@
+using Avalonia;
 using Avalonia.Controls;
+using Avalonia.Headless;
 using Avalonia.Headless.XUnit;
 using Avalonia.Input;
 using Avalonia.Interactivity;
@@ -16,6 +18,7 @@ public sealed partial class InboxWindowTests
     {
         const string suggestedTag = "Réparation";
         const string newTag = "Invoices";
+        const string typedPrefix = "Home";
         using var temporary = new TemporaryLibrary();
         long selectedId;
         using (var library = InboxLibrary.Open(temporary.Path))
@@ -26,6 +29,7 @@ public sealed partial class InboxWindowTests
             selectedId = documents[0].Id;
             library.AddTag(selectedId, "Réglé");
             library.AddTag(documents[1].Id, suggestedTag);
+            library.AddTag(documents[1].Id, "Home records");
         }
         using var model = new InboxViewModel(new FixtureDialogs());
         model.InitializeLibrary(() => temporary.Path);
@@ -55,6 +59,16 @@ public sealed partial class InboxWindowTests
             Assert.False(field.IsDropDownOpen);
             PressTagKey(input, Key.Enter);
             Assert.Contains(newTag, model.SelectedDocument!.Tags);
+
+            StartTypingTag(field, typedPrefix);
+            await WaitForAsync(() => field.IsDropDownOpen);
+            var add = Assert.IsType<Button>(window.FindControl<Button>("AddTagButton"));
+            var center = new Point(add.Bounds.Width / 2, add.Bounds.Height / 2);
+            var position = Assert.IsType<Point>(add.TranslatePoint(center, window));
+            window.MouseDown(position, MouseButton.Left);
+            window.MouseUp(position, MouseButton.Left);
+            Assert.False(field.IsDropDownOpen);
+            Assert.Contains(typedPrefix, model.SelectedDocument!.Tags);
             await WaitForPreviewAsync(model);
         }
         finally
