@@ -113,9 +113,9 @@ internal sealed partial class InboxViewModel : ObservableObject, IDisposable
     internal async Task PrepareCloseAsync()
     {
         CancelTypedSearch();
-        await StopFolderWatchAsync();
         var completion = _operationCompletion;
         _operationCancellation?.Cancel();
+        await StopAllWatchesAsync();
         if (completion is not null) await completion.Task;
     }
 
@@ -153,15 +153,12 @@ internal sealed partial class InboxViewModel : ObservableObject, IDisposable
         token.ThrowIfCancellationRequested();
         if (_library is { } library && Path.GetRelativePath(library.RootPath, selected) != ".")
         {
-            await StopFolderWatchAsync();
+            await StopAllWatchesAsync();
         }
         token.ThrowIfCancellationRequested();
         bool opened = OpenLibrary(selected);
         _rememberLocation?.Invoke(LibraryPath);
-        if (opened && CatchUpOnOpen && RememberedWatchFolder is { } folder)
-        {
-            await StartWatchAsync(folder, token, queueExistingFiles: true);
-        }
+        if (opened) await CatchUpSavedWatchesAsync(token);
     });
 
     [RelayCommand] private void Cancel() => _operationCancellation?.Cancel();
@@ -274,7 +271,7 @@ internal sealed partial class InboxViewModel : ObservableObject, IDisposable
         BatchTagInput = "";
         SelectedDocument = null;
         LibraryPath = replacement.RootPath;
-        var watchNotice = RestoreWatchFolder(replacement.RootPath);
+        var watchNotice = RestoreWatchFolders(replacement.RootPath);
         OnPropertyChanged(nameof(HasLibrary));
         OnPropertyChanged(nameof(CanWork));
         OnPropertyChanged(nameof(CanStartFolderWatch));
@@ -599,7 +596,7 @@ internal sealed partial class InboxViewModel : ObservableObject, IDisposable
         _reminderTimer?.Stop();
         var library = _library;
         _library = null;
-        if (IsBusy || IsWatchingFolder) _ = FinishDisposalAsync(library);
+        if (IsBusy || HasActiveWatches) _ = FinishDisposalAsync(library);
         else library?.Dispose();
     }
 

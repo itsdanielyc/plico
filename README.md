@@ -165,6 +165,8 @@ Choose **Import existing files** while a watch is active to check its current fi
 
 Automatic intake compares a settled scan’s size and modification time with its last known version. If the operating system reports lost notifications, Plico checks the folder again and queues scans that appeared or changed during the watch.
 
+Use **Phone inbox…** to watch a separate folder alongside your scanner output. Each watch has its own catch-up and stop actions. [Set up a phone inbox](docs/phone-inbox.md).
+
 ## Development
 
 Use the pinned .NET SDK version. [global.json](https://github.com/itsdanielyc/plico/blob/main/global.json)

@@ -1,29 +1,34 @@
 namespace Plico.Desktop;
 
-/// <summary>Stores the machine-local watched folder and startup choice for each library.</summary>
+internal enum WatchSource { Scanner, Phone }
+
+/// <summary>Stores the machine-local intake paths and startup choices for each library.</summary>
 internal sealed class WatchFolderPreference(string directory)
 {
     private const string FolderSetting = "watch-folder";
     private const string CatchUpSetting = "watch-catch-up-on-open";
     private readonly string _directory = Path.GetFullPath(directory);
 
-    internal string? Load(string libraryRoot)
+    internal string? Load(string libraryRoot, WatchSource source = WatchSource.Scanner)
     {
-        string? folder = ReadSetting(PathFor(libraryRoot, FolderSetting));
+        string? folder = ReadSetting(PathFor(libraryRoot, FolderSetting, source));
         return folder is not null && Path.IsPathFullyQualified(folder) ? folder : null;
     }
 
-    internal void Save(string libraryRoot, string watchedFolder) =>
-        ApplicationSettings.WriteAtomically(PathFor(libraryRoot, FolderSetting), Path.GetFullPath(watchedFolder));
+    internal void Save(string libraryRoot, string watchedFolder, WatchSource source = WatchSource.Scanner) =>
+        ApplicationSettings.WriteAtomically(PathFor(libraryRoot, FolderSetting, source), Path.GetFullPath(watchedFolder));
 
-    internal bool LoadCatchUpOnOpen(string libraryRoot) =>
-        bool.TryParse(ReadSetting(PathFor(libraryRoot, CatchUpSetting)), out bool enabled) && enabled;
+    internal bool LoadCatchUpOnOpen(string libraryRoot, WatchSource source = WatchSource.Scanner) =>
+        bool.TryParse(ReadSetting(PathFor(libraryRoot, CatchUpSetting, source)), out bool enabled) && enabled;
 
-    internal void SaveCatchUpOnOpen(string libraryRoot, bool enabled) =>
-        ApplicationSettings.WriteAtomically(PathFor(libraryRoot, CatchUpSetting), enabled.ToString());
+    internal void SaveCatchUpOnOpen(string libraryRoot, bool enabled, WatchSource source = WatchSource.Scanner) =>
+        ApplicationSettings.WriteAtomically(PathFor(libraryRoot, CatchUpSetting, source), enabled.ToString());
 
-    private string PathFor(string libraryRoot, string setting) =>
-        Path.Combine(_directory, $"{setting}-{ApplicationSettings.LibraryKey(libraryRoot)}.txt");
+    private string PathFor(string libraryRoot, string setting, WatchSource source)
+    {
+        string sourcePrefix = source == WatchSource.Phone ? "phone-" : "";
+        return Path.Combine(_directory, $"{sourcePrefix}{setting}-{ApplicationSettings.LibraryKey(libraryRoot)}.txt");
+    }
 
     private static string? ReadSetting(string path)
     {

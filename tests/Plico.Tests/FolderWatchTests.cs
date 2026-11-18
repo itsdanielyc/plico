@@ -186,6 +186,27 @@ public sealed class FolderWatchTests
     }
 
     [Fact]
+    public async Task CatchUpSkipsAnEmptyTransferAndTheWatchImportsItWhenFilled()
+    {
+        using var incoming = new TemporaryLibrary();
+        using var destination = new TemporaryLibrary();
+        string fixture = Path.Combine(AppContext.BaseDirectory, "fixtures", "Lease Renewal.pdf");
+        string transfer = Path.Combine(incoming.Path, "Phone scan.pdf");
+        File.WriteAllBytes(transfer, []);
+
+        var delivered = Channel.CreateUnbounded<IReadOnlyList<string>>();
+        var token = TestContext.Current.CancellationToken;
+        await using var watch = FolderWatch.Start(incoming.Path, destination.Path,
+            (paths, cancellation) => delivered.Writer.WriteAsync(paths, cancellation).AsTask(), token);
+
+        Assert.Equal(0, watch.QueueExistingFiles(token));
+        File.Copy(fixture, transfer, overwrite: true);
+
+        Assert.Equal(transfer, Assert.Single(await NextBatchAsync(delivered.Reader, watch)));
+        Assert.True(new FileInfo(transfer).Length > 0);
+    }
+
+    [Fact]
     public async Task RenamedScanImportsAfterArrivalAndKeepsBothSources()
     {
         using var incoming = new TemporaryLibrary();
