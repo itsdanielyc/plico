@@ -13,12 +13,31 @@ internal static class TiffPdfConverter
     private const float DefaultDpi = 96;
     private const int MaximumRasterPixels = 160_000_000;
 
-    // O(decoded pixels + pages) time and O(largest raster + page offsets) scratch space, plus the PDF writer.
+    /// <summary>Writes a complete image-only PDF and returns the number of TIFF pages it contains.</summary>
     internal static int Convert(string sourcePath, string outputPath, CancellationToken cancellationToken)
     {
         cancellationToken.ThrowIfCancellationRequested();
         using var source = Tiff.Open(sourcePath, "r") ?? throw new InvalidDataException("Plico could not open the TIFF scan.");
-        using var pdf = SKDocument.CreatePdf(outputPath) ?? throw new IOException("Plico could not create a PDF for the TIFF scan.");
+        using var output = File.Open(outputPath, FileMode.CreateNew, FileAccess.Write, FileShare.None);
+        using var pdf = SKDocument.CreatePdf(output) ?? throw new IOException("Plico could not create a PDF for the TIFF scan.");
+        try
+        {
+            int pages = AppendPages(source, pdf, cancellationToken);
+            cancellationToken.ThrowIfCancellationRequested();
+            pdf.Close();
+            return pages;
+        }
+        catch
+        {
+            // Staging can be removed immediately when the writer stops without finalizing a partial document.
+            pdf.Abort();
+            throw;
+        }
+    }
+
+    // O(decoded pixels + pages) time and O(largest raster + page offsets) scratch space, plus the PDF writer.
+    private static int AppendPages(Tiff source, SKDocument pdf, CancellationToken cancellationToken)
+    {
         var directoryOffsets = new HashSet<long>();
         int pages = 0;
         while (true)
@@ -33,8 +52,6 @@ internal static class TiffPdfConverter
             if (source.LastDirectory()) break;
             if (!source.ReadDirectory()) throw new InvalidDataException("Plico could not read the next TIFF page.");
         }
-        cancellationToken.ThrowIfCancellationRequested();
-        pdf.Close();
         return pages;
     }
 
