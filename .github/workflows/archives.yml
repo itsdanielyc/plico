@@ -25,6 +25,8 @@ jobs:
           OLLAMA_HOST: 127.0.0.1:11434
           OLLAMA_NO_CLOUD: "1"
           PLICO_LIVE_MODEL_ENDPOINT: http://127.0.0.1:11434
+          PLICO_LIVE_CHAT_MODEL: qwen3:4b-instruct-2507-q4_K_M
+          PLICO_LIVE_EMBEDDING_MODEL: all-minilm:22m
         run: |
           set -euo pipefail
           export OLLAMA_MODELS="$RUNNER_TEMP/plico-ollama-models"
@@ -44,6 +46,6 @@ jobs:
             sleep 1
           done
           curl --fail --silent --show-error http://127.0.0.1:11434/api/version
-          "$runtime/bin/ollama" pull all-minilm:22m
-          "$runtime/bin/ollama" pull qwen2.5:0.5b
+          "$runtime/bin/ollama" pull "$PLICO_LIVE_EMBEDDING_MODEL"
+          "$runtime/bin/ollama" pull "$PLICO_LIVE_CHAT_MODEL"
           dotnet test Plico.slnx -c Release --no-restore --filter FullyQualifiedName~LiveLocalModelVerification
