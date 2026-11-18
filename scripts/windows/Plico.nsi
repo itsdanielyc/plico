@@ -1,11 +1,12 @@
 Unicode true
 !include "MUI2.nsh"
+!include "x64.nsh"
 
 !define NAME "Plico"
 !define UNINSTALL_KEY "Software\Microsoft\Windows\CurrentVersion\Uninstall\Plico"
 
 Name "${NAME}"
-OutFile "${OUTPUT}\Plico-${VERSION}-win-x64-setup.exe"
+OutFile "${OUTPUT}\Plico-${VERSION}-${RUNTIME}-setup.exe"
 InstallDir "$LOCALAPPDATA\Programs\Plico"
 InstallDirRegKey HKCU "${UNINSTALL_KEY}" "InstallLocation"
 RequestExecutionLevel user
@@ -24,6 +25,16 @@ SetCompressor /SOLID lzma
 !insertmacro MUI_UNPAGE_CONFIRM
 !insertmacro MUI_UNPAGE_INSTFILES
 !insertmacro MUI_LANGUAGE "English"
+
+!if "${RUNTIME}" == "win-arm64"
+Function .onInit
+    ${IfNot} ${IsNativeARM64}
+        MessageBox MB_OK|MB_ICONSTOP "This Plico setup requires Windows on ARM64." /SD IDOK
+        SetErrorLevel 1
+        Quit
+    ${EndIf}
+FunctionEnd
+!endif
 
 Section "Install"
     SetShellVarContext current

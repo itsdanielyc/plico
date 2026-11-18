@@ -1,3 +1,4 @@
+using System.Runtime.InteropServices;
 using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Controls.ApplicationLifetimes;
@@ -13,6 +14,7 @@ namespace Plico.Desktop;
 internal static class NativeVerification
 {
     internal const string EditedDocumentTitle = "October housing";
+    private const string ExpectedRuntimeVariable = "PLICO_EXPECTED_NATIVE_RID";
     private const string ReceiptKeyword = "WRENCH470";
     private const string TestTag = "Workshop";
     private const string LetterKeyword = "NORTHSTAR";
@@ -26,6 +28,10 @@ internal static class NativeVerification
         try
         {
             Directory.CreateDirectory(evidenceDirectory);
+            string runtime = RuntimeInformation.RuntimeIdentifier;
+            string? expectedRuntime = Environment.GetEnvironmentVariable(ExpectedRuntimeVariable);
+            Require(string.IsNullOrEmpty(expectedRuntime) || runtime == expectedRuntime,
+                $"Expected runtime {expectedRuntime}. Running on {runtime}.");
             Require(window.IsVisible && Control<TextBlock>(window, "InboxHeading").Text == "Inbox", "The native inbox did not open.");
             var import = Control<Button>(window, "AddFilesButton");
             Require(import.IsEnabled && import.Command is IAsyncRelayCommand, "The import control was not available.");
@@ -60,7 +66,7 @@ internal static class NativeVerification
             await VerifyScannerDialogAsync(window, evidenceDirectory);
 
             File.WriteAllText(Path.Combine(evidenceDirectory, "passed.txt"),
-                "Native window completed multilingual OCR, phrase search, duplicate drop, folder watch, title edit, relocation, batch actions, library backup, and import retry.");
+                $"Verified {runtime}. Native window completed multilingual OCR, phrase search, duplicate drop, folder watch, title edit, relocation, batch actions, library backup, and import retry.");
             desktop.Shutdown(0);
         }
         catch (Exception error)

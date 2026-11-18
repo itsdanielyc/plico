@@ -35,7 +35,7 @@ jobs:
           fi
           gh run download "$archives" --pattern 'archive-*' --dir verified
           mkdir dist
-          for target in win-x64 osx-arm64 osx-x64 linux-x64 linux-arm64; do
+          for target in win-x64 win-arm64 osx-arm64 osx-x64 linux-x64 linux-arm64; do
             case "$target" in
               win-*) suffixes=(.zip -setup.exe) ;;
               osx-*) suffixes=(.zip .dmg) ;;
@@ -71,6 +71,7 @@ jobs:
       matrix:
         include:
           - {runner: windows-2025, rid: win-x64, extension: zip, installer_suffix: -setup.exe}
+          - {runner: windows-11-arm, rid: win-arm64, extension: zip, installer_suffix: -setup.exe}
           - {runner: macos-26, rid: osx-arm64, extension: zip, installer_suffix: .dmg}
           - {runner: macos-26-intel, rid: osx-x64, extension: zip, installer_suffix: .dmg}
           - {runner: ubuntu-24.04, rid: linux-x64, extension: tar.gz, installer_suffix: .deb}
@@ -84,12 +85,10 @@ jobs:
           PLICO_RUNTIME: ${{ matrix.rid }}
           PLICO_EXTENSION: ${{ matrix.extension }}
           PLICO_INSTALLER_SUFFIX: ${{ matrix.installer_suffix }}
+          PLICO_EXPECTED_NATIVE_RID: ${{ matrix.rid }}
         run: |
           $ErrorActionPreference = 'Stop'
           $PSNativeCommandUseErrorActionPreference = $true
-          if ([System.Runtime.InteropServices.RuntimeInformation]::RuntimeIdentifier -ne $env:PLICO_RUNTIME) {
-              throw "This job must use the native $env:PLICO_RUNTIME runtime."
-          }
           $version = $env:GITHUB_REF_NAME.TrimStart('v')
           $prefix = "Plico-$version-$env:PLICO_RUNTIME"
           $names = @("$prefix.$env:PLICO_EXTENSION", "$prefix$env:PLICO_INSTALLER_SUFFIX")

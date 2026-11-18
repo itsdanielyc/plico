@@ -2,7 +2,8 @@ param(
     [Parameter(Mandatory)][string]$Compiler,
     [Parameter(Mandatory)][string]$PayloadDirectory,
     [Parameter(Mandatory)][string]$OutputDirectory,
-    [Parameter(Mandatory)][ValidatePattern('^\d+\.\d+\.\d+$')][string]$Version
+    [Parameter(Mandatory)][ValidatePattern('^\d+\.\d+\.\d+$')][string]$Version,
+    [ValidateSet('win-x64', 'win-arm64')][string]$Runtime = 'win-x64'
 )
 
 $ErrorActionPreference = 'Stop'
@@ -24,7 +25,7 @@ try {
         }
     [IO.File]::WriteAllLines($manifest.FullName, [string[]](@($removeFiles) + @($removeEmptyDirectories)), [Text.UTF8Encoding]::new($true))
     $recipe = Join-Path $PSScriptRoot 'windows/Plico.nsi'
-    & $compilerPath /V3 /WX "/DVERSION=$Version" "/DPAYLOAD=$payload" "/DOUTPUT=$output" "/DUNINSTALL_MANIFEST=$($manifest.FullName)" $recipe
+    & $compilerPath /V3 /WX "/DVERSION=$Version" "/DRUNTIME=$Runtime" "/DPAYLOAD=$payload" "/DOUTPUT=$output" "/DUNINSTALL_MANIFEST=$($manifest.FullName)" $recipe
 } finally {
     Remove-Item -LiteralPath $manifest.FullName -Force
 }

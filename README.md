@@ -8,7 +8,7 @@ Get Plico from [GitHub Releases](https://github.com/itsdanielyc/plico/releases).
 
 | Platform | Launch |
 | --- | --- |
-| Windows 11 x64 | Run the setup executable and open **Plico** from Start. For the portable ZIP, open `Plico/Plico.exe` after extraction. |
+| Windows 11, x64 or ARM64 | Run the setup for your architecture and open **Plico** from Start. For the portable ZIP, open `Plico/Plico.exe` after extraction. |
 | macOS 26, Apple silicon or Intel | Open the disk image and drag **Plico** into Applications. The ZIP contains the app for direct extraction. |
 | Ubuntu 24.04, x64 or ARM64 | Install the `.deb` with your package manager and open **Plico** from the desktop menu. The tar.gz opens with `./Plico/Plico` after extraction. |
 

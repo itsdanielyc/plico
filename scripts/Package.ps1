@@ -1,5 +1,5 @@
 param(
-    [Parameter(Mandatory)][ValidateSet('win-x64', 'osx-arm64', 'osx-x64', 'linux-x64', 'linux-arm64')][string]$Runtime,
+    [Parameter(Mandatory)][ValidateSet('win-x64', 'win-arm64', 'osx-arm64', 'osx-x64', 'linux-x64', 'linux-arm64')][string]$Runtime,
     [string]$OutputDirectory = 'artifacts/archives',
     [string]$WindowsInstallerCompiler
 )
@@ -53,7 +53,7 @@ try {
     } else {
         Compress-Archive -Force -LiteralPath $publish -DestinationPath (Join-Path $output "Plico-$version-$Runtime.zip")
         if ($WindowsInstallerCompiler) {
-            & (Join-Path $PSScriptRoot 'Package-WindowsInstaller.ps1') -Compiler $WindowsInstallerCompiler -PayloadDirectory $publish -OutputDirectory $output -Version $version
+            & (Join-Path $PSScriptRoot 'Package-WindowsInstaller.ps1') -Compiler $WindowsInstallerCompiler -PayloadDirectory $publish -OutputDirectory $output -Version $version -Runtime $Runtime
         }
     }
 } finally {
