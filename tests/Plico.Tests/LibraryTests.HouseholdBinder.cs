@@ -27,7 +27,8 @@ public sealed partial class LibraryTests
         string result = await library.ExportHouseholdBinderAsync(
             [mixed.Id, lease.Id, mixed.Id], "Family records", destination, cancellationToken: token);
 
-        Assert.Equal(Path.Combine(destination, "Family records (2).pdf"), result);
+        Assert.Equal("Family records (2).pdf", Path.GetFileName(result));
+        Assert.True(File.Exists(Path.Combine(destination, Path.GetFileName(result))));
         Assert.Equal(existing, File.ReadAllBytes(occupied));
         using var binder = PdfDocument.Open(result);
         Assert.Equal(4, binder.NumberOfPages);
