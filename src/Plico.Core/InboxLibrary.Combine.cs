@@ -81,10 +81,7 @@ public sealed partial class InboxLibrary
                 target.Pages.InsertRange(target.PageCount, input, 0, pages, AnnotationCopyingType.DeepCopy);
                 return pages;
             }
-            if (selection.SourcePageCount != pages)
-            {
-                throw new InvalidDataException("The PDF page count changed. Refresh the index and choose pages again.");
-            }
+            RequireSourcePageCount(selection, pages);
             foreach (var range in selection.Ranges)
             {
                 cancellationToken.ThrowIfCancellationRequested();

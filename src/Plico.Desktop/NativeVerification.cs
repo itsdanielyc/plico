@@ -79,10 +79,11 @@ internal static class NativeVerification
             await VerifyCombinedPdfsAsync(window, model, dialogs, evidenceDirectory);
             await VerifyBatchMoveAsync(window, model, dialogs, evidenceDirectory);
             await VerifyExtractPagesAsync(window, model, dialogs, evidenceDirectory);
+            await VerifyRotatePagesAsync(window, model, dialogs, evidenceDirectory);
             await VerifyScannerDialogAsync(window, evidenceDirectory);
 
             File.WriteAllText(Path.Combine(evidenceDirectory, "passed.txt"),
-                $"Verified {runtime}. Native window completed multilingual OCR and correction, oriented JPEG and multi-page TIFF import, PDF combination and page extraction, phrase and tag search, result sorting, fit-width preview, match navigation, tag merging and suggestions, duplicate drop, folder watch, title edit, single and batch PDF moves, external relocation, selected PDF export, library backup, text copy, searchable PDF copy, and import retry.");
+                $"Verified {runtime}. Native window completed multilingual OCR and correction, oriented JPEG and multi-page TIFF import, PDF combination, page extraction and rotation, phrase and tag search, result sorting, fit-width preview, match navigation, tag merging and suggestions, duplicate drop, folder watch, title edit, single and batch PDF moves, external relocation, selected PDF export, library backup, text copy, searchable PDF copy, and import retry.");
             desktop.Shutdown(0);
         }
         catch (Exception error)
@@ -401,14 +402,20 @@ internal static class NativeVerification
         await UntilAsync(() => model.SelectedDocument?.Id == packet.Id && model.Preview is not null, () => model.Status);
         var action = Control<Button>(window, "ExtractPdfPagesButton");
         Require(action.IsEffectivelyVisible && action.IsEnabled, "The six-page packet did not offer page extraction.");
-        dialogs.ExtractChoice = (source, page) => ConfirmExtractPagesAsync(window, source, page, excerptTitle, directory);
+        dialogs.PageCopyChoice = (source, page, actionKind) =>
+        {
+            Require(source.Id == packet.Id && source.PageCount == 6 && page == 1 && actionKind == PdfPageCopyAction.Extract,
+                "The extraction dialog did not start at the open page.");
+            var dialog = new PdfPageCopyDialog(source.PageCount, page, actionKind);
+            return ConfirmPageCopyAsync(window, dialog, "6,2-3,3", excerptTitle, directory, "extract-pages-dialog.png");
+        };
         try
         {
             await ((IAsyncRelayCommand)action.Command!).ExecuteAsync(action.CommandParameter);
         }
         finally
         {
-            dialogs.ExtractChoice = null;
+            dialogs.PageCopyChoice = null;
         }
         var excerpt = model.SelectedDocument;
         Require(excerpt is { Title: excerptTitle, PageCount: 3, HasText: true, Reviewed: false } &&
@@ -423,19 +430,53 @@ internal static class NativeVerification
         await CaptureAsync(window, directory, "extracted-pdf.png");
     }
 
-    private static async Task<ExtractPdfPagesRequest?> ConfirmExtractPagesAsync(Window owner, DocumentSummary source, int currentPage,
-        string title, string directory)
+    private static async Task VerifyRotatePagesAsync(MainWindow window, InboxViewModel model, FixtureDialogs dialogs, string directory)
     {
-        var dialog = new ExtractPdfPagesDialog(source.PageCount, currentPage);
-        var response = dialog.ShowDialog<ExtractPdfPagesRequest?>(owner);
+        const string title = "Rotated receipt excerpt";
+        var original = model.SelectedDocument ?? throw new InvalidOperationException("Open the excerpt before rotating it.");
+        Require(original.PageCount == 3 && model.PageLabel == "3 / 3" && model.Preview!.PixelSize.Width < model.Preview.PixelSize.Height,
+            "The receipt page was unavailable for rotation.");
+        var action = Control<Button>(window, "RotatePdfPagesButton");
+        Require(action.IsEffectivelyVisible && action.IsEnabled, "The opened PDF did not offer page rotation.");
+        dialogs.PageCopyChoice = (source, page, actionKind) =>
+        {
+            Require(source.Id == original.Id && page == 3 && actionKind == PdfPageCopyAction.Rotate,
+                "The rotation dialog did not start at the open page.");
+            var dialog = new PdfPageCopyDialog(source.PageCount, page, actionKind);
+            return ConfirmPageCopyAsync(window, dialog, "3", title, directory, "rotate-pages-dialog.png");
+        };
         try
         {
-            var pages = Control<TextBox>(dialog, "PagesBox");
-            Require(pages.Text == "1" && source.PageCount == 6, "The extraction dialog did not start at the open page.");
-            pages.Text = "6,2-3,3";
+            await ((IAsyncRelayCommand)action.Command!).ExecuteAsync(action.CommandParameter);
+        }
+        finally
+        {
+            dialogs.PageCopyChoice = null;
+        }
+        var rotated = model.SelectedDocument;
+        Require(rotated is { Title: title, PageCount: 3, HasText: true, Reviewed: false } &&
+            rotated.Id != original.Id && rotated.Tags.Contains("Packet") &&
+            File.Exists(Path.Combine(model.LibraryPath, "PDFs", original.RelativePath)), model.Status);
+
+        Control<TextBox>(window, "SearchBox").SetCurrentValue(TextBox.TextProperty, ReceiptKeyword);
+        var jump = Control<Button>(window, "GoToMatchButton");
+        await UntilAsync(() => model.SelectedDocument?.Id == rotated!.Id && jump.IsVisible && jump.IsEnabled, () => model.Status);
+        await ((IAsyncRelayCommand)jump.Command!).ExecuteAsync(jump.CommandParameter);
+        await UntilAsync(() => model.PageLabel == "3 / 3" && model.Preview is not null, () => model.Status);
+        Require(model.Preview!.PixelSize.Width > model.Preview.PixelSize.Height, "The matching receipt page did not turn into landscape.");
+        await CaptureAsync(window, directory, "rotated-pdf.png");
+    }
+
+    private static async Task<PdfPageCopyRequest?> ConfirmPageCopyAsync(Window owner, PdfPageCopyDialog dialog, string selection,
+        string title, string directory, string capture)
+    {
+        var response = dialog.ShowDialog<PdfPageCopyRequest?>(owner);
+        try
+        {
+            Control<TextBox>(dialog, "PagesBox").Text = selection;
             Control<TextBox>(dialog, "TitleBox").Text = title;
-            await CaptureAsync(dialog, directory, "extract-pages-dialog.png");
-            Control<Button>(dialog, "ConfirmExtractButton").RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
+            await CaptureAsync(dialog, directory, capture);
+            Control<Button>(dialog, "ConfirmPageCopyButton").RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
             return await response;
         }
         finally
@@ -925,7 +966,7 @@ internal sealed class FixtureDialogs(params string[] documents) : IWorkspaceDial
     internal string? EditedTitle { get; init; }
     internal TagRenameRequest? TagRenameChoice { get; set; }
     internal Func<IReadOnlyList<DocumentSummary>, Task<CombinePdfsRequest?>>? CombineChoice { get; set; }
-    internal Func<DocumentSummary, int, Task<ExtractPdfPagesRequest?>>? ExtractChoice { get; set; }
+    internal Func<DocumentSummary, int, PdfPageCopyAction, Task<PdfPageCopyRequest?>>? PageCopyChoice { get; set; }
     internal string? LastOpenedPath { get; private set; }
     internal string? LastCopiedText { get; private set; }
     internal ImportErrorsAction ImportErrorsChoice { get; set; }
@@ -943,8 +984,8 @@ internal sealed class FixtureDialogs(params string[] documents) : IWorkspaceDial
     public Task<TagRenameRequest?> RenameTagAsync(string currentName, IReadOnlyList<string> catalogNames) => Task.FromResult(TagRenameChoice);
     public Task<CombinePdfsRequest?> OrderPdfCombinationAsync(IReadOnlyList<DocumentSummary> selectedDocuments) =>
         CombineChoice?.Invoke(selectedDocuments) ?? Task.FromResult<CombinePdfsRequest?>(null);
-    public Task<ExtractPdfPagesRequest?> ChoosePdfPagesAsync(DocumentSummary document, int currentPage) =>
-        ExtractChoice?.Invoke(document, currentPage) ?? Task.FromResult<ExtractPdfPagesRequest?>(null);
+    public Task<PdfPageCopyRequest?> ChoosePdfPageCopyAsync(DocumentSummary document, int currentPage, PdfPageCopyAction action) =>
+        PageCopyChoice?.Invoke(document, currentPage, action) ?? Task.FromResult<PdfPageCopyRequest?>(null);
     public Task<ImportErrorsAction> ShowImportErrorsAsync(IReadOnlyList<ImportFailure> failures)
     {
         InspectedImportFailures = failures;

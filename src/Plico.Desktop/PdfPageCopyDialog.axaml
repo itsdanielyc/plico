@@ -1,22 +1,26 @@
 <Window xmlns="https://github.com/avaloniaui" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-        x:Class="Plico.Desktop.ExtractPdfPagesDialog" Title="Extract pages" Width="465" SizeToContent="Height"
+        x:Class="Plico.Desktop.PdfPageCopyDialog" Width="465" SizeToContent="Height"
         CanResize="False" WindowStartupLocation="CenterOwner"
         FontFamily="{StaticResource InterFont}" Background="#F4F5EF">
     <StackPanel Margin="24" Spacing="13">
         <StackPanel Spacing="5">
             <TextBlock Text="Pages" FontWeight="SemiBold" />
-            <TextBox x:Name="PagesBox" AutomationProperties.Name="Pages to extract" />
+            <TextBox x:Name="PagesBox" AutomationProperties.Name="Selected PDF pages" />
             <TextBlock x:Name="PageHint" Foreground="#5C685D" TextWrapping="Wrap" FontSize="12" />
+        </StackPanel>
+        <StackPanel x:Name="RotationField" Spacing="5" IsVisible="False">
+            <TextBlock Text="Rotation" FontWeight="SemiBold" />
+            <ComboBox x:Name="RotationBox" HorizontalAlignment="Stretch" AutomationProperties.Name="Page rotation" />
         </StackPanel>
         <StackPanel Spacing="5">
             <TextBlock Text="New document title" FontWeight="SemiBold" />
-            <TextBox x:Name="TitleBox" AutomationProperties.Name="Extracted document title" />
+            <TextBox x:Name="TitleBox" AutomationProperties.Name="New document title" />
         </StackPanel>
         <TextBlock x:Name="ValidationMessage" IsVisible="False" Foreground="#8E4037" FontSize="12"
                    TextWrapping="Wrap" AutomationProperties.LiveSetting="Polite" />
         <StackPanel Orientation="Horizontal" Spacing="8" HorizontalAlignment="Right">
             <Button Content="Cancel" IsCancel="True" Click="Cancel_Click" Padding="14,7" />
-            <Button x:Name="ConfirmExtractButton" Content="Extract pages" IsDefault="True" Click="Extract_Click"
+            <Button x:Name="ConfirmPageCopyButton" IsDefault="True" Click="Confirm_Click"
                     Background="#254C37" Foreground="White" Padding="14,7" />
         </StackPanel>
     </StackPanel>

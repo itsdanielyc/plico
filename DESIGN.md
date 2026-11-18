@@ -26,6 +26,8 @@ Batch review lives below the document list. The selection count identifies its s
 
 **Extract pages…** opens a page selection and title dialog from a multi-page preview. The open page is the initial selection. The result opens as a separate inbox PDF.
 
+**Rotate pages…** adds a direction to that dialog and is available on single-page PDFs. The preview starts on the new copy after confirmation. Its pages retain their order.
+
 The OCR selector sits beside intake controls. Its current language is visible before a new file or scan begins.
 
 The sort selector sits beside the results count. It applies to the current inbox, tag, or text search. The selected PDF stays open when it is visible in the reordered list.

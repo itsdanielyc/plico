@@ -326,7 +326,9 @@
                                                     Command="{Binding MovePdfCommand}" IsEnabled="{Binding CanWork}" Margin="0,0,6,4" />
                                             <Button x:Name="ExtractPdfPagesButton" Classes="secondary" Content="Extract pages…"
                                                     Command="{Binding ExtractPdfPagesCommand}" IsEnabled="{Binding CanWork}"
-                                                    IsVisible="{Binding HasMultiplePages}" />
+                                                    IsVisible="{Binding HasMultiplePages}" Margin="0,0,6,4" />
+                                            <Button x:Name="RotatePdfPagesButton" Classes="secondary" Content="Rotate pages…"
+                                                    Command="{Binding RotatePdfPagesCommand}" IsEnabled="{Binding CanWork}" />
                                         </WrapPanel>
                                         <Button Grid.Column="1" x:Name="CreateSearchableCopyButton" Classes="secondary"
                                                 Content="{Binding SearchableCopyAction}" Command="{Binding CreateSearchableCopyCommand}"

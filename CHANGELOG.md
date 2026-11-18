@@ -27,6 +27,7 @@
 - Use `folder:"Filed/Property"` or `folder:.` to scope a search to a folder branch or the top level of the library.
 - File a selection with **Move PDFs…** and one folder choice. Plico reports completed moves if the batch pauses.
 - Extract pages and ranges from a PDF into a separately titled inbox document with their embedded text and source tags.
+- Rotate selected pages clockwise, counterclockwise, or 180 degrees in a copy that keeps every page, embedded text, bookmarks, and source tags.
 
 ## [0.15.0] - 2026-11-18
 

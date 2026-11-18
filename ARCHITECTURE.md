@@ -49,6 +49,10 @@ Combining PDFs uses the selected-file checks and snapshots each source under the
 
 Page extraction uses that page-copy pipeline with ordered, merged ranges. The catalog operation checks the selection against the staged PDF’s page count, copies the selected page content and embedded text, and verifies the output count and source stamp before publication. The source document holds its page annotations.
 
+Page rotation updates the selected page angles in a complete staged PDF. It keeps the page content, bookmarks, and embedded text. It verifies the saved page count and source stamp before publishing the copy with the source tags.
+
+The preview reads the selected page’s inherited rotation from the page tree. For a rotated page it creates an upright single-page snapshot in memory and applies the turn to the thumbnail. This accounts for the scan extractor returning raw pixels when the original and rotated page dimensions match. [NAPS2 image extraction](https://github.com/cyanfish/naps2/blob/c6c762214293097c522fc1b7656f106fbb66a7f2/NAPS2.Sdk/Pdf/PdfiumImageExtractor.cs)
+
 Search uses a bounded page of document records and SQLite FTS5. The UI never loads every document body to filter results. Tagged or reviewed documents remain in the same filesystem location.
 
 Result ordering runs in SQLite before the page limit. Newest added follows catalog insertion order. Alphabetical order compares the visible titles case-insensitively, with the most recently added record breaking ties.

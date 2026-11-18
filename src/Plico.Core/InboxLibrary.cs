@@ -230,7 +230,7 @@ public sealed partial class InboxLibrary : IDisposable
     {
         ArgumentOutOfRangeException.ThrowIfLessThan(pageNumber, 1);
         ArgumentOutOfRangeException.ThrowIfGreaterThan(pageNumber, document.PageCount);
-        return DocumentProcessor.RenderPageAsync(ResolvePdf(document), pageNumber, cancellationToken);
+        return PdfPreviewRenderer.RenderPageAsync(ResolvePdf(document), pageNumber, cancellationToken);
     }
 
     /// <summary>Reconciles copied, edited, moved, and missing PDFs with the index.</summary>

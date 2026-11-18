@@ -56,6 +56,8 @@ Choose **Combine PDFs…** to make a single document from the selection. Set the
 
 Choose **Extract pages…** in a multi-page preview and enter a selection such as `1,3-5`. The excerpt opens in the inbox with those pages in source order, embedded text, and source tags. Page annotations belong to the source PDF.
 
+Choose **Rotate pages…** for sideways or upside-down scans. Select pages, choose a direction, and title the new PDF. The copy keeps every page, its searchable text, and the source tags.
+
 Use **Edit title** in the preview to change the document's catalog title. Search covers both the title and filename. Select the PDF's filename to open its containing folder.
 
 Choose **Move to folder…** in the preview to file the PDF within the library’s `PDFs/` directory. Plico keeps its title, tags, and review state with the file. A filename collision gets a numbered name.

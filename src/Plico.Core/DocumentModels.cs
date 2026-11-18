@@ -9,6 +9,9 @@ public enum DocumentSort { Automatic, Newest, Title }
 /// <summary>The direction to look for another matching page from the current one.</summary>
 public enum PageMatchDirection { Forward, Backward }
 
+/// <summary>A relative right-angle turn applied to selected pages in a PDF copy.</summary>
+public enum PdfPageRotation { Clockwise = 90, HalfTurn = 180, Counterclockwise = 270 }
+
 /// <summary>A page of results, scoped by inbox status, a tag, or literal search terms.</summary>
 public sealed record DocumentFilter(string Query = "", string? Tag = null, bool InboxOnly = false, int Offset = 0,
     DocumentSort Sort = DocumentSort.Automatic);

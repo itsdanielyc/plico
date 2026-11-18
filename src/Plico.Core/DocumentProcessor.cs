@@ -21,7 +21,6 @@ internal sealed class DocumentProcessor(string dataDirectory)
     internal const string PdfExtension = ".pdf";
     private const string NormalizedTiffPdf = "tiff-pages.pdf";
     private const int OcrTimeoutSecondsPerPage = 90;
-    private const int PreviewPixelLimit = 900;
     private static readonly HashSet<string> ImageExtensions = new(StringComparer.OrdinalIgnoreCase)
     {
         ".png", ".jpg", ".jpeg"
@@ -183,24 +182,5 @@ internal sealed class DocumentProcessor(string dataDirectory)
         {
             throw new InvalidDataException("Plico could not read this PDF. Check that it opens in a PDF viewer.", error);
         }
-    }
-
-    internal static async Task<MemoryStream> RenderPageAsync(string path, int pageNumber, CancellationToken cancellationToken)
-    {
-        var options = new ImportParams { Slice = Slice.Item(pageNumber - 1), ThumbnailSize = PreviewPixelLimit };
-        using var context = new ScanningContext(new SkiaImageContext());
-        var pages = new PdfImporter(context).Import(path, options, cancellationToken);
-        await foreach (var page in pages.WithCancellation(cancellationToken).ConfigureAwait(false))
-        {
-            using (page)
-            {
-                if (page.PostProcessingData.Thumbnail is { } thumbnail)
-                {
-                    return thumbnail.SaveToMemoryStream(ImageFileFormat.Png);
-                }
-            }
-        }
-        cancellationToken.ThrowIfCancellationRequested();
-        throw new InvalidDataException($"Page {pageNumber} could not be previewed.");
     }
 }

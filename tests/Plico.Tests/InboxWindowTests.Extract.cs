@@ -38,11 +38,12 @@ public sealed partial class InboxWindowTests
             Assert.Equal("Page extraction closed.", model.Status);
             Assert.Equal("2 / 5", model.PageLabel);
 
-            dialogs.ExtractChoice = (document, page) =>
+            dialogs.PageCopyChoice = (document, page, action) =>
             {
                 Assert.Equal(source.Id, document.Id);
                 Assert.Equal(2, page);
-                return Task.FromResult<ExtractPdfPagesRequest?>(new("January entry", PdfPageSelection.Parse("2", document.PageCount)));
+                Assert.Equal(PdfPageCopyAction.Extract, action);
+                return Task.FromResult<PdfPageCopyRequest?>(new("January entry", PdfPageSelection.Parse("2", document.PageCount)));
             };
             await command.ExecuteAsync(extract.CommandParameter);
             await WaitForPreviewAsync(model);
@@ -64,15 +65,16 @@ public sealed partial class InboxWindowTests
     {
         var owner = new Window();
         owner.Show();
-        var dialog = new ExtractPdfPagesDialog(documentPageCount: 5, currentPage: 3);
-        var completion = dialog.ShowDialog<ExtractPdfPagesRequest?>(owner);
+        var dialog = new PdfPageCopyDialog(documentPageCount: 5, currentPage: 3, action: PdfPageCopyAction.Extract);
+        var completion = dialog.ShowDialog<PdfPageCopyRequest?>(owner);
         try
         {
             var pages = Assert.IsType<TextBox>(dialog.FindControl<TextBox>("PagesBox"));
             var title = Assert.IsType<TextBox>(dialog.FindControl<TextBox>("TitleBox"));
-            var confirm = Assert.IsType<Button>(dialog.FindControl<Button>("ConfirmExtractButton"));
+            var confirm = Assert.IsType<Button>(dialog.FindControl<Button>("ConfirmPageCopyButton"));
             var validation = Assert.IsType<TextBlock>(dialog.FindControl<TextBlock>("ValidationMessage"));
             Assert.Equal("3", pages.Text);
+            Assert.False(Assert.IsType<ComboBox>(dialog.FindControl<ComboBox>("RotationBox")).IsEffectivelyVisible);
             pages.Text = "2-6";
             confirm.RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
             Assert.Contains("1 to 5", validation.Text);
@@ -86,9 +88,10 @@ public sealed partial class InboxWindowTests
 
             title.Text = "  Lease excerpt  ";
             confirm.RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
-            var request = Assert.IsType<ExtractPdfPagesRequest>(await completion.WaitAsync(TestContext.Current.CancellationToken));
+            var request = Assert.IsType<PdfPageCopyRequest>(await completion.WaitAsync(TestContext.Current.CancellationToken));
             Assert.Equal("Lease excerpt", request.Title);
             Assert.Equal(new[] { new PdfPageRange(1, 2), new PdfPageRange(4, 4) }, request.Selection.Ranges);
+            Assert.Null(request.Rotation);
         }
         finally
         {
