@@ -112,6 +112,36 @@ public sealed partial class LibraryTests
     }
 
     [Fact]
+    public async Task PdfVersionCommitsTheInstalledPdfWhenTheProcessStoppedBeforeReindexing()
+    {
+        using var temporary = new TemporaryLibrary();
+        var token = TestContext.Current.CancellationToken;
+        string? active = null;
+        long documentId;
+        using (var library = InboxLibrary.Open(temporary.Path, (source, destination, allowHardLink) =>
+        {
+            bool claimed = PdfFilePublication.TryClaim(source, destination, allowHardLink);
+            if (claimed && destination == active) throw new InterruptedVersionTestException();
+            return claimed;
+        }))
+        {
+            var original = await library.ImportAsync(Fixture(Mixed), token);
+            documentId = original.Id;
+            active = library.ResolvePdf(original);
+            await Assert.ThrowsAsync<InterruptedVersionTestException>(() =>
+                library.DeletePdfPagesAsync(documentId, PdfPageSelection.Parse("1", 2), token));
+            Assert.True(File.Exists(active));
+        }
+
+        using var reopened = InboxLibrary.Open(temporary.Path);
+        var current = Assert.Single(reopened.Find(new DocumentFilter(Query: ReceiptKeyword), token).Items);
+        Assert.Equal(documentId, current.Id);
+        Assert.Equal(1, current.PageCount);
+        Assert.Empty(reopened.Find(new DocumentFilter(Query: LetterKeyword), token).Items);
+        Assert.Equal(2, Assert.Single(reopened.GetPdfVersions(documentId)).PageCount);
+    }
+
+    [Fact]
     public async Task PdfVersionBackupAndTrashKeepHistoryUntilPurge()
     {
         using var temporary = new TemporaryLibrary();
