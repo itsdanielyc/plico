@@ -4,7 +4,8 @@ namespace Plico.Desktop;
 internal static class ApplicationSettings
 {
     internal static string DirectoryPath { get; } =
-        Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "Plico");
+        Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData,
+            Environment.SpecialFolderOption.DoNotVerify), "Plico");
 
     internal static void WriteAtomically(string path, string value)
     {

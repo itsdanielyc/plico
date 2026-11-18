@@ -8,7 +8,7 @@
     <InternalsVisibleTo Include="Plico.Tests" />
   </ItemGroup>
   <ItemGroup>
-    <Content Include="../../assets/ocr/eng.traineddata" Link="tessdata/eng.traineddata" CopyToOutputDirectory="PreserveNewest" CopyToPublishDirectory="PreserveNewest" />
+    <Content Include="../../assets/ocr/*.traineddata" Link="tessdata/%(Filename)%(Extension)" CopyToOutputDirectory="PreserveNewest" CopyToPublishDirectory="PreserveNewest" />
     <Content Include="../../assets/ocr/LICENSE" Link="tessdata/LICENSE" CopyToOutputDirectory="PreserveNewest" CopyToPublishDirectory="PreserveNewest" />
   </ItemGroup>
 </Project>

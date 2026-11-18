@@ -43,6 +43,8 @@ public sealed class App : Application
             {
                 var model = new InboxViewModel(new WorkspaceDialogs(window), LibraryPreference.Save);
                 model.InitializeLibrary(LibraryPreference.LoadOrCreateDefault);
+                var recognition = new OcrLanguagePreference(ApplicationSettings.DirectoryPath);
+                model.InitializeRecognitionLanguage(recognition.Load, recognition.Save);
                 window.DataContext = model;
                 desktop.Exit += (_, _) => model.Dispose();
             }

@@ -13,7 +13,8 @@ public sealed partial class InboxLibrary
     public static bool SupportsImport(string path) => DocumentProcessor.SupportsExtension(Path.GetExtension(path));
 
     /// <summary>Imports a file once and returns the existing PDF when the exact source has already been imported.</summary>
-    public Task<FileImportResult> ImportFileAsync(string sourcePath, CancellationToken cancellationToken = default)
+    public Task<FileImportResult> ImportFileAsync(string sourcePath, CancellationToken cancellationToken = default,
+        OcrLanguage language = OcrLanguage.English)
     {
         var extension = Path.GetExtension(sourcePath).ToLowerInvariant();
         if (!DocumentProcessor.SupportsExtension(extension))
@@ -36,7 +37,7 @@ public sealed partial class InboxLibrary
             if (existing is not null) return new FileImportResult(existing, Added: false);
 
             string pdf = Path.Combine(stage, StagedPdfName);
-            var prepared = await _processor.PrepareAsync(snapshot, pdf, token).ConfigureAwait(false);
+            var prepared = await _processor.PrepareAsync(snapshot, pdf, language, token).ConfigureAwait(false);
             var document = CommitPdf(pdf, title, prepared.Text, token, fingerprint, prepared.CopiedSource ? fingerprint : null);
             return new FileImportResult(document, Added: true);
         }, cancellationToken);

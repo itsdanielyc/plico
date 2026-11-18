@@ -27,7 +27,7 @@ Search uses a bounded page of document records and SQLite FTS5. The UI never loa
 
 Search input is compiled into a parameterized FTS5 expression. Ordinary words are prefix terms, and completed quoted phrases use adjacent whole tokens. [SQLite FTS5 query syntax](https://www.sqlite.org/fts5.html#full_text_query_syntax)
 
-The runtime contains the English Tesseract model. PDF parsing and text extraction use PDFium. Scanner discovery uses the supported local OS driver and eSCL on the local network. Platform requirements and support are versioned in the release notes.
+The runtime carries English, French, and German Tesseract models. The app captures the selected language for each import batch or scan. PDF parsing and text extraction use PDFium. Scanner discovery uses the supported local OS driver and eSCL on the local network. Platform requirements and support are versioned in the release notes.
 
 Direct scanner addresses are stored in per-user settings. A short write lease and atomic replacement preserve entries when separate Plico instances save them. The scanner picker reconstructs saved entries locally and checks the device when it starts a scan.
 

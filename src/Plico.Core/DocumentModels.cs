@@ -1,5 +1,8 @@
 namespace Plico.Core;
 
+/// <summary>The bundled model used to recognize text in new scans and imports.</summary>
+public enum OcrLanguage { English, French, German }
+
 /// <summary>A page of results, scoped by inbox status, a tag, or literal search terms.</summary>
 public sealed record DocumentFilter(string Query = "", string? Tag = null, bool InboxOnly = false, int Offset = 0);
 

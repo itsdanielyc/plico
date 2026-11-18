@@ -14,4 +14,6 @@ The preview shows the PDF path below its catalog title. The path opens the docum
 
 Batch review lives below the document list. The selection count identifies its scope. The preview keeps the individual document's review action.
 
+The OCR selector sits beside intake controls. Its current language is visible before a new file or scan begins.
+
 Keep labels present on actions. Use a polite live region for processing status. Keep the PDF accessible by keyboard and show a visible response for unavailable previews.

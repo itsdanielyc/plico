@@ -16,7 +16,6 @@ namespace Plico.Core;
 internal sealed class DocumentProcessor(string dataDirectory)
 {
     internal const string PdfExtension = ".pdf";
-    private const string OcrLanguage = "eng";
     private const int OcrTimeoutSecondsPerPage = 90;
     private const int PreviewPixelLimit = 900;
     private static readonly HashSet<string> ImageExtensions = new(StringComparer.OrdinalIgnoreCase)
@@ -28,7 +27,8 @@ internal sealed class DocumentProcessor(string dataDirectory)
 
     internal static bool SupportsExtension(string extension) => IsPdf(extension) || ImageExtensions.Contains(extension);
 
-    internal async Task<PreparedPdf> PrepareAsync(string stagedSource, string outputPath, CancellationToken cancellationToken)
+    internal async Task<PreparedPdf> PrepareAsync(string stagedSource, string outputPath,
+        OcrLanguage language, CancellationToken cancellationToken)
     {
         string stagingDirectory = Path.GetDirectoryName(outputPath)!;
         bool isPdf = IsPdf(Path.GetExtension(stagedSource));
@@ -46,7 +46,7 @@ internal sealed class DocumentProcessor(string dataDirectory)
         var pages = isPdf
             ? new PdfImporter(context).Import(stagedSource, progress: cancellationToken)
             : new ImageImporter(context).Import(stagedSource, progress: cancellationToken);
-        var text = await ExportAsync(context, pages, outputPath, cancellationToken).ConfigureAwait(false);
+        var text = await ExportAsync(context, pages, outputPath, language, cancellationToken).ConfigureAwait(false);
         return new(text, CopiedSource: false);
     }
 
@@ -54,6 +54,7 @@ internal sealed class DocumentProcessor(string dataDirectory)
         ScanningContext context,
         IAsyncEnumerable<ProcessedImage> pages,
         string outputPath,
+        OcrLanguage language,
         CancellationToken cancellationToken)
     {
         var captured = new List<ProcessedImage>();
@@ -67,15 +68,22 @@ internal sealed class DocumentProcessor(string dataDirectory)
             throw new InvalidDataException("No pages could be read. Check that the file or scanner has a page.");
         }
 
-        string modelFile = Path.Combine(dataDirectory, $"{OcrLanguage}.traineddata");
+        string languageCode = language switch
+        {
+            OcrLanguage.English => "eng",
+            OcrLanguage.French => "fra",
+            OcrLanguage.German => "deu",
+            _ => throw new ArgumentOutOfRangeException(nameof(language), language, "Unknown OCR language.")
+        };
+        string modelFile = Path.Combine(dataDirectory, $"{languageCode}.traineddata");
         if (!File.Exists(modelFile))
         {
-            throw new FileNotFoundException("The bundled English OCR data is missing. Extract a fresh copy of Plico.", modelFile);
+            throw new FileNotFoundException($"The bundled {language} OCR data is missing. Extract a fresh copy of Plico.", modelFile);
         }
         context.OcrEngine = TesseractOcrEngine.Bundled(dataDirectory);
         if (!await new PdfExporter(context).Export(
             outputPath, captured, new PdfExportParams { Metadata = new PdfMetadata { Creator = "Plico" } },
-            new OcrParams(OcrLanguage, TimeoutInSeconds: OcrTimeoutSecondsPerPage),
+            new OcrParams(languageCode, TimeoutInSeconds: OcrTimeoutSecondsPerPage),
             cancellationToken).ConfigureAwait(false))
         {
             cancellationToken.ThrowIfCancellationRequested();

@@ -4,7 +4,7 @@ A local paperwork inbox for Windows, macOS, and Linux. Scan or import documents 
 
 ## Download
 
-Get Plico from [GitHub Releases](https://github.com/itsdanielyc/plico/releases). The archives include the .NET runtime and English OCR data. Extract the entire archive before launching.
+Get Plico from [GitHub Releases](https://github.com/itsdanielyc/plico/releases). The archives include the .NET runtime and English, French, and German OCR models. Extract the entire archive before launching.
 
 | Platform | Launch |
 | --- | --- |
@@ -23,6 +23,8 @@ On Linux, Plico uses X11 or XWayland. The Debian package declares its runtime li
 1. Drop PDFs, PNGs, or JPEGs into Plico or select **Add files**. Select **Scan** to capture a new document.
 2. Select a document to preview it and add tags. **Mark reviewed** takes it out of the Inbox.
 3. Search by name or document text, including documents you already reviewed. Choose a tag to narrow the results.
+
+Select a language in **OCR** before scanning or importing. Plico remembers the choice and uses that bundled model for new documents.
 
 Put a phrase in quotation marks to search its adjacent whole words. For example, "lease renewal" north searches for the phrase together with a word beginning with north.
 

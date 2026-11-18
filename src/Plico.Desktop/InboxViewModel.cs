@@ -222,6 +222,7 @@ internal sealed partial class InboxViewModel : ObservableObject, IDisposable
     private async Task ImportFilesAsync(IReadOnlyList<string> files, CancellationToken token, bool revealAdded = true)
     {
         var library = RequireLibrary();
+        var language = RecognitionLanguage;
         var failures = new List<string>();
         DocumentSummary? lastAdded = null;
         int added = 0;
@@ -236,7 +237,7 @@ internal sealed partial class InboxViewModel : ObservableObject, IDisposable
                 Status = $"Processing {filename}…";
                 try
                 {
-                    var result = await Task.Run(() => library.ImportFileAsync(file, token), token);
+                    var result = await Task.Run(() => library.ImportFileAsync(file, token, language), token);
                     if (!result.Added)
                     {
                         alreadyPresent++;

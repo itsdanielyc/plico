@@ -54,10 +54,11 @@ internal static class NativeVerification
             await VerifyMovedPdfAsync(window, model, dialogs, evidenceDirectory);
             await VerifyPhraseSearchAsync(window, model, evidenceDirectory);
             await VerifyBatchReviewAsync(window, model, evidenceDirectory);
+            await VerifyOcrLanguageAsync(window, model, dialogs, fixture, evidenceDirectory);
             await VerifyScannerDialogAsync(window, evidenceDirectory);
 
             File.WriteAllText(Path.Combine(evidenceDirectory, "passed.txt"),
-                "Native window completed OCR, phrase search, duplicate drop, folder watch, title edit, PDF relocation, batch tagging and review, and scanner settings display.");
+                "Native window completed English and French OCR, phrase search, duplicate drop, folder watch, title edit, relocation, batch actions, and scanner settings display.");
             desktop.Shutdown(0);
         }
         catch (Exception error)
@@ -65,6 +66,22 @@ internal static class NativeVerification
             File.WriteAllText(Path.Combine(evidenceDirectory, "error.txt"), error.ToString());
             desktop.Shutdown(1);
         }
+    }
+
+    private static async Task VerifyOcrLanguageAsync(MainWindow window, InboxViewModel model, FixtureDialogs dialogs,
+        string fixture, string directory)
+    {
+        var languages = Control<ComboBox>(window, "OcrLanguageBox");
+        languages.SetCurrentValue(ComboBox.SelectedItemProperty, OcrLanguage.French);
+        Require(model.RecognitionLanguage == OcrLanguage.French, "The OCR language control did not select French.");
+        dialogs.SelectedFiles = [Path.Combine(Path.GetDirectoryName(fixture)!, "Facture française.png")];
+        await ((IAsyncRelayCommand)Control<Button>(window, "AddFilesButton").Command!).ExecuteAsync(null);
+        Require(model.SelectedDocument is { HasText: true }, model.Status);
+        var search = Control<TextBox>(window, "SearchBox");
+        search.SetCurrentValue(TextBox.TextProperty, "Règlement");
+        await UntilAsync(() => model.SelectedDocument?.Match.Contains("Règlement", StringComparison.OrdinalIgnoreCase) == true &&
+            model.Preview is not null, () => model.Status);
+        await CaptureAsync(window, directory, "ocr-language.png");
     }
 
     private static async Task VerifyPhraseSearchAsync(MainWindow window, InboxViewModel model, string directory)
@@ -281,7 +298,8 @@ internal sealed class FixtureDialogs(params string[] documents) : IWorkspaceDial
     internal string? FolderPath { get; init; }
     internal string? EditedTitle { get; init; }
     internal string? LastOpenedPath { get; private set; }
-    public Task<IReadOnlyList<string>> PickDocumentsAsync() => Task.FromResult<IReadOnlyList<string>>(documents);
+    internal IReadOnlyList<string> SelectedFiles { get; set; } = documents;
+    public Task<IReadOnlyList<string>> PickDocumentsAsync() => Task.FromResult(SelectedFiles);
     public Task<string?> PickFolderAsync(string title) => Task.FromResult(FolderPath);
     public Task<ScanRequest?> PickScannerAsync() => Task.FromResult<ScanRequest?>(null);
     public Task<string?> EditTitleAsync(string currentTitle) => Task.FromResult(EditedTitle);

@@ -1,5 +1,10 @@
 # Changelog
 
+## [0.10.0] - 2026-11-18
+
+- Choose English, French, or German for OCR in new scans and imports.
+- All three models are bundled. Plico remembers the selected language on this computer.
+
 ## [0.9.0] - 2026-11-18
 
 - Search quoted phrases as adjacent whole words. Mix them with ordinary search terms in the same query.

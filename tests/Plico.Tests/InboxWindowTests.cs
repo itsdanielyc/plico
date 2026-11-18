@@ -288,6 +288,29 @@ public sealed class InboxWindowTests
     private static async Task WaitForPreviewAsync(InboxViewModel model)
         => await WaitForAsync(() => model.Preview is not null || model.HasPreviewMessage);
 
+    [AvaloniaFact]
+    public void LanguageSelectorLoadsAndUpdatesTheLocalChoice()
+    {
+        using var directory = new TemporaryLibrary();
+        using var model = new InboxViewModel(new FixtureDialogs());
+        model.InitializeLibrary(() => directory.Path);
+        OcrLanguage? saved = null;
+        model.InitializeRecognitionLanguage(() => OcrLanguage.German, language => saved = language);
+        var window = new MainWindow { DataContext = model };
+        window.Show();
+        try
+        {
+            var languages = Assert.IsType<ComboBox>(window.FindControl<ComboBox>("OcrLanguageBox"));
+            Assert.Equal(OcrLanguage.German, languages.SelectedItem);
+            languages.SetCurrentValue(ComboBox.SelectedItemProperty, OcrLanguage.French);
+            Assert.Equal(OcrLanguage.French, saved);
+        }
+        finally
+        {
+            window.Close();
+        }
+    }
+
     private static async Task WaitForAsync(Func<bool> condition)
     {
         using var timeout = CancellationTokenSource.CreateLinkedTokenSource(TestContext.Current.CancellationToken);
