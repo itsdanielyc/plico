@@ -53,7 +53,7 @@ internal sealed partial class InboxViewModel
         string? folder = await _dialogs.PickFolderAsync("Choose a library folder for files and scans", library.PdfDirectory);
         if (folder is null)
         {
-            Status = "Intake folder selection cancelled.";
+            Status = DesktopText.Translate("Intake folder selection cancelled.");
             return;
         }
 
@@ -61,7 +61,7 @@ internal sealed partial class InboxViewModel
         string relative = library.GetRelativeLibraryFolderPath(folder);
         _intakeFolderPreference?.Save(library.RootPath, relative);
         IntakeFolder = relative;
-        Status = $"Intake folder set to {IntakeFolderLabel}.";
+        Status = DesktopText.Format($"Intake folder set to {IntakeFolderLabel}.");
     });
 
     private string? RestoreIntakeFolder(string libraryRoot)

@@ -1,11 +1,12 @@
-<Window xmlns="https://github.com/avaloniaui" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:translation="using:Plico.Desktop" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:core="using:Plico.Core" x:Class="Plico.Desktop.FilingRulesDialog"
-        Title="Tag rules" Width="520" SizeToContent="Height" CanResize="False"
-        WindowStartupLocation="CenterOwner" FontFamily="{StaticResource InterFont}" Background="#F4F5EF">
+        Title="{translation:Tr TagRules}" Width="520" SizeToContent="Height" CanResize="False"
+        WindowStartupLocation="CenterOwner" FontFamily="{StaticResource InterFont}" Background="{DynamicResource WorkspaceSurface}">
     <StackPanel Margin="24" Spacing="10">
-        <TextBlock Text="Tag rules" FontSize="19" FontWeight="SemiBold" />
-        <TextBlock Text="Suggest a tag when the title or searchable text matches." TextWrapping="Wrap" />
-        <ListBox x:Name="FilingRuleList" AutomationProperties.Name="Saved tag rules" MaxHeight="150"
+        <TextBlock Text="{translation:Tr TagRules}" FontSize="19" FontWeight="SemiBold" />
+        <TextBlock Text="{translation:Tr SuggestATagWhenTheTitleOrSearchableTextMatches}" TextWrapping="Wrap" />
+        <ListBox x:Name="FilingRuleList" AutomationProperties.Name="{translation:Tr SavedTagRules}" MaxHeight="150"
                  SelectionChanged="Rule_Changed" ScrollViewer.HorizontalScrollBarVisibility="Disabled">
             <ListBox.ItemTemplate>
                 <DataTemplate x:DataType="core:FilingRule">
@@ -16,15 +17,15 @@
                 </DataTemplate>
             </ListBox.ItemTemplate>
         </ListBox>
-        <TextBox x:Name="RuleTag" PlaceholderText="Tag name" MaxLength="48" AutomationProperties.Name="Tag name" />
-        <ComboBox x:Name="RuleMatchMode" HorizontalAlignment="Stretch" AutomationProperties.Name="Rule matching mode" />
-        <TextBox x:Name="RulePattern" PlaceholderText="Matching words" MaxLength="256" AutomationProperties.Name="Matching words" />
+        <TextBox x:Name="RuleTag" PlaceholderText="{translation:Tr TagName}" MaxLength="48" AutomationProperties.Name="{translation:Tr TagName}" />
+        <ComboBox x:Name="RuleMatchMode" HorizontalAlignment="Stretch" AutomationProperties.Name="{translation:Tr RuleMatchingMode}" />
+        <TextBox x:Name="RulePattern" PlaceholderText="{translation:Tr MatchingWords}" MaxLength="256" AutomationProperties.Name="{translation:Tr MatchingWords}" />
         <TextBlock x:Name="FilingRuleStatus" TextWrapping="Wrap" AutomationProperties.LiveSetting="Polite" />
         <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" Spacing="8">
-            <Button Content="New rule" Click="New_Click" />
-            <Button x:Name="RemoveRuleButton" Content="Remove" IsEnabled="False" Click="Remove_Click" />
-            <Button x:Name="SaveFilingRuleButton" Content="Save rule" Click="Save_Click" Background="#254C37" Foreground="White" />
-            <Button Content="Done" IsCancel="True" Click="Cancel_Click" />
+            <Button Content="{translation:Tr NewRule}" Click="New_Click" />
+            <Button x:Name="RemoveRuleButton" Content="{translation:Tr Remove}" IsEnabled="False" Click="Remove_Click" />
+            <Button x:Name="SaveFilingRuleButton" Content="{translation:Tr SaveRule}" Click="Save_Click" Background="{DynamicResource PrimarySurface}" Foreground="White" />
+            <Button Content="{translation:Tr Done}" IsCancel="True" Click="Cancel_Click" />
         </StackPanel>
     </StackPanel>
 </Window>

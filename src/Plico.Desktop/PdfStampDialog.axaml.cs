@@ -31,7 +31,7 @@ internal sealed partial class PdfStampDialog : Window
         try
         {
             string text = StampText.Text?.Trim() ?? "";
-            if (text.Length == 0 || text.Any(char.IsControl)) throw new ArgumentException("Enter printable stamp text.");
+            if (text.Length == 0 || text.Any(char.IsControl)) throw new ArgumentException(DesktopText.Translate("Enter printable stamp text."));
             var pages = PdfPageSelection.Parse((StampPages.Text ?? "").Replace('–', '-'), _pageCount);
             Close(new PdfStampRequest(pages, new PdfStamp(text, (PdfStampPosition)StampPosition.SelectedIndex)));
         }

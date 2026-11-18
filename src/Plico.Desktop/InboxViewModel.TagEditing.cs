@@ -17,7 +17,7 @@ internal sealed partial class InboxViewModel
             var request = await _dialogs.RenameTagAsync(tag, names);
             if (request is null)
             {
-                Status = "Tag rename closed.";
+                Status = DesktopText.Translate("Tag rename closed.");
                 return;
             }
 
@@ -26,7 +26,7 @@ internal sealed partial class InboxViewModel
             SavedSearches = library.GetSavedSearches();
             if (_activeTag == tag) Navigate(inboxOnly: false, tag: label, preferredId: SelectedDocument?.Id);
             else LoadResults();
-            Status = request.MergeIntoExisting ? $"Tags merged into “{label}”." : $"Tag renamed to “{label}”.";
+            Status = request.MergeIntoExisting ? DesktopText.Format($"Tags merged into “{label}”.") : DesktopText.Format($"Tag renamed to “{label}”.");
         });
     }
 }

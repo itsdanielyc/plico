@@ -17,9 +17,9 @@ internal sealed partial class InboxViewModel
     public bool HasResultActions => HasBatchCandidates || HasDeferredWatchResults;
     public bool HasBatchSelection => _batchSelection.Count > 1;
     public bool HasTaggedBatchSelection => HasBatchSelection && _batchSelection.Any(document => document.Tags.Count > 0);
-    public string BatchCountLabel => $"{_batchSelection.Count} selected";
-    public string SelectShownAction => HasBatchSelection ? "Clear selection" : "Select shown";
-    public string BatchReviewAction => AllSelectedAreReviewed ? "Return selected to inbox" : "Mark selected reviewed";
+    public string BatchCountLabel => DesktopText.Format($"{_batchSelection.Count} selected");
+    public string SelectShownAction => HasBatchSelection ? DesktopText.Translate("Clear selection") : DesktopText.Translate("Select shown");
+    public string BatchReviewAction => AllSelectedAreReviewed ? DesktopText.Translate("Return selected to inbox") : DesktopText.Translate("Mark selected reviewed");
     private bool AllSelectedAreReviewed => _batchSelection.All(document => document.Reviewed);
 
     internal void SetBatchSelection(IReadOnlyList<DocumentSummary> selectedDocuments)
@@ -70,7 +70,7 @@ internal sealed partial class InboxViewModel
             RequireLibrary().SetReviewed(document.Id, reviewed);
             RefreshInboxCount();
             LoadResults(document.Id, retainLoadedResults: true, reviewPosition: position);
-            Status = reviewed ? "Marked as reviewed." : "Returned to inbox.";
+            Status = reviewed ? DesktopText.Translate("Marked as reviewed.") : DesktopText.Translate("Returned to inbox.");
         }
         catch (Exception error)
         {
@@ -92,7 +92,7 @@ internal sealed partial class InboxViewModel
             RefreshInboxCount();
             LoadResults(retainLoadedResults: true, reviewPosition: position);
             var count = DocumentCount(selectedIds.Length);
-            Status = reviewed ? $"{count} marked reviewed." : $"{count} returned to inbox.";
+            Status = reviewed ? DesktopText.Format($"{count} marked reviewed.") : DesktopText.Format($"{count} returned to inbox.");
         });
     }
 
@@ -137,7 +137,7 @@ internal sealed partial class InboxViewModel
         if (!HasBatchSelection) return Task.CompletedTask;
         if (string.IsNullOrWhiteSpace(BatchTagInput))
         {
-            Status = "Enter a tag for the selection.";
+            Status = DesktopText.Translate("Enter a tag for the selection.");
             return Task.CompletedTask;
         }
         var selectedIds = _batchSelection.Select(document => document.Id).ToArray();
@@ -149,7 +149,7 @@ internal sealed partial class InboxViewModel
             Tags = library.GetTags();
             LoadResults(retainLoadedResults: true);
             BatchTagInput = "";
-            Status = $"Tag applied to {DocumentCount(selectedIds.Length)}.";
+            Status = DesktopText.Format($"Tag applied to {DocumentCount(selectedIds.Length)}.");
         });
     }
 
@@ -163,7 +163,7 @@ internal sealed partial class InboxViewModel
             string? tag = await _dialogs.ChooseTagToRemoveAsync(GetBatchTagOptions(selectedDocuments));
             if (tag is null)
             {
-                Status = "Tag removal cancelled.";
+                Status = DesktopText.Translate("Tag removal cancelled.");
                 return;
             }
 
@@ -171,7 +171,7 @@ internal sealed partial class InboxViewModel
             int changed = await Task.Run(() => library.RemoveTagFromDocuments(selectedIds, tag, token), token);
             Tags = library.GetTags();
             LoadResults(retainLoadedResults: true);
-            Status = changed == 0 ? "The selected documents no longer have that tag." : $"Tag removed from {DocumentCount(changed)}.";
+            Status = changed == 0 ? DesktopText.Translate("The selected documents no longer have that tag.") : DesktopText.Format($"Tag removed from {DocumentCount(changed)}.");
         });
     }
 

@@ -16,26 +16,26 @@ internal sealed partial class InboxViewModel
     private Task ExportPdfAsync()
     {
         if (SelectedDocument is not { } document) return Task.CompletedTask;
-        return RunOperationAsync("Choose an export destination…", async token =>
+        return RunOperationAsync(DesktopText.Translate("Choose an export destination…"), async token =>
         {
             var library = RequireLibrary();
             var options = await _dialogs.ChoosePdfExportAsync(RecognitionLanguage);
             if (options is null)
             {
-                Status = "Export cancelled.";
+                Status = DesktopText.Translate("Export cancelled.");
                 return;
             }
-            string? destination = await _dialogs.PickFolderAsync("Choose where to export the PDF");
+            string? destination = await _dialogs.PickFolderAsync(DesktopText.Translate("Choose where to export the PDF"));
             if (destination is null)
             {
-                Status = "Export destination selection closed.";
+                Status = DesktopText.Translate("Export destination selection closed.");
                 return;
             }
 
-            Status = options.Format == PdfExportFormat.PdfA ? "Creating an archival PDF…" : "Copying PDF…";
+            Status = options.Format == PdfExportFormat.PdfA ? DesktopText.Translate("Creating an archival PDF…") : DesktopText.Translate("Copying PDF…");
             string export = await Task.Run(() => library.ExportPdfAsync(document.Id, destination, options, token), token);
             LatestExportLocation = Path.GetDirectoryName(export)!;
-            Status = $"Exported {Path.GetFileName(export)} to {LatestExportLocation}.";
+            Status = DesktopText.Format($"Exported {Path.GetFileName(export)} to {LatestExportLocation}.");
         });
     }
 
@@ -44,24 +44,24 @@ internal sealed partial class InboxViewModel
     {
         if (!HasBatchSelection) return Task.CompletedTask;
         var selectedIds = _batchSelection.Select(document => document.Id).ToArray();
-        return RunOperationAsync("Choose an export destination…", async token =>
+        return RunOperationAsync(DesktopText.Translate("Choose an export destination…"), async token =>
         {
             var library = RequireLibrary();
-            string? destination = await _dialogs.PickFolderAsync("Choose where to export the selected PDFs");
+            string? destination = await _dialogs.PickFolderAsync(DesktopText.Translate("Choose where to export the selected PDFs"));
             if (destination is null)
             {
-                Status = "Export destination selection closed.";
+                Status = DesktopText.Translate("Export destination selection closed.");
                 return;
             }
 
-            Status = "Copying selected PDFs…";
+            Status = DesktopText.Translate("Copying selected PDFs…");
             var progress = new Progress<int>(copied =>
             {
-                if (IsBusy && !token.IsCancellationRequested) Status = $"Copied {copied} of {selectedIds.Length} PDFs…";
+                if (IsBusy && !token.IsCancellationRequested) Status = DesktopText.Format($"Copied {copied} of {selectedIds.Length} PDFs…");
             });
             var export = await Task.Run(() => library.ExportPdfsAsync(selectedIds, destination, progress, token), token);
             LatestExportLocation = export.Location;
-            Status = $"Exported {DocumentCount(export.PdfCount)} to {export.Location}.";
+            Status = DesktopText.Format($"Exported {DocumentCount(export.PdfCount)} to {export.Location}.");
         });
     }
 

@@ -16,14 +16,14 @@ internal sealed partial class TrashDialog : Window
         InitializeComponent();
         TrashedFiles.ItemsSource = documents;
         TrashedFiles.IsVisible = documents.Count > 0;
-        TrashMessage.Text = documents.Count == 0 ? "Trash is empty." : RestoreHint;
+        TrashMessage.Text = documents.Count == 0 ? DesktopText.Translate("Trash is empty.") : RestoreHint;
     }
 
     private void Selection_Changed(object? sender, SelectionChangedEventArgs e)
     {
         _confirmingPurge = false;
         RestoreTrashButton.IsEnabled = PurgeTrashButton.IsEnabled = TrashedFiles.SelectedItem is TrashedDocument;
-        PurgeTrashButton.Content = "Delete permanently…";
+        PurgeTrashButton.Content = DesktopText.Translate("Delete permanently…");
         TrashMessage.Text = RestoreHint;
     }
 
@@ -43,7 +43,7 @@ internal sealed partial class TrashDialog : Window
         _confirmingPurge = true;
         RestoreTrashButton.IsEnabled = false;
         TrashMessage.Text = $"Permanently delete “{selected.Title}” and its library metadata?";
-        PurgeTrashButton.Content = "Confirm deletion";
+        PurgeTrashButton.Content = DesktopText.Translate("Confirm deletion");
         CloseTrashButton.Focus();
     }
 

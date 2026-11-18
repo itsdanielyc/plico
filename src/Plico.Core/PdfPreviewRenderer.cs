@@ -18,7 +18,11 @@ internal static class PdfPreviewRenderer
     private const int PreviewPixelLimit = 900;
 
     /// <summary>Returns the requested one-based page as a PNG stream owned by the caller.</summary>
-    internal static async Task<MemoryStream> RenderPageAsync(string path, int pageNumber, CancellationToken cancellationToken)
+    internal static Task<MemoryStream> RenderPageAsync(string path, int pageNumber, CancellationToken cancellationToken) =>
+        RenderPageAsync(path, pageNumber, PreviewPixelLimit, cancellationToken);
+
+    internal static async Task<MemoryStream> RenderPageAsync(string path, int pageNumber, int pixelLimit,
+        CancellationToken cancellationToken)
     {
         cancellationToken.ThrowIfCancellationRequested();
         int rotation = ReadRotation(path, pageNumber);
@@ -27,7 +31,7 @@ internal static class PdfPreviewRenderer
         var options = new ImportParams
         {
             Slice = Slice.Item(pageSnapshot is null ? pageNumber - 1 : 0),
-            ThumbnailSize = PreviewPixelLimit
+            ThumbnailSize = pixelLimit
         };
         using var context = new ScanningContext(new SkiaImageContext());
         var importer = new PdfImporter(context);

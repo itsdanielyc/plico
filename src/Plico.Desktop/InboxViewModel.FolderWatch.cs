@@ -17,7 +17,7 @@ internal sealed partial class InboxViewModel
     public bool CanOfferResumeFolderWatch => RememberedWatchFolder is not null && !IsWatchingFolder;
     public bool CanOfferImportWatchFiles => IsWatchingFolder || CanOfferResumeFolderWatch;
     public bool CanOfferCatchUpOnOpen => _watchPreference is not null && RememberedWatchFolder is not null;
-    public string ImportWatchFilesLabel => IsWatchingFolder ? "Import existing files" : "Resume and catch up";
+    public string ImportWatchFilesLabel => IsWatchingFolder ? "Import existing files" : DesktopText.Translate("Resume and catch up");
     public string WatchedFolderPath => _folderWatch?.Folder ?? "";
     public string WatchedFolderName => IsWatchingFolder
         ? new DirectoryInfo(WatchedFolderPath).Name
@@ -52,13 +52,13 @@ internal sealed partial class InboxViewModel
         CanWork && CatchUpOnOpen ? ResumeRememberedWatchAsync(queueExistingFiles: true) : Task.CompletedTask;
 
     [RelayCommand]
-    private Task StartFolderWatchAsync() => RunOperationAsync("Choose a scanner output folder…", async token =>
+    private Task StartFolderWatchAsync() => RunOperationAsync(DesktopText.Translate("Choose a scanner output folder…"), async token =>
     {
         if (IsWatchingFolder) return;
         var folder = await _dialogs.PickFolderAsync("Choose a scanner output folder");
         if (folder is null)
         {
-            Status = "Folder selection closed.";
+            Status = DesktopText.Translate("Folder selection closed.");
             return;
         }
         token.ThrowIfCancellationRequested();
@@ -71,21 +71,21 @@ internal sealed partial class InboxViewModel
     private Task ResumeRememberedWatchAsync(bool queueExistingFiles)
     {
         if (RememberedWatchFolder is not { } folder || IsWatchingFolder) return Task.CompletedTask;
-        return RunOperationAsync("Resuming folder watch…", token => StartWatchAsync(folder, token, queueExistingFiles));
+        return RunOperationAsync(DesktopText.Translate("Resuming folder watch…"), token => StartWatchAsync(folder, token, queueExistingFiles));
     }
 
     [RelayCommand]
     private Task ImportWatchFolderFilesAsync()
     {
         if (_folderWatch is not { } watch) return ResumeRememberedWatchAsync(queueExistingFiles: true);
-        return RunOperationAsync("Checking the watched folder…", async token =>
+        return RunOperationAsync(DesktopText.Translate("Checking the watched folder…"), async token =>
         {
             try
             {
                 int queued = await Task.Run(() => watch.QueueExistingFiles(token), token);
                 if (ReferenceEquals(_folderWatch, watch))
                 {
-                    Status = queued > 0 ? $"{DocumentCount(queued)} queued for the folder watch." : "No additional files to check.";
+                    Status = queued > 0 ? $"{DocumentCount(queued)} queued for the folder watch." : DesktopText.Translate("No additional files to check.");
                 }
             }
             catch (Exception error) when ((error is OperationCanceledException or ObjectDisposedException) &&
@@ -96,7 +96,7 @@ internal sealed partial class InboxViewModel
     private async Task StartWatchAsync(string folder, CancellationToken cancellationToken, bool queueExistingFiles = false)
     {
         var library = RequireLibrary();
-        Status = "Checking the scanner output folder…";
+        Status = DesktopText.Translate("Checking the scanner output folder…");
         var watch = await Task.Run(() => FolderWatch.Start(folder, library.PdfDirectory, ImportWatchedFilesAsync, cancellationToken),
             cancellationToken);
         int queued = 0;
@@ -105,7 +105,7 @@ internal sealed partial class InboxViewModel
             cancellationToken.ThrowIfCancellationRequested();
             if (queueExistingFiles)
             {
-                Status = "Checking existing files…";
+                Status = DesktopText.Translate("Checking existing files…");
                 queued = await Task.Run(() => watch.QueueExistingFiles(cancellationToken), cancellationToken);
             }
             cancellationToken.ThrowIfCancellationRequested();
@@ -118,7 +118,7 @@ internal sealed partial class InboxViewModel
         _folderWatch = watch;
         RememberedWatchFolder = watch.Folder;
         NotifyWatchChanged();
-        Status = $"Watching for new or updated files in {WatchedFolderName}.";
+        Status = DesktopText.Format($"Watching for new or updated files in {WatchedFolderName}.");
         if (queued > 0) Status += $" {DocumentCount(queued)} queued for the folder watch.";
         _ = ObserveWatchAsync(watch);
         try
@@ -166,7 +166,7 @@ internal sealed partial class InboxViewModel
         try
         {
             await watch.DisposeAsync();
-            if (_folderWatch is null) Status = "Folder watch stopped.";
+            if (_folderWatch is null) Status = DesktopText.Translate("Folder watch stopped.");
         }
         catch (Exception error)
         {
@@ -182,7 +182,7 @@ internal sealed partial class InboxViewModel
                 await active.Task.WaitAsync(cancellationToken);
             }
             cancellationToken.ThrowIfCancellationRequested();
-            await RunOperationAsync("Importing from the watched folder…",
+            await RunOperationAsync(DesktopText.Translate("Importing from the watched folder…"),
                 token => ImportFilesAsync(files, token, ImportOrigin.FolderWatch, revealAdded: false), cancellationToken);
         });
 

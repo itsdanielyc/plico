@@ -1,26 +1,27 @@
-<Window xmlns="https://github.com/avaloniaui" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-        xmlns:local="using:Plico.Desktop" x:Class="Plico.Desktop.PdfRedactionDialog" Title="Redact PDF"
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:translation="using:Plico.Desktop" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:local="using:Plico.Desktop" x:Class="Plico.Desktop.PdfRedactionDialog" Title="{translation:Tr RedactPDF}"
         Width="680" Height="700" MinWidth="480" MinHeight="440" WindowStartupLocation="CenterOwner"
-        FontFamily="{StaticResource InterFont}" Background="#F4F5EF">
+        FontFamily="{StaticResource InterFont}" Background="{DynamicResource WorkspaceSurface}">
     <Grid Margin="20" RowDefinitions="Auto,*,Auto" RowSpacing="12">
-        <TextBlock Text="Draw a box over each area to remove from the exported PDF." TextWrapping="Wrap" />
-        <Border Grid.Row="1" Background="#E8EEE4" CornerRadius="8" ClipToBounds="True">
+        <TextBlock Text="{translation:Tr DrawABoxOverEachAreaToRemoveFromTheExportedPDF}" TextWrapping="Wrap" />
+        <Border Grid.Row="1" Background="{DynamicResource InsetSurface}" CornerRadius="8" ClipToBounds="True">
             <Panel Margin="8">
-                <local:PdfRedactionCanvas x:Name="PageCanvas" AutomationProperties.Name="PDF page for marking redactions" />
+                <local:PdfRedactionCanvas x:Name="PageCanvas" AutomationProperties.Name="{translation:Tr PDFPageForMarkingRedactions}" />
                 <TextBlock x:Name="PreviewNotice" TextWrapping="Wrap" HorizontalAlignment="Center" VerticalAlignment="Center" />
             </Panel>
         </Border>
         <Grid Grid.Row="2" RowDefinitions="Auto,Auto" RowSpacing="10">
             <StackPanel Orientation="Horizontal" Spacing="6">
-                <Button x:Name="PreviousPage" Content="‹" Click="Previous_Click" AutomationProperties.Name="Previous page" />
+                <Button x:Name="PreviousPage" Content="‹" Click="Previous_Click" AutomationProperties.Name="{translation:Tr PreviousPage}" />
                 <TextBlock x:Name="PageLabel" VerticalAlignment="Center" />
-                <Button x:Name="NextPage" Content="›" Click="Next_Click" AutomationProperties.Name="Next page" />
-                <Button x:Name="UndoRegion" Content="Undo box" Click="Undo_Click" />
+                <Button x:Name="NextPage" Content="›" Click="Next_Click" AutomationProperties.Name="{translation:Tr NextPage}" />
+                <Button x:Name="UndoRegion" Content="{translation:Tr UndoBox}" Click="Undo_Click" />
             </StackPanel>
             <StackPanel Grid.Row="1" Orientation="Horizontal" Spacing="8" HorizontalAlignment="Right">
-                <Button Content="Cancel" IsCancel="True" Click="Cancel_Click" />
-                <Button x:Name="ConfirmRedactions" Content="Choose destination…" Click="Confirm_Click" IsEnabled="False"
-                        Background="#254C37" Foreground="White" />
+                <Button Content="{translation:Tr Cancel}" IsCancel="True" Click="Cancel_Click" />
+                <Button x:Name="ConfirmRedactions" Content="{translation:Tr ChooseDestination}" Click="Confirm_Click" IsEnabled="False"
+                        Background="{DynamicResource PrimarySurface}" Foreground="White" />
             </StackPanel>
         </Grid>
     </Grid>

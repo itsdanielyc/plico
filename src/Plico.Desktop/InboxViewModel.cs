@@ -27,10 +27,10 @@ internal sealed partial class InboxViewModel : ObservableObject, IDisposable
     [ObservableProperty] private string _query = "";
     [ObservableProperty] private SortChoice? _sortOption = AutomaticSort;
     [ObservableProperty] private string _tagInput = "";
-    [ObservableProperty] private string _heading = "Inbox";
-    [ObservableProperty] private string _resultCount = "0 documents";
-    [ObservableProperty] private string _emptyMessage = "Add a file to start your inbox.";
-    [ObservableProperty] private string _status = "Choose a library folder to get started.";
+    [ObservableProperty] private string _heading = DesktopText.Translate("Inbox");
+    [ObservableProperty] private string _resultCount = DesktopText.Translate("0 documents");
+    [ObservableProperty] private string _emptyMessage = DesktopText.Translate("Add a file to start your inbox.");
+    [ObservableProperty] private string _status = DesktopText.Translate("Choose a library folder to get started.");
     [ObservableProperty] private string _libraryPath = "";
     [ObservableProperty] private string _previewMessage = "";
     [ObservableProperty] private IReadOnlyList<DocumentSummary> _documents = [];
@@ -49,6 +49,7 @@ internal sealed partial class InboxViewModel : ObservableObject, IDisposable
     private bool _isPageTextView;
     [ObservableProperty]
     [NotifyPropertyChangedFor(nameof(PreviewFitAction))]
+    [NotifyPropertyChangedFor(nameof(IsPreviewScrollable))]
     private bool _fitPreviewWidth;
     [ObservableProperty] private bool _isBusy;
     [ObservableProperty] private bool _hasMore;
@@ -82,20 +83,20 @@ internal sealed partial class InboxViewModel : ObservableObject, IDisposable
     {
         get
         {
-            if (!HasLibrary) return "Choose library";
+            if (!HasLibrary) return DesktopText.Translate("Choose library");
             var name = Path.GetFileName(Path.TrimEndingDirectorySeparator(LibraryPath));
             return name.Length == 0 ? LibraryPath : name;
         }
     }
-    public string ReviewAction => SelectedDocument?.Reviewed == true ? "Return to inbox" : "Mark reviewed";
+    public string ReviewAction => SelectedDocument?.Reviewed == true ? DesktopText.Translate("Return to inbox") : DesktopText.Translate("Mark reviewed");
     public string PageLabel => SelectedDocument is { } document ? $"{_pageNumber} / {document.PageCount}" : "";
     public bool CanGoBack => _pageNumber > 1;
     public bool CanGoForward => _pageNumber < SelectedDocument?.PageCount;
     public bool HasPreviewMessage => PreviewMessage.Length > 0;
     public bool HasPreview => Preview is not null;
     public bool HasPageText => PageText.Length > 0;
-    public string PageTextAction => IsPageTextView ? "Show page" : "Read text";
-    public string PreviewFitAction => FitPreviewWidth ? "Fit page" : "Fit width";
+    public string PageTextAction => IsPageTextView ? DesktopText.Translate("Show page") : DesktopText.Translate("Read text");
+    public string PreviewFitAction => IsPreviewScrollable ? DesktopText.Translate("Fit page") : DesktopText.Translate("Fit width");
     public bool HasNoSearchableText => SelectedDocument is { HasText: false };
 
     internal void InitializeLibrary(Func<string> locate)
@@ -113,6 +114,8 @@ internal sealed partial class InboxViewModel : ObservableObject, IDisposable
     internal async Task PrepareCloseAsync()
     {
         CancelTypedSearch();
+        ClearPageThumbnails();
+        if (_thumbnailLoad is { } thumbnailLoad) await thumbnailLoad;
         await StopFolderWatchAsync();
         var completion = _operationCompletion;
         _operationCancellation?.Cancel();
@@ -120,12 +123,12 @@ internal sealed partial class InboxViewModel : ObservableObject, IDisposable
     }
 
     [RelayCommand]
-    private Task AddFilesAsync() => RunOperationAsync("Choose documents to import…", async token =>
+    private Task AddFilesAsync() => RunOperationAsync(DesktopText.Translate("Choose documents to import…"), async token =>
     {
         var files = await _dialogs.PickDocumentsAsync();
         if (files.Count == 0)
         {
-            Status = "No files selected.";
+            Status = DesktopText.Translate("No files selected.");
             return;
         }
         await ImportFilesAsync(files, token);
@@ -135,19 +138,19 @@ internal sealed partial class InboxViewModel : ObservableObject, IDisposable
     {
         if (!hasSupportedFile)
         {
-            Status = "Drop a PDF, PNG, JPEG, or TIFF document.";
+            Status = DesktopText.Translate("Drop a PDF, PNG, JPEG, or TIFF document.");
             return Task.CompletedTask;
         }
-        return RunOperationAsync("Importing dropped files…", token => ImportFilesAsync(files, token));
+        return RunOperationAsync(DesktopText.Translate("Importing dropped files…"), token => ImportFilesAsync(files, token));
     }
 
     [RelayCommand]
-    private Task ChooseLibraryAsync() => RunOperationAsync("Choose a library folder…", async token =>
+    private Task ChooseLibraryAsync() => RunOperationAsync(DesktopText.Translate("Choose a library folder…"), async token =>
     {
         var selected = await _dialogs.PickFolderAsync("Choose a Plico library folder");
         if (selected is null)
         {
-            Status = "Folder selection closed.";
+            Status = DesktopText.Translate("Folder selection closed.");
             return;
         }
         token.ThrowIfCancellationRequested();
@@ -173,7 +176,17 @@ internal sealed partial class InboxViewModel : ObservableObject, IDisposable
     {
         if (HasMore) LoadResults(append: true);
     }
-    [RelayCommand] private void TogglePreviewFit() => FitPreviewWidth = !FitPreviewWidth;
+    [RelayCommand]
+    private void TogglePreviewFit()
+    {
+        if (IsPreviewZoomed)
+        {
+            ResetManualZoom();
+            RequestPreview();
+            return;
+        }
+        FitPreviewWidth = !FitPreviewWidth;
+    }
 
     [RelayCommand]
     private void TogglePageText()
@@ -202,35 +215,35 @@ internal sealed partial class InboxViewModel : ObservableObject, IDisposable
     private Task CopyDocumentTextAsync()
     {
         if (SelectedDocument is not { HasText: true } document) return Task.CompletedTask;
-        return RunOperationAsync("Reading document text…", async token =>
+        return RunOperationAsync(DesktopText.Translate("Reading document text…"), async token =>
         {
             var library = RequireLibrary();
             string text = await Task.Run(() => library.ReadIndexedText(document.Id), token);
             token.ThrowIfCancellationRequested();
             if (string.IsNullOrWhiteSpace(text))
             {
-                Status = "No searchable text found.";
+                Status = DesktopText.Translate("No searchable text found.");
                 return;
             }
             await _dialogs.CopyTextAsync(text);
-            Status = "Document text copied.";
+            Status = DesktopText.Translate("Document text copied.");
         });
     }
 
     [RelayCommand]
-    private Task EditDocumentTitleAsync() => RunOperationAsync("Edit the document title…", async token =>
+    private Task EditDocumentTitleAsync() => RunOperationAsync(DesktopText.Translate("Edit the document title…"), async token =>
     {
         if (SelectedDocument is not { } document) return;
         var title = await _dialogs.EditTitleAsync(document.Title);
         if (title is null)
         {
-            Status = "Title editor closed.";
+            Status = DesktopText.Translate("Title editor closed.");
             return;
         }
         var library = RequireLibrary();
         await Task.Run(() => library.SetTitle(document.Id, title), token);
         LoadResults(document.Id);
-        Status = "Title saved.";
+        Status = DesktopText.Translate("Title saved.");
     });
 
     [RelayCommand]
@@ -246,14 +259,14 @@ internal sealed partial class InboxViewModel : ObservableObject, IDisposable
     internal void FilterByTag(string tag) => Navigate(inboxOnly: false, tag);
 
     internal void RemoveTag(string tag) =>
-        UpdateDocument((library, document) => library.RemoveTag(document.Id, tag), "Tag removed.");
+        UpdateDocument((library, document) => library.RemoveTag(document.Id, tag), DesktopText.Translate("Tag removed."));
 
     private bool OpenLibrary(string directory)
     {
         string target = Path.GetFullPath(directory);
         if (_library is not null && Path.GetRelativePath(_library.RootPath, target) == ".")
         {
-            Status = "Library already open.";
+            Status = DesktopText.Translate("Library already open.");
             return false;
         }
 
@@ -284,7 +297,7 @@ internal sealed partial class InboxViewModel : ObservableObject, IDisposable
         RefreshInboxCount();
         RefreshUnavailableCount();
         Navigate(inboxOnly: true);
-        Status = watchNotice is null ? "Library ready." : $"Library ready. {watchNotice}";
+        Status = watchNotice is null ? DesktopText.Translate("Library ready.") : DesktopText.Format($"Library ready. {watchNotice}");
         if (importNotice is not null) Status += $" {importNotice}";
         if (intakeNotice is not null) Status += $" {intakeNotice}";
         if (replacement.MoveRecoveryNotice is { } moveNotice) Status += $" {moveNotice}";
@@ -315,7 +328,7 @@ internal sealed partial class InboxViewModel : ObservableObject, IDisposable
             {
                 token.ThrowIfCancellationRequested();
                 string filename = Path.GetFileName(sourcePath);
-                Status = $"Processing {filename}…";
+                Status = DesktopText.Format($"Processing {filename}…");
                 try
                 {
                     string? destination = origin == ImportOrigin.FolderWatch ? watchedDestination : manualDestination;
@@ -389,7 +402,7 @@ internal sealed partial class InboxViewModel : ObservableObject, IDisposable
         }
         catch (OperationCanceledException) when (cancellation.IsCancellationRequested)
         {
-            Status = "Cancelled.";
+            Status = DesktopText.Translate("Cancelled.");
         }
         catch (Exception error)
         {
@@ -466,7 +479,7 @@ internal sealed partial class InboxViewModel : ObservableObject, IDisposable
     private InboxLibrary RequireLibrary() =>
         _library ?? throw new InvalidOperationException("Choose a library folder first.");
 
-    private static string DocumentCount(long count) => count == 1 ? "1 document" : $"{count} documents";
+    private static string DocumentCount(long count) => count == 1 ? "1 document" : DesktopText.Format($"{count} documents");
 
     partial void OnDocumentsChanged(IReadOnlyList<DocumentSummary> value)
     {
@@ -504,6 +517,7 @@ internal sealed partial class InboxViewModel : ObservableObject, IDisposable
         }
         if (reloadPreview)
         {
+            ClearPageThumbnails();
             ResetPageMatchNavigation();
             RequestPreview();
         }
@@ -537,11 +551,12 @@ internal sealed partial class InboxViewModel : ObservableObject, IDisposable
     private void RequestPreview()
     {
         CancelPreview();
+        RefreshPageThumbnails();
         PreviewMessage = "";
         if (_library is not { } library || SelectedDocument is not { } document) return;
         var request = new CancellationTokenSource();
         _previewCancellation = request;
-        if (IsPageTextView) PreviewMessage = "Reading page text…";
+        if (IsPageTextView) PreviewMessage = DesktopText.Translate("Reading page text…");
         _ = LoadPreviewAsync(library, document, _pageNumber, IsPageTextView, request);
     }
 
@@ -556,7 +571,22 @@ internal sealed partial class InboxViewModel : ObservableObject, IDisposable
                 string text = await Task.Run(() => library.ReadPageText(document, page, token), token);
                 if (token.IsCancellationRequested) return;
                 PageText = text;
-                PreviewMessage = text.Length == 0 ? "This page has no searchable text." : "";
+                PreviewMessage = text.Length == 0 ? DesktopText.Translate("This page has no searchable text.") : "";
+                return;
+            }
+
+            int zoom = PreviewZoomPercent;
+            if (zoom != 0)
+            {
+                var scaled = await Task.Run(() => library.RenderScaledPdfPageAsync(document, page, zoom, token), token);
+                using var image = scaled.Image;
+                if (token.IsCancellationRequested) return;
+                var bitmap = new Bitmap(image);
+                bool rotatedDimensions = (bitmap.Size.Width >= bitmap.Size.Height) != (scaled.DisplayWidth >= scaled.DisplayHeight);
+                PreviewDisplayWidth = rotatedDimensions ? scaled.DisplayHeight : scaled.DisplayWidth;
+                PreviewDisplayHeight = rotatedDimensions ? scaled.DisplayWidth : scaled.DisplayHeight;
+                Preview = bitmap;
+                UpdatePreviewHighlights();
                 return;
             }
 
@@ -571,8 +601,8 @@ internal sealed partial class InboxViewModel : ObservableObject, IDisposable
         catch (Exception)
         {
             if (!request.IsCancellationRequested) PreviewMessage = readText
-                ? "Page text unavailable. Try refreshing the index."
-                : "Preview unavailable. Try opening the PDF.";
+                ? DesktopText.Translate("Page text unavailable. Try refreshing the index.")
+                : DesktopText.Translate("Preview unavailable. Try opening the PDF.");
         }
         finally
         {
@@ -595,9 +625,10 @@ internal sealed partial class InboxViewModel : ObservableObject, IDisposable
     {
         CancelTypedSearch();
         CancelPreview();
+        ClearPageThumbnails();
         var library = _library;
         _library = null;
-        if (IsBusy || IsWatchingFolder) _ = FinishDisposalAsync(library);
+        if (IsBusy || IsWatchingFolder || _thumbnailLoad is { IsCompleted: false }) _ = FinishDisposalAsync(library);
         else library?.Dispose();
     }
 
@@ -614,8 +645,9 @@ internal sealed partial class InboxViewModel : ObservableObject, IDisposable
     }
 
     /// <summary>A catalog order and its visible label.</summary>
-    internal sealed record SortChoice(DocumentSort Order, string Label)
+    internal sealed record SortChoice(DocumentSort Order, string EnglishLabel)
     {
+        public string Label => DesktopText.Translate(EnglishLabel);
         public override string ToString() => Label;
     }
 }

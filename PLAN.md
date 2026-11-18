@@ -95,6 +95,7 @@
 | Gap 15 | Export a household binder | Select and order PDFs, export one searchable file with contents and bookmarks, and keep the library and existing exports intact. | L0, L3, L4, L6 | Hosted verification pending |
 | Gap 13 | Keep PDF versions and edit pages | Reorder, delete, rotate, split, and unlock PDFs. The active file and catalog identity survive editing and restoration. Backups and Trash account for archived versions. | L0, L3, L4, L6 | Hosted verification pending |
 | Gap 22 | Export redacted, stamped, and compressed PDFs | Mark areas visually, export redacted pixels with fresh OCR, stamp selected pages, and export a smaller PDF when lossless or scan optimization saves space. | L0, L3, L4, L6 | Hosted verification pending |
+| Gap 23 | Desktop appearance, PDF navigation and Open With | Save theme and UI language, navigate with thumbnails and physical page zoom, and accept PDF Open With requests on Windows, macOS and Ubuntu. | L0, L1, L3, L4, L6, L7 | Hosted verification pending |
 
 The v0.16.1 commit `00fcd70` passed main CI, archive verification, and published download checks on all six release targets. [Main CI](https://github.com/itsdanielyc/plico/actions/runs/44290738615) · [Archive matrix](https://github.com/itsdanielyc/plico/actions/runs/44289495647) · [Published checks](https://github.com/itsdanielyc/plico/actions/runs/44290747869)
 

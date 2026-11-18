@@ -10,7 +10,7 @@ internal sealed partial class InboxViewModel
     private long _inboxCount;
 
     public bool HasInboxCount => InboxCount > 0;
-    public string InboxAutomationName => HasInboxCount ? $"Inbox, {DocumentCount(InboxCount)} to review" : "Inbox";
+    public string InboxAutomationName => HasInboxCount ? DesktopText.Format($"Inbox, {DocumentCount(InboxCount)} to review") : DesktopText.Translate("Inbox");
 
     private void RefreshInboxCount() => InboxCount = _library?.CountUnreviewedDocuments() ?? 0;
 

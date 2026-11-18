@@ -92,6 +92,8 @@ Open **PDF tools…** to reorder, delete, or rotate pages in the current PDF. **
 
 Use **PDF tools…** to export a redacted, stamped, or compressed copy. Draw redaction boxes over each area you want to remove. Plico rebuilds the export from the visible pages and recognizes its text again. A stamp can go on selected pages in any corner. Compression offers a lossless setting and a smaller-scan setting that reduces supported color JPEGs while preserving existing text.
 
+Use **Thumbnails** to show nearby pages and select one to jump to it. The **−** and **+** buttons zoom from 50% to 300%, with **Fit page** returning to the fitted preview. Under **Library tools… → Appearance…**, choose the system, light, or dark theme and the English or French interface. Reopen Plico to apply a language change. In your file manager, you can choose Plico from a PDF’s **Open With** menu to import a copy into your library.
+
 Choose **Extract pages…** in a multi-page preview and enter a selection such as `1,3-5`. The excerpt opens in the inbox with those pages in source order, embedded text, and source tags. Page annotations belong to the source PDF.
 
 Choose **Rotate pages…** for sideways or upside-down scans. Select pages, choose a direction, and title the new PDF. The copy keeps every page, its searchable text, and the source tags.

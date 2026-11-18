@@ -1,11 +1,12 @@
-<Window xmlns="https://github.com/avaloniaui" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:translation="using:Plico.Desktop" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:core="using:Plico.Core" x:Class="Plico.Desktop.TrashDialog"
-        Title="Trash" Width="500" SizeToContent="Height" CanResize="False" WindowStartupLocation="CenterOwner"
-        FontFamily="{StaticResource InterFont}" Background="#F4F5EF">
+        Title="{translation:Tr Trash}" Width="500" SizeToContent="Height" CanResize="False" WindowStartupLocation="CenterOwner"
+        FontFamily="{StaticResource InterFont}" Background="{DynamicResource WorkspaceSurface}">
     <StackPanel Margin="24" Spacing="12">
-        <TextBlock Text="Trash" FontSize="19" FontWeight="SemiBold" />
+        <TextBlock Text="{translation:Tr Trash}" FontSize="19" FontWeight="SemiBold" />
         <TextBlock x:Name="TrashMessage" TextWrapping="Wrap" />
-        <ListBox x:Name="TrashedFiles" AutomationProperties.Name="PDFs in Trash" MaxHeight="260"
+        <ListBox x:Name="TrashedFiles" AutomationProperties.Name="{translation:Tr PDFsInTrash}" MaxHeight="260"
                  ScrollViewer.HorizontalScrollBarVisibility="Disabled" SelectionChanged="Selection_Changed">
             <ListBox.ItemTemplate>
                 <DataTemplate x:DataType="core:TrashedDocument">
@@ -17,9 +18,9 @@
             </ListBox.ItemTemplate>
         </ListBox>
         <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" Spacing="8">
-            <Button x:Name="CloseTrashButton" Content="Close" IsCancel="True" IsDefault="True" Click="Close_Click" />
-            <Button x:Name="RestoreTrashButton" Content="Restore" IsEnabled="False" Click="Restore_Click" />
-            <Button x:Name="PurgeTrashButton" Content="Delete permanently…" IsEnabled="False" Click="Purge_Click" />
+            <Button x:Name="CloseTrashButton" Content="{translation:Tr Close}" IsCancel="True" IsDefault="True" Click="Close_Click" />
+            <Button x:Name="RestoreTrashButton" Content="{translation:Tr Restore}" IsEnabled="False" Click="Restore_Click" />
+            <Button x:Name="PurgeTrashButton" Content="{translation:Tr DeletePermanently}" IsEnabled="False" Click="Purge_Click" />
         </StackPanel>
     </StackPanel>
 </Window>

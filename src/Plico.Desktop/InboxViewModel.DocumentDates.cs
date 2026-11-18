@@ -14,14 +14,14 @@ internal sealed partial class InboxViewModel
         var edit = await _dialogs.EditDocumentDateAsync(document.DocumentDate);
         if (edit is null)
         {
-            Status = "Document date editor closed.";
+            Status = DesktopText.Translate("Document date editor closed.");
             return;
         }
 
         var library = RequireLibrary();
         await Task.Run(() => library.SetDocumentDate(document.Id, edit.Date), token);
         LoadResults(document.Id);
-        Status = edit.Date.HasValue ? "Document date saved." : "Document date cleared.";
+        Status = edit.Date.HasValue ? DesktopText.Translate("Document date saved.") : DesktopText.Translate("Document date cleared.");
     });
 
     internal Task EditBatchDocumentDatesAsync()
@@ -37,7 +37,7 @@ internal sealed partial class InboxViewModel
             var edit = await _dialogs.EditBatchDocumentDatesAsync(commonDate, selectedIds.Length);
             if (edit is null)
             {
-                Status = "Document date editor closed.";
+                Status = DesktopText.Translate("Document date editor closed.");
                 return;
             }
 
@@ -45,7 +45,7 @@ internal sealed partial class InboxViewModel
             await Task.Run(() => library.SetDocumentDates(selectedIds, edit.Date, token), token);
             LoadResults(retainLoadedResults: true);
             string count = DocumentCount(selectedIds.Length);
-            Status = edit.Date.HasValue ? $"Document date saved for {count}." : $"Document dates cleared for {count}.";
+            Status = edit.Date.HasValue ? DesktopText.Format($"Document date saved for {count}.") : DesktopText.Format($"Document dates cleared for {count}.");
         });
     }
 }

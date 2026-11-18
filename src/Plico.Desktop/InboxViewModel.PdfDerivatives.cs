@@ -10,7 +10,7 @@ internal sealed partial class InboxViewModel
     private Task ExportRedactedPdfAsync()
     {
         if (SelectedDocument is not { } document) return Task.CompletedTask;
-        return RunOperationAsync("Mark the areas to redact…", async token =>
+        return RunOperationAsync(DesktopText.Translate("Mark the areas to redact…"), async token =>
         {
             var library = RequireLibrary();
             var marks = await _dialogs.MarkPdfRedactionsAsync(document.PageCount, _pageNumber,
@@ -22,13 +22,13 @@ internal sealed partial class InboxViewModel
                 }, previewToken));
             if (marks is null)
             {
-                Status = "Redaction cancelled.";
+                Status = DesktopText.Translate("Redaction cancelled.");
                 return;
             }
 
             string? destination = await PickEditedPdfDestinationAsync();
             if (destination is null) return;
-            Status = "Removing the marked areas and rebuilding searchable text…";
+            Status = DesktopText.Translate("Removing the marked areas and rebuilding searchable text…");
             var language = RecognitionLanguage;
             string path = await Task.Run(() => library.ExportRedactedPdfAsync(document.Id, marks, destination, language, token), token);
             ReportEditedPdfExport(path);
@@ -39,18 +39,18 @@ internal sealed partial class InboxViewModel
     private Task ExportStampedPdfAsync()
     {
         if (SelectedDocument is not { } document) return Task.CompletedTask;
-        return RunOperationAsync("Choose a stamp…", async token =>
+        return RunOperationAsync(DesktopText.Translate("Choose a stamp…"), async token =>
         {
             var library = RequireLibrary();
             var request = await _dialogs.ChoosePdfStampAsync(document.PageCount, _pageNumber);
             if (request is null)
             {
-                Status = "Stamp export cancelled.";
+                Status = DesktopText.Translate("Stamp export cancelled.");
                 return;
             }
             string? destination = await PickEditedPdfDestinationAsync();
             if (destination is null) return;
-            Status = "Stamping the PDF…";
+            Status = DesktopText.Translate("Stamping the PDF…");
             string path = await Task.Run(() => library.ExportStampedPdfAsync(document.Id, request.Pages, request.Stamp, destination, token), token);
             ReportEditedPdfExport(path);
         });
@@ -60,22 +60,22 @@ internal sealed partial class InboxViewModel
     private Task ExportCompressedPdfAsync()
     {
         if (SelectedDocument is not { } document) return Task.CompletedTask;
-        return RunOperationAsync("Choose PDF compression…", async token =>
+        return RunOperationAsync(DesktopText.Translate("Choose PDF compression…"), async token =>
         {
             var library = RequireLibrary();
             var mode = await _dialogs.ChoosePdfCompressionAsync();
             if (mode is null)
             {
-                Status = "Compression cancelled.";
+                Status = DesktopText.Translate("Compression cancelled.");
                 return;
             }
             string? destination = await PickEditedPdfDestinationAsync();
             if (destination is null) return;
-            Status = "Optimizing the PDF…";
+            Status = DesktopText.Translate("Optimizing the PDF…");
             var result = await Task.Run(() => library.ExportCompressedPdfAsync(document.Id, mode.Value, destination, token), token);
             if (result.Location is null)
             {
-                Status = "The original PDF is already as small as this mode can make it.";
+                Status = DesktopText.Translate("The original PDF is already as small as this mode can make it.");
                 return;
             }
             ReportEditedPdfExport(result.Location);
@@ -84,14 +84,14 @@ internal sealed partial class InboxViewModel
 
     private async Task<string?> PickEditedPdfDestinationAsync()
     {
-        string? path = await _dialogs.PickFolderAsync("Choose where to export the PDF");
-        if (path is null) Status = "Export cancelled.";
+        string? path = await _dialogs.PickFolderAsync(DesktopText.Translate("Choose where to export the PDF"));
+        if (path is null) Status = DesktopText.Translate("Export cancelled.");
         return path;
     }
 
     private void ReportEditedPdfExport(string path)
     {
         LatestExportLocation = Path.GetDirectoryName(path)!;
-        Status = $"Exported {Path.GetFileName(path)} to {LatestExportLocation}.";
+        Status = DesktopText.Format($"Exported {Path.GetFileName(path)} to {LatestExportLocation}.");
     }
 }

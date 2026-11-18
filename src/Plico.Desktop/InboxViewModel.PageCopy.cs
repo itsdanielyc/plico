@@ -29,11 +29,11 @@ internal sealed partial class InboxViewModel
             var request = await _dialogs.ChoosePdfPageCopyAsync(document, currentPage, action);
             if (request is null)
             {
-                Status = rotate ? "Page rotation closed." : "Page extraction closed.";
+                Status = rotate ? DesktopText.Translate("Page rotation closed.") : DesktopText.Translate("Page extraction closed.");
                 return;
             }
 
-            Status = rotate ? "Rotating selected pages…" : "Extracting selected pages…";
+            Status = rotate ? DesktopText.Translate("Rotating selected pages…") : DesktopText.Translate("Extracting selected pages…");
             var copy = await Task.Run(() => rotate
                 ? library.RotatePdfPagesAsync(document.Id, request.Selection,
                     request.Rotation ?? throw new InvalidOperationException("Choose a rotation."), request.Title, token)
@@ -41,7 +41,7 @@ internal sealed partial class InboxViewModel
             RevealNewInboxDocument(copy.Id);
             int pageCount = request.Selection.SelectedPageCount;
             string pages = pageCount == 1 ? "1 page" : $"{pageCount} pages";
-            Status = rotate ? $"Rotated {pages} in a new copy." : $"Extracted {pages}.";
+            Status = rotate ? DesktopText.Format($"Rotated {pages} in a new copy.") : DesktopText.Format($"Extracted {pages}.");
         });
     }
 }

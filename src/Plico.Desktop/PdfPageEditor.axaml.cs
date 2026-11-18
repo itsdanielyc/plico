@@ -46,10 +46,10 @@ internal sealed partial class PdfPageEditor : Window
         RangePanel.IsVisible = Action != EditAction.Reorder;
         TurnBox.IsVisible = Action == EditAction.Rotate;
         RangeHint.Text = Action == EditAction.Split
-            ? "Enter the first page of each new part after page 1. For example, 3, 6."
-            : "Enter page numbers or ranges. For example, 1, 3–5.";
-        ResultHint.Text = Action == EditAction.Split ? "Plico keeps the original PDF and adds the parts to your inbox."
-            : "Plico saves the previous PDF in version history.";
+            ? DesktopText.Translate("Enter the first page of each new part after page 1. For example, 3, 6.")
+            : DesktopText.Translate("Enter page numbers or ranges. For example, 1, 3–5.");
+        ResultHint.Text = Action == EditAction.Split ? DesktopText.Translate("Plico keeps the original PDF and adds the parts to your inbox.")
+            : DesktopText.Translate("Plico saves the previous PDF in version history.");
         ValidationMessage.IsVisible = false;
     }
 
@@ -93,7 +93,7 @@ internal sealed partial class PdfPageEditor : Window
         if (Action == EditAction.Reorder)
         {
             if (_pageOrder.SequenceEqual(Enumerable.Range(1, _pageCount)))
-                throw new ArgumentException("Move at least one page to change the order.");
+                throw new ArgumentException(DesktopText.Translate("Move at least one page to change the order."));
             return new ReorderPdfPages(_pageOrder.ToArray());
         }
 
@@ -105,7 +105,7 @@ internal sealed partial class PdfPageEditor : Window
             for (int index = 0; index < entries.Length; index++)
             {
                 if (!int.TryParse(entries[index], NumberStyles.None, CultureInfo.InvariantCulture, out int page) || page < 2 || page > _pageCount)
-                    throw new ArgumentException("Choose the start of a new part between page 2 and the end of the PDF.");
+                    throw new ArgumentException(DesktopText.Translate("Choose the start of a new part between page 2 and the end of the PDF."));
                 starts[index] = page;
             }
             return new SplitPdfPages(starts);
@@ -114,7 +114,7 @@ internal sealed partial class PdfPageEditor : Window
         if (Action == EditAction.Rotate) return new RotatePdfPages(selection, Rotations[TurnBox.SelectedIndex]);
         if (Action == EditAction.Delete)
         {
-            if (selection.SelectedPageCount == _pageCount) throw new ArgumentException("Keep at least one page in the PDF.");
+            if (selection.SelectedPageCount == _pageCount) throw new ArgumentException(DesktopText.Translate("Keep at least one page in the PDF."));
             return new DeletePdfPages(selection);
         }
         throw new InvalidOperationException("Choose a page editing action.");

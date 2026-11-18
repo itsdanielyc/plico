@@ -31,7 +31,7 @@ internal sealed partial class ScanDialog : Window
 
     private static readonly SourceOption[] Sources =
     [
-        new("Automatic", ScanFeed.Automatic),
+        new(DesktopText.Translate("Automatic"), ScanFeed.Automatic),
         new("Flatbed", ScanFeed.Flatbed),
         new("Feeder · one-sided", ScanFeed.Feeder),
         new("Feeder · two-sided", ScanFeed.Duplex)

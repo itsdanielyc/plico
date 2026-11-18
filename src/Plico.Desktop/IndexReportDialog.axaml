@@ -1,10 +1,11 @@
-<Window xmlns="https://github.com/avaloniaui" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:translation="using:Plico.Desktop" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:local="using:Plico.Desktop" x:Class="Plico.Desktop.IndexReportDialog"
-        Title="Index report" Width="640" Height="402" MinWidth="420" MinHeight="290"
-        WindowStartupLocation="CenterOwner" FontFamily="{StaticResource InterFont}" Background="#F4F5EF">
+        Title="{translation:Tr IndexReport}" Width="640" Height="402" MinWidth="420" MinHeight="290"
+        WindowStartupLocation="CenterOwner" FontFamily="{StaticResource InterFont}" Background="{DynamicResource WorkspaceSurface}">
     <Grid Margin="23" RowDefinitions="*,Auto" RowSpacing="14">
-        <ListBox x:Name="IndexReportList" Background="#FCFDF8" BorderBrush="#DDE2D7" BorderThickness="1"
-                 ScrollViewer.HorizontalScrollBarVisibility="Disabled" AutomationProperties.Name="Unavailable PDFs and refresh notices">
+        <ListBox x:Name="IndexReportList" Background="{DynamicResource CardSurface}" BorderBrush="{DynamicResource PanelOutline}" BorderThickness="1"
+                 ScrollViewer.HorizontalScrollBarVisibility="Disabled" AutomationProperties.Name="{translation:Tr UnavailablePDFsAndRefreshNotices}">
             <ListBox.Styles>
                 <Style Selector="ListBoxItem">
                     <Setter Property="Padding" Value="12" />
@@ -15,18 +16,18 @@
                 <DataTemplate x:DataType="local:IndexReportLine">
                     <Grid ColumnDefinitions="104,*" ColumnSpacing="12">
                         <TextBlock Text="{Binding Label}" FontWeight="SemiBold" TextWrapping="Wrap" />
-                        <TextBlock Grid.Column="1" Text="{Binding Detail}" Foreground="#5C685D" TextWrapping="Wrap" />
+                        <TextBlock Grid.Column="1" Text="{Binding Detail}" Foreground="{DynamicResource MutedInk}" TextWrapping="Wrap" />
                     </Grid>
                 </DataTemplate>
             </ListBox.ItemTemplate>
         </ListBox>
         <StackPanel Grid.Row="1" Orientation="Horizontal" HorizontalAlignment="Right" Spacing="8">
-            <Button Content="Close" IsCancel="True" Click="Close_Click" Padding="13,7" />
-            <Button x:Name="RestoreFromFolderButton" Content="Restore from folder…" Click="RestoreFromFolder_Click"
+            <Button Content="{translation:Tr Close}" IsCancel="True" Click="Close_Click" Padding="13,7" />
+            <Button x:Name="RestoreFromFolderButton" Content="{translation:Tr RestoreFromFolder}" Click="RestoreFromFolder_Click"
                     Padding="13,7" />
-            <Button x:Name="RestorePdfButton" Content="Restore PDF…" IsEnabled="False" Click="Restore_Click"
-                    ToolTip.Tip="Copy an exact match to the original library path"
-                    Padding="13,7" Background="#254C37" Foreground="White" />
+            <Button x:Name="RestorePdfButton" Content="{translation:Tr RestorePDF}" IsEnabled="False" Click="Restore_Click"
+                    ToolTip.Tip="{translation:Tr CopyAnExactMatchToTheOriginalLibraryPath}"
+                    Padding="13,7" Background="{DynamicResource PrimarySurface}" Foreground="White" />
         </StackPanel>
     </Grid>
 </Window>

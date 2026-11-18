@@ -6,7 +6,7 @@ namespace Plico.Desktop;
 /// <summary>A tag and its number of assignments within the captured selection.</summary>
 internal sealed record BatchTagOption(string Label, int DocumentCount)
 {
-    public string CountLabel => DocumentCount == 1 ? "1 document" : $"{DocumentCount} documents";
+    public string CountLabel => DocumentCount == 1 ? "1 document" : DesktopText.Format($"{DocumentCount} documents");
 }
 
 /// <summary>Asks which tag to remove from the currently selected documents.</summary>

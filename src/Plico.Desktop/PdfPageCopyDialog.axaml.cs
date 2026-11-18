@@ -14,8 +14,8 @@ internal sealed partial class PdfPageCopyDialog : Window
 {
     private static readonly PdfRotationChoice[] RotationChoices =
     [
-        new(PdfPageRotation.Clockwise, "90° clockwise"),
-        new(PdfPageRotation.Counterclockwise, "90° counterclockwise"),
+        new(PdfPageRotation.Clockwise, DesktopText.Translate("90° clockwise")),
+        new(PdfPageRotation.Counterclockwise, DesktopText.Translate("90° counterclockwise")),
         new(PdfPageRotation.HalfTurn, "180°")
     ];
     private readonly int _documentPageCount;
@@ -27,7 +27,7 @@ internal sealed partial class PdfPageCopyDialog : Window
         _documentPageCount = documentPageCount;
         _action = action;
         bool rotate = action == PdfPageCopyAction.Rotate;
-        Title = rotate ? "Rotate pages" : "Extract pages";
+        Title = rotate ? DesktopText.Translate("Rotate pages") : "Extract pages";
         ConfirmPageCopyButton.Content = Title;
         PagesBox.Text = currentPage.ToString(CultureInfo.InvariantCulture);
         PageHint.Text = $"Choose pages 1 to {documentPageCount}. Use commas between entries and a hyphen for a range.";

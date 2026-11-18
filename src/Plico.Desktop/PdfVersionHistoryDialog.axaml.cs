@@ -11,13 +11,13 @@ internal sealed record PdfVersionRow(PdfVersion Version)
 {
     public string Label => Version.Change switch
     {
-        PdfRevisionKind.Reorder => "Before reordering pages",
-        PdfRevisionKind.DeletePages => "Before deleting pages",
-        PdfRevisionKind.Rotate => "Before rotating pages",
-        PdfRevisionKind.Replace => "Before adding a revised PDF",
-        PdfRevisionKind.Restore => "Before restoring an earlier PDF",
-        PdfRevisionKind.Unlock => "Password-protected original",
-        _ => "Earlier PDF"
+        PdfRevisionKind.Reorder => DesktopText.Translate("Before reordering pages"),
+        PdfRevisionKind.DeletePages => DesktopText.Translate("Before deleting pages"),
+        PdfRevisionKind.Rotate => DesktopText.Translate("Before rotating pages"),
+        PdfRevisionKind.Replace => DesktopText.Translate("Before adding a revised PDF"),
+        PdfRevisionKind.Restore => DesktopText.Translate("Before restoring an earlier PDF"),
+        PdfRevisionKind.Unlock => DesktopText.Translate("Password-protected original"),
+        _ => DesktopText.Translate("Earlier PDF")
     };
     public string Detail => $"{Version.ArchivedAt.ToLocalTime():g} · {Version.PageCount} {(Version.PageCount == 1 ? "page" : "pages")}";
 }

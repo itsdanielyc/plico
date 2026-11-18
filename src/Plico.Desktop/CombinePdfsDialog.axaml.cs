@@ -20,12 +20,12 @@ internal sealed partial class CombinePdfsDialog : Window
         InitializeComponent();
         _documents = new ObservableCollection<DocumentSummary>(documents);
         TitleBox.MaxLength = InboxLibrary.MaximumTitleLength;
-        TitleBox.Text = isBinder ? "Household binder" : DefaultTitle;
+        TitleBox.Text = isBinder ? DesktopText.Translate("Household binder") : DefaultTitle;
         if (isBinder)
         {
-            Title = "Export household binder";
-            ConfirmCombineButton.Content = "Choose destination…";
-            AutomationProperties.SetName(TitleBox, "Household binder title");
+            Title = DesktopText.Translate("Export household binder");
+            ConfirmCombineButton.Content = DesktopText.Translate("Choose destination…");
+            AutomationProperties.SetName(TitleBox, DesktopText.Translate("Household binder title"));
         }
         SourceList.ItemsSource = _documents;
         SourceList.SelectionChanged += (_, _) => UpdateOrderButtons();

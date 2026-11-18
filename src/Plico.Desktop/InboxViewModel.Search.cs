@@ -20,19 +20,19 @@ internal sealed partial class InboxViewModel
     private bool HasExpandedResults => Documents.Count > InboxLibrary.DefaultResultPageSize;
 
     [RelayCommand]
-    private Task ChooseSearchFolderAsync() => RunOperationAsync("Choose a library folder to search…", async token =>
+    private Task ChooseSearchFolderAsync() => RunOperationAsync(DesktopText.Translate("Choose a library folder to search…"), async token =>
     {
         var library = RequireLibrary();
-        string? folder = await _dialogs.PickFolderAsync("Choose a library folder to search", library.PdfDirectory);
+        string? folder = await _dialogs.PickFolderAsync(DesktopText.Translate("Choose a library folder to search"), library.PdfDirectory);
         if (folder is null)
         {
-            Status = "Folder search cancelled.";
+            Status = DesktopText.Translate("Folder search cancelled.");
             return;
         }
 
         token.ThrowIfCancellationRequested();
         Query = library.CreateFolderSearchQuery(folder, Query);
-        Status = "Folder search applied.";
+        Status = DesktopText.Translate("Folder search applied.");
         LoadResults();
     });
 
@@ -43,7 +43,7 @@ internal sealed partial class InboxViewModel
 
     public bool HasPageMatchAction => !string.IsNullOrWhiteSpace(Query) && Query == _appliedQuery &&
         SelectedDocument is { HasText: true, PageCount: > 1, Match.Length: > 0 };
-    public string PageMatchActionLabel => PageMatchNavigationActive ? "Next match" : "Go to match";
+    public string PageMatchActionLabel => PageMatchNavigationActive ? DesktopText.Translate("Next match") : DesktopText.Translate("Go to match");
     public string PageMatchActionHelp => PageMatchNavigationActive
         ? "Go to the next page that matches the text terms"
         : "Go to the first page that matches the text terms";
@@ -61,7 +61,7 @@ internal sealed partial class InboxViewModel
         if (findFirst && direction == PageMatchDirection.Backward) return Task.CompletedTask;
         string query = Query;
         int startingPage = _pageNumber;
-        return RunOperationAsync("Finding a matching page…", async token =>
+        return RunOperationAsync(DesktopText.Translate("Finding a matching page…"), async token =>
         {
             var library = RequireLibrary();
             using var source = CancellationTokenSource.CreateLinkedTokenSource(token);
@@ -78,7 +78,7 @@ internal sealed partial class InboxViewModel
             catch (Exception) when (source.IsCancellationRequested)
             {
                 token.ThrowIfCancellationRequested();
-                Status = "Search or preview changed.";
+                Status = DesktopText.Translate("Search or preview changed.");
                 return;
             }
             finally
@@ -89,7 +89,7 @@ internal sealed partial class InboxViewModel
             if (!ReferenceEquals(_library, library) || Query != query || SelectedDocument?.Id != document.Id ||
                 _pageNumber != startingPage)
             {
-                Status = "Search or preview changed.";
+                Status = DesktopText.Translate("Search or preview changed.");
                 return;
             }
             if (match is not int page)
@@ -104,12 +104,12 @@ internal sealed partial class InboxViewModel
             }
             if (page > document.PageCount)
             {
-                Status = "Refresh the index to see the PDF’s new pages.";
+                Status = DesktopText.Translate("Refresh the index to see the PDF’s new pages.");
                 return;
             }
             ShowPreviewPage(page);
             PageMatchNavigationActive = true;
-            Status = $"Match on page {page}.";
+            Status = DesktopText.Format($"Match on page {page}.");
         });
     }
 
@@ -232,14 +232,14 @@ internal sealed partial class InboxViewModel
         bool hasQuery = !string.IsNullOrWhiteSpace(filter.Query);
         if (WithoutTextSelected)
         {
-            Heading = "Without text";
-            EmptyMessage = "No PDFs without searchable text.";
+            Heading = DesktopText.Translate("Without text");
+            EmptyMessage = DesktopText.Translate("No PDFs without searchable text.");
         }
         else
         {
-            Heading = ActiveSavedSearch?.Name ?? (hasQuery ? "Search results" : filter.Tag ?? (filter.InboxOnly ? "Inbox" : "All documents"));
-            EmptyMessage = hasQuery || filter.Tag is not null ? "No documents match." :
-                filter.InboxOnly ? "Add a file to start your inbox." : "This library has no documents yet.";
+            Heading = ActiveSavedSearch?.Name ?? (hasQuery ? DesktopText.Translate("Search results") : filter.Tag ?? (filter.InboxOnly ? DesktopText.Translate("Inbox") : DesktopText.Translate("All documents")));
+            EmptyMessage = hasQuery || filter.Tag is not null ? DesktopText.Translate("No documents match.") :
+                filter.InboxOnly ? DesktopText.Translate("Add a file to start your inbox.") : DesktopText.Translate("This library has no documents yet.");
         }
         OnPropertyChanged(nameof(InboxSelected));
         OnPropertyChanged(nameof(AllSelected));

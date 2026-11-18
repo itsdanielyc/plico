@@ -30,6 +30,7 @@ internal interface IWorkspaceDialogs
     Task<IReadOnlyList<PdfRedactionRegion>?> MarkPdfRedactionsAsync(int pageCount, int currentPage, Func<int, CancellationToken, Task<Bitmap>> preview);
     Task<PdfStampRequest?> ChoosePdfStampAsync(int pageCount, int currentPage);
     Task<PdfCompressionMode?> ChoosePdfCompressionAsync();
+    Task<AppearanceOptions?> ChooseAppearanceAsync(AppearanceOptions current);
     Task<ImportErrorsAction> ShowImportErrorsAsync(IReadOnlyList<ImportFailure> failures);
     Task ShowOcrCopyBatchResultsAsync(IReadOnlyList<OcrCopyBatchItem> results);
     Task<IndexReportDecision?> ShowIndexRefreshReportAsync(IndexReport report);
@@ -63,7 +64,7 @@ internal sealed class WorkspaceDialogs(Window owner) : IWorkspaceDialogs
     {
         var files = await owner.StorageProvider.OpenFilePickerAsync(new FilePickerOpenOptions
         {
-            Title = "Add paperwork",
+            Title = DesktopText.Translate("Add paperwork"),
             AllowMultiple = true,
             FileTypeFilter = [SupportedDocuments, FilePickerFileTypes.All]
         });
@@ -137,6 +138,9 @@ internal sealed class WorkspaceDialogs(Window owner) : IWorkspaceDialogs
     public Task<PdfCompressionMode?> ChoosePdfCompressionAsync() =>
         new PdfCompressionDialog().ShowDialog<PdfCompressionMode?>(owner);
 
+    public Task<AppearanceOptions?> ChooseAppearanceAsync(AppearanceOptions current) =>
+        new AppearanceDialog(current).ShowDialog<AppearanceOptions?>(owner);
+
     public Task<ImportErrorsAction> ShowImportErrorsAsync(IReadOnlyList<ImportFailure> failures) =>
         new ImportErrorsDialog(failures).ShowDialog<ImportErrorsAction>(owner);
 
@@ -160,7 +164,7 @@ internal sealed class WorkspaceDialogs(Window owner) : IWorkspaceDialogs
 
     public Task ShowIntegrityReportAsync(IntegrityReport report) => new IntegrityReportDialog(report).ShowDialog(owner);
 
-    public Task<string?> PickRestorePdfAsync() => PickPdfAsync("Choose a matching PDF");
+    public Task<string?> PickRestorePdfAsync() => PickPdfAsync(DesktopText.Translate("Choose a matching PDF"));
 
     public async Task<string?> PickPdfAsync(string title)
     {

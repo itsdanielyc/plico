@@ -44,7 +44,7 @@ internal sealed partial class PdfRedactionDialog : Window
         _page?.Dispose();
         _page = null;
         RefreshControls();
-        PreviewNotice.Text = "Preparing a page preview…";
+        PreviewNotice.Text = DesktopText.Translate("Preparing a page preview…");
         using var request = new CancellationTokenSource();
         _previewRequest = request;
         try

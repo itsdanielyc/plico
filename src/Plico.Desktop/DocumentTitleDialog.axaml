@@ -1,16 +1,17 @@
-<Window xmlns="https://github.com/avaloniaui" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-        x:Class="Plico.Desktop.DocumentTitleDialog" Title="Edit title" Width="450" SizeToContent="Height"
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:translation="using:Plico.Desktop" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        x:Class="Plico.Desktop.DocumentTitleDialog" Title="{translation:Tr EditTitle}" Width="450" SizeToContent="Height"
         CanResize="False" WindowStartupLocation="CenterOwner"
-        FontFamily="{StaticResource InterFont}" Background="#F4F5EF">
+        FontFamily="{StaticResource InterFont}" Background="{DynamicResource WorkspaceSurface}">
     <StackPanel Margin="24" Spacing="11">
-        <TextBlock Text="Document title" FontSize="17" FontWeight="SemiBold" />
-        <TextBox x:Name="TitleBox" AutomationProperties.Name="Document title" />
-        <TextBlock x:Name="ValidationMessage" IsVisible="False" TextWrapping="Wrap" Foreground="#8E4037"
+        <TextBlock Text="{translation:Tr DocumentTitle}" FontSize="17" FontWeight="SemiBold" />
+        <TextBox x:Name="TitleBox" AutomationProperties.Name="{translation:Tr DocumentTitle}" />
+        <TextBlock x:Name="ValidationMessage" IsVisible="False" TextWrapping="Wrap" Foreground="{DynamicResource ValidationInk}"
                    FontSize="12" AutomationProperties.LiveSetting="Polite" />
         <StackPanel Orientation="Horizontal" Spacing="8" HorizontalAlignment="Right">
-            <Button Content="Cancel" IsCancel="True" Click="Cancel_Click" Padding="14,7" />
-            <Button x:Name="SaveTitleButton" Content="Save title" IsDefault="True" Click="Save_Click"
-                    Background="#254C37" Foreground="White" Padding="14,7" />
+            <Button Content="{translation:Tr Cancel}" IsCancel="True" Click="Cancel_Click" Padding="14,7" />
+            <Button x:Name="SaveTitleButton" Content="{translation:Tr SaveTitle}" IsDefault="True" Click="Save_Click"
+                    Background="{DynamicResource PrimarySurface}" Foreground="White" Padding="14,7" />
         </StackPanel>
     </StackPanel>
 </Window>

@@ -12,20 +12,20 @@ internal sealed partial class InboxViewModel
     [ObservableProperty] private OcrLanguage _recognitionLanguage = OcrLanguage.English;
 
     public IReadOnlyList<OcrLanguage> RecognitionLanguages => AvailableRecognitionLanguages;
-    public string SearchableCopyAction => HasNoSearchableText ? "Create searchable copy" : "Create OCR copy";
+    public string SearchableCopyAction => HasNoSearchableText ? DesktopText.Translate("Create searchable copy") : DesktopText.Translate("Create OCR copy");
 
     [RelayCommand]
     private Task CreateSearchableCopyAsync()
     {
         if (SelectedDocument is not { } scan) return Task.CompletedTask;
         var language = RecognitionLanguage;
-        return RunOperationAsync("Creating a searchable copy…", async token =>
+        return RunOperationAsync(DesktopText.Translate("Creating a searchable copy…"), async token =>
         {
             var library = RequireLibrary();
             var result = await Task.Run(() => library.CreateSearchableCopyAsync(scan.Id, token, language), token);
             if (result.Added) RefreshInboxCount();
             Navigate(inboxOnly: !result.Document.Reviewed, preferredId: result.Document.Id);
-            Status = result.Added ? "Searchable copy added to inbox." : "Searchable copy already in the library.";
+            Status = result.Added ? DesktopText.Translate("Searchable copy added to inbox.") : DesktopText.Translate("Searchable copy already in the library.");
         });
     }
 
@@ -50,7 +50,7 @@ internal sealed partial class InboxViewModel
         }
         catch (Exception error) when (error is IOException or UnauthorizedAccessException)
         {
-            Status = $"Using {value} OCR for this session. {error.Message}";
+            Status = DesktopText.Format($"Using {value} OCR for this session. {error.Message}");
         }
     }
 }

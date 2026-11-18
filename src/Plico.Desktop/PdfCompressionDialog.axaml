@@ -1,15 +1,16 @@
-<Window xmlns="https://github.com/avaloniaui" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-        x:Class="Plico.Desktop.PdfCompressionDialog" Title="Compress PDF" Width="450" SizeToContent="Height"
-        WindowStartupLocation="CenterOwner" CanResize="False" FontFamily="{StaticResource InterFont}" Background="#F4F5EF">
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:translation="using:Plico.Desktop" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        x:Class="Plico.Desktop.PdfCompressionDialog" Title="{translation:Tr CompressPDF}" Width="450" SizeToContent="Height"
+        WindowStartupLocation="CenterOwner" CanResize="False" FontFamily="{StaticResource InterFont}" Background="{DynamicResource WorkspaceSurface}">
     <StackPanel Margin="24" Spacing="12">
-        <RadioButton x:Name="LosslessOption" Content="Lossless" GroupName="Compression" IsChecked="True" />
-        <RadioButton x:Name="SmallerScansOption" Content="Smaller scans" GroupName="Compression" />
-        <TextBlock Text="The smaller scan setting reduces resolution and JPEG quality for supported color images. Both modes keep searchable text."
-                   TextWrapping="Wrap" Foreground="#5C685D" />
+        <RadioButton x:Name="LosslessOption" Content="{translation:Tr Lossless}" GroupName="Compression" IsChecked="True" />
+        <RadioButton x:Name="SmallerScansOption" Content="{translation:Tr SmallerScans}" GroupName="Compression" />
+        <TextBlock Text="{translation:Tr TheSmallerScanSettingReducesResolutionAndJPEGQualityForSupport}"
+                   TextWrapping="Wrap" Foreground="{DynamicResource MutedInk}" />
         <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" Spacing="8">
-            <Button Content="Cancel" IsCancel="True" Click="Cancel_Click" />
-            <Button x:Name="ConfirmCompression" Content="Choose destination…" IsDefault="True" Click="Confirm_Click"
-                    Background="#254C37" Foreground="White" />
+            <Button Content="{translation:Tr Cancel}" IsCancel="True" Click="Cancel_Click" />
+            <Button x:Name="ConfirmCompression" Content="{translation:Tr ChooseDestination}" IsDefault="True" Click="Confirm_Click"
+                    Background="{DynamicResource PrimarySurface}" Foreground="White" />
         </StackPanel>
     </StackPanel>
 </Window>
