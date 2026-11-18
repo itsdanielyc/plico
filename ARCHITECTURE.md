@@ -87,6 +87,8 @@ The query compiler extracts tag clauses and normalizes their keys with the same 
 
 A `folder:` branch uses the existing unique relative-path index to find the rows between its slash-delimited prefix and upper bound. The query joins those IDs to the rest of the search. For `folder:.`, it checks for paths with zero folder separators. [SQLite query plans](https://sqlite.org/eqp.html)
 
+The folder picker validates the resolved directory against the PDF root. The query parser records the existing folder clause ranges and replaces them with the chosen path, retaining quoted text and other predicates. The final query is compiled again to verify the visible scope.
+
 Typed search uses a single background reader for results. Editing the query cancels the previous read and gives the newest request control of the results. SQLite checks cancellation during the read so an abandoned query can release the reader slot. [SQLite progress callbacks](https://www.sqlite.org/c3ref/progress_handler.html)
 
 Match navigation reads the selected PDF in the background. A scratch FTS5 index uses the catalog’s query compiler and tokenizer and holds the text index for one page. A matching-page step starts beside the current preview page and stops at the closest hit in the requested direction. Changing the search, selection, or preview page cancels a pending jump. [FTS5 contentless indexes](https://sqlite.org/fts5.html#the_delete_all_command)

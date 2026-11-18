@@ -21,6 +21,7 @@ internal static partial class SearchTerms
     private const string ReviewedStatus = "reviewed";
     private const string TextMissing = "missing";
     private const string TextPresent = "present";
+    private const string CompleteSearchForFolder = "Complete the current search before choosing a folder.";
     private const int YearLength = 4;
     private const int MonthLength = 7;
     private const int DayLength = 10;
@@ -42,8 +43,58 @@ internal static partial class SearchTerms
             LastDay < other.LastDay ? LastDay : other.LastDay);
     }
 
+    internal static CompiledSearch Compile(string query) => Compile(query, folderClauses: null);
+
+    // O(n + p) time and space for query length n and selected path length p.
+    internal static string WithFolderScope(string query, string folder)
+    {
+        ArgumentNullException.ThrowIfNull(query);
+        ArgumentException.ThrowIfNullOrEmpty(folder);
+        var folderClauses = new List<(int Start, int End)>();
+        if (!Compile(query, folderClauses).IsValid) throw new ArgumentException(CompleteSearchForFolder, nameof(query));
+
+        string quoted = folder == RootFolderScope ? folder :
+            $"\"{folder.Replace("\\", "\\\\", StringComparison.Ordinal).Replace("\"", "\\\"", StringComparison.Ordinal)}\"";
+        string clause = FolderPrefix + quoted;
+        if (ReadFolderClause(clause, FolderPrefix.Length) is null)
+        {
+            throw new ArgumentException("The selected folder path contains characters that search cannot use.", nameof(folder));
+        }
+
+        var updated = new StringBuilder();
+        int preservedFrom = 0;
+        foreach (var (start, end) in folderClauses)
+        {
+            AppendQueryPart(updated, query.AsSpan(preservedFrom, start - preservedFrom));
+            preservedFrom = end;
+        }
+        AppendQueryPart(updated, query.AsSpan(preservedFrom));
+        AppendQueryPart(updated, clause);
+        if (updated.Length > MaximumQueryLength)
+        {
+            throw new ArgumentException("Shorten the search or choose a folder with a shorter path.", nameof(query));
+        }
+
+        string result = updated.ToString();
+        // An unfinished quoted phrase can absorb the new clause and hide the selected scope.
+        var compiled = Compile(result);
+        if (!compiled.IsValid || !string.Equals(compiled.FolderPath, folder, StringComparison.Ordinal))
+        {
+            throw new ArgumentException(CompleteSearchForFolder, nameof(query));
+        }
+        return result;
+    }
+
+    private static void AppendQueryPart(StringBuilder output, ReadOnlySpan<char> part)
+    {
+        part = part.Trim();
+        if (part.IsEmpty) return;
+        if (output.Length > 0) output.Append(' ');
+        output.Append(part);
+    }
+
     // O(n) time and space in the bounded query length. Quoted text is scanned once.
-    internal static CompiledSearch Compile(string query)
+    private static CompiledSearch Compile(string query, List<(int Start, int End)>? folderClauses)
     {
         ArgumentOutOfRangeException.ThrowIfGreaterThan(query.Length, MaximumQueryLength);
         if (!query.Contains(TagPrefix, StringComparison.OrdinalIgnoreCase) &&
@@ -88,9 +139,13 @@ internal static partial class SearchTerms
                 else if (remaining.StartsWith(FolderPrefix, StringComparison.OrdinalIgnoreCase))
                 {
                     if (ReadFolderClause(query, cursor + FolderPrefix.Length) is not { } folder) return InvalidSearch(SearchQueryIssue.Folder);
-                    folderPath = folderPath is null ? folder.Path : IntersectFolderPaths(folderPath, folder.Path);
+                    // A picker replaces every existing folder clause, including conflicting scopes.
+                    folderPath = folderPath is null || folderClauses is not null
+                        ? folder.Path
+                        : IntersectFolderPaths(folderPath, folder.Path);
                     if (folderPath is null) return InvalidSearch(SearchQueryIssue.Folder);
                     clauseEnd = folder.End;
+                    folderClauses?.Add((cursor, clauseEnd));
                 }
                 else if (remaining.StartsWith(StatusPrefix, StringComparison.OrdinalIgnoreCase))
                 {

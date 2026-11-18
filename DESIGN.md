@@ -50,6 +50,8 @@ The results count shows **Searching…** after a query edit. **Load more** becom
 
 The search box hints at review status, tags, and dates. Its tooltip gives examples for `status:inbox`, `status:reviewed`, and the existing filters. `added:` uses the displayed local intake date. Folder filters use the stored relative path.
 
+**Folder…** beside search opens a native picker in the library’s PDF directory. The selected folder appears as an editable search clause alongside the other terms.
+
 **Without text** opens the library-wide `text:missing` search. The query is visible and editable. The same selection actions allow batch OCR from this view, and `text:present` finds PDFs with searchable text.
 
 A malformed filter shows **Check search** beside the sort selector and an example in the results pane. The search box keeps the query editable. A valid search with no hits shows **No documents match.**

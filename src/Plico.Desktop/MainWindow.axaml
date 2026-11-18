@@ -172,7 +172,7 @@
 
         <Grid Grid.Column="1" RowDefinitions="Auto,*,Auto">
             <Border Background="#FCFDF8" BorderBrush="#DDE2D7" BorderThickness="0,0,0,1" Padding="25,16">
-                <Grid ColumnDefinitions="*,Auto,Auto,Auto" ColumnSpacing="10">
+                <Grid ColumnDefinitions="*,Auto,Auto,Auto,Auto" ColumnSpacing="10">
                     <TextBox x:Name="SearchBox" Text="{Binding Query, Mode=TwoWay}" MaxLength="256"
                              PlaceholderText="Search text, status:…, tag:…, dated:…" AutomationProperties.Name="Search documents"
                              ToolTip.Tip="Use status:inbox for the review queue or status:reviewed for reviewed PDFs.&#10;Use text:missing or text:present to filter by searchable text.&#10;dated:2024-02 matches the document date. added:2026-11 matches the date added.&#10;Use tag:tax, folder:&quot;Filed/Property&quot;, and quoted phrases in the same query."
@@ -182,15 +182,18 @@
                                       Data="M10,2 A8,8 0 1 0 10,18 A8,8 0 1 0 10,2 M10,4 A6,6 0 1 1 10,16 A6,6 0 1 1 10,4 M15,16 L21,22 L23,20 L17,14 Z" />
                         </TextBox.InnerLeftContent>
                     </TextBox>
-                    <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="6">
+                    <Button Grid.Column="1" x:Name="ChooseSearchFolderButton" Classes="secondary"
+                            Command="{Binding ChooseSearchFolderCommand}" Content="Folder…" IsEnabled="{Binding CanWork}"
+                            AutomationProperties.Name="Choose a library folder to search" MinHeight="38" />
+                    <StackPanel Grid.Column="2" Orientation="Horizontal" Spacing="6">
                         <TextBlock Text="OCR" Classes="muted" VerticalAlignment="Center" />
                         <ComboBox x:Name="OcrLanguageBox" ItemsSource="{Binding RecognitionLanguages}"
                                   SelectedItem="{Binding RecognitionLanguage, Mode=TwoWay}" MinWidth="96" MinHeight="38"
                                   IsEnabled="{Binding IsIdle}" AutomationProperties.Name="OCR language" />
                     </StackPanel>
-                    <Button Grid.Column="2" x:Name="ScanButton" Classes="secondary" Command="{Binding ScanCommand}"
+                    <Button Grid.Column="3" x:Name="ScanButton" Classes="secondary" Command="{Binding ScanCommand}"
                             Content="Scan" IsEnabled="{Binding CanWork}" MinHeight="38" />
-                    <Button Grid.Column="3" x:Name="AddFilesButton" Classes="primary"
+                    <Button Grid.Column="4" x:Name="AddFilesButton" Classes="primary"
                             IsEnabled="{Binding CanWork}" Command="{Binding AddFilesCommand}" Content="Add files" MinHeight="38" />
                 </Grid>
             </Border>

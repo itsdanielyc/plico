@@ -17,6 +17,23 @@ internal sealed partial class InboxViewModel
     private string? _appliedQuery;
     private bool _hasAppendedResults;
 
+    [RelayCommand]
+    private Task ChooseSearchFolderAsync() => RunOperationAsync("Choose a library folder to search…", async token =>
+    {
+        var library = RequireLibrary();
+        string? folder = await _dialogs.PickFolderAsync("Choose a library folder to search", library.PdfDirectory);
+        if (folder is null)
+        {
+            Status = "Folder search cancelled.";
+            return;
+        }
+
+        token.ThrowIfCancellationRequested();
+        Query = library.CreateFolderSearchQuery(folder, Query);
+        Status = "Folder search applied.";
+        LoadResults();
+    });
+
     [ObservableProperty]
     [NotifyPropertyChangedFor(nameof(PageMatchActionLabel))]
     [NotifyPropertyChangedFor(nameof(PageMatchActionHelp))]
