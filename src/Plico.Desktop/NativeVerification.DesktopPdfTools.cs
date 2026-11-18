@@ -26,8 +26,9 @@ internal static partial class NativeVerification
         await UntilAsync(() => model.Preview is not null && model.PageLabel == "2 / 2", () => model.Status);
         Control<Button>(window, "ZoomInButton").Command!.Execute(null);
         await UntilAsync(() => model.Preview is not null && model.PreviewZoomPercent == 100 && model.PreviewDisplayWidth > 0, () => model.Status);
-        Require(Control<ScrollViewer>(window, "PreviewScroll").HorizontalScrollBarVisibility ==
-            Avalonia.Controls.Primitives.ScrollBarVisibility.Auto, "The zoomed PDF could not scroll horizontally.");
+        var previewScroll = Control<ScrollViewer>(window, "PreviewScroll");
+        Require(previewScroll.HorizontalScrollBarVisibility == ScrollBarVisibility.Auto && previewScroll.Viewport.Height >= 96,
+            $"The zoomed PDF could not scroll or fit a usable viewport. Preview height {previewScroll.Viewport.Height}.");
         await CaptureAsync(window, evidence, "pdf-thumbnails-and-zoom.png");
         model.TogglePreviewFitCommand.Execute(null);
         model.TogglePageThumbnailsCommand.Execute(null);
@@ -45,7 +46,7 @@ internal static partial class NativeVerification
         try
         {
             await model.ShowAppearanceCommand.ExecuteAsync(null);
-            await UntilAsync(() => window.ActualThemeVariant == ThemeVariant.Dark &&
+            await UntilAsync(() => model.Preview is not null && window.ActualThemeVariant == ThemeVariant.Dark &&
                 window.Background is ISolidColorBrush { Color: { R: 23, G: 36, B: 29 } }, () => model.Status);
             await CaptureAsync(window, evidence, "desktop-dark.png");
 

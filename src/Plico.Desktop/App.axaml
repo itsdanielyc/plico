@@ -94,5 +94,11 @@
     </Application.Resources>
     <Application.Styles>
         <FluentTheme />
+        <Style Selector="TextBox">
+            <Setter Property="PlaceholderForeground" Value="{DynamicResource MutedInk}" />
+        </Style>
+        <Style Selector="AutoCompleteBox">
+            <Setter Property="PlaceholderForeground" Value="{DynamicResource MutedInk}" />
+        </Style>
     </Application.Styles>
 </Application>
