@@ -11,6 +11,8 @@
     <PackageReference Include="Avalonia.Fonts.Inter" />
     <PackageReference Include="Avalonia.Themes.Fluent" />
     <PackageReference Include="CommunityToolkit.Mvvm" />
+    <PackageReference Include="NAPS2.Pdfium.Binaries" />
+    <PackageReference Include="NAPS2.Tesseract.Binaries" />
     <PackageReference Include="SkiaSharp.NativeAssets.Linux" />
     <ProjectReference Include="../Plico.Core/Plico.Core.csproj" />
     <InternalsVisibleTo Include="Plico.Tests" />

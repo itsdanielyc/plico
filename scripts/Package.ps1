@@ -13,21 +13,24 @@ $stage = [IO.Directory]::CreateTempSubdirectory('plico-package-')
 
 try {
     $publish = Join-Path $stage.FullName 'Plico'
+    $resources = $publish
+    $bundle = Join-Path $stage.FullName 'Plico.app'
     if ($Runtime -eq 'osx-arm64') {
-        $publish = Join-Path $stage.FullName 'Plico.app/Contents/MacOS'
+        if (-not $IsMacOS) { throw 'Package the macOS app on macOS so it can be signed.' }
+        $publish = Join-Path $bundle 'Contents/MacOS'
+        $resources = Join-Path $bundle 'Contents/Resources'
     }
 
     dotnet publish (Join-Path $repository 'src/Plico.Desktop/Plico.Desktop.csproj') -c Release -r $Runtime --self-contained -o $publish -p:NuGetLockFilePath=obj/publish-packages.lock.json
-    & (Join-Path $PSScriptRoot 'Copy-Notices.ps1') -AssetsFile (Join-Path $repository 'src/Plico.Desktop/obj/project.assets.json') -InstallDirectory $publish
+    New-Item -ItemType Directory -Force -Path $resources | Out-Null
+    & (Join-Path $PSScriptRoot 'Copy-Notices.ps1') -AssetsFile (Join-Path $repository 'src/Plico.Desktop/obj/project.assets.json') -InstallDirectory $resources
     foreach ($file in @('README.md', 'THIRD-PARTY.md')) {
         $notice = Join-Path $repository $file
-        if (Test-Path -LiteralPath $notice) { Copy-Item -LiteralPath $notice -Destination $publish }
+        if (Test-Path -LiteralPath $notice) { Copy-Item -LiteralPath $notice -Destination $resources }
     }
 
     if ($Runtime -eq 'osx-arm64') {
-        if (-not $IsMacOS) { throw 'Package the macOS app on macOS so it can be signed.' }
         $plist = Get-Content -Raw -LiteralPath (Join-Path $PSScriptRoot 'macos/Info.plist')
-        $bundle = Join-Path $stage.FullName 'Plico.app'
         $plist.Replace('@VERSION@', $version) | Set-Content -Encoding utf8NoBOM -LiteralPath (Join-Path $bundle 'Contents/Info.plist')
         Get-ChildItem -LiteralPath $publish -File -Recurse -Filter 'tesseract' | ForEach-Object { chmod +x $_.FullName }
         codesign --force --deep --sign - $bundle

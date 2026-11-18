@@ -1,6 +1,6 @@
 # Third-party software in Plico
 
-Release archives carry package notices under `licenses/`. The application ships the .NET runtime, Avalonia, SQLite, and the document components below. The complete resolved package versions are recorded in the repository's NuGet lock files.
+Release archives carry package notices under `licenses/`, in `Contents/Resources/` on macOS. The application ships the .NET runtime, Avalonia, SQLite, and the document components below. The complete resolved package versions are recorded in the repository's NuGet lock files.
 
 | Component | License or notices | Sources |
 | --- | --- | --- |

@@ -147,7 +147,8 @@
                                             <StackPanel Grid.Column="1" Spacing="4">
                                                 <TextBlock Text="{Binding Title}" FontSize="13" FontWeight="SemiBold" TextTrimming="CharacterEllipsis" />
                                                 <TextBlock Text="{Binding AddedAt.LocalDateTime, StringFormat='{}{0:dd MMM yyyy}'}" Classes="muted" />
-                                                <TextBlock Text="{Binding Match}" Classes="muted" TextTrimming="CharacterEllipsis" />
+                                                <TextBlock Text="{Binding Match}" Classes="muted" TextWrapping="Wrap"
+                                                           MaxLines="2" TextTrimming="CharacterEllipsis" />
                                             </StackPanel>
                                         </Grid>
                                     </DataTemplate>

@@ -23,12 +23,6 @@
           "SkiaSharp": "4.156.0"
         }
       },
-      "NAPS2.Pdfium.Binaries": {
-        "type": "Direct",
-        "requested": "[1.3.0, )",
-        "resolved": "1.3.0",
-        "contentHash": "YoucjhTDLzcVNTIe2kM0wwIK77Mq8b51iHjCblfiaiAr7XMydZ4da7LZLt7jjPjKJtXa5p6mL+J08fP8AASXhw=="
-      },
       "NAPS2.Sdk": {
         "type": "Direct",
         "requested": "[1.6.1, )",
@@ -48,12 +42,6 @@
           "System.Resources.Extensions": "10.0.10",
           "ZXing.Net": "0.16.11"
         }
-      },
-      "NAPS2.Tesseract.Binaries": {
-        "type": "Direct",
-        "requested": "[1.5.0, )",
-        "resolved": "1.5.0",
-        "contentHash": "Mf8audriQ1/qpplle6WEZo+wV/CJTpt+0tM+CnU4VhLJrtgWrc6UqOurT0oAfW+cHdquhTM85jj9LbX+QhBMUA=="
       },
       "PdfPig": {
         "type": "Direct",
