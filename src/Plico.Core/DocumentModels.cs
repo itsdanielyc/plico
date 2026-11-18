@@ -1,7 +1,7 @@
 namespace Plico.Core;
 
 /// <summary>The bundled model used to recognize text in new scans and imports.</summary>
-public enum OcrLanguage { English, French, German, Spanish }
+public enum OcrLanguage { English, French, German, Spanish, Italian, Portuguese, Dutch, Polish }
 
 /// <summary>The order applied to all matching records before paging.</summary>
 public enum DocumentSort { Automatic = 0, Newest = 1, Title = 2, DocumentDate = 3 }
@@ -91,7 +91,12 @@ public sealed record FileImportResult(DocumentSummary Document, bool Added);
 
 internal sealed record PdfText(string Body, int PageCount, bool HasTextOnEveryPage);
 internal readonly record struct PreparedPdf(PdfText Text, bool CopiedSource);
-internal readonly record struct OcrCopySource(long DocumentId, OcrLanguage Language);
+internal readonly record struct OcrCopySource(long DocumentId, OcrLanguage Language, OcrProcessingOptions Options)
+{
+    internal string CatalogKey => Options == OcrProcessingOptions.Default
+        ? Language.ToString()
+        : $"{Language}/{Options.Engine}/{(Options.AutoOrient ? "orient" : "original")}";
+}
 
 internal readonly record struct CatalogFileReference(long Id, string RelativePath, FileVersion Version);
 internal sealed record IndexedPdf(long Id, string RelativePath, FileVersion Version, byte[]? Fingerprint, bool HasText = true);

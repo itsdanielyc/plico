@@ -75,6 +75,19 @@
           "System.Security.Cryptography.Pkcs": "8.0.1"
         }
       },
+      "RapidOcrNet": {
+        "type": "Direct",
+        "requested": "[4.2.0, )",
+        "resolved": "4.2.0",
+        "contentHash": "BB1mZuXE7J6DnvndiFKcO8/voMHgXzWMtda7qzQyBrSyZqSiI/W99G5jQMxYp0O57nmkH3GcrrehuXHRpiKApA==",
+        "dependencies": {
+          "Clipper2": "2.0.0",
+          "Microsoft.ML.OnnxRuntime": "1.29.0",
+          "Microsoft.ML.OnnxRuntime.Managed": "1.29.0",
+          "SkiaSharp": "3.119.1",
+          "SkiaSharp.NativeAssets.Linux.NoDependencies": "3.119.1"
+        }
+      },
       "SkiaSharp": {
         "type": "Direct",
         "requested": "[4.156.0, )",
@@ -91,11 +104,22 @@
         "resolved": "4.156.0",
         "contentHash": "H+s60e8mNUO8jiRuQQpMXQjcPnFTYb168t59mB/UAewSHNv5hXLfP8xiKeSDc4jAF/aMusjamXx9Di2FIurl/w=="
       },
+      "SkiaSharp.NativeAssets.Linux.NoDependencies": {
+        "type": "Direct",
+        "requested": "[4.156.0, )",
+        "resolved": "4.156.0",
+        "contentHash": "VpvL0V18Ffcne/PwqSw0cbVcjs/1NvCGDfDBM81E6NMwLSCnU3N/oeEYiBkAFIC+/H5ciHhkRDHDq4ew74e5ag=="
+      },
       "System.Security.Cryptography.Pkcs": {
         "type": "Direct",
         "requested": "[10.0.15, )",
         "resolved": "10.0.15",
         "contentHash": "4jEv/lXDuQkh60lPU3hlwASErXdv1ZMKmsxVuBfZWiVKT5Q2QGo58kTa6rN519+PU+m4Hsj1m3yT8fN+Xw0XZw=="
+      },
+      "Clipper2": {
+        "type": "Transitive",
+        "resolved": "2.0.0",
+        "contentHash": "2X23RZxJrjRjOSZc20aqXY9jpmHLekDRy4PIMfrsi2LPNzxFYlnuqzX/nLdk77fbURHUeX+gMhUn2a1z9/wMTQ=="
       },
       "Google.Protobuf": {
         "type": "Transitive",
@@ -148,6 +172,22 @@
         "contentHash": "zkFxGYUvdxAvIKTyXHrmW+Sux53D4SezD9dMyZ6hrwwzPQJNuwCRy1f5W7AvYTqacEGhWF2XderRQG1OvbV8og==",
         "dependencies": {
           "Microsoft.Extensions.DependencyInjection.Abstractions": "10.0.10"
+        }
+      },
+      "Microsoft.ML.OnnxRuntime": {
+        "type": "Transitive",
+        "resolved": "1.29.0",
+        "contentHash": "bUO3Ryc42UVkDGByBIYU9/ogRURGHeMOEq96LMWnDBVMQGZpIahBhPRCeu+Qq6+EJh/dfxzFJBKZa0/+yMmpWQ==",
+        "dependencies": {
+          "Microsoft.ML.OnnxRuntime.Managed": "1.29.0"
+        }
+      },
+      "Microsoft.ML.OnnxRuntime.Managed": {
+        "type": "Transitive",
+        "resolved": "1.29.0",
+        "contentHash": "jLy5PtzvRQCBFOczzfRY7zpuMVUyLwjO0Jsdd8MBZdmnPIqx5vW9cYDNyCqkrYpwkof8GlqBVaEUMWrMWRtvuw==",
+        "dependencies": {
+          "System.Numerics.Tensors": "9.0.0"
         }
       },
       "NAPS2.Escl": {
@@ -259,6 +299,11 @@
         "type": "Transitive",
         "resolved": "10.0.10",
         "contentHash": "gOcWB7GddeYRGZWA8lHi84MvuzTI3ugYISfLfCg5FTdZB3cDaoAj7yG7c2bBaO+hio1nZ5kz/BrwpzfLT1R8Bg=="
+      },
+      "System.Numerics.Tensors": {
+        "type": "Transitive",
+        "resolved": "9.0.0",
+        "contentHash": "hyJB4UlpAi19Xr9AXzu2NuagKC4lPfHObNMEAA0HmqFz2rX7wKgzeYzO/jM/eBHDhnUGFFEjk5cOoJaxqg5J4A=="
       },
       "System.Resources.Extensions": {
         "type": "Transitive",

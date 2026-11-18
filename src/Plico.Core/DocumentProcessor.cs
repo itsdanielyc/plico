@@ -26,6 +26,18 @@ internal sealed class DocumentProcessor(string dataDirectory)
         ".png", ".jpg", ".jpeg"
     };
     private static readonly FileFormatTransform RenderForOcr = new(ImageFileFormat.Png);
+    private OcrProcessingOptions _recognition = OcrProcessingOptions.Default;
+
+    internal OcrProcessingOptions ProcessingOptions => Volatile.Read(ref _recognition);
+
+    internal void ConfigureOcr(OcrProcessingOptions options)
+    {
+        ArgumentNullException.ThrowIfNull(options);
+        if (!Enum.IsDefined(options.Engine)) throw new ArgumentOutOfRangeException(nameof(options));
+        if (options.Engine == OcrEngineKind.RapidOcr && !OcrProcessingOptions.RapidOcrAvailable)
+            throw new PlatformNotSupportedException("RapidOCR is unavailable on Intel Macs. Choose Tesseract.");
+        Volatile.Write(ref _recognition, options);
+    }
 
     internal static bool IsPdf(string extension) => string.Equals(extension, PdfExtension, StringComparison.OrdinalIgnoreCase);
 
@@ -35,8 +47,9 @@ internal sealed class DocumentProcessor(string dataDirectory)
         string.Equals(extension, ".tiff", StringComparison.OrdinalIgnoreCase);
 
     internal async Task<PreparedPdf> PrepareAsync(string stagedSource, string outputPath,
-        OcrLanguage language, CancellationToken cancellationToken)
+        OcrLanguage language, CancellationToken cancellationToken, OcrProcessingOptions? recognition = null)
     {
+        recognition ??= ProcessingOptions;
         string stagingDirectory = Path.GetDirectoryName(outputPath)!;
         string extension = Path.GetExtension(stagedSource);
         bool isPdf = IsPdf(extension);
@@ -67,7 +80,7 @@ internal sealed class DocumentProcessor(string dataDirectory)
         var pages = isPdf
             ? new PdfImporter(context).Import(stagedSource, progress: cancellationToken)
             : new ImageImporter(context).Import(stagedSource, progress: cancellationToken);
-        var text = await ExportAsync(context, pages, outputPath, language, cancellationToken).ConfigureAwait(false);
+        var text = await ExportAsync(context, pages, outputPath, language, cancellationToken, recognition: recognition).ConfigureAwait(false);
         if (tiffPageCount is int expected && text.PageCount != expected)
         {
             throw new InvalidDataException("The searchable PDF is missing pages from the TIFF scan.");
@@ -77,11 +90,11 @@ internal sealed class DocumentProcessor(string dataDirectory)
 
     /// <summary>Creates fresh OCR from the visible PDF pages, including pages that already contain text.</summary>
     internal async Task<PdfText> ReprocessPdfAsync(string sourcePath, string outputPath, OcrLanguage language,
-        CancellationToken cancellationToken, PdfExportParams? exportSettings = null)
+        CancellationToken cancellationToken, PdfExportParams? exportSettings = null, OcrProcessingOptions? recognition = null)
     {
         using var context = CreateCaptureContext(Path.GetDirectoryName(outputPath)!);
         var pages = new PdfImporter(context).Import(sourcePath, progress: cancellationToken);
-        return await ExportAsync(context, RenderedPages(pages, cancellationToken), outputPath, language, cancellationToken, exportSettings)
+        return await ExportAsync(context, RenderedPages(pages, cancellationToken), outputPath, language, cancellationToken, exportSettings, recognition)
             .ConfigureAwait(false);
     }
 
@@ -101,11 +114,13 @@ internal sealed class DocumentProcessor(string dataDirectory)
         string outputPath,
         OcrLanguage language,
         CancellationToken cancellationToken,
-        PdfExportParams? exportSettings = null)
+        PdfExportParams? exportSettings = null,
+        OcrProcessingOptions? recognition = null)
     {
+        recognition ??= ProcessingOptions;
         var captured = new List<ProcessedImage>();
         await CollectPagesAsync(pages, captured, cancellationToken).ConfigureAwait(false);
-        return await ExportCapturedAsync(context, captured, outputPath, language, cancellationToken, exportSettings)
+        return await ExportCapturedAsync(context, captured, outputPath, language, cancellationToken, exportSettings, recognition)
             .ConfigureAwait(false);
     }
 
@@ -119,7 +134,8 @@ internal sealed class DocumentProcessor(string dataDirectory)
     }
 
     internal async Task<PdfText> ExportCapturedAsync(ScanningContext context, ICollection<ProcessedImage> captured,
-        string outputPath, OcrLanguage language, CancellationToken cancellationToken, PdfExportParams? exportSettings = null)
+        string outputPath, OcrLanguage language, CancellationToken cancellationToken, PdfExportParams? exportSettings = null,
+        OcrProcessingOptions? recognition = null)
     {
         cancellationToken.ThrowIfCancellationRequested();
         if (captured.Count == 0)
@@ -133,14 +149,22 @@ internal sealed class DocumentProcessor(string dataDirectory)
             OcrLanguage.French => "fra",
             OcrLanguage.German => "deu",
             OcrLanguage.Spanish => "spa",
+            OcrLanguage.Italian => "ita",
+            OcrLanguage.Portuguese => "por",
+            OcrLanguage.Dutch => "nld",
+            OcrLanguage.Polish => "pol",
             _ => throw new ArgumentOutOfRangeException(nameof(language), language, "Unknown OCR language.")
         };
+        recognition ??= ProcessingOptions;
+        bool tesseract = recognition.Engine == OcrEngineKind.Tesseract;
         string modelFile = Path.Combine(dataDirectory, $"{languageCode}.traineddata");
-        if (!File.Exists(modelFile))
+        if (tesseract && !File.Exists(modelFile))
         {
             throw new FileNotFoundException($"The bundled {language} OCR data is missing. Extract a fresh copy of Plico.", modelFile);
         }
-        context.OcrEngine = TesseractOcrEngine.Bundled(dataDirectory);
+        if (recognition.AutoOrient)
+            captured = await TesseractOrientation.OrientAsync(context, captured, dataDirectory, cancellationToken).ConfigureAwait(false);
+        context.OcrEngine = tesseract ? TesseractOcrEngine.Bundled(dataDirectory) : new RapidOcrEngine();
         if (!await new PdfExporter(context).Export(
             outputPath, captured, exportSettings ?? new PdfExportParams { Metadata = new PdfMetadata { Creator = "Plico" } },
             new OcrParams(languageCode, TimeoutInSeconds: OcrTimeoutSecondsPerPage),

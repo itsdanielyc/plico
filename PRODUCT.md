@@ -29,7 +29,7 @@ New pages land in the Inbox after processing. A person can select a result, see 
 ## Product boundaries
 
 - A personal library on one machine at a time. Shared editing, synchronization, and hosted access need a separate design.
-- Bundled English, French, German, and Spanish OCR.
+- Bundled English, French, German, Spanish, Italian, Portuguese, Dutch, and Polish OCR. Optional page orientation and RapidOCR run locally.
 - PDF and common document images. Office conversion needs a separate import adapter.
 
 ## Risks and decisions to validate

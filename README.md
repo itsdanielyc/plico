@@ -4,7 +4,7 @@ A local paperwork inbox for Windows, macOS, and Linux. Scan or import documents 
 
 ## Download
 
-Get Plico from [GitHub Releases](https://github.com/itsdanielyc/plico/releases). The archives include the .NET runtime and English, French, German, and Spanish OCR models. Extract the entire archive before launching.
+Get Plico from [GitHub Releases](https://github.com/itsdanielyc/plico/releases). The archives include the .NET runtime and English, French, German, Spanish, Italian, Portuguese, Dutch, and Polish OCR models. Extract the entire archive before launching.
 
 | Platform | Launch |
 | --- | --- |
@@ -27,6 +27,8 @@ On Linux, Plico uses X11 or XWayland. The Debian package declares its runtime li
 Use **Intake folder…** in the Library sidebar to send added files, dropped files, and direct scans to an existing folder inside `PDFs/`. With a custom folder selected, turn on **Include watched scans** to file new arrivals and catch-up scans there too. Plico remembers both choices for each library on this computer. New PDFs still appear in the Inbox for review. Choose `PDFs/` to file at the top level again. If the folder has moved or been deleted, choose an available folder before retrying.
 
 Select a language in **OCR** for scans, imports, and searchable copies. Plico remembers the choice and uses that bundled model for recognition.
+
+Use **OCR… → Turn sideways pages upright** to rotate pages when orientation detection is confident. Choose **Use RapidOCR** to try the bundled Latin-script recognition engine on Windows, Linux, or Apple silicon. Intel Macs use Tesseract. Plico remembers the engine and rotation options on this computer.
 
 Plico imports a multi-page TIFF as one searchable PDF. The pages follow the scan’s order, orientation, and resolution.
 

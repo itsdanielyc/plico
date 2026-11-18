@@ -51,6 +51,7 @@ public sealed class App : Application
                 model.InitializeLibrary(LibraryPreference.LoadOrCreateDefault);
                 var recognition = new OcrLanguagePreference(settingsDirectory);
                 model.InitializeRecognitionLanguage(recognition.Load, recognition.Save);
+                model.InitializeOcrProcessing(new OcrProcessingPreference(settingsDirectory));
                 window.DataContext = model;
                 desktop.Exit += (_, _) => model.Dispose();
             }
