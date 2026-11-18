@@ -3,10 +3,7 @@ namespace Plico.Desktop;
 /// <summary>Remembers the last chosen folder independently from the portable library.</summary>
 internal static class LibraryPreference
 {
-    private static readonly string PreferenceDirectory =
-        Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "Plico");
-
-    private static string PreferencePath => Path.Combine(PreferenceDirectory, "library-location.txt");
+    private static string PreferencePath => Path.Combine(ApplicationSettings.DirectoryPath, "library-location.txt");
 
     internal static string LoadOrCreateDefault()
     {
@@ -24,18 +21,5 @@ internal static class LibraryPreference
         return Directory.CreateDirectory(Path.Combine(documents, "Plico")).FullName;
     }
 
-    internal static void Save(string root)
-    {
-        Directory.CreateDirectory(PreferenceDirectory);
-        string temporary = Path.Combine(PreferenceDirectory, $"location-{Guid.NewGuid():N}.tmp");
-        try
-        {
-            File.WriteAllText(temporary, root);
-            File.Move(temporary, PreferencePath, overwrite: true);
-        }
-        finally
-        {
-            File.Delete(temporary);
-        }
-    }
+    internal static void Save(string root) => ApplicationSettings.WriteAtomically(PreferencePath, root);
 }

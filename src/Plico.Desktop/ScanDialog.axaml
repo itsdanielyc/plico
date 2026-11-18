@@ -4,7 +4,7 @@
         WindowStartupLocation="CenterOwner" FontFamily="{StaticResource InterFont}" Background="#F4F5EF">
     <StackPanel Margin="24" Spacing="14">
         <TextBlock Text="Scan paperwork" FontSize="24" FontWeight="SemiBold" AutomationProperties.HeadingLevel="1" />
-        <Grid ColumnDefinitions="*,Auto" ColumnSpacing="8">
+        <Grid ColumnDefinitions="*,Auto,Auto" ColumnSpacing="8">
             <ComboBox x:Name="DeviceBox" PlaceholderText="Choose a scanner" HorizontalAlignment="Stretch"
                       SelectionChanged="Device_Changed" AutomationProperties.Name="Scanner">
                 <ComboBox.ItemTemplate>
@@ -12,6 +12,8 @@
                 </ComboBox.ItemTemplate>
             </ComboBox>
             <Button Grid.Column="1" x:Name="RefreshButton" Content="Refresh" Click="Refresh_Click" />
+            <Button Grid.Column="2" x:Name="ForgetButton" Content="Forget" Click="Forget_Click" IsVisible="False"
+                    AutomationProperties.Name="Forget saved scanner address" />
         </Grid>
         <Grid ColumnDefinitions="*,Auto" ColumnSpacing="8">
             <TextBox x:Name="AddressBox" PlaceholderText="Scanner address (optional)" MaxLength="512"

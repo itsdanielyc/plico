@@ -1,5 +1,11 @@
 # Changelog
 
+## [0.3.1] - 2026-11-18
+
+- Plico remembers the addresses of scanners you connect to and offers them the next time you open Scan.
+- Use **Forget** to remove a saved address from this computer.
+- A settings error leaves a newly connected scanner available for the current scan.
+
 ## [0.3.0] - 2026-11-18
 
 - Connect an eSCL scanner by hostname, IP address, or its full scanner URL from the Scan dialog.

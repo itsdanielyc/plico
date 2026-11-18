@@ -61,15 +61,33 @@ internal static class NativeVerification
 
     private static async Task VerifyScannerDialogAsync(Window owner, string directory)
     {
-        var dialog = new ScanDialog(_ => Task.FromResult(new ScanDiscovery([], [])));
+        await CaptureScanDialogAsync(owner, directory, "scanner-address.png");
+        var settingsDirectory = Directory.CreateTempSubdirectory("plico-verify-scanners-");
+        try
+        {
+            var settings = new SavedScannerStore(settingsDirectory.FullName);
+            settings.AddOrUpdate(Scanners.FromAddress("scanner.test:8080", "Office scanner"));
+            await CaptureScanDialogAsync(owner, directory, "saved-scanner.png", settings);
+        }
+        finally
+        {
+            settingsDirectory.Delete(recursive: true);
+        }
+    }
+
+    private static async Task CaptureScanDialogAsync(Window owner, string directory, string filename, SavedScannerStore? settings = null)
+    {
+        var dialog = new ScanDialog(_ => Task.FromResult(new ScanDiscovery([], [])), settings: settings);
         var result = dialog.ShowDialog<ScanRequest?>(owner);
         try
         {
             var address = Control<TextBox>(dialog, "AddressBox");
             var connect = Control<Button>(dialog, "ConnectButton");
-            Require(address.IsVisible && connect.IsEnabled && !Control<Button>(dialog, "StartButton").IsEnabled,
-                "The native scanner dialog did not offer address entry.");
-            await CaptureAsync(dialog, directory, "scanner-address.png");
+            bool hasSavedScanner = settings is not null;
+            Require(address.IsVisible && connect.IsEnabled && Control<Button>(dialog, "StartButton").IsEnabled == hasSavedScanner &&
+                    Control<Button>(dialog, "ForgetButton").IsVisible == hasSavedScanner,
+                "The native scanner dialog did not offer the expected scanner actions.");
+            await CaptureAsync(dialog, directory, filename);
         }
         finally
         {

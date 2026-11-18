@@ -44,7 +44,9 @@ internal sealed class WorkspaceDialogs(Window owner) : IWorkspaceDialogs
         return folders.FirstOrDefault()?.TryGetLocalPath();
     }
 
-    public Task<ScanRequest?> PickScannerAsync() => new ScanDialog(Scanners.DiscoverAsync).ShowDialog<ScanRequest?>(owner);
+    public Task<ScanRequest?> PickScannerAsync() =>
+        new ScanDialog(Scanners.DiscoverAsync, settings: new SavedScannerStore(ApplicationSettings.DirectoryPath))
+            .ShowDialog<ScanRequest?>(owner);
 
     public void OpenPath(string path)
     {

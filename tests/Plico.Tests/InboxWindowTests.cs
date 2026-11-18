@@ -98,4 +98,69 @@ public sealed class InboxWindowTests
             dialog.Close();
         }
     }
+
+    [AvaloniaFact]
+    public void SavedScannerCanBeSelectedAndForgottenWithoutConnectingFirst()
+    {
+        using var directory = new TemporaryLibrary();
+        var settings = new SavedScannerStore(directory.Path);
+        var scanner = Scanners.FromAddress("http://scanner.test:8080", "Saved scanner");
+        settings.AddOrUpdate(scanner);
+        int connections = 0;
+        var dialog = new ScanDialog(_ => Task.FromResult(new ScanDiscovery([], [])), (_, _) =>
+        {
+            connections++;
+            return Task.FromResult(scanner);
+        }, settings);
+        dialog.Show();
+        try
+        {
+            var devices = Assert.IsType<ComboBox>(dialog.FindControl<ComboBox>("DeviceBox"));
+            var forget = Assert.IsType<Button>(dialog.FindControl<Button>("ForgetButton"));
+            var start = Assert.IsType<Button>(dialog.FindControl<Button>("StartButton"));
+            Assert.Equal(scanner, devices.SelectedItem);
+            Assert.True(forget.IsVisible);
+            Assert.True(start.IsEnabled);
+
+            forget.RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
+
+            Assert.Equal(0, connections);
+            Assert.Empty(settings.Load());
+            Assert.Null(devices.SelectedItem);
+            Assert.False(start.IsEnabled);
+        }
+        finally
+        {
+            dialog.Close();
+        }
+    }
+
+    [AvaloniaFact]
+    public void InvalidSavedAddressesLeaveTheConnectedScannerAvailable()
+    {
+        using var directory = new TemporaryLibrary();
+        string settingsFile = Path.Combine(directory.Path, "scanners.json");
+        File.WriteAllText(settingsFile, "{");
+        var scanner = Scanners.FromAddress("desk-scanner.test", "Desk scanner");
+        var dialog = new ScanDialog(_ => Task.FromResult(new ScanDiscovery([], [])), (_, _) => Task.FromResult(scanner),
+            new SavedScannerStore(directory.Path));
+        dialog.Show();
+        try
+        {
+            var addressBox = Assert.IsType<TextBox>(dialog.FindControl<TextBox>("AddressBox"));
+            var connect = Assert.IsType<Button>(dialog.FindControl<Button>("ConnectButton"));
+            var start = Assert.IsType<Button>(dialog.FindControl<Button>("StartButton"));
+            var status = Assert.IsType<TextBlock>(dialog.FindControl<TextBlock>("ScannerStatus"));
+            addressBox.Text = "desk-scanner.test";
+            connect.RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
+
+            Assert.True(start.IsEnabled);
+            Assert.Contains("Connected to Desk scanner.", status.Text);
+            Assert.Equal("{", File.ReadAllText(settingsFile));
+        }
+        finally
+        {
+            dialog.Close();
+        }
+    }
 }

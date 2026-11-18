@@ -21,6 +21,8 @@ Search uses a bounded page of document records and SQLite FTS5. The UI never loa
 
 The runtime contains the English Tesseract model. PDF parsing and text extraction use PDFium. Scanner discovery uses the supported local OS driver and eSCL on the local network. Platform requirements and support are versioned in the release notes.
 
+Direct scanner addresses are stored in per-user settings. A short write lease and atomic replacement preserve entries when separate Plico instances save them. The scanner picker reconstructs saved entries locally and checks the device when it starts a scan.
+
 Folder watch coalesces filesystem events by path and samples pending files until two consecutive observations agree. It stays idle without pending events. Ready files wait for the current desktop operation, then use the same snapshot and duplicate checks as manual import. Watching stops with the active window or when the library changes. [.NET FileSystemWatcher](https://learn.microsoft.com/en-us/dotnet/api/system.io.filesystemwatcher)
 
 ## Scope decisions
