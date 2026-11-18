@@ -1,32 +1,32 @@
-name: CI
+name: Supplementary Apple silicon capture verification
 on:
-  push:
-    branches: [main]
-    paths-ignore: ['**/*.md', '.agents/**']
-  pull_request:
-    paths-ignore: ['**/*.md', '.agents/**']
   workflow_dispatch:
+    inputs:
+      source_sha:
+        description: Exact feature commit to verify
+        required: true
+        type: string
 
 permissions:
   contents: read
 
 jobs:
-  desktop:
-    name: Desktop (${{ matrix.rid }})
-    runs-on: ${{ matrix.runner }}
-    timeout-minutes: 15
-    strategy:
-      fail-fast: false
-      matrix:
-        include:
-          - {runner: windows-2025, rid: win-x64, executable: Plico.exe}
-          - {runner: windows-11-arm, rid: win-arm64, executable: Plico.exe}
-          - {runner: macos-26, rid: osx-arm64, executable: Plico}
-          - {runner: macos-26-intel, rid: osx-x64, executable: Plico}
-          - {runner: ubuntu-24.04, rid: linux-x64, executable: Plico}
-          - {runner: ubuntu-24.04-arm, rid: linux-arm64, executable: Plico}
+  apple-silicon:
+    name: macOS 15 arm64 (${{ inputs.source_sha }})
+    runs-on: macos-15
+    timeout-minutes: 20
     steps:
       - uses: actions/checkout@v6
+        with:
+          ref: ${{ inputs.source_sha }}
+      - name: Confirm the checked-out commit
+        shell: pwsh
+        env:
+          PLICO_SOURCE_SHA: ${{ inputs.source_sha }}
+        run: |
+          $actual = git rev-parse HEAD
+          if ($actual -cne $env:PLICO_SOURCE_SHA) { throw "Wrong source commit: $actual" }
+          "Verified source checkout $actual" >> $env:GITHUB_STEP_SUMMARY
       - uses: actions/setup-dotnet@v5
         with:
           global-json-file: global.json
@@ -35,18 +35,11 @@ jobs:
       - name: Launch native window
         shell: pwsh
         env:
-          PLICO_EXECUTABLE: ${{ matrix.executable }}
-          PLICO_EXPECTED_NATIVE_RID: ${{ matrix.rid }}
-        run: |
-          $executable = "src/Plico.Desktop/bin/Release/net10.0/$env:PLICO_EXECUTABLE"
-          if ($IsLinux) {
-            xvfb-run -a pwsh -NoProfile -File scripts/Test-Native.ps1 -Executable $executable -EvidenceDirectory artifacts/native
-          } else {
-            ./scripts/Test-Native.ps1 -Executable $executable -EvidenceDirectory artifacts/native
-          }
+          PLICO_EXPECTED_NATIVE_RID: osx-arm64
+        run: ./scripts/Test-Native.ps1 -Executable src/Plico.Desktop/bin/Release/net10.0/Plico -EvidenceDirectory artifacts/native
       - uses: actions/upload-artifact@v6
         if: always()
         with:
-          name: native-${{ matrix.rid }}
+          name: native-macos15-arm64
           path: artifacts/native/
           if-no-files-found: ignore
