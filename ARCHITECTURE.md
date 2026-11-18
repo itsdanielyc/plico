@@ -93,6 +93,8 @@ The desktop reads the pending review count through the inbox index after publish
 
 The query compiler strips review-status clauses before building the text expression. The catalog binds the review state as an indexed predicate. An explicit Inbox view and a reviewed clause have an empty intersection. Saved searches store the clause as part of their existing query text.
 
+When query parsing finds an invalid clause, the result page carries a typed issue and skips the catalog read. The desktop maps the issue to a correction for the active query. A valid empty page uses the ordinary empty-result message.
+
 The watcher records top-level scan sizes and modification times before it subscribes. It reconciles once after subscription to catch arrivals during startup, and again when the operating system reports lost notifications. Only new or changed paths join the readiness queue. A backend that needs to restart is rearmed before reconciliation. A failed restart or unreadable folder is reported to the desktop. [.NET notification buffer overflow](https://learn.microsoft.com/en-us/dotnet/api/system.io.internalbufferoverflowexception?view=net-10.0)
 
 The last watch folder is saved in local settings under the normalized library path. Reopening a library offers the saved folder as an explicit resume action.

@@ -83,8 +83,7 @@ internal sealed partial class InboxViewModel
         {
             _restoringSavedSearch = false;
         }
-        HasMore = false;
-        ResultCount = "Searching…";
+        SetSearchPending();
         OnPropertyChanged(nameof(HasPageMatchAction));
         return LoadTypedSearchAsync();
     }

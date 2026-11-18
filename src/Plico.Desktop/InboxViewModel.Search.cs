@@ -102,9 +102,15 @@ internal sealed partial class InboxViewModel
         CancelTypedSearch();
         OnPropertyChanged(nameof(HasPageMatchAction));
         if (_library is null) return;
+        SetSearchPending();
+        _searchTimer.Start();
+    }
+
+    private void SetSearchPending()
+    {
         HasMore = false;
         ResultCount = "Searching…";
-        _searchTimer.Start();
+        EmptyMessage = "";
     }
 
     private void ResetPageMatchNavigation()
@@ -210,9 +216,28 @@ internal sealed partial class InboxViewModel
         _hasAppendedResults = filter.Offset > 0;
         ReplaceResults(filter.Offset > 0 ? [.. Documents, .. page.Items] : page.Items, selection, reloadPreview);
         HasMore = page.HasMore;
+
+        if (page.QueryIssue is { } issue)
+        {
+            ResultCount = "Check search";
+            EmptyMessage = SearchCorrection(issue);
+            return;
+        }
+
         ResultCount = HasMore ? $"Showing {DocumentCount(Documents.Count)}" : DocumentCount(Documents.Count);
         if (filter.Tag is not null && !string.IsNullOrWhiteSpace(filter.Query)) ResultCount += $" in {filter.Tag}";
     }
+
+    private static string SearchCorrection(SearchQueryIssue issue) => issue switch
+    {
+        SearchQueryIssue.Tag =>
+            $"Use a tag of up to {InboxLibrary.MaximumTagNameLength} printable characters. Try tag:tax or tag:\"Property tax\".",
+        SearchQueryIssue.AddedDate => "Use a date such as added:2024-02. Added-date filters must overlap.",
+        SearchQueryIssue.DocumentDate => "Use a date such as dated:2024-02. Document-date filters must overlap.",
+        SearchQueryIssue.Folder => "Use a folder such as folder:\"Filed/Tax\". Use one folder or nested folders.",
+        SearchQueryIssue.ReviewStatus => "Use one review status. Try status:inbox or status:reviewed.",
+        _ => "Enter a word, number, or search filter."
+    };
 
     private void ReportResultFailure(Exception error)
     {

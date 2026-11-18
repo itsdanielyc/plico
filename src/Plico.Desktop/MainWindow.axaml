@@ -213,9 +213,10 @@
                 <Grid Grid.Row="1" ColumnDefinitions="2*,3*" ColumnSpacing="15">
                     <Border CornerRadius="11" Background="#FCFDF8" BorderBrush="#DDE2D7" BorderThickness="1" ClipToBounds="True">
                         <Grid RowDefinitions="*,Auto">
-                            <TextBlock Text="{Binding EmptyMessage}" IsVisible="{Binding !HasDocuments}"
+                            <TextBlock x:Name="EmptyResultsMessage" Text="{Binding EmptyMessage}" IsVisible="{Binding !HasDocuments}"
                                        Foreground="#556358" MaxWidth="220" TextAlignment="Center" TextWrapping="Wrap"
-                                       HorizontalAlignment="Center" VerticalAlignment="Center" Margin="12" />
+                                       HorizontalAlignment="Center" VerticalAlignment="Center" Margin="12"
+                                       AutomationProperties.LiveSetting="Polite" />
                             <ListBox x:Name="DocumentList" ItemsSource="{Binding Documents}" SelectedItem="{Binding SelectedDocument, Mode=TwoWay}"
                                      IsVisible="{Binding HasDocuments}" Background="Transparent" Padding="4"
                                      SelectionMode="Multiple" SelectionChanged="Documents_SelectionChanged"

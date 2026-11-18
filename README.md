@@ -44,6 +44,8 @@ Choose **Set document date…** under a PDF’s filename to record the date on t
 
 Use `folder:"Filed/Tax Forms"` to search that folder and its subfolders. Use `/` and the spelling and case shown in Plico’s file path. `folder:.` matches PDFs directly in `PDFs/`. Add text, tags, or dates to the same query.
 
+If a filter needs correction, **Check search** appears with an example in the results pane. Edit the same query to search again.
+
 Choose **Save search…** to name the current query. The shortcut appears under **Saved searches** and restores the query, the selected sidebar tag, and the sort order. Open a shortcut and choose **Edit search…** to update it or remove it. The library backup includes saved searches.
 
 Select a sidebar tag and choose **Rename…** to change its label across the library. Enter an existing tag name and choose **Merge tags** to put their documents under that tag.

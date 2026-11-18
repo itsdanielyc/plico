@@ -36,6 +36,7 @@
 - Carry document dates into new OCR, rotated, and extracted copies. A combined PDF inherits a date shared by every source.
 - See the pending review count beside Inbox. Watched imports keep the current preview and loaded pages in view and offer a results refresh when needed.
 - Search and save review queues with `status:inbox` and find completed reviews with `status:reviewed`.
+- See how to fix incomplete, malformed, or conflicting search filters in the results pane.
 
 ## [0.15.0] - 2026-11-18
 

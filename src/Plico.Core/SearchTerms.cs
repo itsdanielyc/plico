@@ -24,10 +24,12 @@ internal static partial class SearchTerms
     private const string IsoDayFormat = "yyyy-MM-dd";
     private const string WordPattern = @"[\p{L}\p{M}\p{N}]+";
     private const string QueryPattern = "\"[^\"]*\"|“[^”]*”|" + WordPattern;
-    private static readonly CompiledSearch InvalidSearch = new("", [], null, null, null, null, IsValid: false);
 
     internal readonly record struct CompiledSearch(string FullTextExpression, IReadOnlyCollection<string> TagKeys,
-        DatePeriod? AddedPeriod, DatePeriod? DocumentPeriod, string? FolderPath, bool? Reviewed, bool IsValid);
+        DatePeriod? AddedPeriod, DatePeriod? DocumentPeriod, string? FolderPath, bool? Reviewed, SearchQueryIssue? QueryIssue)
+    {
+        internal bool IsValid => QueryIssue is null;
+    }
 
     internal readonly record struct DatePeriod(DateOnly FirstDay, DateOnly LastDay)
     {
@@ -61,30 +63,33 @@ internal static partial class SearchTerms
                 var remaining = query.AsSpan(cursor);
                 if (remaining.StartsWith(TagPrefix, StringComparison.OrdinalIgnoreCase))
                 {
-                    if (ReadTagClause(query, cursor + TagPrefix.Length) is not { } tag) return InvalidSearch;
+                    if (ReadTagClause(query, cursor + TagPrefix.Length) is not { } tag) return InvalidSearch(SearchQueryIssue.Tag);
                     (tagKeys ??= new HashSet<string>(StringComparer.Ordinal)).Add(tag.Key);
                     clauseEnd = tag.End;
                 }
                 else if (remaining.StartsWith(AddedPrefix, StringComparison.OrdinalIgnoreCase))
                 {
-                    if (ReadDateClause(query, cursor + AddedPrefix.Length, addedPeriod) is not { } added) return InvalidSearch;
+                    if (ReadDateClause(query, cursor + AddedPrefix.Length, addedPeriod) is not { } added)
+                        return InvalidSearch(SearchQueryIssue.AddedDate);
                     (addedPeriod, clauseEnd) = added;
                 }
                 else if (remaining.StartsWith(DatedPrefix, StringComparison.OrdinalIgnoreCase))
                 {
-                    if (ReadDateClause(query, cursor + DatedPrefix.Length, documentPeriod) is not { } dated) return InvalidSearch;
+                    if (ReadDateClause(query, cursor + DatedPrefix.Length, documentPeriod) is not { } dated)
+                        return InvalidSearch(SearchQueryIssue.DocumentDate);
                     (documentPeriod, clauseEnd) = dated;
                 }
                 else if (remaining.StartsWith(FolderPrefix, StringComparison.OrdinalIgnoreCase))
                 {
-                    if (ReadFolderClause(query, cursor + FolderPrefix.Length) is not { } folder) return InvalidSearch;
+                    if (ReadFolderClause(query, cursor + FolderPrefix.Length) is not { } folder) return InvalidSearch(SearchQueryIssue.Folder);
                     folderPath = folderPath is null ? folder.Path : IntersectFolderPaths(folderPath, folder.Path);
-                    if (folderPath is null) return InvalidSearch;
+                    if (folderPath is null) return InvalidSearch(SearchQueryIssue.Folder);
                     clauseEnd = folder.End;
                 }
                 else if (remaining.StartsWith(StatusPrefix, StringComparison.OrdinalIgnoreCase))
                 {
-                    if (ReadReviewClause(query, cursor + StatusPrefix.Length, reviewed) is not { } status) return InvalidSearch;
+                    if (ReadReviewClause(query, cursor + StatusPrefix.Length, reviewed) is not { } status)
+                        return InvalidSearch(SearchQueryIssue.ReviewStatus);
                     (reviewed, clauseEnd) = status;
                 }
             }
@@ -117,8 +122,11 @@ internal static partial class SearchTerms
         string expression = FullTextExpression(textQuery);
         bool isValid = expression.Length > 0 || tagKeys.Count > 0 || addedPeriod.HasValue || documentPeriod.HasValue ||
             folderPath is not null || reviewed.HasValue || string.IsNullOrWhiteSpace(originalQuery);
-        return new CompiledSearch(expression, tagKeys, addedPeriod, documentPeriod, folderPath, reviewed, isValid);
+        return isValid ? new CompiledSearch(expression, tagKeys, addedPeriod, documentPeriod, folderPath, reviewed, QueryIssue: null)
+            : InvalidSearch(SearchQueryIssue.NoSearchTerms);
     }
+
+    private static CompiledSearch InvalidSearch(SearchQueryIssue issue) => new("", [], null, null, null, null, issue);
 
     private static (bool Reviewed, int End)? ReadReviewClause(string query, int start, bool? previous)
     {

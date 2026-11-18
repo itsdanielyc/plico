@@ -284,9 +284,9 @@ internal sealed partial class LibraryCatalog
         cancellationToken.ThrowIfCancellationRequested();
         ArgumentOutOfRangeException.ThrowIfNegative(filter.Offset);
         var search = SearchTerms.Compile(filter.Query);
-        if (!search.IsValid || (filter.InboxOnly && search.Reviewed == true))
+        if (search.QueryIssue is not null || (filter.InboxOnly && search.Reviewed == true))
         {
-            return new([], HasMore: false);
+            return new([], HasMore: false) { QueryIssue = search.QueryIssue };
         }
 
         using var connection = Connect();

@@ -35,8 +35,15 @@ public sealed record DocumentSummary(
     public bool HasDocumentDate => DocumentDate.HasValue;
 }
 
+/// <summary>The part of a search query that needs correction before it can run.</summary>
+public enum SearchQueryIssue { NoSearchTerms, Tag, AddedDate, DocumentDate, Folder, ReviewStatus }
+
 /// <summary>Results in display order and whether there are more at the next offset.</summary>
-public sealed record DocumentPage(IReadOnlyList<DocumentSummary> Items, bool HasMore);
+public sealed record DocumentPage(IReadOnlyList<DocumentSummary> Items, bool HasMore)
+{
+    /// <summary>The correction needed for an invalid query. Null for a valid query with any number of results.</summary>
+    public SearchQueryIssue? QueryIssue { get; init; }
+}
 
 /// <summary>A named query with an optional sidebar tag and the order used when it opens.</summary>
 public sealed record SavedSearch(long Id, string Name, string Query, string? ScopeTag, DocumentSort Sort);
