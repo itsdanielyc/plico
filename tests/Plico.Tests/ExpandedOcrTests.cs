@@ -39,7 +39,7 @@ public sealed class ExpandedOcrTests
         using var sideways = SKBitmap.Decode(original);
         string models = Path.Combine(AppContext.BaseDirectory, "tessdata");
         string executable = TesseractOrientation.FindExecutable();
-        string intermediate = Path.Combine(temporary.Path, "orientation.png");
+        string intermediate = Path.Combine(temporary.Path, "orientation.jpg");
         Assert.Equal(270, await TesseractOrientation.EstimateFromRecognitionAsync(executable, sideways, intermediate, models, "eng", token));
 
         using var blank = new SKBitmap(360, 480);
