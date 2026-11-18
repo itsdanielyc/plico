@@ -17,6 +17,7 @@ internal static partial class NativeVerification
 {
     internal const string EditedDocumentTitle = "October housing";
     private const string ExpectedRuntimeVariable = "PLICO_EXPECTED_NATIVE_RID";
+    private const string CaptureProgressFilename = "progress.txt";
     private const string ReceiptKeyword = "WRENCH470";
     private const string TestTag = "Workshop";
     private const string LetterKeyword = "NORTHSTAR";
@@ -1031,6 +1032,7 @@ internal static partial class NativeVerification
             using var bitmap = new RenderTargetBitmap(PixelSize.FromSize(window.Bounds.Size, 1), new Vector(96, 96));
             bitmap.Render(window);
             bitmap.Save(Path.Combine(directory, filename), PngBitmapEncoderOptions.Default);
+            File.AppendAllText(Path.Combine(directory, CaptureProgressFilename), filename + Environment.NewLine);
         }, DispatcherPriority.Background);
     }
 }

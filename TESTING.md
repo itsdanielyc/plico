@@ -75,6 +75,8 @@
 
 Run `dotnet test Plico.slnx -c Release` for the fast suite. Run the native harness from `keel.json` for installed-platform evidence. Visual review starts with per-OS captures and geometry checks. Add pixel baselines when repeatable runner captures justify the maintenance.
 
+The native harness records each completed screenshot in `progress.txt`. Its process guard allows up to one minute between captures and three minutes per launch. Individual state assertions keep their own deadlines.
+
 The native harness checks the scan recovery dialog with a synthetic fault. Set `PLICO_VERIFY_INTERRUPTED_SCANNER` to a loopback eSCL fixture that delivers two pages, including the hardware receipt, before failing to run the full Scan action and search check.
 
 For an emulated Linux `--verify` run, `PLICO_VERIFY_UI_THREAD_RENDERING=1` keeps X11 composition and verification screenshots on the same thread. Record this setting in the evidence for the emulated platform. [Avalonia X11 rendering options](https://docs.avaloniaui.net/docs/platform-specific-guides/linux#rendering-options)
