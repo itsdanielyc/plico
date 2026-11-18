@@ -105,4 +105,4 @@ Ruling for v0.17.0. Implement the brief’s first nine ranked items together on 
 
 | Slice | Done when | Levels | Status |
 |---|---|---|---|
-| #16 Phone inbox | A second per-library folder watches phone transfers while scanner intake continues. Empty files wait for contents. Each watch can stop, resume, catch up, and opt in to catch-up on open. The setup guide covers phone delivery. | L0, L3, L4, L6 | Five hosted runners passed. Apple silicon checks are pending. |
+| #16 Phone inbox | A second per-library folder watches phone transfers while scanner intake continues. Empty files wait for contents. Each watch can stop, resume, catch up, and opt in to catch-up on open. The setup guide covers phone delivery. | L0, L3, L4, L6 | Passed on all six hosted release targets. |
