@@ -1,0 +1,19 @@
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        x:Class="Plico.Desktop.MainWindow"
+        Title="Plico" Width="1060" Height="720" MinWidth="840" MinHeight="560"
+        FontFamily="{StaticResource InterFont}" Background="#F1F3EB"
+        WindowStartupLocation="CenterScreen">
+    <Grid ColumnDefinitions="220,*">
+        <Border Background="#1B302B" Padding="24">
+            <StackPanel Spacing="32">
+                <TextBlock Text="Plico" FontSize="26" FontWeight="SemiBold" Foreground="#FFFFFF" />
+                <TextBlock Text="Inbox" FontSize="15" Foreground="#DCE7D7" />
+            </StackPanel>
+        </Border>
+        <StackPanel Grid.Column="1" Margin="36" Spacing="12">
+            <TextBlock x:Name="InboxHeading" Text="Inbox" FontSize="34" FontWeight="SemiBold" />
+            <TextBlock Text="Your paperwork will appear here." Foreground="#505B51" FontSize="15" />
+        </StackPanel>
+    </Grid>
+</Window>

@@ -1,0 +1,26 @@
+{
+  "keel": 1,
+  "name": "plico",
+  "profile": "avalonia-desktop",
+  "platforms": {
+    "tier1": ["windows-x64", "macos-arm64", "linux-x64"],
+    "tier2": [],
+    "tier3": []
+  },
+  "commands": {
+    "lint": "dotnet build Plico.slnx -c Release",
+    "unit": "dotnet test Plico.slnx -c Release",
+    "contracts": null,
+    "integration": null,
+    "ui": "dotnet test Plico.slnx -c Release --filter FullyQualifiedName~InboxWindowTests",
+    "build": "dotnet build Plico.slnx -c Release",
+    "e2e": "pwsh -File scripts/Test-Native.ps1 -Executable <path-to-Plico> -EvidenceDirectory artifacts/native",
+    "package": null,
+    "installers": null
+  },
+  "paths": {
+    "ui": "src/Plico.Desktop/",
+    "native": "src/Plico.Core/",
+    "e2e": "scripts/"
+  }
+}
