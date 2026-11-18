@@ -17,7 +17,7 @@ public sealed partial class MainWindow : Window
         InitializeComponent();
         PreviewPage.PropertyChanged += (_, change) =>
         {
-            if (change.Property == Image.SourceProperty) PreviewScroll.Offset = default;
+            if (change.Property == Image.SourceProperty) UpdatePreviewScrollPosition();
         };
         PageTextContent.PropertyChanged += (_, change) =>
         {
