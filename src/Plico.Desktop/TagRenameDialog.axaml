@@ -1,16 +1,17 @@
-<Window xmlns="https://github.com/avaloniaui" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-        x:Class="Plico.Desktop.TagRenameDialog" Title="Rename tag" Width="450" SizeToContent="Height"
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:translation="using:Plico.Desktop" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        x:Class="Plico.Desktop.TagRenameDialog" Title="{translation:Tr RenameTag}" Width="450" SizeToContent="Height"
         CanResize="False" WindowStartupLocation="CenterOwner"
-        FontFamily="{StaticResource InterFont}" Background="#F4F5EF">
+        FontFamily="{StaticResource InterFont}" Background="{DynamicResource WorkspaceSurface}">
     <StackPanel Margin="24" Spacing="11">
         <TextBlock x:Name="TagPrompt" FontSize="17" FontWeight="SemiBold" TextWrapping="Wrap" />
-        <TextBox x:Name="TagNameBox" AutomationProperties.Name="New tag name" />
-        <TextBlock x:Name="TagRenameNotice" IsVisible="False" TextWrapping="Wrap" Foreground="#5C685D"
+        <TextBox x:Name="TagNameBox" AutomationProperties.Name="{translation:Tr NewTagName}" />
+        <TextBlock x:Name="TagRenameNotice" IsVisible="False" TextWrapping="Wrap" Foreground="{DynamicResource MutedInk}"
                    FontSize="12" AutomationProperties.LiveSetting="Polite" />
         <StackPanel Orientation="Horizontal" Spacing="8" HorizontalAlignment="Right">
-            <Button Content="Cancel" IsCancel="True" Click="Cancel_Click" Padding="14,7" />
-            <Button x:Name="SaveTagButton" Content="Rename tag" IsDefault="True" Click="Save_Click"
-                    Background="#254C37" Foreground="White" Padding="14,7" />
+            <Button Content="{translation:Tr Cancel}" IsCancel="True" Click="Cancel_Click" Padding="14,7" />
+            <Button x:Name="SaveTagButton" Content="{translation:Tr RenameTag}" IsDefault="True" Click="Save_Click"
+                    Background="{DynamicResource PrimarySurface}" Foreground="White" Padding="14,7" />
         </StackPanel>
     </StackPanel>
 </Window>

@@ -1,12 +1,13 @@
-<Window xmlns="https://github.com/avaloniaui" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:translation="using:Plico.Desktop" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:local="using:Plico.Desktop" x:Class="Plico.Desktop.IntegrityReportDialog"
-        Title="Library integrity" Width="560" SizeToContent="Height" CanResize="False"
-        WindowStartupLocation="CenterOwner" FontFamily="{StaticResource InterFont}" Background="#F4F5EF">
+        Title="{translation:Tr LibraryIntegrity}" Width="560" SizeToContent="Height" CanResize="False"
+        WindowStartupLocation="CenterOwner" FontFamily="{StaticResource InterFont}" Background="{DynamicResource WorkspaceSurface}">
     <StackPanel Margin="24" Spacing="10">
-        <TextBlock Text="Library integrity" FontSize="19" FontWeight="SemiBold" />
+        <TextBlock Text="{translation:Tr LibraryIntegrity}" FontSize="19" FontWeight="SemiBold" />
         <TextBlock x:Name="IntegritySummary" TextWrapping="Wrap" />
         <ListBox x:Name="IntegrityIssues" MaxHeight="280" ScrollViewer.HorizontalScrollBarVisibility="Disabled"
-                 AutomationProperties.Name="Library integrity findings">
+                 AutomationProperties.Name="{translation:Tr LibraryIntegrityFindings}">
             <ListBox.ItemTemplate>
                 <DataTemplate x:DataType="local:IntegrityFinding">
                     <StackPanel Spacing="3">
@@ -16,6 +17,6 @@
                 </DataTemplate>
             </ListBox.ItemTemplate>
         </ListBox>
-        <Button Content="Close" IsCancel="True" IsDefault="True" Click="Close_Click" HorizontalAlignment="Right" />
+        <Button Content="{translation:Tr Close}" IsCancel="True" IsDefault="True" Click="Close_Click" HorizontalAlignment="Right" />
     </StackPanel>
 </Window>

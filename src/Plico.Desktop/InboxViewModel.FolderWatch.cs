@@ -16,7 +16,7 @@ internal sealed partial class InboxViewModel
         internal bool CatchUpOnOpen { get; set; }
         internal bool CanResume => Active is null && RememberedFolder is not null;
         internal bool CanCatchUp => Active is not null || CanResume;
-        internal string CatchUpLabel => Active is null ? "Resume and catch up" : "Import existing files";
+        internal string CatchUpLabel => Active is null ? DesktopText.Translate("Resume and catch up") : DesktopText.Translate("Import existing files");
     }
 
     private readonly WatchSlot _scannerWatch = new("scanner output folder", "Folder watch stopped.", WatchSource.Scanner);
@@ -45,7 +45,7 @@ internal sealed partial class InboxViewModel
     public bool CanSetPhoneCatchUpOnOpen => _watchPreference is not null && _phoneWatch.RememberedFolder is not null;
     public string PhoneCatchUpLabel => _phoneWatch.CatchUpLabel;
     public string? PhoneInboxFolder => _phoneWatch.RememberedFolder;
-    public string PhoneInboxLabel => IsWatchingPhoneInbox ? "Phone inbox active…" : "Phone inbox…";
+    public string PhoneInboxLabel => DesktopText.Translate(IsWatchingPhoneInbox ? "Phone inbox active…" : "Phone inbox…");
 
     public bool PhoneCatchUpOnOpen
     {
@@ -57,7 +57,7 @@ internal sealed partial class InboxViewModel
 
     internal Task CatchUpWhenWindowOpensAsync() =>
         CanWork && (CatchUpOnOpen || PhoneCatchUpOnOpen)
-            ? RunOperationAsync("Resuming saved watches…", CatchUpSavedWatchesAsync)
+            ? RunOperationAsync(DesktopText.Translate("Resuming saved watches…"), CatchUpSavedWatchesAsync)
             : Task.CompletedTask;
 
     [RelayCommand] private Task StartFolderWatchAsync() => ChooseWatchFolderAsync(_scannerWatch);
@@ -94,13 +94,13 @@ internal sealed partial class InboxViewModel
         }
     }
 
-    private Task ChooseWatchFolderAsync(WatchSlot slot) => RunOperationAsync($"Choose a {slot.Description}…", async token =>
+    private Task ChooseWatchFolderAsync(WatchSlot slot) => RunOperationAsync(DesktopText.Format($"Choose a {DesktopText.Translate(slot.Description)}…"), async token =>
     {
         if (slot.Active is not null) return;
-        var folder = await _dialogs.PickFolderAsync($"Choose a {slot.Description}");
+        var folder = await _dialogs.PickFolderAsync(DesktopText.Format($"Choose a {DesktopText.Translate(slot.Description)}"));
         if (folder is null)
         {
-            Status = "Folder selection closed.";
+            Status = DesktopText.Translate("Folder selection closed.");
             return;
         }
         token.ThrowIfCancellationRequested();
@@ -110,20 +110,21 @@ internal sealed partial class InboxViewModel
     private Task ResumeWatchAsync(WatchSlot slot, bool queueExistingFiles)
     {
         if (!slot.CanResume || slot.RememberedFolder is not { } folder) return Task.CompletedTask;
-        return RunOperationAsync($"Resuming the {slot.Description} watch…", token => StartWatchAsync(slot, folder, token, queueExistingFiles));
+        return RunOperationAsync(DesktopText.Format($"Resuming the {DesktopText.Translate(slot.Description)} watch…"),
+            token => StartWatchAsync(slot, folder, token, queueExistingFiles));
     }
 
     private Task CatchUpWatchAsync(WatchSlot slot)
     {
         if (slot.Active is not { } watch) return ResumeWatchAsync(slot, queueExistingFiles: true);
-        return RunOperationAsync($"Checking the {slot.Description}…", async token =>
+        return RunOperationAsync(DesktopText.Format($"Checking the {DesktopText.Translate(slot.Description)}…"), async token =>
         {
             try
             {
                 int queued = await Task.Run(() => watch.QueueExistingFiles(token), token);
                 if (ReferenceEquals(slot.Active, watch))
                 {
-                    Status = queued > 0 ? $"{DocumentCount(queued)} queued for the folder watch." : "No additional files to check.";
+                    Status = queued > 0 ? DesktopText.Format($"{DocumentCount(queued)} queued for the folder watch.") : DesktopText.Translate("No additional files to check.");
                 }
             }
             catch (Exception error) when ((error is OperationCanceledException or ObjectDisposedException) &&
@@ -135,7 +136,7 @@ internal sealed partial class InboxViewModel
     {
         var library = RequireLibrary();
         var otherWatch = ReferenceEquals(slot, _scannerWatch) ? _phoneWatch.Active : _scannerWatch.Active;
-        Status = $"Checking the {slot.Description}…";
+        Status = DesktopText.Format($"Checking the {DesktopText.Translate(slot.Description)}…");
         var watch = await Task.Run(() => library.StartIntakeWatch(folder, ImportWatchedFilesAsync, otherWatch, cancellationToken),
             cancellationToken);
         int queued = 0;
@@ -144,7 +145,7 @@ internal sealed partial class InboxViewModel
             cancellationToken.ThrowIfCancellationRequested();
             if (queueExistingFiles)
             {
-                Status = "Checking existing files…";
+                Status = DesktopText.Translate("Checking existing files…");
                 queued = await Task.Run(() => watch.QueueExistingFiles(cancellationToken), cancellationToken);
             }
             cancellationToken.ThrowIfCancellationRequested();
@@ -157,8 +158,8 @@ internal sealed partial class InboxViewModel
         slot.Active = watch;
         slot.RememberedFolder = watch.Folder;
         NotifyWatchChanged(slot);
-        Status = $"Watching for new or updated files in {new DirectoryInfo(watch.Folder).Name}.";
-        if (queued > 0) Status += $" {DocumentCount(queued)} queued for the folder watch.";
+        Status = DesktopText.Format($"Watching for new or updated files in {new DirectoryInfo(watch.Folder).Name}.");
+        if (queued > 0) Status += " " + DesktopText.Format($"{DocumentCount(queued)} queued for the folder watch.");
         _ = ObserveWatchAsync(slot, watch);
         try
         {
@@ -187,7 +188,7 @@ internal sealed partial class InboxViewModel
         }
         catch (Exception error) when (error is IOException or UnauthorizedAccessException or ArgumentException)
         {
-            return $"Could not resume the {slot.Description} watch. {error.Message}";
+            return DesktopText.Format($"Could not resume the {DesktopText.Translate(slot.Description)} watch. {error.Message}");
         }
     }
 
@@ -230,7 +231,7 @@ internal sealed partial class InboxViewModel
         try
         {
             await watch.DisposeAsync();
-            if (slot.Active is null) Status = slot.StopMessage;
+            if (slot.Active is null) Status = DesktopText.Translate(slot.StopMessage);
         }
         catch (Exception error)
         {
@@ -246,7 +247,7 @@ internal sealed partial class InboxViewModel
                 await active.Task.WaitAsync(cancellationToken);
             }
             cancellationToken.ThrowIfCancellationRequested();
-            await RunOperationAsync("Importing from the watched folder…",
+            await RunOperationAsync(DesktopText.Translate("Importing from the watched folder…"),
                 token => ImportFilesAsync(files, token, ImportOrigin.FolderWatch, revealAdded: false), cancellationToken);
         });
 

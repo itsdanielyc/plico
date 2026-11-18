@@ -19,10 +19,10 @@ internal sealed partial class PdfExportDialog : Window
         InitializeComponent();
         PdfExportFormatBox.ItemsSource = new FormatChoice[]
         {
-            new(PdfExportFormat.Original, "Original PDF", "Save a copy of the PDF as it is in the library."),
-            new(PdfExportFormat.PdfA, "Archival PDF/A-2b", $"Render the pages and rebuild searchable text using {language} OCR."),
-            new(PdfExportFormat.PasswordProtected, "Password-protected PDF", "The copy requires a password to open."),
-            new(PdfExportFormat.WithMetadata, "PDF with library metadata", "Put the library title and tags in the copy’s metadata.")
+            new(PdfExportFormat.Original, DesktopText.Translate("Original PDF"), "Save a copy of the PDF as it is in the library."),
+            new(PdfExportFormat.PdfA, DesktopText.Translate("Archival PDF/A-2b"), $"Render the pages and rebuild searchable text using {language} OCR."),
+            new(PdfExportFormat.PasswordProtected, DesktopText.Translate("Password-protected PDF"), "The copy requires a password to open."),
+            new(PdfExportFormat.WithMetadata, DesktopText.Translate("PDF with library metadata"), "Put the library title and tags in the copy’s metadata.")
         };
         PdfExportFormatBox.SelectedIndex = 0;
     }

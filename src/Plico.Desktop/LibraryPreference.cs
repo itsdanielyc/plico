@@ -16,7 +16,7 @@ internal static class LibraryPreference
         var documents = Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments);
         if (string.IsNullOrEmpty(documents))
         {
-            documents = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.UserProfile), "Documents");
+            documents = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.UserProfile), DesktopText.Translate("Documents"));
         }
         return Directory.CreateDirectory(Path.Combine(documents, "Plico")).FullName;
     }

@@ -2,7 +2,8 @@
 Type=Application
 Name=Plico
 Comment=Scan, tag, and search your paperwork
-Exec=plico
+Exec=plico %F
+MimeType=application/pdf;
 Icon=application-pdf
 Terminal=false
 Categories=Office;Utility;

@@ -6,15 +6,15 @@ namespace Plico.Desktop;
 internal sealed partial class InboxViewModel
 {
     [RelayCommand]
-    private Task ManageMetadataAsync() => RunOperationAsync("Edit metadata definitions…", async token =>
+    private Task ManageMetadataAsync() => RunOperationAsync(DesktopText.Translate("Edit metadata definitions…"), async token =>
     {
         await _dialogs.ManageMetadataDefinitionsAsync(RequireLibrary());
         RefreshTagNavigation();
-        Status = "Metadata definitions closed.";
+        Status = DesktopText.Translate("Metadata definitions closed.");
     });
 
     [RelayCommand]
-    private Task EditMetadataAsync() => RunOperationAsync("Edit document metadata…", async token =>
+    private Task EditMetadataAsync() => RunOperationAsync(DesktopText.Translate("Edit document metadata…"), async token =>
     {
         if (SelectedDocument is not { } document) return;
         var library = RequireLibrary();
@@ -29,11 +29,11 @@ internal sealed partial class InboxViewModel
         var changed = await _dialogs.EditStructuredMetadataAsync(input);
         if (changed is null)
         {
-            Status = "Metadata editor closed.";
+            Status = DesktopText.Translate("Metadata editor closed.");
             return;
         }
         await Task.Run(() => library.SaveDocumentMetadata(document.Id, changed, token), token);
         LoadResults(document.Id, retainLoadedResults: true);
-        Status = "Document metadata saved.";
+        Status = DesktopText.Translate("Document metadata saved.");
     });
 }

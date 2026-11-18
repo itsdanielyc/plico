@@ -8,6 +8,10 @@ if (-not $IsWindows) { throw 'Use Windows to verify the setup executable.' }
 
 $installerPath = (Resolve-Path -LiteralPath $Installer).Path
 $registryKey = 'HKCU:\Software\Microsoft\Windows\CurrentVersion\Uninstall\Plico'
+$pdfClass = 'HKCU:\Software\Classes\Plico.PDF'
+$pdfOpenWith = 'HKCU:\Software\Classes\.pdf\OpenWithProgids'
+$pdfUserChoice = 'HKCU:\Software\Microsoft\Windows\CurrentVersion\Explorer\FileExts\.pdf\UserChoice'
+$previousPdfDefault = Get-ItemPropertyValue -LiteralPath $pdfUserChoice -Name 'ProgId' -ErrorAction SilentlyContinue
 $shortcut = Join-Path ([Environment]::GetFolderPath('Programs')) 'Plico.lnk'
 if ((Test-Path -LiteralPath $registryKey) -or (Test-Path -LiteralPath $shortcut)) {
     throw 'Use a clean Windows user profile for the setup round trip.'
@@ -41,6 +45,14 @@ try {
     if ($shell.CreateShortcut($shortcut).TargetPath -ne $executable) {
         throw 'The Start menu shortcut did not target the installed application.'
     }
+    $openCommand = (Get-Item -LiteralPath "$pdfClass\shell\open\command").GetValue('')
+    $expectedCommand = '"{0}" "%1"' -f $executable
+    if ($openCommand -ne $expectedCommand -or !(Get-Item -LiteralPath $pdfOpenWith).GetValueNames().Contains('Plico.PDF')) {
+        throw 'Setup did not advertise the quoted PDF Open With command.'
+    }
+    if ((Get-ItemPropertyValue -LiteralPath $pdfUserChoice -Name 'ProgId' -ErrorAction SilentlyContinue) -ne $previousPdfDefault) {
+        throw 'Setup changed the default PDF handler.'
+    }
     & (Join-Path $PSScriptRoot 'Test-Native.ps1') -Executable $executable -EvidenceDirectory $EvidenceDirectory
 
     $pdfFolder = (New-Item -ItemType Directory -Force -Path (Join-Path $installed 'Library/PDFs')).FullName
@@ -50,14 +62,15 @@ try {
 
     Invoke-SetupProcess $uninstaller @('/S')
     if ((Test-Path -LiteralPath $executable) -or (Test-Path -LiteralPath $uninstaller) -or
-        (Test-Path -LiteralPath $registryKey) -or (Test-Path -LiteralPath $shortcut)) {
+        (Test-Path -LiteralPath $registryKey) -or (Test-Path -LiteralPath $shortcut) -or (Test-Path -LiteralPath $pdfClass) -or
+        ((Test-Path -LiteralPath $pdfOpenWith) -and (Get-Item -LiteralPath $pdfOpenWith).GetValueNames().Contains('Plico.PDF'))) {
         throw 'Uninstall left an executable, registration, or Start menu shortcut.'
     }
     if (-not (Test-Path -LiteralPath $libraryFile -PathType Leaf) -or
         (Get-FileHash -LiteralPath $libraryFile).Hash -ne $libraryDigest) {
         throw 'Uninstall changed a PDF that belonged to the user.'
     }
-    $result = 'Setup registered Plico, launched the native journey, and removed the app while preserving an existing PDF.'
+    $result = 'Setup registered Plico for PDF Open With, preserved the default, launched the native journey, and removed the app while preserving an existing PDF.'
     Set-Content -LiteralPath (Join-Path $EvidenceDirectory 'setup-passed.txt') -Value $result
     Write-Output $result
 } finally {

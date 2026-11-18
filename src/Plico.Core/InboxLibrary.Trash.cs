@@ -61,6 +61,7 @@ public sealed partial class InboxLibrary
             cancellationToken.ThrowIfCancellationRequested();
             _catalog.RecordPdfMove(new(documentId, TrashCatalogPath(documentId), "", file.Fingerprint));
             if (present) File.Delete(path);
+            PurgePdfVersionFiles(documentId, CancellationToken.None);
             _catalog.CompletePurge(documentId);
             return true;
         }, cancellationToken);
@@ -70,6 +71,7 @@ public sealed partial class InboxLibrary
         await _fileOperations.WaitAsync(token).ConfigureAwait(false);
         try
         {
+            RecoverPdfRevision(token);
             var recovery = RecoverPendingPdfMove(token);
             if (recovery.PendingDestination is not null) throw new IOException(recovery.Notice);
             await _pdfFileAccess.WaitAsync(token).ConfigureAwait(false);
@@ -136,7 +138,11 @@ public sealed partial class InboxLibrary
             if (move.DestinationRelativePath.Length == 0)
             {
                 if (ReadExistingAttributes(trashFile) is not null) _catalog.ClearPendingPdfMove();
-                else _catalog.CompletePurge(move.DocumentId);
+                else
+                {
+                    PurgePdfVersionFiles(move.DocumentId, token);
+                    _catalog.CompletePurge(move.DocumentId);
+                }
                 return (null, null);
             }
 

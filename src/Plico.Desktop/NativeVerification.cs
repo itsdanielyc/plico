@@ -107,6 +107,9 @@ internal static partial class NativeVerification
             await VerifyStructuredMetadataAsync(window, model, dialogs, evidenceDirectory);
             await VerifyDeadlineRemindersAsync(window, model, dialogs, evidenceDirectory);
             await VerifyLocalModelsAsync(window, model, dialogs, evidenceDirectory);
+            await VerifyPdfVersionFlowAsync(window, model, dialogs, evidenceDirectory, fixture);
+            await VerifyPdfDerivativesAsync(window, model, dialogs, evidenceDirectory);
+            await VerifyDesktopPdfToolsAsync(window, model, dialogs, evidenceDirectory, fixture);
             await VerifyPhoneInboxAsync(window, model, dialogs, fixture, evidenceDirectory);
 
             File.WriteAllText(Path.Combine(evidenceDirectory, "passed.txt"),

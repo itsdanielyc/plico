@@ -18,19 +18,19 @@ internal sealed class LocalChatDialog : Window
     private const int TranscriptLimit = 64 * 1024;
     private readonly LocalChatInput _input;
     private readonly List<LocalModelMessage> _history = [];
-    private readonly TextBox _question = CreateTextBox("Question", placeholder: "Ask a question about your documents");
+    private readonly TextBox _question = CreateTextBox(DesktopText.Translate("Question"), placeholder: DesktopText.Translate("Ask a question about your documents"));
     private readonly TextBox _transcript = new() { IsReadOnly = true, AcceptsReturn = true, TextWrapping = TextWrapping.Wrap };
-    private readonly CheckBox _searchLibrary = new() { Content = "Use library search for context" };
+    private readonly CheckBox _searchLibrary = new() { Content = DesktopText.Translate("Use library search for context") };
     private readonly StackPanel _sources = new() { Spacing = 5 };
     private readonly TextBlock _status = new() { TextWrapping = TextWrapping.Wrap };
-    private readonly Button _send = new() { Content = "Ask", IsDefault = true };
-    private readonly Button _stop = new() { Content = "Stop", IsEnabled = false };
+    private readonly Button _send = new() { Content = DesktopText.Translate("Ask"), IsDefault = true };
+    private readonly Button _stop = new() { Content = DesktopText.Translate("Stop"), IsEnabled = false };
     private CancellationTokenSource? _request;
 
     internal LocalChatDialog(LocalChatInput input)
     {
         _input = input;
-        Title = "Ask a local model";
+        Title = DesktopText.Translate("Ask a local model");
         Width = 680;
         Height = 590;
         MinWidth = 480;
@@ -53,7 +53,7 @@ internal sealed class LocalChatDialog : Window
         heading.Children.Add(_searchLibrary);
         _send.Click += async (_, _) => await AskAsync();
         _stop.Click += (_, _) => _request?.Cancel();
-        var close = new Button { Content = "Close", IsCancel = true };
+        var close = new Button { Content = DesktopText.Translate("Close"), IsCancel = true };
         close.Click += (_, _) => Close();
         Closed += (_, _) => _request?.Cancel();
         var panel = new Grid { RowDefinitions = new("Auto,*,Auto,Auto,Auto"), RowSpacing = 8, Margin = new Thickness(20) };
@@ -81,7 +81,7 @@ internal sealed class LocalChatDialog : Window
         _send.IsEnabled = false;
         _stop.IsEnabled = true;
         _searchLibrary.IsEnabled = false;
-        _status.Text = "Waiting for the local model…";
+        _status.Text = DesktopText.Translate("Waiting for the local model…");
         try
         {
             var answer = await _input.Ask(new(question, _searchLibrary.IsChecked == true, _history.ToArray()), request.Token);
@@ -105,7 +105,7 @@ internal sealed class LocalChatDialog : Window
             }
             _status.Text = "";
         }
-        catch (OperationCanceledException) when (request.IsCancellationRequested) { _status.Text = "Question cancelled."; }
+        catch (OperationCanceledException) when (request.IsCancellationRequested) { _status.Text = DesktopText.Translate("Question cancelled."); }
         catch (Exception error) when (error is IOException or InvalidOperationException or ArgumentException)
         {
             _status.Text = error.Message;

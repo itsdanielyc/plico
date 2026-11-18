@@ -24,7 +24,7 @@ internal sealed partial class InboxViewModel
     private void RefreshUnavailableCount() => UnavailableCount = _library?.CountUnavailableDocuments() ?? 0;
 
     [RelayCommand]
-    private Task RefreshIndexAsync() => RunOperationAsync("Checking the PDF folder…", async token =>
+    private Task RefreshIndexAsync() => RunOperationAsync(DesktopText.Translate("Checking the PDF folder…"), async token =>
     {
         var library = RequireLibrary();
         var result = await Task.Run(() => library.Refresh(token), token);
@@ -34,7 +34,7 @@ internal sealed partial class InboxViewModel
         LoadResults(reloadPreview: result.Indexed > 0 || result.Relocated > 0);
         LatestIndexRefresh = result;
         FolderRestoreNotices = [];
-        Status = $"{DocumentCount(result.Indexed)} indexed.";
+        Status = DesktopText.Format($"{DocumentCount(result.Indexed)} indexed.");
         if (result.Relocated > 0) Status += $" {DocumentCount(result.Relocated)} moved.";
         if (UnavailableCount > 0) Status += $" {DocumentCount(UnavailableCount)} unavailable.";
         int notices = result.Warnings.Count;
@@ -49,7 +49,7 @@ internal sealed partial class InboxViewModel
         if (FolderRestoreNotices.Count > 0) notices = [.. notices, .. FolderRestoreNotices];
         string previous = Status;
         IndexReport? report = null;
-        await RunOperationAsync("Reading index report…", async token =>
+        await RunOperationAsync(DesktopText.Translate("Reading index report…"), async token =>
         {
             var unavailable = await Task.Run(() => library.ReadUnavailablePaths(token), token);
             token.ThrowIfCancellationRequested();
@@ -80,17 +80,17 @@ internal sealed partial class InboxViewModel
             string? copyPath = await _dialogs.PickRestorePdfAsync();
             if (copyPath is null)
             {
-                Status = "PDF restore cancelled.";
+                Status = DesktopText.Translate("PDF restore cancelled.");
                 return;
             }
 
-            Status = "Restoring PDF…";
+            Status = DesktopText.Translate("Restoring PDF…");
             var restored = await Task.Run(() => library.RestoreUnavailablePdfAsync(relativePath, copyPath, token), token);
             Tags = library.GetTags();
             RefreshInboxCount();
             RefreshUnavailableCount();
             Navigate(inboxOnly: !restored.Reviewed, preferredId: restored.Id);
-            Status = "PDF restored.";
+            Status = DesktopText.Translate("PDF restored.");
         });
 
     private Task RestoreFolderFromIndexReportAsync(InboxLibrary library) =>
@@ -99,11 +99,11 @@ internal sealed partial class InboxViewModel
             string? folder = await _dialogs.PickFolderAsync("Choose a folder of backup PDFs");
             if (folder is null)
             {
-                Status = "Folder restore cancelled.";
+                Status = DesktopText.Translate("Folder restore cancelled.");
                 return;
             }
 
-            Status = "Matching backup PDFs…";
+            Status = DesktopText.Translate("Matching backup PDFs…");
             var result = await Task.Run(() => library.RestoreUnavailablePdfsFromFolderAsync(folder, cancellationToken: token), token);
             FolderRestoreNotices = result.Issues.Select(issue => $"{issue.Path} — {issue.Reason}").ToArray();
             RefreshUnavailableCount();

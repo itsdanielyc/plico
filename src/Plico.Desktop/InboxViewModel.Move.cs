@@ -12,7 +12,7 @@ internal sealed partial class InboxViewModel
     private Task MovePdfAsync()
     {
         if (SelectedDocument is not { } document) return Task.CompletedTask;
-        return RunOperationAsync("Choose a library folder…", async token =>
+        return RunOperationAsync(DesktopText.Translate("Choose a library folder…"), async token =>
         {
             var library = RequireLibrary();
             string? folder = await _dialogs.PickFolderAsync(MovePickerTitle, library.PdfDirectory);
@@ -22,7 +22,7 @@ internal sealed partial class InboxViewModel
                 return;
             }
 
-            Status = "Moving the PDF…";
+            Status = DesktopText.Translate("Moving the PDF…");
             var moved = await Task.Run(() => library.MovePdfAsync(document.Id, folder, token), token);
             LoadResults(moved.Id, reloadPreview: Preview is null);
             Status = moved.RelativePath == document.RelativePath
@@ -38,7 +38,7 @@ internal sealed partial class InboxViewModel
         var selectedIds = _batchSelection.Select(document => document.Id).ToHashSet();
         var orderedIds = Documents.Where(document => selectedIds.Contains(document.Id)).Select(document => document.Id).ToArray();
         if (orderedIds.Length < 2) return Task.CompletedTask;
-        return RunOperationAsync("Choose a library folder…", async token =>
+        return RunOperationAsync(DesktopText.Translate("Choose a library folder…"), async token =>
         {
             var library = RequireLibrary();
             string? folder = await _dialogs.PickFolderAsync(MovePickerTitle, library.PdfDirectory);
@@ -48,10 +48,10 @@ internal sealed partial class InboxViewModel
                 return;
             }
 
-            Status = "Moving selected PDFs…";
+            Status = DesktopText.Translate("Moving selected PDFs…");
             var progress = new Progress<int>(processed =>
             {
-                if (IsBusy && !token.IsCancellationRequested) Status = $"Filed {processed} of {orderedIds.Length} PDFs…";
+                if (IsBusy && !token.IsCancellationRequested) Status = DesktopText.Format($"Filed {processed} of {orderedIds.Length} PDFs…");
             });
             long? displayedDocument = SelectedDocument?.Id;
             var result = await Task.Run(() => library.MoveSelectedPdfsAsync(orderedIds, folder, progress, token), token);

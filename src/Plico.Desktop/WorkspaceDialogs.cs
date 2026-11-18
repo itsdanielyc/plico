@@ -1,6 +1,7 @@
 using System.Diagnostics;
 using Avalonia.Controls;
 using Avalonia.Input.Platform;
+using Avalonia.Media.Imaging;
 using Avalonia.Platform.Storage;
 using Plico.Core;
 
@@ -22,6 +23,14 @@ internal partial interface IWorkspaceDialogs
     Task<CombinePdfsRequest?> OrderPdfCombinationAsync(IReadOnlyList<DocumentSummary> selectedDocuments);
     Task<CombinePdfsRequest?> OrderHouseholdBinderAsync(IReadOnlyList<DocumentSummary> selectedDocuments);
     Task<PdfPageCopyRequest?> ChoosePdfPageCopyAsync(DocumentSummary document, int currentPage, PdfPageCopyAction action);
+    Task<PdfPageEditRequest?> EditPdfPagesAsync(DocumentSummary document, int currentPage);
+    Task<PdfVersionDecision?> ChoosePdfVersionAsync(DocumentSummary document, IReadOnlyList<PdfVersion> versions);
+    Task<string?> PickPdfAsync(string title);
+    Task<string?> GetPdfPasswordAsync(string sourcePath);
+    Task<IReadOnlyList<PdfRedactionRegion>?> MarkPdfRedactionsAsync(int pageCount, int currentPage, Func<int, CancellationToken, Task<Bitmap>> preview);
+    Task<PdfStampRequest?> ChoosePdfStampAsync(int pageCount, int currentPage);
+    Task<PdfCompressionMode?> ChoosePdfCompressionAsync();
+    Task<AppearanceOptions?> ChooseAppearanceAsync(AppearanceOptions current);
     Task<ImportErrorsAction> ShowImportErrorsAsync(IReadOnlyList<ImportFailure> failures);
     Task ShowOcrCopyBatchResultsAsync(IReadOnlyList<OcrCopyBatchItem> results);
     Task<IndexReportDecision?> ShowIndexRefreshReportAsync(IndexReport report);
@@ -55,7 +64,7 @@ internal sealed partial class WorkspaceDialogs(Window owner) : IWorkspaceDialogs
     {
         var files = await owner.StorageProvider.OpenFilePickerAsync(new FilePickerOpenOptions
         {
-            Title = "Add paperwork",
+            Title = DesktopText.Translate("Add paperwork"),
             AllowMultiple = true,
             FileTypeFilter = [SupportedDocuments, FilePickerFileTypes.All]
         });
@@ -111,6 +120,27 @@ internal sealed partial class WorkspaceDialogs(Window owner) : IWorkspaceDialogs
     public Task<PdfPageCopyRequest?> ChoosePdfPageCopyAsync(DocumentSummary document, int currentPage, PdfPageCopyAction action) =>
         new PdfPageCopyDialog(document.PageCount, currentPage, action).ShowDialog<PdfPageCopyRequest?>(owner);
 
+    public Task<PdfPageEditRequest?> EditPdfPagesAsync(DocumentSummary document, int currentPage) =>
+        new PdfPageEditor(document.PageCount, currentPage).ShowDialog<PdfPageEditRequest?>(owner);
+
+    public Task<PdfVersionDecision?> ChoosePdfVersionAsync(DocumentSummary document, IReadOnlyList<PdfVersion> versions) =>
+        new PdfVersionHistoryDialog(document, versions).ShowDialog<PdfVersionDecision?>(owner);
+
+    public Task<string?> GetPdfPasswordAsync(string sourcePath) => new UnlockPdfDialog(sourcePath).ShowDialog<string?>(owner);
+
+    public Task<IReadOnlyList<PdfRedactionRegion>?> MarkPdfRedactionsAsync(int pageCount, int currentPage,
+        Func<int, CancellationToken, Task<Bitmap>> preview) =>
+        new PdfRedactionDialog(pageCount, currentPage, preview).ShowDialog<IReadOnlyList<PdfRedactionRegion>?>(owner);
+
+    public Task<PdfStampRequest?> ChoosePdfStampAsync(int pageCount, int currentPage) =>
+        new PdfStampDialog(pageCount, currentPage).ShowDialog<PdfStampRequest?>(owner);
+
+    public Task<PdfCompressionMode?> ChoosePdfCompressionAsync() =>
+        new PdfCompressionDialog().ShowDialog<PdfCompressionMode?>(owner);
+
+    public Task<AppearanceOptions?> ChooseAppearanceAsync(AppearanceOptions current) =>
+        new AppearanceDialog(current).ShowDialog<AppearanceOptions?>(owner);
+
     public Task<ImportErrorsAction> ShowImportErrorsAsync(IReadOnlyList<ImportFailure> failures) =>
         new ImportErrorsDialog(failures).ShowDialog<ImportErrorsAction>(owner);
 
@@ -134,11 +164,13 @@ internal sealed partial class WorkspaceDialogs(Window owner) : IWorkspaceDialogs
 
     public Task ShowIntegrityReportAsync(IntegrityReport report) => new IntegrityReportDialog(report).ShowDialog(owner);
 
-    public async Task<string?> PickRestorePdfAsync()
+    public Task<string?> PickRestorePdfAsync() => PickPdfAsync(DesktopText.Translate("Choose a matching PDF"));
+
+    public async Task<string?> PickPdfAsync(string title)
     {
         var files = await owner.StorageProvider.OpenFilePickerAsync(new FilePickerOpenOptions
         {
-            Title = "Choose a matching PDF",
+            Title = title,
             AllowMultiple = false,
             FileTypeFilter = [PdfDocuments]
         });

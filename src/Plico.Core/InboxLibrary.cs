@@ -79,7 +79,10 @@ public sealed partial class InboxLibrary : IDisposable
         {
             var catalog = new LibraryCatalog(Path.Combine(metadata, CatalogFilename));
             library = new InboxLibrary(root, pdfs, metadata, lease, catalog, claimPdfPath);
+            string? revisionNotice = library.RecoverPdfRevision(CancellationToken.None);
             library.MoveRecoveryNotice = library.RecoverPendingPdfMove(CancellationToken.None).Notice;
+            if (revisionNotice is not null) library.MoveRecoveryNotice = library.MoveRecoveryNotice is { } moveNotice
+                ? $"{revisionNotice} {moveNotice}" : revisionNotice;
             return library;
         }
         catch
@@ -331,8 +334,10 @@ public sealed partial class InboxLibrary : IDisposable
         _fileOperations.Wait(cancellationToken);
         try
         {
+            string? revisionNotice = RecoverPdfRevision(cancellationToken);
             var recovery = RecoverPendingPdfMove(cancellationToken);
             var result = ReconcileFiles(cancellationToken, recovery.PendingDestination);
+            if (revisionNotice is not null) result = result with { Warnings = [revisionNotice, .. result.Warnings] };
             return recovery.Notice is { } notice ? result with { Warnings = [notice, .. result.Warnings] } : result;
         }
         finally

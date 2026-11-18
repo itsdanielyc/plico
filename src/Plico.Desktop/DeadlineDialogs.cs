@@ -18,7 +18,7 @@ internal sealed class DeadlineEditor : Window
 
     internal DeadlineEditor(DeadlineEditInput input)
     {
-        Title = "Document deadlines";
+        Title = DesktopText.Translate("Document deadlines");
         Width = 530;
         Height = 460;
         WindowStartupLocation = WindowStartupLocation.CenterOwner;
@@ -30,7 +30,8 @@ internal sealed class DeadlineEditor : Window
             string label = Label(kind);
             var date = CreateTextBox(label, previous?.Date.ToString(DateFormat, CultureInfo.InvariantCulture), DateFormat);
             date.Name = $"DeadlineDate{kind}";
-            var lead = CreateTextBox($"{label} reminder", previous?.LeadDays?.ToString(CultureInfo.CurrentCulture), "Days before");
+            var lead = CreateTextBox(DesktopText.Format($"{label} reminder"), previous?.LeadDays?.ToString(CultureInfo.CurrentCulture),
+                DesktopText.Translate("Days before"));
             var row = new Grid { ColumnDefinitions = new("*,130,130"), ColumnSpacing = 10 };
             row.Children.Add(new TextBlock { Text = label, VerticalAlignment = VerticalAlignment.Center });
             Grid.SetColumn(date, 1);
@@ -43,14 +44,14 @@ internal sealed class DeadlineEditor : Window
         if (input.SuggestedDueDates.Count > 0 && !dates.ContainsKey(DeadlineKind.Due))
         {
             var suggested = input.SuggestedDueDates[0];
-            var button = new Button { Content = $"Use suggested due date {suggested:d}" };
+            var button = new Button { Content = DesktopText.Format($"Use suggested due date {suggested:d}") };
             button.Click += (_, _) => _editors.First(item => item.Kind == DeadlineKind.Due).Date.Text =
                 suggested.ToString(DateFormat, CultureInfo.InvariantCulture);
             fields.Children.Add(button);
         }
-        var save = new Button { Name = "SaveDeadlinesButton", Content = "Save", IsDefault = true };
+        var save = new Button { Name = "SaveDeadlinesButton", Content = DesktopText.Translate("Save"), IsDefault = true };
         save.Click += (_, _) => Save();
-        var cancel = new Button { Content = "Cancel", IsCancel = true };
+        var cancel = new Button { Content = DesktopText.Translate("Cancel"), IsCancel = true };
         cancel.Click += (_, _) => Close();
         var panel = new Grid { RowDefinitions = new("Auto,*,Auto,Auto"), Margin = new Thickness(20), RowSpacing = 12 };
         AddRow(panel, 0, new TextBlock { Text = input.Document.Title, FontWeight = FontWeight.SemiBold, FontSize = 17, TextWrapping = TextWrapping.Wrap });
@@ -72,7 +73,7 @@ internal sealed class DeadlineEditor : Window
             if (string.IsNullOrWhiteSpace(date.Text) && string.IsNullOrWhiteSpace(lead.Text)) continue;
             if (!DateOnly.TryParseExact(date.Text?.Trim(), DateFormat, CultureInfo.InvariantCulture, DateTimeStyles.None, out var day))
             {
-                _status.Text = $"Enter {Label(kind).ToLowerInvariant()} as YYYY-MM-DD.";
+                _status.Text = DesktopText.Format($"Enter {Label(kind).ToLowerInvariant()} as YYYY-MM-DD.");
                 date.Focus();
                 return;
             }
@@ -81,7 +82,7 @@ internal sealed class DeadlineEditor : Window
             {
                 if (!int.TryParse(lead.Text, out int value) || value is < 0 or > DocumentDeadline.MaximumLeadDays)
                 {
-                    _status.Text = $"Enter a lead time from 0 to {DocumentDeadline.MaximumLeadDays}.";
+                    _status.Text = DesktopText.Format($"Enter a lead time from 0 to {DocumentDeadline.MaximumLeadDays}.");
                     lead.Focus();
                     return;
                 }
@@ -94,10 +95,10 @@ internal sealed class DeadlineEditor : Window
 
     internal static string Label(DeadlineKind kind) => kind switch
     {
-        DeadlineKind.Due => "Due date",
-        DeadlineKind.Renewal => "Renewal",
-        DeadlineKind.Expiry => "Expiry",
-        DeadlineKind.KeepUntil => "Keep until",
+        DeadlineKind.Due => DesktopText.Translate("Due date"),
+        DeadlineKind.Renewal => DesktopText.Translate("Renewal"),
+        DeadlineKind.Expiry => DesktopText.Translate("Expiry"),
+        DeadlineKind.KeepUntil => DesktopText.Translate("Keep until"),
         _ => ""
     };
 }
@@ -109,7 +110,7 @@ internal sealed class RemindersDialog : Window
 {
     internal RemindersDialog(IReadOnlyList<DueReminder> reminders)
     {
-        Title = "Reminders";
+        Title = DesktopText.Translate("Reminders");
         Width = 600;
         Height = 430;
         WindowStartupLocation = WindowStartupLocation.CenterOwner;
@@ -119,17 +120,17 @@ internal sealed class RemindersDialog : Window
                 $"{reminder.Deadline.Date:d} · {DeadlineEditor.Label(reminder.Deadline.Kind)} · {reminder.Title}", reminder)).ToArray(),
             SelectedIndex = reminders.Count > 0 ? 0 : -1
         };
-        var close = new Button { Content = "Close", IsCancel = true };
+        var close = new Button { Content = DesktopText.Translate("Close"), IsCancel = true };
         close.Click += (_, _) => Close();
-        var open = new Button { Content = "Open PDF", IsEnabled = reminders.Count > 0 };
-        var dismiss = new Button { Content = "Dismiss", IsEnabled = reminders.Count > 0 };
-        var calendar = new Button { Content = "Export calendar…" };
+        var open = new Button { Content = DesktopText.Translate("Open PDF"), IsEnabled = reminders.Count > 0 };
+        var dismiss = new Button { Content = DesktopText.Translate("Dismiss"), IsEnabled = reminders.Count > 0 };
+        var calendar = new Button { Content = DesktopText.Translate("Export calendar…") };
         open.Click += (_, _) => Choose(ReminderAction.Open);
         dismiss.Click += (_, _) => Choose(ReminderAction.Dismiss);
         calendar.Click += (_, _) => Close(new ReminderChoice(ReminderAction.Export, null));
         list.SelectionChanged += (_, _) => open.IsEnabled = dismiss.IsEnabled = list.SelectedIndex >= 0;
         var grid = new Grid { RowDefinitions = new("*,Auto"), RowSpacing = 12, Margin = new Thickness(20) };
-        AddRow(grid, 0, reminders.Count == 0 ? new TextBlock { Text = "No reminders are due." } : list);
+        AddRow(grid, 0, reminders.Count == 0 ? new TextBlock { Text = DesktopText.Translate("No reminders are due.") } : list);
         AddRow(grid, 1, new StackPanel
         {
             Orientation = Orientation.Horizontal, Spacing = 8, HorizontalAlignment = HorizontalAlignment.Right,

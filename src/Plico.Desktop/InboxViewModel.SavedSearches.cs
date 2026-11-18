@@ -49,7 +49,7 @@ internal sealed partial class InboxViewModel
                     ? library.SaveSearch(edited.Name, edited.Query, edited.Sort, scopeTag)
                     : library.UpdateSavedSearch(existing.Id, edited.Name, edited.Query, edited.Sort);
                 SavedSearches = library.GetSavedSearches();
-                Status = $"Saved “{saved.Name}”.";
+                Status = DesktopText.Format($"Saved “{saved.Name}”.");
                 await ApplySavedSearchAsync(saved);
             }
             else if (choice is SavedSearchDecision.Remove && existing is not null)
@@ -58,9 +58,9 @@ internal sealed partial class InboxViewModel
                 SavedSearches = library.GetSavedSearches();
                 ActiveSavedSearch = null;
                 UpdateResultHeading(CurrentFilter());
-                Status = $"Removed “{existing.Name}”.";
+                Status = DesktopText.Format($"Removed “{existing.Name}”.");
             }
-            else Status = "Saved search editor closed.";
+            else Status = DesktopText.Translate("Saved search editor closed.");
         });
     }
 

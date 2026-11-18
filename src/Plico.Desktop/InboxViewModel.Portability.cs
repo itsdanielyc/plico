@@ -5,12 +5,12 @@ namespace Plico.Desktop;
 internal sealed partial class InboxViewModel
 {
     [RelayCommand]
-    private Task CheckIntegrityAsync() => RunOperationAsync("Checking the library…", async token =>
+    private Task CheckIntegrityAsync() => RunOperationAsync(DesktopText.Translate("Checking the library…"), async token =>
     {
         var library = RequireLibrary();
         var report = await Task.Run(() => library.CheckIntegrity(token), token);
         await _dialogs.ShowIntegrityReportAsync(report);
-        Status = report.Issues.Count == 0 ? "Integrity check found no issues." : "Integrity check complete.";
+        Status = report.Issues.Count == 0 ? DesktopText.Translate("Integrity check found no issues.") : DesktopText.Translate("Integrity check complete.");
     });
 
     [RelayCommand]
@@ -22,22 +22,22 @@ internal sealed partial class InboxViewModel
     private Task ExportReportAsync(bool csv)
     {
         var filter = CurrentFilter();
-        return RunOperationAsync("Choose an export destination…", async token =>
+        return RunOperationAsync(DesktopText.Translate("Choose an export destination…"), async token =>
         {
             var library = RequireLibrary();
             string title = csv ? "Choose where to save search results" : "Choose where to save library metadata";
             string? directory = await _dialogs.PickFolderAsync(title);
             if (directory is null)
             {
-                Status = "Export cancelled.";
+                Status = DesktopText.Translate("Export cancelled.");
                 return;
             }
-            Status = csv ? "Exporting search results…" : "Exporting metadata…";
+            Status = csv ? DesktopText.Translate("Exporting search results…") : DesktopText.Translate("Exporting metadata…");
             string path = await Task.Run(() => csv
                 ? library.ExportSearchCsvAsync(filter, directory, token)
                 : library.ExportMetadataAsync(directory, token), token);
             LatestExportLocation = Path.GetDirectoryName(path);
-            Status = $"Exported {Path.GetFileName(path)}.";
+            Status = DesktopText.Format($"Exported {Path.GetFileName(path)}.");
         });
     }
 }

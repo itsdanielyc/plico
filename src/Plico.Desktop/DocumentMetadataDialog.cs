@@ -26,7 +26,7 @@ internal sealed class DocumentMetadataDialog : Window
 
     internal DocumentMetadataDialog(MetadataEditInput input)
     {
-        Title = "Document metadata";
+        Title = DesktopText.Translate("Document metadata");
         Width = 560;
         Height = 620;
         MinWidth = 400;
@@ -35,12 +35,12 @@ internal sealed class DocumentMetadataDialog : Window
 
         var body = new StackPanel { Spacing = 9 };
         var definitions = input.Definitions;
-        _type = Options("Document type", [new("Unclassified", null), .. definitions.DocumentTypes.Select(type =>
+        _type = Options(DesktopText.Translate("Document type"), [new(DesktopText.Translate("Unclassified"), null), .. definitions.DocumentTypes.Select(type =>
             new MetadataOption<long?>(type.Name, type.Id))], input.Metadata.DocumentTypeId);
-        AddField(body, "Document type", _type);
+        AddField(body, DesktopText.Translate("Document type"), _type);
         if (definitions.Correspondents.Count > 0)
         {
-            body.Children.Add(new TextBlock { Text = "Correspondents", FontWeight = FontWeight.SemiBold });
+            body.Children.Add(new TextBlock { Text = DesktopText.Translate("Correspondents"), FontWeight = FontWeight.SemiBold });
             var selected = input.Metadata.CorrespondentIds.ToHashSet();
             var suggestions = input.Suggestions.Select(contact => contact.Id).ToHashSet();
             foreach (var contact in definitions.Correspondents.OrderByDescending(contact => selected.Contains(contact.Id))
@@ -48,19 +48,20 @@ internal sealed class DocumentMetadataDialog : Window
             {
                 var box = new CheckBox
                 {
-                    Content = suggestions.Contains(contact.Id) && !selected.Contains(contact.Id) ? $"{contact.Name} · Suggested" : contact.Name,
+                    Content = suggestions.Contains(contact.Id) && !selected.Contains(contact.Id)
+                        ? DesktopText.Format($"{contact.Name} · Suggested") : contact.Name,
                     IsChecked = selected.Contains(contact.Id)
                 };
                 _contacts.Add((contact.Id, box));
                 body.Children.Add(box);
             }
         }
-        _notes = CreateTextBox("Notes", input.Metadata.Notes);
+        _notes = CreateTextBox(DesktopText.Translate("Notes"), input.Metadata.Notes);
         _notes.Name = "MetadataNotes";
         _notes.AcceptsReturn = true;
         _notes.TextWrapping = TextWrapping.Wrap;
         _notes.MinHeight = 76;
-        AddField(body, "Notes", _notes);
+        AddField(body, DesktopText.Translate("Notes"), _notes);
 
         var fields = input.Metadata.Fields.ToDictionary(field => field.FieldId, field => field.Value);
         foreach (var field in definitions.CustomFields)
@@ -70,9 +71,9 @@ internal sealed class DocumentMetadataDialog : Window
             _fields.Add((field.Id, editor.Read));
         }
 
-        var save = new Button { Name = "SaveDocumentMetadataButton", Content = "Save", IsDefault = true };
+        var save = new Button { Name = "SaveDocumentMetadataButton", Content = DesktopText.Translate("Save"), IsDefault = true };
         save.Click += (_, _) => Save();
-        var cancel = new Button { Content = "Cancel", IsCancel = true };
+        var cancel = new Button { Content = DesktopText.Translate("Cancel"), IsCancel = true };
         cancel.Click += (_, _) => Close();
         var footer = new StackPanel { Spacing = 8 };
         footer.Children.Add(_error);
@@ -107,15 +108,15 @@ internal sealed class DocumentMetadataDialog : Window
         switch (field.Kind)
         {
             case CustomFieldKind.Choice:
-                var choices = Options<string?>(field.Name, [new("Unset", null), .. field.Choices.Select(label =>
+                var choices = Options<string?>(field.Name, [new(DesktopText.Translate("Unset"), null), .. field.Choices.Select(label =>
                     new MetadataOption<string?>(label, label))], (previous as CustomFieldValue.Choice)?.Label);
                 return (choices, () => ReadOption<string?>(choices) is { } label ? new CustomFieldValue.Choice(label) : null);
             case CustomFieldKind.Boolean:
-                var bools = Options<bool?>(field.Name, [new("Unset", null), new("Yes", true), new("No", false)],
+                var bools = Options<bool?>(field.Name, [new(DesktopText.Translate("Unset"), null), new(DesktopText.Translate("Yes"), true), new(DesktopText.Translate("No"), false)],
                     (previous as CustomFieldValue.Boolean)?.Value);
                 return (bools, () => ReadOption<bool?>(bools) is { } value ? new CustomFieldValue.Boolean(value) : null);
             case CustomFieldKind.DocumentLink:
-                var links = Options<long?>(field.Name, [new("Unset", null), .. targets.Select(target =>
+                var links = Options<long?>(field.Name, [new(DesktopText.Translate("Unset"), null), .. targets.Select(target =>
                     new MetadataOption<long?>(target.Title, target.Id))], (previous as CustomFieldValue.DocumentLink)?.DocumentId);
                 return (links, () => ReadOption<long?>(links) is { } value ? new CustomFieldValue.DocumentLink(value) : null);
             case CustomFieldKind.Money:
@@ -128,8 +129,8 @@ internal sealed class DocumentMetadataDialog : Window
 
     private static (Control, Func<CustomFieldValue?>) MoneyEditor(CustomFieldDefinition field, CustomFieldValue.Money? previous)
     {
-        var amount = CreateTextBox(field.Name, previous?.Amount.ToString(CultureInfo.CurrentCulture), "Amount");
-        var currency = CreateTextBox($"{field.Name} currency", previous?.Currency, "Currency code");
+        var amount = CreateTextBox(field.Name, previous?.Amount.ToString(CultureInfo.CurrentCulture), DesktopText.Translate("Amount"));
+        var currency = CreateTextBox(DesktopText.Format($"{field.Name} currency"), previous?.Currency, DesktopText.Translate("Currency code"));
         var panel = new Grid { ColumnDefinitions = new("*,120"), ColumnSpacing = 8, Children = { amount, currency } };
         Grid.SetColumn(currency, 1);
         return (panel, () =>
@@ -157,7 +158,7 @@ internal sealed class DocumentMetadataDialog : Window
         };
     }
 
-    private static ArgumentException InvalidField(CustomFieldDefinition field) => new($"Enter a valid value for “{field.Name}”.");
+    private static ArgumentException InvalidField(CustomFieldDefinition field) => new(DesktopText.Format($"Enter a valid value for “{field.Name}”."));
 
     private static string? Format(CustomFieldValue? value) => value switch
     {

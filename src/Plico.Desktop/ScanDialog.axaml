@@ -1,87 +1,88 @@
-<Window xmlns="https://github.com/avaloniaui" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:translation="using:Plico.Desktop" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:core="using:Plico.Core" x:Class="Plico.Desktop.ScanDialog"
-        Title="Scan paperwork" Width="510" SizeToContent="Height" CanResize="False"
-        WindowStartupLocation="CenterOwner" FontFamily="{StaticResource InterFont}" Background="#F4F5EF">
+        Title="{translation:Tr ScanPaperwork}" Width="510" SizeToContent="Height" CanResize="False"
+        WindowStartupLocation="CenterOwner" FontFamily="{StaticResource InterFont}" Background="{DynamicResource WorkspaceSurface}">
     <StackPanel Margin="24" Spacing="14">
-        <TextBlock Text="Scan paperwork" FontSize="24" FontWeight="SemiBold" AutomationProperties.HeadingLevel="1" />
+        <TextBlock Text="{translation:Tr ScanPaperwork}" FontSize="24" FontWeight="SemiBold" AutomationProperties.HeadingLevel="1" />
         <Grid ColumnDefinitions="*,Auto,Auto" ColumnSpacing="8">
-            <ComboBox x:Name="DeviceBox" PlaceholderText="Choose a scanner" HorizontalAlignment="Stretch"
-                      SelectionChanged="Device_Changed" AutomationProperties.Name="Scanner">
+            <ComboBox x:Name="DeviceBox" PlaceholderText="{translation:Tr ChooseAScanner}" HorizontalAlignment="Stretch"
+                      SelectionChanged="Device_Changed" AutomationProperties.Name="{translation:Tr Scanner}">
                 <ComboBox.ItemTemplate>
                     <DataTemplate x:DataType="core:ScannerDevice"><TextBlock Text="{Binding DisplayName}" /></DataTemplate>
                 </ComboBox.ItemTemplate>
             </ComboBox>
-            <Button Grid.Column="1" x:Name="RefreshButton" Content="Refresh" Click="Refresh_Click" />
-            <Button Grid.Column="2" x:Name="ForgetButton" Content="Forget" Click="Forget_Click" IsVisible="False"
-                    AutomationProperties.Name="Forget saved scanner address" />
+            <Button Grid.Column="1" x:Name="RefreshButton" Content="{translation:Tr Refresh}" Click="Refresh_Click" />
+            <Button Grid.Column="2" x:Name="ForgetButton" Content="{translation:Tr Forget}" Click="Forget_Click" IsVisible="False"
+                    AutomationProperties.Name="{translation:Tr ForgetSavedScannerAddress}" />
         </Grid>
         <Grid ColumnDefinitions="*,Auto" ColumnSpacing="8">
-            <TextBox x:Name="AddressBox" PlaceholderText="Scanner address (optional)" MaxLength="512"
-                     AutomationProperties.Name="Scanner address" KeyDown="Address_KeyDown" />
-            <Button Grid.Column="1" x:Name="ConnectButton" Content="Connect" Click="Connect_Click" />
+            <TextBox x:Name="AddressBox" PlaceholderText="{translation:Tr ScannerAddressOptional}" MaxLength="512"
+                     AutomationProperties.Name="{translation:Tr ScannerAddress}" KeyDown="Address_KeyDown" />
+            <Button Grid.Column="1" x:Name="ConnectButton" Content="{translation:Tr Connect}" Click="Connect_Click" />
         </Grid>
         <Grid ColumnDefinitions="1.4*,*,*" ColumnSpacing="12">
             <StackPanel Spacing="5">
-                <TextBlock Text="Paper source" FontSize="12" />
-                <ComboBox x:Name="SourceBox" HorizontalAlignment="Stretch" AutomationProperties.Name="Paper source"
+                <TextBlock Text="{translation:Tr PaperSource}" FontSize="12" />
+                <ComboBox x:Name="SourceBox" HorizontalAlignment="Stretch" AutomationProperties.Name="{translation:Tr PaperSource}"
                           SelectionChanged="CaptureOptions_Changed" />
             </StackPanel>
             <StackPanel Grid.Column="1" Spacing="5">
-                <TextBlock Text="Paper size" FontSize="12" />
-                <ComboBox x:Name="PaperBox" HorizontalAlignment="Stretch" AutomationProperties.Name="Paper size"
+                <TextBlock Text="{translation:Tr PaperSize}" FontSize="12" />
+                <ComboBox x:Name="PaperBox" HorizontalAlignment="Stretch" AutomationProperties.Name="{translation:Tr PaperSize}"
                           SelectionChanged="CaptureOptions_Changed" />
             </StackPanel>
             <StackPanel Grid.Column="2" Spacing="5">
-                <TextBlock Text="Resolution" FontSize="12" />
-                <ComboBox x:Name="ResolutionBox" HorizontalAlignment="Stretch" AutomationProperties.Name="Scan resolution"
+                <TextBlock Text="{translation:Tr Resolution}" FontSize="12" />
+                <ComboBox x:Name="ResolutionBox" HorizontalAlignment="Stretch" AutomationProperties.Name="{translation:Tr ScanResolution}"
                           SelectionChanged="CaptureOptions_Changed" />
             </StackPanel>
         </Grid>
-        <Expander x:Name="ScanCleanupExpander" Header="Cleanup and profiles" HorizontalAlignment="Stretch"
+        <Expander x:Name="ScanCleanupExpander" Header="{translation:Tr CleanupAndProfiles}" HorizontalAlignment="Stretch"
                   HorizontalContentAlignment="Stretch">
             <StackPanel Spacing="10">
                 <Grid ColumnDefinitions="*,*,*" ColumnSpacing="8">
                     <StackPanel Spacing="4">
-                        <TextBlock Text="Colour mode" FontSize="12" />
-                        <ComboBox x:Name="ScanColourBox" HorizontalAlignment="Stretch" AutomationProperties.Name="Colour mode"
+                        <TextBlock Text="{translation:Tr ColourMode}" FontSize="12" />
+                        <ComboBox x:Name="ScanColourBox" HorizontalAlignment="Stretch" AutomationProperties.Name="{translation:Tr ColourMode}"
                                   SelectionChanged="CaptureOptions_Changed" />
                     </StackPanel>
                     <StackPanel Grid.Column="1" Spacing="4">
-                        <TextBlock Text="Brightness" FontSize="12" />
+                        <TextBlock Text="{translation:Tr Brightness}" FontSize="12" />
                         <NumericUpDown x:Name="ScanBrightness" Value="0" Minimum="-100" Maximum="100" Increment="5" FormatString="0"
-                                       AutomationProperties.Name="Brightness adjustment" ValueChanged="CaptureOptions_Changed" />
+                                       AutomationProperties.Name="{translation:Tr BrightnessAdjustment}" ValueChanged="CaptureOptions_Changed" />
                     </StackPanel>
                     <StackPanel Grid.Column="2" Spacing="4">
-                        <TextBlock Text="Contrast" FontSize="12" />
+                        <TextBlock Text="{translation:Tr Contrast}" FontSize="12" />
                         <NumericUpDown x:Name="ScanContrast" Value="0" Minimum="-100" Maximum="100" Increment="5" FormatString="0"
-                                       AutomationProperties.Name="Contrast adjustment" ValueChanged="CaptureOptions_Changed" />
+                                       AutomationProperties.Name="{translation:Tr ContrastAdjustment}" ValueChanged="CaptureOptions_Changed" />
                     </StackPanel>
                 </Grid>
                 <UniformGrid Columns="2">
-                    <CheckBox x:Name="SkipBlankPages" Content="Skip blank pages" IsCheckedChanged="CaptureOptions_Changed" />
-                    <CheckBox x:Name="DeskewScan" Content="Straighten pages" IsCheckedChanged="CaptureOptions_Changed" />
-                    <CheckBox x:Name="CropScan" Content="Crop to page edges" IsCheckedChanged="CaptureOptions_Changed" />
-                    <CheckBox x:Name="FlipScanBacks" Content="Flip duplex backs" IsCheckedChanged="CaptureOptions_Changed" />
+                    <CheckBox x:Name="SkipBlankPages" Content="{translation:Tr SkipBlankPages}" IsCheckedChanged="CaptureOptions_Changed" />
+                    <CheckBox x:Name="DeskewScan" Content="{translation:Tr StraightenPages}" IsCheckedChanged="CaptureOptions_Changed" />
+                    <CheckBox x:Name="CropScan" Content="{translation:Tr CropToPageEdges}" IsCheckedChanged="CaptureOptions_Changed" />
+                    <CheckBox x:Name="FlipScanBacks" Content="{translation:Tr FlipDuplexBacks}" IsCheckedChanged="CaptureOptions_Changed" />
                 </UniformGrid>
                 <StackPanel x:Name="ProfileControls" Spacing="6">
                     <Grid ColumnDefinitions="*,Auto" ColumnSpacing="8">
-                        <ComboBox x:Name="ScanProfileBox" PlaceholderText="Choose a saved profile" HorizontalAlignment="Stretch"
-                                  AutomationProperties.Name="Scan profile" SelectionChanged="ScanProfile_Changed" />
-                        <Button Grid.Column="1" x:Name="RemoveScanProfile" Content="Remove" Click="RemoveProfile_Click" IsEnabled="False" />
+                        <ComboBox x:Name="ScanProfileBox" PlaceholderText="{translation:Tr ChooseASavedProfile}" HorizontalAlignment="Stretch"
+                                  AutomationProperties.Name="{translation:Tr ScanProfile}" SelectionChanged="ScanProfile_Changed" />
+                        <Button Grid.Column="1" x:Name="RemoveScanProfile" Content="{translation:Tr Remove}" Click="RemoveProfile_Click" IsEnabled="False" />
                     </Grid>
                     <Grid ColumnDefinitions="*,Auto" ColumnSpacing="8">
-                        <TextBox x:Name="ScanProfileName" PlaceholderText="Profile name" MaxLength="48" AutomationProperties.Name="Profile name" />
-                        <Button Grid.Column="1" x:Name="SaveScanProfile" Content="Save profile" Click="SaveProfile_Click" />
+                        <TextBox x:Name="ScanProfileName" PlaceholderText="{translation:Tr ProfileName}" MaxLength="48" AutomationProperties.Name="{translation:Tr ProfileName}" />
+                        <Button Grid.Column="1" x:Name="SaveScanProfile" Content="{translation:Tr SaveProfile}" Click="SaveProfile_Click" />
                     </Grid>
                 </StackPanel>
             </StackPanel>
         </Expander>
-        <TextBlock x:Name="ScannerStatus" TextWrapping="Wrap" Foreground="#526358" FontSize="12"
+        <TextBlock x:Name="ScannerStatus" TextWrapping="Wrap" Foreground="{DynamicResource FaintInk}" FontSize="12"
                    AutomationProperties.LiveSetting="Polite" />
         <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" Spacing="8">
-            <Button Content="Cancel" Click="Cancel_Click" IsCancel="True" Padding="14,7" />
-            <Button x:Name="StartButton" Content="Scan to inbox" Click="Start_Click" IsDefault="True" IsEnabled="False"
-                    Background="#254C37" Foreground="White" Padding="14,7" />
+            <Button Content="{translation:Tr Cancel}" Click="Cancel_Click" IsCancel="True" Padding="14,7" />
+            <Button x:Name="StartButton" Content="{translation:Tr ScanToInbox}" Click="Start_Click" IsDefault="True" IsEnabled="False"
+                    Background="{DynamicResource PrimarySurface}" Foreground="White" Padding="14,7" />
         </StackPanel>
     </StackPanel>
 </Window>

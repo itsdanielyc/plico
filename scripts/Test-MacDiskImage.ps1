@@ -27,8 +27,14 @@ try {
         $attached = $false
     }
     codesign --verify --deep --strict $application
+    $plist = Join-Path $application 'Contents/Info.plist'
+    $documentType = & '/usr/libexec/PlistBuddy' -c 'Print :CFBundleDocumentTypes:0:LSItemContentTypes:0' $plist
+    $handlerRank = & '/usr/libexec/PlistBuddy' -c 'Print :CFBundleDocumentTypes:0:LSHandlerRank' $plist
+    if ($documentType -ne 'com.adobe.pdf' -or $handlerRank -ne 'Alternate') {
+        throw 'The macOS app did not advertise itself as an alternate PDF handler.'
+    }
     & (Join-Path $PSScriptRoot 'Test-Native.ps1') -Executable (Join-Path $application 'Contents/MacOS/Plico') -EvidenceDirectory $EvidenceDirectory
-    'Mounted the disk image, copied Plico.app, verified its signature, and completed the native journey.' |
+    'Mounted the disk image, verified the alternate PDF handler and app signature, and completed the native journey.' |
         Set-Content -LiteralPath (Join-Path $EvidenceDirectory 'setup-passed.txt')
 } finally {
     $systemTemp = [IO.Path]::TrimEndingDirectorySeparator([IO.Path]::GetFullPath([IO.Path]::GetTempPath()))

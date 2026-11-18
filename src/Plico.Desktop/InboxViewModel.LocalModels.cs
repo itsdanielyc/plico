@@ -37,57 +37,57 @@ internal sealed partial class InboxViewModel
     }
 
     [RelayCommand]
-    private Task ConfigureLocalModelsAsync() => RunOperationAsync("Edit local model settings…", async token =>
+    private Task ConfigureLocalModelsAsync() => RunOperationAsync(DesktopText.Translate("Edit local model settings…"), async token =>
     {
         var changed = await _dialogs.EditLocalModelsAsync(LocalModels);
-        if (changed is null) { Status = "Local model settings closed."; return; }
+        if (changed is null) { Status = DesktopText.Translate("Local model settings closed."); return; }
         changed = changed.Validate();
         _localModelPreference?.Save(changed);
         LocalModels = changed;
-        Status = "Local model settings saved.";
+        Status = DesktopText.Translate("Local model settings saved.");
     });
 
     [RelayCommand]
-    private Task FindRelatedAsync() => RunOperationAsync("Finding related documents…", async token =>
+    private Task FindRelatedAsync() => RunOperationAsync(DesktopText.Translate("Finding related documents…"), async token =>
     {
         if (SelectedDocument is not { } document) return;
         var library = RequireLibrary();
         var matches = await Task.Run(() => library.FindRelatedDocuments(document.Id, cancellationToken: token), token);
-        await ReviewSimilarityAsync(library, "Related documents", matches);
+        await ReviewSimilarityAsync(library, DesktopText.Translate("Related documents"), matches);
     });
 
     [RelayCommand]
-    private Task SearchSemanticallyAsync() => RunOperationAsync("Choose a semantic query…", async token =>
+    private Task SearchSemanticallyAsync() => RunOperationAsync(DesktopText.Translate("Choose a semantic query…"), async token =>
     {
-        if (!HasSemanticSearch) { Status = "Enable an embedding model in Local models."; return; }
+        if (!HasSemanticSearch) { Status = DesktopText.Translate("Enable an embedding model in Local models."); return; }
         var query = await _dialogs.EnterSemanticQueryAsync(_latestSemanticQuery);
-        if (query is null) { Status = "Semantic search closed."; return; }
+        if (query is null) { Status = DesktopText.Translate("Semantic search closed."); return; }
         _latestSemanticQuery = query;
         var library = RequireLibrary();
         using var session = _openLocalModel(LocalModels);
-        Status = "Searching the local semantic index…";
-        var progress = new Progress<int>(count => Status = $"Compared {count} documents…");
+        Status = DesktopText.Translate("Searching the local semantic index…");
+        var progress = new Progress<int>(count => Status = DesktopText.Format($"Compared {count} documents…"));
         var matches = await Task.Run(() => library.SearchSemanticallyAsync(query, session.Embeddings,
             progress: progress, cancellationToken: token), token);
-        await ReviewSimilarityAsync(library, "Semantic matches", matches);
+        await ReviewSimilarityAsync(library, DesktopText.Translate("Semantic matches"), matches);
     });
 
     [RelayCommand]
-    private Task RebuildSemanticIndexAsync() => RunOperationAsync("Clearing generated vectors…", async token =>
+    private Task RebuildSemanticIndexAsync() => RunOperationAsync(DesktopText.Translate("Clearing generated vectors…"), async token =>
     {
         await Task.Run(RequireLibrary().ClearSemanticIndex, token);
-        Status = "Semantic index cleared. The next search will rebuild it.";
+        Status = DesktopText.Translate("Semantic index cleared. The next search will rebuild it.");
     });
 
     private async Task ReviewSimilarityAsync(InboxLibrary library, string title, IReadOnlyList<DocumentSimilarityMatch> matches)
     {
         var selected = await _dialogs.ShowSimilarityMatchesAsync(title, matches);
         if (selected is not null) _dialogs.OpenPath(library.ResolveReminderPdf(selected.Document.Id));
-        Status = matches.Count == 0 ? "No matching documents." : $"Found {DocumentCount(matches.Count)}.";
+        Status = matches.Count == 0 ? DesktopText.Translate("No matching documents.") : DesktopText.Format($"Found {DocumentCount(matches.Count)}.");
     }
 
     [RelayCommand]
-    private Task SuggestLocalFilingAsync() => RunOperationAsync("Preparing local filing suggestions…", async token =>
+    private Task SuggestLocalFilingAsync() => RunOperationAsync(DesktopText.Translate("Preparing local filing suggestions…"), async token =>
     {
         if (SelectedDocument is not { } document || !HasLocalChat) return;
         var library = RequireLibrary();
@@ -95,37 +95,37 @@ internal sealed partial class InboxViewModel
         var proposal = await Task.Run(() => library.SuggestLocalFilingAsync(document.Id, session.Chat, RecognitionLanguage,
             CultureInfo.CurrentCulture, token), token);
         var edit = await _dialogs.ReviewLocalFilingAsync(proposal, library.GetMetadataDefinitions());
-        if (edit is null) { Status = "Local filing suggestions closed."; return; }
+        if (edit is null) { Status = DesktopText.Translate("Local filing suggestions closed."); return; }
         await Task.Run(() => library.ApplyLocalFiling(edit, token), token);
         Tags = library.GetTags();
         LoadResults(document.Id, retainLoadedResults: true);
-        Status = "Local filing saved.";
+        Status = DesktopText.Translate("Local filing saved.");
     });
 
     [RelayCommand]
-    private Task UndoLocalFilingAsync() => RunOperationAsync("Restoring prior metadata…", async token =>
+    private Task UndoLocalFilingAsync() => RunOperationAsync(DesktopText.Translate("Restoring prior metadata…"), async token =>
     {
         if (SelectedDocument is not { } document) return;
         var library = RequireLibrary();
         if (!await Task.Run(() => library.UndoLocalFiling(document.Id, token), token))
         {
-            Status = "There is no local filing change to undo for this PDF.";
+            Status = DesktopText.Translate("There is no local filing change to undo for this PDF.");
             return;
         }
         Tags = library.GetTags();
         LoadResults(document.Id, retainLoadedResults: true);
-        Status = "Local filing undone.";
+        Status = DesktopText.Translate("Local filing undone.");
     });
 
     [RelayCommand]
-    private Task AskLocalModelAsync() => RunOperationAsync("Opening the local assistant…", async token =>
+    private Task AskLocalModelAsync() => RunOperationAsync(DesktopText.Translate("Opening the local assistant…"), async token =>
     {
-        if (!HasLocalChat) { Status = "Enable a chat model in Local models."; return; }
+        if (!HasLocalChat) { Status = DesktopText.Translate("Enable a chat model in Local models."); return; }
         var library = RequireLibrary();
         var document = SelectedDocument;
         using var session = _openLocalModel(LocalModels);
         await _dialogs.ShowLocalChatAsync(new(document?.Title, AskAsync, id => _dialogs.OpenPath(library.ResolveReminderPdf(id))));
-        Status = "Local assistant closed.";
+        Status = DesktopText.Translate("Local assistant closed.");
         async Task<LocalAssistantAnswer> AskAsync(LocalChatRequest request, CancellationToken dialogToken)
         {
             using var linked = CancellationTokenSource.CreateLinkedTokenSource(token, dialogToken);

@@ -11,38 +11,38 @@ internal sealed class MetadataDefinitionsDialog : Window
 {
     private enum Section { Correspondents, Types, Fields, Tags }
     private readonly InboxLibrary _library;
-    private readonly ComboBox _section = Options("Metadata category",
-        [new("Correspondents", Section.Correspondents), new("Document types", Section.Types),
-            new("Custom fields", Section.Fields), new("Tag appearance", Section.Tags)], Section.Correspondents);
+    private readonly ComboBox _section = Options(DesktopText.Translate("Metadata category"),
+        [new(DesktopText.Translate("Correspondents"), Section.Correspondents), new(DesktopText.Translate("Document types"), Section.Types),
+            new(DesktopText.Translate("Custom fields"), Section.Fields), new(DesktopText.Translate("Tag appearance"), Section.Tags)], Section.Correspondents);
     private readonly ListBox _definitions = new() { MinHeight = 136, MaxHeight = 190 };
     private readonly TextBox _name = CreateTextBox("Name");
-    private readonly TextBox _options = CreateTextBox("Aliases or choices");
-    private readonly ComboBox _kind = Options("Field type", Enum.GetValues<CustomFieldKind>()
+    private readonly TextBox _options = CreateTextBox(DesktopText.Translate("Aliases or choices"));
+    private readonly ComboBox _kind = Options(DesktopText.Translate("Field type"), Enum.GetValues<CustomFieldKind>()
         .Select(kind => new MetadataOption<CustomFieldKind>(FieldLabel(kind), kind)).ToArray(), CustomFieldKind.Text);
     private readonly ComboBox _parent = new() { HorizontalAlignment = HorizontalAlignment.Stretch };
-    private readonly TextBox _color = CreateTextBox("Tag colour", placeholder: "#RRGGBB");
-    private readonly TextBlock _kindLabel = new() { Text = "Field type" };
+    private readonly TextBox _color = CreateTextBox(DesktopText.Translate("Tag colour"), placeholder: "#RRGGBB");
+    private readonly TextBlock _kindLabel = new() { Text = DesktopText.Translate("Field type") };
     private readonly TextBlock _optionsLabel = new();
-    private readonly TextBlock _parentLabel = new() { Text = "Parent tag" };
-    private readonly TextBlock _colorLabel = new() { Text = "Tag colour" };
+    private readonly TextBlock _parentLabel = new() { Text = DesktopText.Translate("Parent tag") };
+    private readonly TextBlock _colorLabel = new() { Text = DesktopText.Translate("Tag colour") };
     private readonly TextBlock _status = new() { TextWrapping = TextWrapping.Wrap };
 
     internal MetadataDefinitionsDialog(InboxLibrary library)
     {
         _library = library;
-        Title = "Metadata definitions";
+        Title = DesktopText.Translate("Metadata definitions");
         Width = 510;
         Height = 570;
         MinHeight = 360;
         WindowStartupLocation = WindowStartupLocation.CenterOwner;
         _options.AcceptsReturn = true;
         _options.MinHeight = 64;
-        Avalonia.Automation.AutomationProperties.SetName(_parent, "Parent tag");
-        var add = new Button { Content = "New" };
+        Avalonia.Automation.AutomationProperties.SetName(_parent, DesktopText.Translate("Parent tag"));
+        var add = new Button { Content = DesktopText.Translate("New") };
         add.Click += (_, _) => { _definitions.SelectedItem = null; RefreshEditor(); _name.Focus(); };
-        var save = new Button { Content = "Save definition" };
+        var save = new Button { Content = DesktopText.Translate("Save definition") };
         save.Click += (_, _) => Save();
-        var close = new Button { Content = "Close", IsCancel = true };
+        var close = new Button { Content = DesktopText.Translate("Close"), IsCancel = true };
         close.Click += (_, _) => Close();
         var fields = new StackPanel
         {
@@ -100,7 +100,7 @@ internal sealed class MetadataDefinitionsDialog : Window
         {
             var parents = _library.GetTagAppearances().Where(tag => tag.Label != _name.Text).Select(tag =>
                 new MetadataOption<string?>(tag.Label, tag.Label));
-            MetadataOption<string?>[] options = [new("No parent", null), .. parents];
+            MetadataOption<string?>[] options = [new(DesktopText.Translate("No parent"), null), .. parents];
             _parent.ItemsSource = options;
             _parent.SelectedItem = options.FirstOrDefault(item => item.Value == (current as TagAppearance)?.ParentLabel) ?? options[0];
         }
@@ -114,7 +114,7 @@ internal sealed class MetadataDefinitionsDialog : Window
         _kindLabel.IsVisible = _kind.IsVisible = section == Section.Fields;
         _optionsLabel.IsVisible = _options.IsVisible = section == Section.Correspondents ||
             (section == Section.Fields && ReadOption<CustomFieldKind>(_kind) == CustomFieldKind.Choice);
-        _optionsLabel.Text = section == Section.Correspondents ? "Aliases, one per line" : "Choices, one per line";
+        _optionsLabel.Text = section == Section.Correspondents ? DesktopText.Translate("Aliases, one per line") : DesktopText.Translate("Choices, one per line");
         _parentLabel.IsVisible = _parent.IsVisible = _colorLabel.IsVisible = _color.IsVisible = section == Section.Tags;
     }
 
@@ -136,7 +136,7 @@ internal sealed class MetadataDefinitionsDialog : Window
                 _ => throw new InvalidOperationException("Choose a metadata category.")
             };
             RefreshList(saved);
-            _status.Text = "Saved.";
+            _status.Text = DesktopText.Translate("Saved.");
         }
         catch (Exception error) when (error is ArgumentException or InvalidOperationException or IOException)
         {
@@ -163,9 +163,9 @@ internal sealed class MetadataDefinitionsDialog : Window
 
     private static string FieldLabel(CustomFieldKind kind) => kind switch
     {
-        CustomFieldKind.Boolean => "Yes or no",
-        CustomFieldKind.Url => "Web address",
-        CustomFieldKind.DocumentLink => "Document link",
-        _ => kind.ToString()
+        CustomFieldKind.Boolean => DesktopText.Translate("Yes or no"),
+        CustomFieldKind.Url => DesktopText.Translate("Web address"),
+        CustomFieldKind.DocumentLink => DesktopText.Translate("Document link"),
+        _ => DesktopText.Translate(kind.ToString())
     };
 }

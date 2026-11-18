@@ -9,6 +9,12 @@ internal static class Program
     [STAThread]
     public static int Main(string[] arguments)
     {
+        if (!OperatingSystem.IsMacOS())
+        {
+            var incoming = PdfFileActivation.ReadPaths(arguments);
+            if (incoming.Length != 0 && PdfFileActivation.ForwardAsync(PdfFileActivation.UserPipeName, incoming).GetAwaiter().GetResult())
+                return 0;
+        }
         var builder = BuildAvaloniaApp();
         if (OperatingSystem.IsLinux() && arguments is [App.VerifySwitch, _, _] &&
             Environment.GetEnvironmentVariable(VerifyUiThreadRenderingVariable) == "1")

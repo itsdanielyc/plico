@@ -18,7 +18,7 @@ internal sealed partial class SavedSearchDialog : Window
     internal SavedSearchDialog(SavedSearchDraft draft, string? scopeTag, bool editing)
     {
         InitializeComponent();
-        Title = editing ? "Edit saved search" : "Save search";
+        Title = editing ? "Edit saved search" : DesktopText.Translate("Save search");
         SavedNameBox.MaxLength = InboxLibrary.MaximumTitleLength;
         SavedNameBox.Text = draft.Name;
         SavedQueryBox.MaxLength = InboxLibrary.MaximumSearchQueryLength;

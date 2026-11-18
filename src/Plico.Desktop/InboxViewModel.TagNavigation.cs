@@ -5,7 +5,7 @@ using Plico.Core;
 
 namespace Plico.Desktop;
 
-internal sealed record TagNavigationItem(string Label, int Depth, IBrush Color)
+internal sealed record TagNavigationItem(string Label, int Depth, IBrush? Color)
 {
     private const int IndentPerLevel = 9;
     public Thickness Indent => new(Math.Min(Depth, 6) * IndentPerLevel, 0, 0, 0);
@@ -13,7 +13,6 @@ internal sealed record TagNavigationItem(string Label, int Depth, IBrush Color)
 
 internal sealed partial class InboxViewModel
 {
-    private static readonly IBrush DefaultTagColor = Brush.Parse("#C5DDA6");
     [ObservableProperty] private IReadOnlyList<TagNavigationItem> _tagNavigation = [];
 
     // O(t + s log s) for t configured tags and s shown entries, with O(t) metadata and traversal space.
@@ -42,7 +41,7 @@ internal sealed partial class InboxViewModel
         var entries = new List<TagNavigationItem>(visible.Count);
         while (stack.TryPop(out var item))
         {
-            entries.Add(new(item.Tag.Label, item.Depth, item.Tag.ColorHex is { } color ? Brush.Parse(color) : DefaultTagColor));
+            entries.Add(new(item.Tag.Label, item.Depth, item.Tag.ColorHex is { } color ? Brush.Parse(color) : null));
             foreach (var child in groups[InboxLibrary.GetTagKey(item.Tag.Label)].Reverse())
                 stack.Push((child, item.Depth + 1));
         }

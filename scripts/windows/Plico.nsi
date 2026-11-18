@@ -4,6 +4,9 @@ Unicode true
 
 !define NAME "Plico"
 !define UNINSTALL_KEY "Software\Microsoft\Windows\CurrentVersion\Uninstall\Plico"
+!define PDF_PROGID "Plico.PDF"
+!define PDF_OPEN_WITH "Software\Classes\.pdf\OpenWithProgids"
+!define PDF_APPLICATION "Software\Classes\${PDF_PROGID}"
 
 Name "${NAME}"
 OutFile "${OUTPUT}\Plico-${VERSION}-${RUNTIME}-setup.exe"
@@ -51,6 +54,11 @@ Section "Install"
     WriteRegStr HKCU "${UNINSTALL_KEY}" "QuietUninstallString" '"$INSTDIR\Uninstall-Plico.exe" /S'
     WriteRegDWORD HKCU "${UNINSTALL_KEY}" "NoModify" 1
     WriteRegDWORD HKCU "${UNINSTALL_KEY}" "NoRepair" 1
+    WriteRegStr HKCU "${PDF_APPLICATION}" "" "Plico PDF document"
+    WriteRegStr HKCU "${PDF_APPLICATION}\DefaultIcon" "" '"$INSTDIR\Plico.exe",0'
+    WriteRegStr HKCU "${PDF_APPLICATION}\shell\open\command" "" '"$INSTDIR\Plico.exe" "%1"'
+    WriteRegStr HKCU "${PDF_OPEN_WITH}" "${PDF_PROGID}" ""
+    System::Call 'shell32::SHChangeNotify(i 0x08000000, i 0, p 0, p 0)'
 SectionEnd
 
 Section "Uninstall"
@@ -59,6 +67,9 @@ Section "Uninstall"
     !include "${UNINSTALL_MANIFEST}"
     Delete "$SMPROGRAMS\Plico.lnk"
     DeleteRegKey HKCU "${UNINSTALL_KEY}"
+    DeleteRegValue HKCU "${PDF_OPEN_WITH}" "${PDF_PROGID}"
+    DeleteRegKey HKCU "${PDF_APPLICATION}"
+    System::Call 'shell32::SHChangeNotify(i 0x08000000, i 0, p 0, p 0)'
     Delete "$INSTDIR\Uninstall-Plico.exe"
     RMDir "$INSTDIR"
 SectionEnd

@@ -1,23 +1,24 @@
-<Window xmlns="https://github.com/avaloniaui" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-        x:Class="Plico.Desktop.DocumentDateDialog" Title="Document date" Width="450" SizeToContent="Height"
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:translation="using:Plico.Desktop" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        x:Class="Plico.Desktop.DocumentDateDialog" Title="{translation:Tr DocumentDate}" Width="450" SizeToContent="Height"
         CanResize="False" WindowStartupLocation="CenterOwner"
-        FontFamily="{StaticResource InterFont}" Background="#F4F5EF">
+        FontFamily="{StaticResource InterFont}" Background="{DynamicResource WorkspaceSurface}">
     <StackPanel Margin="24" Spacing="12">
         <StackPanel Spacing="5">
-            <TextBlock x:Name="DocumentDatePrompt" Text="Document date" FontWeight="SemiBold" TextWrapping="Wrap" />
-            <TextBox x:Name="DocumentDateBox" PlaceholderText="YYYY-MM-DD" AutomationProperties.Name="Document date" />
-            <TextBlock x:Name="DocumentDateHint" Text="Use YYYY-MM-DD. Leave blank to clear the date."
-                       TextWrapping="Wrap" FontSize="12" Foreground="#5C685D" />
+            <TextBlock x:Name="DocumentDatePrompt" Text="{translation:Tr DocumentDate}" FontWeight="SemiBold" TextWrapping="Wrap" />
+            <TextBox x:Name="DocumentDateBox" PlaceholderText="YYYY-MM-DD" AutomationProperties.Name="{translation:Tr DocumentDate}" />
+            <TextBlock x:Name="DocumentDateHint" Text="{translation:Tr UseYYYYMMDDLeaveBlankToClearTheDate}"
+                       TextWrapping="Wrap" FontSize="12" Foreground="{DynamicResource MutedInk}" />
         </StackPanel>
-        <TextBlock x:Name="DateValidation" IsVisible="False" Foreground="#8E4037" TextWrapping="Wrap"
+        <TextBlock x:Name="DateValidation" IsVisible="False" Foreground="{DynamicResource ValidationInk}" TextWrapping="Wrap"
                    AutomationProperties.LiveSetting="Polite" />
         <Grid ColumnDefinitions="*,Auto" ColumnSpacing="8">
-            <Button x:Name="ClearDocumentDatesButton" Content="Clear dates" HorizontalAlignment="Left"
+            <Button x:Name="ClearDocumentDatesButton" Content="{translation:Tr ClearDates}" HorizontalAlignment="Left"
                     IsVisible="False" Click="Clear_Click" Padding="14,7" />
             <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="8">
-                <Button x:Name="CancelDocumentDateButton" Content="Cancel" IsCancel="True" Click="Cancel_Click" Padding="14,7" />
-                <Button x:Name="ConfirmDocumentDateButton" Content="Save date" IsDefault="True" Click="Save_Click"
-                        Padding="14,7" Background="#254C37" Foreground="White" />
+                <Button x:Name="CancelDocumentDateButton" Content="{translation:Tr Cancel}" IsCancel="True" Click="Cancel_Click" Padding="14,7" />
+                <Button x:Name="ConfirmDocumentDateButton" Content="{translation:Tr SaveDate}" IsDefault="True" Click="Save_Click"
+                        Padding="14,7" Background="{DynamicResource PrimarySurface}" Foreground="White" />
             </StackPanel>
         </Grid>
     </StackPanel>

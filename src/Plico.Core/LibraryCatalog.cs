@@ -74,7 +74,8 @@ internal sealed partial class LibraryCatalog
     private static readonly string[] Migrations =
         [Schema, FingerprintMigration, DisplayTitleMigration, PdfFingerprintMigration, OcrCopyMigration, AddedDateIndexMigration,
             PdfMoveMigration, SavedSearchMigration, DocumentDateMigration, TextPresenceMigration, TrashMigration, FilingMigration,
-            StructuredMetadataMigration, ArchiveSerialMigration, DeadlineMigration, EmbeddingMigration, AssistantUndoMigration];
+            StructuredMetadataMigration, ArchiveSerialMigration, PdfVersionsMigration, DeadlineMigration, EmbeddingMigration,
+            AssistantUndoMigration];
 
     internal static long SchemaVersion => Migrations.Length;
 

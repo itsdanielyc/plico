@@ -14,7 +14,7 @@ internal sealed partial class InboxViewModel
     [NotifyPropertyChangedFor(nameof(ReminderMenuTitle))]
     private long _dueReminderCount;
 
-    public string ReminderMenuTitle => DueReminderCount == 0 ? "Reminders…" : $"Reminders ({DueReminderCount})…";
+    public string ReminderMenuTitle => DueReminderCount == 0 ? DesktopText.Translate("Reminders…") : DesktopText.Format($"Reminders ({DueReminderCount})…");
 
     private void PrepareReminderPolling()
     {
@@ -28,7 +28,7 @@ internal sealed partial class InboxViewModel
             try
             {
                 RefreshDueReminderCount();
-                if (DueReminderCount > previous) Status = $"{DueReminderCount} document reminders are due.";
+                if (DueReminderCount > previous) Status = DesktopText.Format($"{DueReminderCount} document reminders are due.");
             }
             catch (Exception error) when (error is IOException or Microsoft.Data.Sqlite.SqliteException)
             {
@@ -43,7 +43,7 @@ internal sealed partial class InboxViewModel
     private static DateOnly LocalReminderDate() => DateOnly.FromDateTime(DateTime.Today);
 
     [RelayCommand]
-    private Task EditDeadlinesAsync() => RunOperationAsync("Edit document deadlines…", async token =>
+    private Task EditDeadlinesAsync() => RunOperationAsync(DesktopText.Translate("Edit document deadlines…"), async token =>
     {
         if (SelectedDocument is not { } document) return;
         var library = RequireLibrary();
@@ -53,16 +53,16 @@ internal sealed partial class InboxViewModel
         var edited = await _dialogs.EditDeadlinesAsync(new(document, dates, suggestions));
         if (edited is null)
         {
-            Status = "Deadline editor closed.";
+            Status = DesktopText.Translate("Deadline editor closed.");
             return;
         }
         await Task.Run(() => library.SaveDeadlines(document.Id, edited, token), token);
         RefreshDueReminderCount();
-        Status = "Document deadlines saved.";
+        Status = DesktopText.Translate("Document deadlines saved.");
     });
 
     [RelayCommand]
-    private Task RemindersAsync() => RunOperationAsync("Checking document reminders…", async token =>
+    private Task RemindersAsync() => RunOperationAsync(DesktopText.Translate("Checking document reminders…"), async token =>
     {
         var library = RequireLibrary();
         var reminders = await Task.Run(() => library.ReadDueReminders(LocalReminderDate(), token), token);
@@ -72,21 +72,21 @@ internal sealed partial class InboxViewModel
             case { Action: ReminderAction.Dismiss, Reminder: { } dismissed }:
                 library.DismissReminder(dismissed.DocumentId, dismissed.Deadline.Kind);
                 RefreshDueReminderCount();
-                Status = "Reminder dismissed.";
+                Status = DesktopText.Translate("Reminder dismissed.");
                 break;
             case { Action: ReminderAction.Open, Reminder: { } selected }:
                 _dialogs.OpenPath(library.ResolveReminderPdf(selected.DocumentId));
-                Status = $"Opened {selected.Title}.";
+                Status = DesktopText.Format($"Opened {selected.Title}.");
                 break;
             case { Action: ReminderAction.Export }:
-                var destination = await _dialogs.PickFolderAsync("Choose where to save the calendar");
-                if (destination is null) { Status = "Calendar destination not chosen."; break; }
+                var destination = await _dialogs.PickFolderAsync(DesktopText.Translate("Choose where to save the calendar"));
+                if (destination is null) { Status = DesktopText.Translate("Calendar destination not chosen."); break; }
                 string path = await Task.Run(() => library.ExportDeadlinesAsync(destination, cancellationToken: token), token);
                 LatestExportLocation = Path.GetDirectoryName(path);
-                Status = $"Exported {Path.GetFileName(path)}.";
+                Status = DesktopText.Format($"Exported {Path.GetFileName(path)}.");
                 break;
             default:
-                Status = "Reminders closed.";
+                Status = DesktopText.Translate("Reminders closed.");
                 break;
         }
     });

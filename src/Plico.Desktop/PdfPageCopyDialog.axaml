@@ -1,27 +1,28 @@
-<Window xmlns="https://github.com/avaloniaui" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:translation="using:Plico.Desktop" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         x:Class="Plico.Desktop.PdfPageCopyDialog" Width="465" SizeToContent="Height"
         CanResize="False" WindowStartupLocation="CenterOwner"
-        FontFamily="{StaticResource InterFont}" Background="#F4F5EF">
+        FontFamily="{StaticResource InterFont}" Background="{DynamicResource WorkspaceSurface}">
     <StackPanel Margin="24" Spacing="13">
         <StackPanel Spacing="5">
-            <TextBlock Text="Pages" FontWeight="SemiBold" />
-            <TextBox x:Name="PagesBox" AutomationProperties.Name="Selected PDF pages" />
-            <TextBlock x:Name="PageHint" Foreground="#5C685D" TextWrapping="Wrap" FontSize="12" />
+            <TextBlock Text="{translation:Tr Pages}" FontWeight="SemiBold" />
+            <TextBox x:Name="PagesBox" AutomationProperties.Name="{translation:Tr SelectedPDFPages}" />
+            <TextBlock x:Name="PageHint" Foreground="{DynamicResource MutedInk}" TextWrapping="Wrap" FontSize="12" />
         </StackPanel>
         <StackPanel x:Name="RotationField" Spacing="5" IsVisible="False">
-            <TextBlock Text="Rotation" FontWeight="SemiBold" />
-            <ComboBox x:Name="RotationBox" HorizontalAlignment="Stretch" AutomationProperties.Name="Page rotation" />
+            <TextBlock Text="{translation:Tr Rotation}" FontWeight="SemiBold" />
+            <ComboBox x:Name="RotationBox" HorizontalAlignment="Stretch" AutomationProperties.Name="{translation:Tr PageRotation}" />
         </StackPanel>
         <StackPanel Spacing="5">
-            <TextBlock Text="New document title" FontWeight="SemiBold" />
-            <TextBox x:Name="TitleBox" AutomationProperties.Name="New document title" />
+            <TextBlock Text="{translation:Tr NewDocumentTitle}" FontWeight="SemiBold" />
+            <TextBox x:Name="TitleBox" AutomationProperties.Name="{translation:Tr NewDocumentTitle}" />
         </StackPanel>
-        <TextBlock x:Name="ValidationMessage" IsVisible="False" Foreground="#8E4037" FontSize="12"
+        <TextBlock x:Name="ValidationMessage" IsVisible="False" Foreground="{DynamicResource ValidationInk}" FontSize="12"
                    TextWrapping="Wrap" AutomationProperties.LiveSetting="Polite" />
         <StackPanel Orientation="Horizontal" Spacing="8" HorizontalAlignment="Right">
-            <Button Content="Cancel" IsCancel="True" Click="Cancel_Click" Padding="14,7" />
+            <Button Content="{translation:Tr Cancel}" IsCancel="True" Click="Cancel_Click" Padding="14,7" />
             <Button x:Name="ConfirmPageCopyButton" IsDefault="True" Click="Confirm_Click"
-                    Background="#254C37" Foreground="White" Padding="14,7" />
+                    Background="{DynamicResource PrimarySurface}" Foreground="White" Padding="14,7" />
         </StackPanel>
     </StackPanel>
 </Window>

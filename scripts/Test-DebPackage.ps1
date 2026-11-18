@@ -29,6 +29,10 @@ try {
     if (-not (Test-Path -LiteralPath $launcher) -or -not (Test-Path -LiteralPath $menuEntry)) {
         throw 'The installed package did not provide its launcher and desktop menu entry.'
     }
+    $desktopEntry = Get-Content -LiteralPath $menuEntry
+    if ($desktopEntry -notcontains 'Exec=plico %F' -or $desktopEntry -notcontains 'MimeType=application/pdf;') {
+        throw 'The installed desktop entry did not accept PDF Open With requests.'
+    }
     $nativeCheck = Join-Path $PSScriptRoot 'Test-Native.ps1'
     if ($env:DISPLAY) {
         & $nativeCheck -Executable $launcher -EvidenceDirectory $EvidenceDirectory
@@ -44,7 +48,7 @@ try {
     if (-not (Test-Path -LiteralPath $libraryFile) -or (Get-FileHash -LiteralPath $libraryFile).Hash -ne $digest) {
         throw 'Package removal changed the library PDF.'
     }
-    'Installed the Debian package, launched Plico, and removed the app while preserving the PDF.' |
+    'Installed the Debian package with PDF Open With registration, launched Plico, and removed the app while preserving the PDF.' |
         Set-Content -LiteralPath (Join-Path $EvidenceDirectory 'setup-passed.txt')
 } finally {
     if ($installed) { sudo apt-get remove -y plico }
