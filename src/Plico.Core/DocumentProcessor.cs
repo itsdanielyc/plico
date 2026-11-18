@@ -68,7 +68,7 @@ internal sealed class DocumentProcessor(string dataDirectory)
         if (ImportFormats.IsEmail(extension))
         {
             await EmailPdfConverter.WriteAsync(stagedSource, outputPath,
-                async (input, output, token) => { await PrepareAsync(input, output, language, token).ConfigureAwait(false); },
+                async (input, output, token) => { await PrepareAsync(input, output, language, token, recognition).ConfigureAwait(false); },
                 cancellationToken).ConfigureAwait(false);
             return new(ReadPdf(outputPath, cancellationToken), CopiedSource: false);
         }

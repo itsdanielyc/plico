@@ -637,3 +637,33 @@ MetaNamedValueError	Enter a valid value for “{0}”.	Saisissez une valeur vali
 ResultFoundCount	Found {0}.	{0} trouvé(s).
 NamedOpenedItem	Opened {0}.	Ouverture de {0}.
 NamedPhoneQueue	{0} queued for the folder watch.	{0} en attente de la surveillance du dossier.
+ArchiveSerialMenu	Archive serial numbers	Numéros d’archives
+ArchiveSerialSet	Set number on this document…	Attribuer un numéro à ce document…
+ArchiveSerialFind	Find by archive number…	Trouver par numéro d’archives…
+ArchiveLabelSheets	Save label sheets…	Enregistrer les feuilles d’étiquettes…
+ArchiveSeparator	Save a PATCH-T separator…	Enregistrer un séparateur PATCH-T…
+MigrationMenu	Migrate a library	Migrer une bibliothèque
+MigratePaperlessFolder	Paperless-ngx folder…	Dossier Paperless-ngx…
+MigratePaperlessZip	Paperless-ngx ZIP…	Archive ZIP Paperless-ngx…
+MigrateEvernote	Evernote ENEX…	Evernote ENEX…
+MigrateMariner	Mariner Paperless…	Mariner Paperless…
+OcrToolbox	OCR…	OCR…
+OcrEngineOrientation	OCR engine and orientation	Moteur OCR et orientation
+UseRapidOcr	Use RapidOCR	Utiliser RapidOCR
+AutoOrientPages	Turn sideways pages upright	Redresser les pages orientées de côté
+ScanBatchSeparators	Batch separators	Séparateurs de lot
+ScanPatchTSeparators	Split at PATCH-T separator sheets	Séparer aux feuilles PATCH-T
+ScanReadArchiveLabels	Read archive serial number labels	Lire les étiquettes de numéros d’archives
+ScanOptionalSeparator	Additional separator barcode value (optional)	Code-barres de séparation supplémentaire (facultatif)
+ScanSeparatorBarcode	Additional separator barcode value	Code-barres de séparation supplémentaire
+ManualDuplexWindow	Manual duplex	Recto verso manuel
+ManualDuplexInstructions	Turn over the stack and reload all sheets so the last front side is scanned first. Keep blank back sides in the stack.	Retournez la pile et rechargez-la pour numériser le dernier recto en premier. Conservez les versos blancs dans la pile.
+DiscardFronts	Discard fronts	Abandonner les rectos
+FinishLater	Finish later	Terminer plus tard
+ScanBackSides	Scan back sides	Numériser les versos
+ArchiveSerialLabel	Archive serial number	Numéro d’archives
+LabelCount	Number of labels	Nombre d’étiquettes
+MigrationReport	Migration report	Rapport de migration
+MigrationDetails	Migration details	Détails de la migration
+SaveMigrationJson	Save JSON…	Enregistrer le JSON…
+DropSupportedDocument	Drop a supported document or image.	Déposez un document ou une image prise en charge.

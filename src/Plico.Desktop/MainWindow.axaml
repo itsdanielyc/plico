@@ -191,18 +191,18 @@
                                 <MenuItem Header="{translation:Tr CheckLibraryIntegrity}" Command="{Binding CheckIntegrityCommand}" />
                                 <MenuItem Header="{translation:Tr ExportLibraryMetadataJSON}" Command="{Binding ExportMetadataCommand}" />
                                 <MenuItem Header="{translation:Tr ExportSearchResultsCSV}" Command="{Binding ExportSearchCsvCommand}" />
-                                <MenuItem Header="Archive serial numbers">
-                                    <MenuItem Header="Set number on this document…" Command="{Binding EditArchiveSerialCommand}"
+                                <MenuItem Header="{translation:Tr ArchiveSerialMenu}">
+                                    <MenuItem Header="{translation:Tr ArchiveSerialSet}" Command="{Binding EditArchiveSerialCommand}"
                                               IsEnabled="{Binding HasSelection}" />
-                                    <MenuItem Header="Find by archive number…" Command="{Binding FindArchiveSerialCommand}" />
-                                    <MenuItem Header="Save label sheets…" Command="{Binding PrintArchiveLabelsCommand}" />
-                                    <MenuItem Header="Save a PATCH-T separator…" Command="{Binding PrintSeparatorSheetCommand}" />
+                                    <MenuItem Header="{translation:Tr ArchiveSerialFind}" Command="{Binding FindArchiveSerialCommand}" />
+                                    <MenuItem Header="{translation:Tr ArchiveLabelSheets}" Command="{Binding PrintArchiveLabelsCommand}" />
+                                    <MenuItem Header="{translation:Tr ArchiveSeparator}" Command="{Binding PrintSeparatorSheetCommand}" />
                                 </MenuItem>
-                                <MenuItem Header="Migrate a library">
-                                    <MenuItem Header="Paperless-ngx folder…" Command="{Binding MigratePaperlessFolderCommand}" />
-                                    <MenuItem Header="Paperless-ngx ZIP…" Command="{Binding MigratePaperlessZipCommand}" />
-                                    <MenuItem Header="Evernote ENEX…" Command="{Binding MigrateEvernoteCommand}" />
-                                    <MenuItem Header="Mariner Paperless…" Command="{Binding MigrateMarinerCommand}" />
+                                <MenuItem Header="{translation:Tr MigrationMenu}">
+                                    <MenuItem Header="{translation:Tr MigratePaperlessFolder}" Command="{Binding MigratePaperlessFolderCommand}" />
+                                    <MenuItem Header="{translation:Tr MigratePaperlessZip}" Command="{Binding MigratePaperlessZipCommand}" />
+                                    <MenuItem Header="{translation:Tr MigrateEvernote}" Command="{Binding MigrateEvernoteCommand}" />
+                                    <MenuItem Header="{translation:Tr MigrateMariner}" Command="{Binding MigrateMarinerCommand}" />
                                 </MenuItem>
                                 <Separator />
                                 <MenuItem Header="{translation:Tr RefreshIndex}" Command="{Binding RefreshIndexCommand}" />
@@ -276,13 +276,13 @@
                             Command="{Binding ChooseSearchFolderCommand}" Content="{translation:Tr Folder}" IsEnabled="{Binding CanWork}"
                             AutomationProperties.Name="{translation:Tr ChooseALibraryFolderToSearch}" MinHeight="38" />
                     <StackPanel Grid.Column="2" Orientation="Horizontal" Spacing="6">
-                        <Button x:Name="OcrProcessingButton" Classes="secondary" Content="OCR…" IsEnabled="{Binding IsIdle}"
-                                AutomationProperties.Name="OCR engine and orientation">
+                        <Button x:Name="OcrProcessingButton" Classes="secondary" Content="{translation:Tr OcrToolbox}" IsEnabled="{Binding IsIdle}"
+                                AutomationProperties.Name="{translation:Tr OcrEngineOrientation}">
                             <Button.Flyout>
                                 <MenuFlyout>
-                                    <MenuItem x:Name="RapidOcrChoice" Header="Use RapidOCR" ToggleType="CheckBox"
+                                    <MenuItem x:Name="RapidOcrChoice" Header="{translation:Tr UseRapidOcr}" ToggleType="CheckBox"
                                               IsChecked="{Binding UseRapidOcr, Mode=TwoWay}" IsEnabled="{Binding CanUseRapidOcr}" />
-                                    <MenuItem x:Name="OrientPagesChoice" Header="Turn sideways pages upright" ToggleType="CheckBox"
+                                    <MenuItem x:Name="OrientPagesChoice" Header="{translation:Tr AutoOrientPages}" ToggleType="CheckBox"
                                               IsChecked="{Binding AutoOrientPages, Mode=TwoWay}" />
                                 </MenuFlyout>
                             </Button.Flyout>

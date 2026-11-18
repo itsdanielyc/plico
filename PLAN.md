@@ -116,6 +116,8 @@ Ruling for v0.17.0. Implement the brief’s first nine ranked items together on 
 
 The intake lane owns format adapters, scanner and phone capture. The PDF and desktop lane owns versioned editing, binder export, PDF tools and desktop polish. The coordinator registers catalog migrations and integrates shared call sites and release evidence. [Capture and intake handoff](docs/handoff/capture-intake.md)
 
+The integrated catalog registers structured metadata at v13, archive serial numbers at v14, and PDF versions at v15. Deadlines, embeddings, and local filing undo follow in that order. The integration branch keeps the independently tested feature commits and verifies the combined packages before release.
+
 ## Capture and intake
 
 | Slice | Done when | Levels | Status |

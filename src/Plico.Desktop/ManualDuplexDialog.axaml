@@ -1,15 +1,15 @@
-<Window xmlns="https://github.com/avaloniaui" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-        x:Class="Plico.Desktop.ManualDuplexDialog" Title="Manual duplex" Width="520"
+<Window xmlns="https://github.com/avaloniaui" xmlns:translation="using:Plico.Desktop" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        x:Class="Plico.Desktop.ManualDuplexDialog" Title="{translation:Tr ManualDuplexWindow}" Width="520"
         SizeToContent="Height" CanResize="False" WindowStartupLocation="CenterOwner"
-        FontFamily="{StaticResource InterFont}" Background="#F4F5EF">
+        FontFamily="{StaticResource InterFont}" Background="{DynamicResource WorkspaceSurface}">
     <StackPanel Margin="24" Spacing="13">
         <TextBlock x:Name="FrontSidesMessage" FontSize="18" FontWeight="SemiBold" TextWrapping="Wrap" />
-        <TextBlock Text="Turn over the stack and reload all sheets so the last front side is scanned first. Keep blank back sides in the stack." TextWrapping="Wrap" />
+        <TextBlock Text="{translation:Tr ManualDuplexInstructions}" TextWrapping="Wrap" />
         <StackPanel Orientation="Horizontal" Spacing="8" HorizontalAlignment="Right">
-            <Button x:Name="DiscardFrontsButton" Content="Discard fronts" Click="Discard_Click" Padding="14,7" />
-            <Button x:Name="LaterButton" Content="Finish later" IsCancel="True" Click="Later_Click" Padding="14,7" />
-            <Button x:Name="ScanBacksButton" Content="Scan back sides" IsDefault="True" Click="ScanBacks_Click" Padding="14,7"
-                    Background="#254C37" Foreground="White" />
+            <Button x:Name="DiscardFrontsButton" Content="{translation:Tr DiscardFronts}" Click="Discard_Click" Padding="14,7" />
+            <Button x:Name="LaterButton" Content="{translation:Tr FinishLater}" IsCancel="True" Click="Later_Click" Padding="14,7" />
+            <Button x:Name="ScanBacksButton" Content="{translation:Tr ScanBackSides}" IsDefault="True" Click="ScanBacks_Click" Padding="14,7"
+                    Background="{DynamicResource PrimarySurface}" Foreground="White" />
         </StackPanel>
     </StackPanel>
 </Window>

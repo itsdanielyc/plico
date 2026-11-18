@@ -1,23 +1,23 @@
-<Window xmlns="https://github.com/avaloniaui" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+<Window xmlns="https://github.com/avaloniaui" xmlns:translation="using:Plico.Desktop" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         x:Class="Plico.Desktop.ArchiveSerialDialog" Width="460" SizeToContent="Height"
         WindowStartupLocation="CenterOwner" CanResize="False"
-        FontFamily="{StaticResource InterFont}" Background="#F4F5EF">
+        FontFamily="{StaticResource InterFont}" Background="{DynamicResource WorkspaceSurface}">
     <StackPanel Margin="24" Spacing="12">
         <TextBlock x:Name="ArchiveSerialPrompt" TextWrapping="Wrap" />
-        <TextBox x:Name="SerialInput" PlaceholderText="Archive serial number" MaxLength="19"
-                 AutomationProperties.Name="Archive serial number" />
+        <TextBox x:Name="SerialInput" PlaceholderText="{translation:Tr ArchiveSerialLabel}" MaxLength="19"
+                 AutomationProperties.Name="{translation:Tr ArchiveSerialLabel}" />
         <StackPanel x:Name="LabelCountControls" Spacing="4">
-            <TextBlock Text="Number of labels" />
+            <TextBlock Text="{translation:Tr LabelCount}" />
             <NumericUpDown x:Name="LabelCount" Value="30" Minimum="1" Maximum="10000" FormatString="0"
-                           AutomationProperties.Name="Number of labels" />
+                           AutomationProperties.Name="{translation:Tr LabelCount}" />
         </StackPanel>
         <StackPanel x:Name="PaperControls" Spacing="4">
-            <TextBlock Text="Paper size" />
-            <ComboBox x:Name="PaperSize" HorizontalAlignment="Stretch" AutomationProperties.Name="Paper size" />
+            <TextBlock Text="{translation:Tr PaperSize}" />
+            <ComboBox x:Name="PaperSize" HorizontalAlignment="Stretch" AutomationProperties.Name="{translation:Tr PaperSize}" />
         </StackPanel>
-        <TextBlock x:Name="SerialError" Foreground="#9A3024" TextWrapping="Wrap" />
+        <TextBlock x:Name="SerialError" Foreground="{DynamicResource ErrorInk}" TextWrapping="Wrap" />
         <StackPanel Orientation="Horizontal" Spacing="8" HorizontalAlignment="Right">
-            <Button Content="Cancel" IsCancel="True" Click="Cancel_Click" />
+            <Button Content="{translation:Tr Cancel}" IsCancel="True" Click="Cancel_Click" />
             <Button x:Name="AcceptSerial" Content="Continue" IsDefault="True" Click="Accept_Click" />
         </StackPanel>
     </StackPanel>

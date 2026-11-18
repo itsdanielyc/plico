@@ -77,12 +77,12 @@
                 </StackPanel>
             </StackPanel>
         </Expander>
-        <Expander Header="Batch separators" HorizontalAlignment="Stretch" HorizontalContentAlignment="Stretch">
+        <Expander Header="{translation:Tr ScanBatchSeparators}" HorizontalAlignment="Stretch" HorizontalContentAlignment="Stretch">
             <StackPanel Spacing="6">
-                <CheckBox x:Name="SplitScanBatch" Content="Split at PATCH-T separator sheets" />
-                <CheckBox x:Name="ReadArchiveSerials" Content="Read archive serial number labels" />
-                <TextBox x:Name="CustomSeparatorBarcode" PlaceholderText="Additional separator barcode value (optional)"
-                         AutomationProperties.Name="Additional separator barcode value" />
+                <CheckBox x:Name="SplitScanBatch" Content="{translation:Tr ScanPatchTSeparators}" />
+                <CheckBox x:Name="ReadArchiveSerials" Content="{translation:Tr ScanReadArchiveLabels}" />
+                <TextBox x:Name="CustomSeparatorBarcode" PlaceholderText="{translation:Tr ScanOptionalSeparator}"
+                         AutomationProperties.Name="{translation:Tr ScanSeparatorBarcode}" />
             </StackPanel>
         </Expander>
         <TextBlock x:Name="ScannerStatus" TextWrapping="Wrap" Foreground="{DynamicResource FaintInk}" FontSize="12"
