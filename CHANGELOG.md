@@ -25,6 +25,7 @@
 - Combine selected PDFs into one searchable inbox document with a title, document order, and source tags.
 - Move a PDF into a library subfolder from its preview. Catalog version 7 records interrupted moves for recovery.
 - Use `folder:"Filed/Property"` or `folder:.` to scope a search to a folder branch or the top level of the library.
+- File a selection with **Move PDFs…** and one folder choice. Plico reports completed moves if the batch pauses.
 
 ## [0.15.0] - 2026-11-18
 

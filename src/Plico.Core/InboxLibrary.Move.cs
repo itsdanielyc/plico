@@ -1,9 +1,14 @@
+using Microsoft.Data.Sqlite;
+
 namespace Plico.Core;
 
 public sealed partial class InboxLibrary
 {
     private const string MoveFolderPrompt = "Choose a folder inside this library’s PDFs directory.";
     private const string PendingMoveUnmatched = "Plico could not match a previous PDF move to its destination. Refresh the index to see current files.";
+    private const int MinimumBatchMoveCount = 2;
+    private const int FirstNumberedName = 2;
+    private readonly record struct MoveTarget(string PdfRoot, string Folder);
 
     /// <summary>Reports the result of recovering a move when the library opened.</summary>
     public string? MoveRecoveryNotice { get; private set; }
@@ -18,37 +23,11 @@ public sealed partial class InboxLibrary
         await _fileOperations.WaitAsync(cancellationToken).ConfigureAwait(false);
         try
         {
-            var recovery = RecoverPendingPdfMove(cancellationToken);
-            if (recovery.PendingDestination is not null) throw new IOException(recovery.Notice);
-            string pdfRoot = ResolveDirectoryLinks(PdfDirectory);
-            string targetFolder = ResolveDirectoryLinks(folder);
-            if (!IsAtOrWithinFolder(pdfRoot, targetFolder)) throw new ArgumentException(MoveFolderPrompt, nameof(folder));
-            var document = _catalog.Get(documentId);
-            var source = ResolveSelectedPdfSources(_catalog.ReadSelectedFiles([documentId]), cancellationToken).Single();
-            string sourceFolder = Path.GetDirectoryName(source.Path)!;
-            if (Path.GetRelativePath(sourceFolder, targetFolder) == ".") return document;
-
-            var destination = ChooseMoveName(pdfRoot, targetFolder, Path.GetFileName(source.Path), cancellationToken);
-            var fingerprint = FingerprintPdf(source.Path, cancellationToken);
-            VerifySelectedPdfSource(source);
-            var move = new PdfMoveIntent(documentId, document.RelativePath, destination.RelativePath, fingerprint);
-            cancellationToken.ThrowIfCancellationRequested();
-
-            // The committed intent identifies the exact catalog row if the process exits after the filesystem move.
-            _catalog.RecordPdfMove(move);
-            File.Move(source.Path, destination.Path, overwrite: false);
-            if (ReadMoveAttributes(source.Path) is not null)
-            {
-                throw new IOException("The source PDF is still at its original location. Close any viewer and try the move again.");
-            }
-            var movedVersion = FileVersion.Read(destination.Path);
-            VerifySelectedPdfSource(new SelectedPdfSource(destination.Path, movedVersion));
-            if (movedVersion != source.Version && !fingerprint.AsSpan().SequenceEqual(FingerprintPdf(destination.Path, CancellationToken.None)))
-            {
-                throw new IOException("The PDF changed during the move. Refresh the index after saving finishes.");
-            }
-            _catalog.Relocate(document.Id, destination.RelativePath, Path.GetFileNameWithoutExtension(destination.Path), movedVersion, move);
-            return _catalog.Get(document.Id);
+            var target = PrepareMoveTarget(folder, cancellationToken);
+            var files = _catalog.ReadSelectedFiles([documentId]);
+            var source = ResolveSelectedPdfSources(files, cancellationToken, target.PdfRoot).Single();
+            MovePreparedPdf(files.Single(), source, target, null, cancellationToken);
+            return _catalog.Get(documentId);
         }
         finally
         {
@@ -56,19 +35,119 @@ public sealed partial class InboxLibrary
         }
     }
 
-    private (string Path, string RelativePath) ChooseMoveName(string pdfRoot, string folder, string filename,
-        CancellationToken cancellationToken)
+    /// <summary>Checks the entire selection and files the PDFs in order, committing each move separately.</summary>
+    /// <param name="documentIds">The selected IDs. The first occurrence of each ID sets the move order.</param>
+    /// <param name="folder">The destination inside the library’s PDFs directory.</param>
+    /// <param name="progress">Reports the number of PDFs moved or already in the folder.</param>
+    /// <param name="cancellationToken">Cancels before another move starts. Completed moves are returned in the result.</param>
+    // O(n log c + total hashed bytes + filename lookups) time for n files in a c-row catalog.
+    // O(n) selected file and suffix state, plus a bounded fingerprint buffer.
+    public async Task<BatchMoveResult> MoveSelectedPdfsAsync(IReadOnlyList<long> documentIds, string folder,
+        IProgress<int>? progress = null, CancellationToken cancellationToken = default)
     {
+        ArgumentNullException.ThrowIfNull(documentIds);
+        long[] selection = documentIds.ToArray();
+        if (selection.Length < MinimumBatchMoveCount) throw new ArgumentException("Select at least two PDFs to file.", nameof(documentIds));
+        await _fileOperations.WaitAsync(cancellationToken).ConfigureAwait(false);
+        try
+        {
+            var target = PrepareMoveTarget(folder, cancellationToken);
+            var files = _catalog.ReadSelectedFiles(selection);
+            if (files.Count < MinimumBatchMoveCount) throw new ArgumentException("Select at least two distinct PDFs to file.", nameof(documentIds));
+            var sources = ResolveSelectedPdfSources(files, cancellationToken, target.PdfRoot);
+            var nextSuffixes = new Dictionary<string, int>(StringComparer.OrdinalIgnoreCase);
+            int moved = 0, alreadyInFolder = 0;
+            for (int index = 0; index < files.Count; index++)
+            {
+                var file = files[index];
+                try
+                {
+                    if (MovePreparedPdf(file, sources[index], target, nextSuffixes, cancellationToken)) moved++;
+                    else alreadyInFolder++;
+                }
+                catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
+                {
+                    return new BatchMoveResult(moved, alreadyInFolder, files.Count - index, Cancelled: true);
+                }
+                catch (Exception error) when (IsFileError(error) || error is SqliteException or InvalidOperationException)
+                {
+                    return new BatchMoveResult(moved, alreadyInFolder, files.Count - index,
+                        Failure: new BatchMoveFailure(file.RelativePath, error.Message));
+                }
+                progress?.Report(index + 1);
+            }
+            return new BatchMoveResult(moved, alreadyInFolder, Remaining: 0);
+        }
+        finally
+        {
+            _fileOperations.Release();
+        }
+    }
+
+    private MoveTarget PrepareMoveTarget(string folder, CancellationToken cancellationToken)
+    {
+        var recovery = RecoverPendingPdfMove(cancellationToken);
+        if (recovery.PendingDestination is not null) throw new IOException(recovery.Notice);
+        string pdfRoot = ResolveDirectoryLinks(PdfDirectory);
+        string targetFolder = ResolveDirectoryLinks(folder);
+        if (!IsAtOrWithinFolder(pdfRoot, targetFolder)) throw new ArgumentException(MoveFolderPrompt, nameof(folder));
+        return new MoveTarget(pdfRoot, targetFolder);
+    }
+
+    private bool MovePreparedPdf(CatalogFileReference file, SelectedPdfSource source, MoveTarget target,
+        Dictionary<string, int>? nextSuffixes, CancellationToken cancellationToken)
+    {
+        cancellationToken.ThrowIfCancellationRequested();
+        VerifySelectedPdfSource(source);
+        string sourceFolder = Path.GetDirectoryName(source.Path)!;
+        if (Path.GetRelativePath(sourceFolder, target.Folder) == ".") return false;
+
+        var destination = ChooseMoveName(target, Path.GetFileName(source.Path), nextSuffixes, cancellationToken);
+        var fingerprint = FingerprintPdf(source.Path, cancellationToken);
+        VerifySelectedPdfSource(source);
+        var move = new PdfMoveIntent(file.Id, file.RelativePath, destination.RelativePath, fingerprint);
+        cancellationToken.ThrowIfCancellationRequested();
+
+        // The committed intent identifies the exact catalog row if the process exits after the filesystem move.
+        _catalog.RecordPdfMove(move);
+        File.Move(source.Path, destination.Path, overwrite: false);
+        if (ReadMoveAttributes(source.Path) is not null)
+        {
+            throw new IOException("The source PDF is still at its original location. Close any viewer and try the move again.");
+        }
+        var movedVersion = FileVersion.Read(destination.Path);
+        VerifySelectedPdfSource(new SelectedPdfSource(destination.Path, movedVersion));
+        if (movedVersion != source.Version && !fingerprint.AsSpan().SequenceEqual(FingerprintPdf(destination.Path, CancellationToken.None)))
+        {
+            throw new IOException("The PDF changed during the move. Refresh the index after saving finishes.");
+        }
+        _catalog.Relocate(file.Id, destination.RelativePath, Path.GetFileNameWithoutExtension(destination.Path), movedVersion, move);
+        return true;
+    }
+
+    private (string Path, string RelativePath) ChooseMoveName(MoveTarget target, string filename,
+        Dictionary<string, int>? nextSuffixes, CancellationToken cancellationToken)
+    {
+        if (FindAvailableMoveName(target, filename) is { } original) return original;
         string stem = PortableStem(Path.GetFileNameWithoutExtension(filename));
         string extension = Path.GetExtension(filename);
-        for (int sequence = 1; ; sequence++)
+        string numberedFamily = stem + extension;
+        int first = nextSuffixes?.GetValueOrDefault(numberedFamily, FirstNumberedName) ?? FirstNumberedName;
+        for (int sequence = first; ; sequence++)
         {
             cancellationToken.ThrowIfCancellationRequested();
-            string name = sequence == 1 ? filename : NumberedName(stem, sequence) + extension;
-            string destination = Path.Combine(folder, name);
-            string relative = Path.GetRelativePath(pdfRoot, destination).Replace(Path.DirectorySeparatorChar, '/');
-            if (!Path.Exists(destination) && !_catalog.ReservesPath(relative)) return (destination, relative);
+            string name = NumberedName(stem, sequence) + extension;
+            if (FindAvailableMoveName(target, name) is not { } candidate) continue;
+            if (nextSuffixes is not null) nextSuffixes[numberedFamily] = sequence + 1;
+            return candidate;
         }
+    }
+
+    private (string Path, string RelativePath)? FindAvailableMoveName(MoveTarget target, string filename)
+    {
+        string destination = Path.Combine(target.Folder, filename);
+        string relative = Path.GetRelativePath(target.PdfRoot, destination).Replace(Path.DirectorySeparatorChar, '/');
+        return !Path.Exists(destination) && !_catalog.ReservesPath(relative) ? (destination, relative) : null;
     }
 
     private (string? Notice, string? PendingDestination) RecoverPendingPdfMove(CancellationToken cancellationToken)

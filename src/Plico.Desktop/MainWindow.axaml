@@ -241,13 +241,18 @@
                                             <Button Grid.Column="1" x:Name="ApplyBatchTagButton" Classes="secondary"
                                                     Content="Tag selected" Click="ApplyBatchTag_Click" />
                                         </Grid>
-                                        <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" Spacing="6">
+                                        <WrapPanel Orientation="Horizontal" HorizontalAlignment="Right">
+                                            <Button x:Name="MoveSelectedPdfsButton" Classes="secondary" Content="Move PDFs…"
+                                                    Command="{Binding MoveSelectedPdfsCommand}" IsEnabled="{Binding CanWork}"
+                                                    AutomationProperties.Name="Move selected PDFs to a folder" Margin="6,0,0,4" Padding="10,7" />
                                             <Button x:Name="CombinePdfsButton" Classes="secondary" Content="Combine PDFs…"
-                                                    Command="{Binding CombinePdfsCommand}" IsEnabled="{Binding CanWork}" />
+                                                    Command="{Binding CombinePdfsCommand}" IsEnabled="{Binding CanWork}"
+                                                    Margin="6,0,0,4" Padding="10,7" />
                                             <Button x:Name="ExportSelectedPdfsButton" Classes="secondary"
                                                     Content="Export PDFs…" Command="{Binding ExportSelectedPdfsCommand}"
-                                                    IsEnabled="{Binding CanWork}" AutomationProperties.Name="Export selected PDFs" />
-                                        </StackPanel>
+                                                    IsEnabled="{Binding CanWork}" AutomationProperties.Name="Export selected PDFs"
+                                                    Margin="6,0,0,4" Padding="10,7" />
+                                        </WrapPanel>
                                     </StackPanel>
                                 </Border>
                             </StackPanel>

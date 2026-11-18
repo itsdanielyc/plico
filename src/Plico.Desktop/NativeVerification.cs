@@ -77,10 +77,11 @@ internal static class NativeVerification
             await VerifyAdjacentMatchesAsync(window, model, dialogs, fixture, evidenceDirectory);
             await VerifyOrientedJpegAsync(window, model, dialogs, fixture, evidenceDirectory);
             await VerifyCombinedPdfsAsync(window, model, dialogs, evidenceDirectory);
+            await VerifyBatchMoveAsync(window, model, dialogs, evidenceDirectory);
             await VerifyScannerDialogAsync(window, evidenceDirectory);
 
             File.WriteAllText(Path.Combine(evidenceDirectory, "passed.txt"),
-                $"Verified {runtime}. Native window completed multilingual OCR and correction, oriented JPEG and multi-page TIFF import, ordered PDF combination, phrase and tag search, result sorting, fit-width preview, match navigation, tag merging and suggestions, duplicate drop, folder watch, title edit, PDF moves and external relocation, batch actions, selected PDF export, library backup, text copy, searchable PDF copy, and import retry.");
+                $"Verified {runtime}. Native window completed multilingual OCR and correction, oriented JPEG and multi-page TIFF import, ordered PDF combination, phrase and tag search, result sorting, fit-width preview, match navigation, tag merging and suggestions, duplicate drop, folder watch, title edit, single and batch PDF moves, external relocation, selected PDF export, library backup, text copy, searchable PDF copy, and import retry.");
             desktop.Shutdown(0);
         }
         catch (Exception error)
@@ -351,6 +352,43 @@ internal static class NativeVerification
             if (dialog.IsVisible) dialog.Close();
             await response;
         }
+    }
+
+    private static async Task VerifyBatchMoveAsync(MainWindow window, InboxViewModel model, FixtureDialogs dialogs, string directory)
+    {
+        var selected = model.Documents.Where(document => document.Title is "Paperwork packet" or "Sideways receipt").ToList();
+        Require(selected.Count == 2, "The PDFs for batch filing were missing from the search.");
+        Control<ListBox>(window, "DocumentList").SelectedItems = selected;
+        var action = Control<Button>(window, "MoveSelectedPdfsButton");
+        Require(model.HasBatchSelection && action.IsEffectivelyVisible && action.IsEnabled, "The selection did not offer batch filing.");
+        await CaptureAsync(window, directory, "batch-move-selection.png");
+
+        string query = model.Query;
+        string pdfs = Path.Combine(model.LibraryPath, "PDFs");
+        string destination = Directory.CreateDirectory(Path.Combine(pdfs, "Filed", "Packets")).FullName;
+        string? previousFolder = dialogs.FolderPath;
+        int previousPicks = dialogs.FolderPickerCalls;
+        dialogs.FolderPath = destination;
+        try
+        {
+            await ((IAsyncRelayCommand)action.Command!).ExecuteAsync(action.CommandParameter);
+        }
+        finally
+        {
+            dialogs.FolderPath = previousFolder;
+        }
+        Require(dialogs.FolderPickerCalls == previousPicks + 1 && dialogs.LastFolderStart == pdfs && model.Query == query &&
+            model.Status == "Moved 2 documents.", model.Status);
+        foreach (var source in selected)
+        {
+            var moved = model.Documents.Single(document => document.Id == source.Id);
+            Require(moved.RelativePath.StartsWith("Filed/Packets/", StringComparison.Ordinal) &&
+                File.Exists(Path.Combine(pdfs, moved.RelativePath)) && !File.Exists(Path.Combine(pdfs, source.RelativePath)), model.Status);
+        }
+
+        Control<TextBox>(window, "SearchBox").SetCurrentValue(TextBox.TextProperty, $"{ReceiptKeyword} folder:Filed/Packets");
+        await UntilAsync(() => model.ResultCount == "2 documents" && model.Preview is not null, () => model.Status);
+        await CaptureAsync(window, directory, "batch-move-result.png");
     }
 
     private static async Task VerifyTagSuggestionAsync(MainWindow window, InboxViewModel model, string directory)
@@ -829,6 +867,7 @@ internal sealed class FixtureDialogs(params string[] documents) : IWorkspaceDial
 {
     internal string? FolderPath { get; set; }
     internal string? LastFolderStart { get; private set; }
+    internal int FolderPickerCalls { get; private set; }
     internal string? EditedTitle { get; init; }
     internal TagRenameRequest? TagRenameChoice { get; set; }
     internal Func<IReadOnlyList<DocumentSummary>, Task<CombinePdfsRequest?>>? CombineChoice { get; set; }
@@ -840,6 +879,7 @@ internal sealed class FixtureDialogs(params string[] documents) : IWorkspaceDial
     public Task<IReadOnlyList<string>> PickDocumentsAsync() => Task.FromResult(SelectedFiles);
     public Task<string?> PickFolderAsync(string title, string? startFolder = null)
     {
+        FolderPickerCalls++;
         LastFolderStart = startFolder;
         return Task.FromResult(FolderPath);
     }

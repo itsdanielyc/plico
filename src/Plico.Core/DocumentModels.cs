@@ -37,6 +37,13 @@ public sealed record BackupResult(string Location, int PdfCount);
 /// <summary>The folder containing the exported PDFs and the number copied.</summary>
 public sealed record ExportResult(string Location, int PdfCount);
 
+/// <summary>The original path and reason when a batch stops at a particular PDF.</summary>
+public sealed record BatchMoveFailure(string RelativePath, string Reason);
+
+/// <summary>The files committed, already filed, and left to finish after a batch move.</summary>
+public sealed record BatchMoveResult(int Moved, int AlreadyInFolder, int Remaining, bool Cancelled = false,
+    BatchMoveFailure? Failure = null);
+
 /// <summary>The number of PDFs copied so far and the total in the backup.</summary>
 public readonly record struct BackupProgress(int Copied, int Total);
 

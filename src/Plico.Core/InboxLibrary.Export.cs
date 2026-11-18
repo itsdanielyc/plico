@@ -56,11 +56,12 @@ public sealed partial class InboxLibrary
         }
     }
 
-    private List<SelectedPdfSource> ResolveSelectedPdfSources(IReadOnlyList<CatalogFileReference> files, CancellationToken cancellationToken)
+    private List<SelectedPdfSource> ResolveSelectedPdfSources(IReadOnlyList<CatalogFileReference> files, CancellationToken cancellationToken,
+        string? canonicalPdfDirectory = null)
     {
         var sources = new List<SelectedPdfSource>(files.Count);
         var canonicalParents = new Dictionary<string, string>(StringComparer.Ordinal);
-        string pdfDirectory = ResolveDirectoryLinks(PdfDirectory);
+        string pdfDirectory = canonicalPdfDirectory ?? ResolveDirectoryLinks(PdfDirectory);
         foreach (var file in files)
         {
             cancellationToken.ThrowIfCancellationRequested();
