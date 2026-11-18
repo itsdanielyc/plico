@@ -25,7 +25,8 @@
 | 20 | Remember scan options | Paper source, paper size, and resolution reopen from local settings. Invalid settings fall back to the regional defaults. | L3, L4, L6 | Done |
 | 21 | Back up the library | A backup opens as a complete library with the same PDFs and catalog data. Cancellation leaves the chosen destination clear. | L3, L6 | Done |
 | 22 | Inspect and retry imports | A batch keeps unresolved errors by file, and retry imports those files through the regular intake path | L3, L4, L6 | Done |
-| 23 | Resume a watched folder | The folder choice belongs to the current library and can be resumed explicitly after reopening Plico | L3, L4, L6 | In progress |
+| 23 | Resume a watched folder | The folder choice belongs to the current library and can be resumed explicitly after reopening Plico | L3, L4, L6 | Done |
 | 24 | Open the latest backup | The backup result can be opened in the file manager from the active library, and switching libraries clears the action | L4, L6 | In progress |
+| 25 | Windows ARM64 | A Windows 11 ARM64 runner verifies the native app from ZIP and per-user setup, including OCR and uninstall | L0–L7 | In progress |
 
 The initial release is followed by focused improvements and fresh evidence.
