@@ -105,4 +105,4 @@ Ruling for v0.17.0. Implement the brief’s first nine ranked items together on 
 
 | Slice | Done when | Levels | Status |
 |---|---|---|---|
-| #14 Windows TWAIN and macOS USB scanners | Local TWAIN and Image Capture entries appear beside the current sources. The native macOS helper can discover scanners from both builds and packages. Physical scans require a device. | L0, L1, L6, L7 | Windows and Ubuntu source and package checks passed. Apple silicon native discovery passed. The corrected Intel fixture and macOS packages are being verified. |
+| #14 Windows TWAIN and macOS USB scanners | Local TWAIN and Image Capture entries appear beside the current sources. The native macOS helper can discover scanners from both builds and packages. Physical scans require a device. | L0, L1, L6, L7 | All six hosted targets passed native checks across the two matrices. Apple silicon package verification and the Intel fixture repetition are pending. |
