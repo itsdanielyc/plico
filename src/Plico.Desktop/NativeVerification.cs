@@ -556,15 +556,15 @@ internal static partial class NativeVerification
             Require(errors.IsVisible && model.ImportFailures.Single().SourcePath == damaged,
                 "The native window did not report the damaged input.");
 
-            string otherLibrary = Path.Combine(libraryRoot, "Verification library");
+            string otherLibrary = Directory.CreateDirectory(Path.Combine(libraryRoot, "Verification library")).FullName;
             dialogs.FolderPath = otherLibrary;
             await model.ChooseLibraryCommand.ExecuteAsync(null);
             Require(model.LibraryPath == otherLibrary && model.ImportFailures.Count == 0 && !errors.IsVisible,
-                "Import errors appeared in another library.");
+                $"The blank library did not open without errors. {model.Status}");
             dialogs.FolderPath = libraryRoot;
             await model.ChooseLibraryCommand.ExecuteAsync(null);
             Require(model.LibraryPath == libraryRoot && errors.IsVisible && model.ImportFailures.Single().SourcePath == damaged,
-                "Reopening the library did not restore its import error.");
+                $"Reopening the library did not restore its import error. {model.Status}");
 
             var dialog = new ImportErrorsDialog(model.ImportFailures);
             var closed = dialog.ShowDialog<ImportErrorsAction>(window);
