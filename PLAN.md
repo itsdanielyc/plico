@@ -118,7 +118,7 @@ The intake lane owns format adapters, scanner and phone capture. The PDF and des
 
 The integrated catalog registers structured metadata at v13, archive serial numbers at v14, and PDF versions at v15. Deadlines, embeddings, and local filing undo follow in that order.
 
-The combined commit `34c6976` passed the solution suite and both package journeys on all six release targets. Items 10–23 are recorded under Unreleased. The local model check also passed against Ollama with real embedding and chat models. [Combined package matrix](https://github.com/itsdanielyc/plico/actions/runs/44321028400) · [Live model check](https://github.com/itsdanielyc/plico/actions/runs/44317149133)
+The combined commit `34c6976` passed the solution suite and both package journeys on all six release targets. Items 10–23 make up the v0.18.0 scope. The local model check also passed against Ollama with real embedding and chat models. [Combined package matrix](https://github.com/itsdanielyc/plico/actions/runs/44321028400) · [Live model check](https://github.com/itsdanielyc/plico/actions/runs/44317149133)
 
 ## Capture and intake
 

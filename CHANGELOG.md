@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+## [0.18.0] - 2026-11-18
+
+The Windows executable and setup are unsigned. SmartScreen may show “Windows protected your PC.” The macOS app is ad-hoc signed and may require approval in Gatekeeper because it has no Apple notarization. [First-launch instructions](https://github.com/itsdanielyc/plico/blob/v0.18.0/README.md#download)
+
 - Added correspondents and aliases, document types, notes, typed custom fields, and coloured tag hierarchies.
 - Added document deadlines, in-app reminders, and calendar export with alarms.
 - Added scan batch separators, manual duplex, archive serial labels, TWAIN discovery, macOS Image Capture, and a second watched folder for phone intake.
