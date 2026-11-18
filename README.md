@@ -36,6 +36,8 @@ Use `tag:tax` to require an exact tag. Use `tag:tax tag:"Home insurance" renewal
 
 Select a sidebar tag and choose **Rename…** to change its label across the library. Enter an existing tag name and choose **Merge tags** to put their documents under that tag.
 
+Start typing in either tag field to reuse a tag from the current library. Use the Down Arrow and Enter to fill in a suggestion, then Enter again to apply it. You can also type a new label.
+
 Use **Sort** to browse by newest added or title A–Z. **Automatic** puts the best matches first during a text search and the most recent documents first while browsing.
 
 Use Ctrl or Shift when selecting rows, or choose **Select shown** to select the loaded results. Use **Tag selected** to apply a tag to the whole selection. The batch control can mark the selection reviewed or return reviewed documents to the inbox.

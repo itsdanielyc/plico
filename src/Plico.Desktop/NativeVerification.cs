@@ -6,6 +6,7 @@ using Avalonia.Input;
 using Avalonia.Interactivity;
 using Avalonia.Media.Imaging;
 using Avalonia.Threading;
+using Avalonia.VisualTree;
 using CommunityToolkit.Mvvm.Input;
 using Plico.Core;
 
@@ -40,7 +41,7 @@ internal static class NativeVerification
                 $"The receipt did not import with embedded text. {model.Status}");
             await UntilAsync(() => model.Preview is not null, () => model.PreviewMessage);
 
-            Control<TextBox>(window, "TagBox").SetCurrentValue(TextBox.TextProperty, TestTag);
+            Control<AutoCompleteBox>(window, "TagBox").SetCurrentValue(AutoCompleteBox.TextProperty, TestTag);
             Control<Button>(window, "AddTagButton").Command!.Execute(null);
             Require(model.SelectedDocument?.Tags.Contains(TestTag) == true, "The tag did not attach to the imported PDF.");
             await CaptureAsync(window, evidenceDirectory, "inbox.png");
@@ -70,10 +71,11 @@ internal static class NativeVerification
             await VerifyTagMergeAsync(window, model, dialogs, evidenceDirectory);
             await VerifySearchableCopyAsync(window, model, fixture, evidenceDirectory);
             await VerifyTiffImportAsync(window, model, dialogs, fixture, evidenceDirectory);
+            await VerifyTagSuggestionAsync(window, model, evidenceDirectory);
             await VerifyScannerDialogAsync(window, evidenceDirectory);
 
             File.WriteAllText(Path.Combine(evidenceDirectory, "passed.txt"),
-                $"Verified {runtime}. Native window completed multilingual OCR, multi-page TIFF import, phrase and tag search, result sorting, fit-width preview, match navigation, tag merging, duplicate drop, folder watch, title edit, relocation, batch actions, selected PDF export, library backup, text copy, searchable PDF copy, and import retry.");
+                $"Verified {runtime}. Native window completed multilingual OCR, multi-page TIFF import, phrase and tag search, result sorting, fit-width preview, match navigation, tag merging and suggestions, duplicate drop, folder watch, title edit, relocation, batch actions, selected PDF export, library backup, text copy, searchable PDF copy, and import retry.");
             desktop.Shutdown(0);
         }
         catch (Exception error)
@@ -124,11 +126,11 @@ internal static class NativeVerification
     {
         var document = model.SelectedDocument ?? throw new InvalidOperationException("The mixed PDF was not selected.");
         const string reviewTag = "Scan review";
-        var tagBox = Control<TextBox>(window, "TagBox");
+        var tagBox = Control<AutoCompleteBox>(window, "TagBox");
         var addTag = Control<Button>(window, "AddTagButton").Command ?? throw new InvalidOperationException("Tag action unavailable.");
-        tagBox.SetCurrentValue(TextBox.TextProperty, TestTag);
+        tagBox.SetCurrentValue(AutoCompleteBox.TextProperty, TestTag);
         addTag.Execute(null);
-        tagBox.SetCurrentValue(TextBox.TextProperty, reviewTag);
+        tagBox.SetCurrentValue(AutoCompleteBox.TextProperty, reviewTag);
         addTag.Execute(null);
         model.PreviousPageCommand.Execute(null);
         Require(model.PageLabel == "1 / 2", "Search match navigation needs the first page of the mixed PDF.");
@@ -162,7 +164,7 @@ internal static class NativeVerification
         var original = model.Documents.Single(document => document.RelativePath == scanName);
         Control<ListBox>(window, "DocumentList").SetCurrentValue(ListBox.SelectedItemProperty, original);
         await UntilAsync(() => model.SelectedDocument?.Id == original.Id && model.Preview is not null, () => model.Status);
-        Control<TextBox>(window, "TagBox").SetCurrentValue(TextBox.TextProperty, TestTag);
+        Control<AutoCompleteBox>(window, "TagBox").SetCurrentValue(AutoCompleteBox.TextProperty, TestTag);
         Control<Button>(window, "AddTagButton").Command!.Execute(null);
         var copy = Control<Button>(window, "CreateSearchableCopyButton");
         Require(!original.HasText && copy.IsEffectivelyVisible && copy.IsEnabled && copy.Command is IAsyncRelayCommand,
@@ -241,6 +243,31 @@ internal static class NativeVerification
         await UntilAsync(() => model.PageLabel == "2 / 2" && model.Preview is not null, () => model.Status);
         await CaptureAsync(window, directory, "tiff-import.png");
     }
+
+    private static async Task VerifyTagSuggestionAsync(MainWindow window, InboxViewModel model, string directory)
+    {
+        var tagBox = Control<AutoCompleteBox>(window, "TagBox");
+        var input = tagBox.GetVisualDescendants().OfType<TextBox>().Single();
+        Require(input.Focus(), "The selected PDF's tag field could not receive focus.");
+        input.SetCurrentValue(TextBox.TextProperty, "work");
+        await UntilAsync(() => tagBox.IsDropDownOpen, () => "The tag field did not suggest an existing tag.");
+        Require(tagBox.ItemsSource?.Cast<string>().SequenceEqual([TestTag]) == true, "The suggestion did not use the catalog label.");
+        await CaptureAsync(window, directory, "tag-suggestions.png");
+
+        PressTagKey(input, Key.Down);
+        PressTagKey(input, Key.Enter);
+        Require(model.TagInput == TestTag && model.SelectedDocument?.Tags.Contains(TestTag) == false,
+            "Choosing a suggestion did not fill the field without applying it.");
+        PressTagKey(input, Key.Enter);
+        Require(model.SelectedDocument?.Tags.Contains(TestTag) == true && string.IsNullOrEmpty(model.TagInput),
+            "Pressing Enter did not apply the chosen tag and clear the field.");
+    }
+
+    private static void PressTagKey(TextBox input, Key key) => input.RaiseEvent(new KeyEventArgs
+    {
+        RoutedEvent = InputElement.KeyDownEvent,
+        Key = key
+    });
 
     private static async Task VerifyImportErrorsAsync(MainWindow window, InboxViewModel model, FixtureDialogs dialogs,
         string fixture, string directory)
@@ -375,7 +402,7 @@ internal static class NativeVerification
             "The window did not select both documents.");
         await UntilAsync(() => model.Preview is not null, () => model.PreviewMessage);
         const string batchTag = "Verification";
-        Control<TextBox>(window, "BatchTagBox").SetCurrentValue(TextBox.TextProperty, batchTag);
+        Control<AutoCompleteBox>(window, "BatchTagBox").SetCurrentValue(AutoCompleteBox.TextProperty, batchTag);
         Control<Button>(window, "ApplyBatchTagButton").RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
         await UntilAsync(() => model.HasBatchSelection && model.Status == "Tag applied to 2 documents." && model.Preview is not null,
             () => model.Status);

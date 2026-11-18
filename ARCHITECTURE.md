@@ -23,6 +23,8 @@ Batch review and tagging update the selected IDs in one SQLite transaction. A ro
 
 Tag renaming updates the label for a capitalization change or moves the catalog links to the destination key. The transaction includes links on missing PDFs so they follow the new tag when the file returns. A merge keeps the destination’s label and uses its existing document links once.
 
+The desktop builds a sorted index of the sidebar's tag keys when a tag field first requests suggestions. The same index serves both fields until the label list changes. Each edit starts at the matching prefix by binary search and reads at most eight eligible labels, with no catalog read for the edit.
+
 Schema v2 indexes the SHA-256 digest of the source. Import computes it while copying a snapshot to staging. Repeating an unchanged source can reuse its existing PDF and avoid OCR. For a v1 entry, a PDF candidate with matching size is hashed on demand. Paths reserved by missing entries keep newly imported documents from inheriting unrelated metadata.
 
 Schema v3 stores an optional display title. The FTS title field includes the display title and filename when a title has been edited. Existing FTS entries remain valid through migration. A refresh updates file text while preserving user-assigned titles.

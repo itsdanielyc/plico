@@ -28,6 +28,8 @@ The search box hints at `tag:` filters and offers a quoted example in its toolti
 
 A selected sidebar tag offers **Rename…**. When the requested name belongs to another tag, the dialog describes the change and offers **Merge tags** as an explicit action. The resulting tag opens after the change.
 
+Both tag fields suggest up to eight names from the current library. The single-document field skips tags already on that PDF. Choosing a suggestion fills in its catalog spelling. **Add**, **Tag selected**, or Enter after closing the suggestions applies the label.
+
 The preview shows the whole page by default. **Fit width** fills the available reading width and allows vertical scrolling. Page navigation stays visible and starts each new page at the top.
 
 **Go to match** sits beneath the preview header actions for multi-page text results. It opens the first page that matches the text terms and reports its page number in the status bar.

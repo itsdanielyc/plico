@@ -398,8 +398,8 @@ public sealed partial class InboxWindowTests
             await WaitForPreviewAsync(model);
             var select = Assert.IsType<Button>(window.FindControl<Button>("SelectShownButton"));
             select.RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
-            var tag = Assert.IsType<TextBox>(window.FindControl<TextBox>("BatchTagBox"));
-            tag.SetCurrentValue(TextBox.TextProperty, "Property");
+            var tag = Assert.IsType<AutoCompleteBox>(window.FindControl<AutoCompleteBox>("BatchTagBox"));
+            tag.SetCurrentValue(AutoCompleteBox.TextProperty, "Property");
             var apply = Assert.IsType<Button>(window.FindControl<Button>("ApplyBatchTagButton"));
             apply.RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
             await WaitForAsync(() => model.Status == "Tag applied to 2 documents." && model.HasBatchSelection);

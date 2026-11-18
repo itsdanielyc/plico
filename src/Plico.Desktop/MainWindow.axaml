@@ -49,6 +49,14 @@
             <Setter Property="Foreground" Value="#5C685D" />
             <Setter Property="FontSize" Value="12" />
         </Style>
+        <Style Selector="AutoCompleteBox.tag-entry">
+            <Setter Property="FilterMode" Value="None" />
+            <Setter Property="MaxLength" Value="48" />
+            <Setter Property="MaxDropDownHeight" Value="196" />
+        </Style>
+        <Style Selector="AutoCompleteBox.tag-entry /template/ Popup#PART_Popup">
+            <Setter Property="ShouldUseOverlayLayer" Value="True" />
+        </Style>
         <Style Selector="Button.document-location">
             <Setter Property="Padding" Value="0,1" />
             <Setter Property="Background" Value="Transparent" />
@@ -226,8 +234,9 @@
                                                     IsEnabled="{Binding CanWork}" />
                                         </Grid>
                                         <Grid ColumnDefinitions="*,Auto" ColumnSpacing="6" IsEnabled="{Binding CanWork}">
-                                            <TextBox x:Name="BatchTagBox" Text="{Binding BatchTagInput, Mode=TwoWay}" PlaceholderText="Tag"
-                                                     AutomationProperties.Name="Tag for the selected documents" KeyDown="BatchTag_KeyDown" />
+                                            <AutoCompleteBox x:Name="BatchTagBox" Classes="tag-entry" Text="{Binding BatchTagInput, Mode=TwoWay}"
+                                                             PlaceholderText="Tag" AutomationProperties.Name="Tag for the selected documents"
+                                                             Populating="TagBox_Populating" KeyDown="BatchTag_KeyDown" />
                                             <Button Grid.Column="1" x:Name="ApplyBatchTagButton" Classes="secondary"
                                                     Content="Tag selected" Click="ApplyBatchTag_Click" />
                                         </Grid>
@@ -313,8 +322,9 @@
                                         </ItemsControl.ItemTemplate>
                                     </ItemsControl>
                                     <Grid ColumnDefinitions="*,Auto,Auto" ColumnSpacing="6" IsEnabled="{Binding CanWork}">
-                                        <TextBox x:Name="TagBox" Text="{Binding TagInput, Mode=TwoWay}" MaxLength="48"
-                                                 PlaceholderText="New tag" AutomationProperties.Name="New tag" KeyDown="TagBox_KeyDown" FontSize="12" />
+                                        <AutoCompleteBox x:Name="TagBox" Classes="tag-entry" Text="{Binding TagInput, Mode=TwoWay}"
+                                                         PlaceholderText="Tag" AutomationProperties.Name="Tag for this document" FontSize="12"
+                                                         Populating="TagBox_Populating" KeyDown="TagBox_KeyDown" />
                                         <Button Grid.Column="1" x:Name="AddTagButton" Classes="secondary" Content="Add" Command="{Binding AddTagCommand}"
                                                 AutomationProperties.Name="Add tag" />
                                         <Button Grid.Column="2" x:Name="ReviewButton" Classes="secondary" Content="{Binding ReviewAction}" Command="{Binding ToggleReviewCommand}" />

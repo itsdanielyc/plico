@@ -15,7 +15,6 @@ public sealed partial class MainWindow : Window
     public MainWindow()
     {
         InitializeComponent();
-        BatchTagBox.MaxLength = TagBox.MaxLength;
         PreviewPage.PropertyChanged += (_, change) =>
         {
             if (change.Property == Image.SourceProperty) PreviewScroll.Offset = default;
@@ -58,6 +57,14 @@ public sealed partial class MainWindow : Window
     private void RemoveTag_Click(object? sender, RoutedEventArgs e)
     {
         if (sender is Button { DataContext: string tag }) ViewModel?.RemoveTag(tag);
+    }
+
+    private void TagBox_Populating(object? sender, PopulatingEventArgs e)
+    {
+        if (sender is AutoCompleteBox field)
+        {
+            field.ItemsSource = ViewModel?.GetTagSuggestions(e.Parameter, ReferenceEquals(field, TagBox));
+        }
     }
 
     private void TagBox_KeyDown(object? sender, KeyEventArgs e)

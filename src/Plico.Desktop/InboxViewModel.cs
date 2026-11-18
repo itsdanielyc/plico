@@ -252,6 +252,8 @@ internal sealed partial class InboxViewModel : ObservableObject, IDisposable
         ClearImportErrors();
         LatestBackupLocation = null;
         LatestExportLocation = null;
+        TagInput = "";
+        BatchTagInput = "";
         SelectedDocument = null;
         LibraryPath = replacement.RootPath;
         var watchNotice = RestoreWatchFolder(replacement.RootPath);
@@ -422,7 +424,6 @@ internal sealed partial class InboxViewModel : ObservableObject, IDisposable
         OnPropertyChanged(nameof(HasDocuments));
         OnPropertyChanged(nameof(HasBatchCandidates));
     }
-    partial void OnTagsChanged(IReadOnlyList<string> value) => OnPropertyChanged(nameof(HasTags));
     partial void OnPreviewMessageChanged(string value) => OnPropertyChanged(nameof(HasPreviewMessage));
 
     partial void OnIsBusyChanged(bool value)
