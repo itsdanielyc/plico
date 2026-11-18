@@ -1,6 +1,8 @@
 using System.Net;
+using System.Net.Sockets;
 using System.Xml.Linq;
 using Microsoft.AspNetCore.Builder;
+using Microsoft.AspNetCore.Connections.Features;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Logging;
@@ -102,7 +104,8 @@ public sealed class NetworkScannerTests
     public async Task InterruptedFeederCanSaveCompletedPagesOrDiscardThem(bool savePages, bool truncatePage)
     {
         var token = TestContext.Current.CancellationToken;
-        await using var scanner = await StartInterruptedFeederAsync(token, truncatePage);
+        var truncationSent = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+        await using var scanner = await StartInterruptedFeederAsync(token, truncatePage, truncationSent);
         using var temporary = new TemporaryLibrary();
         using var library = InboxLibrary.Open(temporary.Path);
         var device = await Scanners.ConnectAsync(new Uri(scanner.Urls.Single()).Authority, token);
@@ -119,6 +122,7 @@ public sealed class NetworkScannerTests
             }, token);
 
         Assert.Equal(1, decisions);
+        if (truncatePage) Assert.True(truncationSent.Task.IsCompletedSuccessfully);
         Assert.Equal(2, scan.Interruption?.CapturedPages);
         if (savePages)
         {
@@ -137,7 +141,8 @@ public sealed class NetworkScannerTests
         Assert.Empty(Directory.EnumerateDirectories(Path.Combine(temporary.Path, ".plico"), "import-*"));
     }
 
-    internal static async Task<WebApplication> StartInterruptedFeederAsync(CancellationToken cancellationToken, bool truncatePage = false)
+    internal static async Task<WebApplication> StartInterruptedFeederAsync(CancellationToken cancellationToken, bool truncatePage = false,
+        TaskCompletionSource? truncationSent = null)
     {
         string fixtures = Path.Combine(AppContext.BaseDirectory, "fixtures");
         byte[] receipt = await File.ReadAllBytesAsync(Path.Combine(fixtures, "Hardware Store Receipt.png"), cancellationToken);
@@ -168,9 +173,15 @@ public sealed class NetworkScannerTests
             }
             context.Response.ContentType = "image/png";
             context.Response.ContentLength = receipt.Length;
+            context.Response.Headers.Connection = "close";
             await context.Response.Body.WriteAsync(receipt.AsMemory(0, receipt.Length / 2), context.RequestAborted);
             await context.Response.Body.FlushAsync(context.RequestAborted);
-            context.Abort();
+            // A write-side EOF lets the client detect the short body as soon as it reads the connection.
+            // Aborting the request can leave the peer waiting for the SDK's full read timeout on Intel macOS.
+            var socket = context.Features.Get<IConnectionSocketFeature>()?.Socket
+                ?? throw new InvalidOperationException("The loopback scanner fixture requires a direct TCP connection.");
+            socket.Shutdown(SocketShutdown.Send);
+            truncationSent?.TrySetResult();
         });
         scanner.MapDelete(JobLocation, () => Results.NoContent());
         try
