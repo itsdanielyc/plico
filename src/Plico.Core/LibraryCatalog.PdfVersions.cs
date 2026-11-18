@@ -5,7 +5,7 @@ namespace Plico.Core;
 internal sealed partial class LibraryCatalog
 {
     private const string PdfVersionsMigration = """
-        CREATE TABLE pdf_versions (
+        CREATE TABLE IF NOT EXISTS pdf_versions (
             sequence INTEGER PRIMARY KEY,
             document_id INTEGER NOT NULL REFERENCES documents(id) ON DELETE CASCADE,
             file_key TEXT NOT NULL CHECK(length(file_key) = 32),
@@ -15,8 +15,8 @@ internal sealed partial class LibraryCatalog
             sha256 BLOB NOT NULL CHECK(length(sha256) = 32),
             UNIQUE(document_id, file_key)
         );
-        CREATE INDEX pdf_versions_by_document ON pdf_versions(document_id, sequence DESC);
-        CREATE TABLE pending_pdf_revision (
+        CREATE INDEX IF NOT EXISTS pdf_versions_by_document ON pdf_versions(document_id, sequence DESC);
+        CREATE TABLE IF NOT EXISTS pending_pdf_revision (
             slot INTEGER PRIMARY KEY CHECK(slot = 1),
             document_id INTEGER NOT NULL REFERENCES documents(id) ON DELETE CASCADE,
             file_key TEXT NOT NULL CHECK(length(file_key) = 32),
