@@ -86,6 +86,9 @@ public sealed class LibraryMoveTests
             database.Open();
             using var command = database.CreateCommand();
             command.CommandText = """
+                DROP INDEX documents_ocr_copies;
+                ALTER TABLE documents DROP COLUMN ocr_copy_language;
+                ALTER TABLE documents DROP COLUMN ocr_copy_source_id;
                 ALTER TABLE documents DROP COLUMN pdf_sha256;
                 PRAGMA user_version = 3;
                 """;

@@ -256,8 +256,11 @@ public sealed partial class LibraryTests
             connection.Open();
             using var command = connection.CreateCommand();
             command.CommandText = """
+                DROP INDEX documents_ocr_copies;
                 DROP INDEX documents_source_sha256;
                 DROP INDEX documents_legacy_file_bytes;
+                ALTER TABLE documents DROP COLUMN ocr_copy_language;
+                ALTER TABLE documents DROP COLUMN ocr_copy_source_id;
                 ALTER TABLE documents DROP COLUMN source_sha256;
                 ALTER TABLE documents DROP COLUMN display_title;
                 ALTER TABLE documents DROP COLUMN pdf_sha256;
