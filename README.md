@@ -84,3 +84,5 @@ dotnet test Plico.slnx -c Release
 
 Native verification commands are in [keel.json](keel.json).
 See [the product brief](PRODUCT.md), [roadmap](PLAN.md), and [verification ledger](VERIFICATION.md).
+
+Use `gh workflow run archives.yml --ref <release-branch>` to verify a release candidate. Wait for the solution tests and package checks on all six runtimes before tagging that commit.

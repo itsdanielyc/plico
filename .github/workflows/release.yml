@@ -27,13 +27,13 @@ jobs:
             exit 1
           fi
           commit="$(git rev-parse HEAD)"
-          ci="$(gh run list --workflow ci.yml --commit "$commit" --status success --limit 1 --json databaseId --jq '.[0].databaseId // empty')"
-          archives="$(gh run list --workflow archives.yml --commit "$commit" --status success --limit 1 --json databaseId --jq '.[0].databaseId // empty')"
-          if [[ -z "$ci" || -z "$archives" ]]; then
-            echo "Both CI and archive verification must pass for $commit before release." >&2
+          verification_run="$(gh run list --workflow archives.yml --event workflow_dispatch --commit "$commit" \
+            --status success --limit 1 --json databaseId --jq '.[0].databaseId // empty')"
+          if [[ -z "$verification_run" ]]; then
+            echo "Release candidate verification must pass for $commit before release." >&2
             exit 1
           fi
-          gh run download "$archives" --pattern 'archive-*' --dir verified
+          gh run download "$verification_run" --pattern 'archive-*' --dir verified
           mkdir dist
           for target in win-x64 win-arm64 osx-arm64 osx-x64 linux-x64 linux-arm64; do
             case "$target" in
@@ -48,8 +48,8 @@ jobs:
           (cd dist && sha256sum Plico-* > SHA256SUMS)
           awk -v version="$version" 'index($0, "## [" version "]") == 1 {printing=1; next} /^## / && printing {exit} printing {print}' CHANGELOG.md > release-notes.md
           test -s release-notes.md
-          printf '\nVerified by [CI run %s](%s/%s/actions/runs/%s) and [archive run %s](%s/%s/actions/runs/%s).\n' \
-            "$ci" "$GITHUB_SERVER_URL" "$GITHUB_REPOSITORY" "$ci" "$archives" "$GITHUB_SERVER_URL" "$GITHUB_REPOSITORY" "$archives" >> release-notes.md
+          printf '\nSource tests, portable launches, and installer checks passed in [candidate run %s](%s/%s/actions/runs/%s).\n' \
+            "$verification_run" "$GITHUB_SERVER_URL" "$GITHUB_REPOSITORY" "$verification_run" >> release-notes.md
       - name: Publish to GitHub Releases
         shell: bash
         env:

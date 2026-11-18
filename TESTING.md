@@ -30,4 +30,6 @@
 
 Run `dotnet test Plico.slnx -c Release` for the fast suite. Run the native harness from `keel.json` for installed-platform evidence. Visual review starts with per-OS captures and geometry checks. Add pixel baselines when repeatable runner captures justify the maintenance.
 
+Use **Verify release candidate** (`archives.yml`) on the exact release commit. Each runtime runs the solution tests before packaging, then verifies the portable and installed copies. The publisher requires a successful run and all package files for that commit. Its smoke matrix downloads the newly published assets and runs the distribution checks again.
+
 Budget three minutes for the local suite and 20 minutes for the normal matrix. Apply the Keel flaky-test policy and record evidence in VERIFICATION.md.

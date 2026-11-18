@@ -1,4 +1,4 @@
-name: Verify archives
+name: Verify release candidate
 on:
   workflow_dispatch:
 
@@ -26,6 +26,8 @@ jobs:
         with:
           global-json-file: global.json
       - run: dotnet restore Plico.slnx --locked-mode
+      - name: Run solution tests
+        run: dotnet test Plico.slnx -c Release --no-restore
       - name: Package and verify the archive
         shell: pwsh
         env:
