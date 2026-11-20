@@ -762,6 +762,11 @@ internal sealed partial class LibraryCatalog
         try
         {
             connection.Open();
+            // A write that returns rows commits when its reader closes, a step Microsoft.Data.Sqlite does not retry.
+            // SQLite's own busy handler makes that commit wait for a reader on another connection.
+            using var wait = connection.CreateCommand();
+            wait.CommandText = $"PRAGMA busy_timeout = {ConnectionTimeoutSeconds * 1000};";
+            wait.ExecuteNonQuery();
             return connection;
         }
         catch
