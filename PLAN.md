@@ -137,3 +137,18 @@ Items 10–23 shipped in the v0.18.0 prerelease at `0b3dcd9`. Fresh runners veri
 ## Post-v0.18.0 maintenance
 
 Duplex backup, move and version recovery, Trash purge, OCR copy reuse, watch lifecycle, archive-number search, filing suggestions, and redaction file handling were tested locally on Windows x64 and Ubuntu x64 (L0, L1, L3, L4, L6). Verification on Windows ARM64, Ubuntu ARM64, and both Macs is pending. [Verification ledger](VERIFICATION.md)
+
+## Desktop redesign
+
+Direction, mockups and research: [docs/design/redesign](docs/design/redesign/DIRECTION.md). Decision record: [ADR 020](docs/adr/020-desktop-redesign.md).
+
+| Slice | Done when | Levels | Status |
+|---|---|---|---|
+| R1 Foundation | Graphite light and dark tokens keep every earlier key, Inter type scale never below 12, shared control styles, stroke icon set | L0, L4, L6 | Tested locally on Windows x64 (L4, L6) |
+| R2 Shell | Places-only sidebar with Intake sources, quiet toolbar, ⋯ menu, Settings window, Ctrl+K command palette, shortcuts sheet, window-level single-key shortcuts that never fire while typing | L4, L6 | Tested locally on Windows x64 (L4, L6) |
+| R3 Review | Queue rows with first-page thumbnails, paper on a desk with a floating page bar, filing card with inline dashed suggestions and Accept all, Mark reviewed and Trash pinned, Undo for review and Trash, review motion with repeat and reduced-motion skips | L3, L4, L6 | Tested locally on Windows x64 (L4, L6) |
+| R4 Batch, empty states and narrow windows | Batch card replaces the filing card, welcome page for a new library, Inbox clear, thumbnail-strip queue below 1100 px | L4, L6 | Tested locally on Windows x64 (L4, L6) |
+| R5 Upcoming list | A library query for reminders and deadlines by date replaces the reminders dialog behind Upcoming | L1, L3, L4 | Not started. Upcoming opens the existing due-reminders dialog. |
+| R6 Search tokens and browse grid | Filter tokens with a suggestions dropdown, a month-grouped thumbnail grid (G) and quick look (Space) | L4, L6 | Not started |
+| R7 Capture surfaces | Activity panel with per-file intake progress, one scan sheet with a live page stream and inline interruption, and a single Edit pages surface | L1, L3, L4, L6 | Not started. Needs the intake progress and scanner page stream contracts in the direction document. |
+| R8 Platform edges | macOS menu bar mirroring the palette, Windows title-bar integration, and system reduced motion on macOS and Linux | L6, L7 | Not started |
