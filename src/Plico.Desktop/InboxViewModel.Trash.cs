@@ -13,6 +13,7 @@ internal sealed partial class InboxViewModel
         {
             var library = RequireLibrary();
             await Task.Run(() => library.TrashPdfAsync(document.Id, token), token);
+            OfferTrashUndo(document.Id, document.Title);
             Tags = library.GetTags();
             RefreshInboxCount();
             LoadResults(retainLoadedResults: true, reviewPosition: position);

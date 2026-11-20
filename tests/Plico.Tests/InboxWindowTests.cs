@@ -413,8 +413,10 @@ public sealed partial class InboxWindowTests
         }
     }
 
+    // Thumbnails and suggestions read library files after the preview appears. Tests that move or delete
+    // those files wait for the reads to finish, as a person would see the rows fill in first.
     private static async Task WaitForPreviewAsync(InboxViewModel model)
-        => await WaitForAsync(() => model.Preview is not null || model.HasPreviewMessage);
+        => await WaitForAsync(() => (model.Preview is not null || model.HasPreviewMessage) && !model.IsReadingInBackground);
 
     [AvaloniaFact]
     public async Task ScannerPickerStartsAtStandardResolutionAndReturnsTheChoice()

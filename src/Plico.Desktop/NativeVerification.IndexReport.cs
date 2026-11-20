@@ -13,6 +13,7 @@ internal static partial class NativeVerification
         string holdingPath = Path.Combine(model.LibraryPath, "held-for-index-report.pdf");
         string firstDamaged = Path.Combine(folder, "First damaged.pdf");
         string secondDamaged = Path.Combine(folder, "Second damaged.pdf");
+        await SettleAsync(model);
         File.Move(sourcePath, holdingPath);
         File.WriteAllText(firstDamaged, "Invalid PDF fixture");
         File.WriteAllText(secondDamaged, "Another invalid PDF fixture");

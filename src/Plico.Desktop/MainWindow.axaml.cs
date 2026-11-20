@@ -15,6 +15,8 @@ public sealed partial class MainWindow : Window
     public MainWindow()
     {
         InitializeComponent();
+        ApplyWorkspaceLayout(Width);
+        WirePalette();
         PreviewPage.PropertyChanged += (_, change) =>
         {
             if (change.Property == Image.SourceProperty) UpdatePreviewScrollPosition();
@@ -37,15 +39,26 @@ public sealed partial class MainWindow : Window
     protected override void OnKeyDown(KeyEventArgs e)
     {
         base.OnKeyDown(e);
-        if (e.KeyModifiers is not (KeyModifiers.Control or KeyModifiers.Meta)) return;
+        if (e.Key == Key.Escape && IsOverlayOpen)
+        {
+            CloseOverlays();
+            e.Handled = true;
+            return;
+        }
+        bool command = (e.KeyModifiers & (KeyModifiers.Control | KeyModifiers.Meta)) != 0;
+        if (!command || e.Handled || ViewModel is not { } model) return;
         if (e.Key == Key.F)
         {
-            SearchBox.Focus();
+            FocusSearch();
             e.Handled = true;
         }
-        if (e.Key == Key.O && ViewModel is { CanWork: true } model)
+        else if (e.Key == Key.O && (e.KeyModifiers & KeyModifiers.Shift) == 0 && model.CanWork)
         {
             model.AddFilesCommand.Execute(null);
+            e.Handled = true;
+        }
+        else if (HandleCommandKey(e, model))
+        {
             e.Handled = true;
         }
     }
@@ -100,7 +113,10 @@ public sealed partial class MainWindow : Window
         if (e.KeyModifiers != KeyModifiers.None || ViewModel is not { CanWork: true, HasSelection: true } model) return;
         switch (e.Key)
         {
-            case Key.R: model.ToggleReviewCommand.Execute(null); break;
+            case Key.R:
+                PlayReviewMotion();
+                model.ToggleReviewCommand.Execute(null);
+                break;
             case Key.T: TagBox.Focus(); break;
             case Key.X: model.TrashDocumentCommand.Execute(null); break;
             case Key.J: model.SelectReviewNeighbour(1); break;

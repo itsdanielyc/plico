@@ -4,52 +4,137 @@
         xmlns:local="using:Plico.Desktop"
         xmlns:core="using:Plico.Core"
         x:Class="Plico.Desktop.MainWindow" x:DataType="local:InboxViewModel"
-        Title="Plico" Width="1180" Height="760" MinWidth="900" MinHeight="590"
+        Title="Plico" Width="1280" Height="800" MinWidth="900" MinHeight="590"
         FontFamily="{StaticResource InterFont}" Foreground="{DynamicResource WorkspaceInk}" Background="{DynamicResource WorkspaceSurface}"
         DragDrop.AllowDrop="True" DragDrop.DragEnter="Files_DragOver" DragDrop.DragOver="Files_DragOver"
         DragDrop.DragLeave="Files_DragLeave" DragDrop.Drop="Files_Dropped"
         WindowStartupLocation="CenterScreen">
     <Window.Styles>
-        <Style Selector="Button">
-            <Setter Property="Padding" Value="13,8" />
-            <Setter Property="CornerRadius" Value="8" />
-            <Setter Property="FontSize" Value="13" />
-        </Style>
-        <Style Selector="Button.primary">
-            <Setter Property="Background" Value="{DynamicResource PrimarySurface}" />
-            <Setter Property="Foreground" Value="White" />
-            <Setter Property="FontWeight" Value="SemiBold" />
-            <Setter Property="BorderThickness" Value="0" />
-        </Style>
-        <Style Selector="Button.primary:pointerover /template/ ContentPresenter">
-            <Setter Property="Background" Value="{DynamicResource PrimaryHoverSurface}" />
-            <Setter Property="Foreground" Value="White" />
-        </Style>
-        <Style Selector="Button.secondary">
-            <Setter Property="Background" Value="{DynamicResource ControlSurface}" />
-            <Setter Property="Foreground" Value="{DynamicResource ControlInk}" />
-            <Setter Property="BorderBrush" Value="{DynamicResource ControlOutline}" />
-            <Setter Property="BorderThickness" Value="1" />
-        </Style>
-        <Style Selector="Button.secondary:pointerover /template/ ContentPresenter">
-            <Setter Property="Background" Value="{DynamicResource ControlHoverSurface}" />
-            <Setter Property="Foreground" Value="{DynamicResource ControlHoverInk}" />
-        </Style>
+        <!-- Sidebar rows. Tag rows keep the "rail" class that verification uses to find them. -->
         <Style Selector="Button.rail">
             <Setter Property="Background" Value="Transparent" />
-            <Setter Property="Foreground" Value="{DynamicResource RailInk}" />
+            <Setter Property="BorderThickness" Value="0" />
+            <Setter Property="HorizontalAlignment" Value="Stretch" />
+            <Setter Property="HorizontalContentAlignment" Value="Stretch" />
+            <Setter Property="MinHeight" Value="30" />
+            <Setter Property="Padding" Value="8,0" />
+            <Setter Property="Foreground" Value="{DynamicResource WorkspaceInk}" />
+        </Style>
+        <Style Selector="Button.rail:pointerover /template/ ContentPresenter#PART_ContentPresenter">
+            <Setter Property="Background" Value="{DynamicResource HoverFill}" />
+            <Setter Property="Foreground" Value="{DynamicResource WorkspaceInk}" />
+        </Style>
+        <Style Selector="TextBlock.section">
+            <Setter Property="FontSize" Value="12" />
+            <Setter Property="FontWeight" Value="SemiBold" />
+            <Setter Property="Foreground" Value="{DynamicResource MutedInk}" />
+            <Setter Property="Margin" Value="8,0,0,0" />
+            <Setter Property="VerticalAlignment" Value="Center" />
+        </Style>
+        <Style Selector="TextBlock.count">
+            <Setter Property="FontSize" Value="12" />
+            <Setter Property="FontWeight" Value="Medium" />
+            <Setter Property="Foreground" Value="{DynamicResource MutedInk}" />
+            <Setter Property="VerticalAlignment" Value="Center" />
+            <Setter Property="FontFeatures" Value="+tnum" />
+        </Style>
+        <Style Selector="Border.badge">
+            <Setter Property="Background" Value="{DynamicResource PrimarySurface}" />
+            <Setter Property="CornerRadius" Value="9" />
+            <Setter Property="MinWidth" Value="22" />
+            <Setter Property="Height" Value="18" />
+            <Setter Property="Padding" Value="6,0" />
+            <Setter Property="VerticalAlignment" Value="Center" />
+        </Style>
+        <Style Selector="Border.badge > TextBlock">
+            <Setter Property="Foreground" Value="{DynamicResource PrimaryInk}" />
+            <Setter Property="FontSize" Value="12" />
+            <Setter Property="FontWeight" Value="SemiBold" />
+            <Setter Property="HorizontalAlignment" Value="Center" />
+            <Setter Property="VerticalAlignment" Value="Center" />
+            <Setter Property="FontFeatures" Value="+tnum" />
+        </Style>
+        <Style Selector="CheckBox.inline">
+            <Setter Property="FontSize" Value="13" />
+            <Setter Property="MinHeight" Value="26" />
+            <Setter Property="Margin" Value="32,0,0,0" />
+            <Setter Property="Foreground" Value="{DynamicResource SecondaryInk}" />
+        </Style>
+        <Style Selector="Button.subaction">
+            <Setter Property="Background" Value="Transparent" />
+            <Setter Property="BorderThickness" Value="0" />
+            <Setter Property="MinHeight" Value="26" />
+            <Setter Property="Padding" Value="8,2" />
+            <Setter Property="FontSize" Value="13" />
+            <Setter Property="Margin" Value="24,0,0,0" />
+            <Setter Property="HorizontalAlignment" Value="Left" />
+            <Setter Property="Foreground" Value="{DynamicResource SecondaryInk}" />
+        </Style>
+        <Style Selector="Button.subaction:pointerover /template/ ContentPresenter#PART_ContentPresenter">
+            <Setter Property="Background" Value="{DynamicResource HoverFill}" />
+            <Setter Property="Foreground" Value="{DynamicResource WorkspaceInk}" />
+        </Style>
+
+        <!-- Buttons whose plain-text label stays readable while the template adds an icon. -->
+        <Style Selector="Button.with-icon">
+            <Setter Property="ContentTemplate">
+                <DataTemplate x:DataType="x:String">
+                    <StackPanel Orientation="Horizontal" Spacing="7">
+                        <local:Icon Data="{Binding $parent[Button].(local:Ui.Icon)}" VerticalAlignment="Center" />
+                        <TextBlock Text="{Binding}" VerticalAlignment="Center" />
+                    </StackPanel>
+                </DataTemplate>
+            </Setter>
+        </Style>
+        <!-- Filing card actions: a quiet list of icon rows rather than a wall of buttons. -->
+        <Style Selector="Button.action">
+            <Setter Property="Background" Value="Transparent" />
+            <Setter Property="BorderThickness" Value="0" />
             <Setter Property="HorizontalAlignment" Value="Stretch" />
             <Setter Property="HorizontalContentAlignment" Value="Left" />
-            <Setter Property="BorderThickness" Value="0" />
+            <Setter Property="MinHeight" Value="30" />
+            <Setter Property="Padding" Value="8,0" />
+            <Setter Property="Foreground" Value="{DynamicResource WorkspaceInk}" />
+            <Setter Property="ContentTemplate">
+                <DataTemplate x:DataType="x:String">
+                    <StackPanel Orientation="Horizontal" Spacing="10">
+                        <local:Icon Data="{Binding $parent[Button].(local:Ui.Icon)}" Foreground="{DynamicResource SecondaryInk}" VerticalAlignment="Center" />
+                        <TextBlock Text="{Binding}" VerticalAlignment="Center" TextTrimming="CharacterEllipsis" />
+                    </StackPanel>
+                </DataTemplate>
+            </Setter>
         </Style>
-        <Style Selector="Button.rail:pointerover /template/ ContentPresenter, Button.rail.current /template/ ContentPresenter">
-            <Setter Property="Background" Value="{DynamicResource RailActiveSurface}" />
-            <Setter Property="Foreground" Value="{DynamicResource RailActiveInk}" />
+        <Style Selector="Button.action:pointerover /template/ ContentPresenter#PART_ContentPresenter">
+            <Setter Property="Background" Value="{DynamicResource HoverFill}" />
+            <Setter Property="Foreground" Value="{DynamicResource WorkspaceInk}" />
         </Style>
-        <Style Selector="TextBlock.muted">
+        <Style Selector="Button.action:disabled /template/ ContentPresenter#PART_ContentPresenter">
+            <Setter Property="Background" Value="Transparent" />
+        </Style>
+
+        <!-- Filing card fields: label column, value column. -->
+        <Style Selector="TextBlock.field-label">
+            <Setter Property="FontSize" Value="13" />
             <Setter Property="Foreground" Value="{DynamicResource MutedInk}" />
-            <Setter Property="FontSize" Value="12" />
+            <Setter Property="VerticalAlignment" Value="Top" />
+            <Setter Property="Margin" Value="0,6,0,0" />
         </Style>
+        <Style Selector="Button.field">
+            <Setter Property="Background" Value="Transparent" />
+            <Setter Property="BorderThickness" Value="1" />
+            <Setter Property="BorderBrush" Value="Transparent" />
+            <Setter Property="HorizontalAlignment" Value="Stretch" />
+            <Setter Property="HorizontalContentAlignment" Value="Left" />
+            <Setter Property="MinHeight" Value="30" />
+            <Setter Property="Padding" Value="8,3" />
+            <Setter Property="Foreground" Value="{DynamicResource WorkspaceInk}" />
+        </Style>
+        <Style Selector="Button.field:pointerover /template/ ContentPresenter#PART_ContentPresenter">
+            <Setter Property="Background" Value="{DynamicResource HoverFill}" />
+            <Setter Property="BorderBrush" Value="{DynamicResource LineBrush}" />
+            <Setter Property="Foreground" Value="{DynamicResource WorkspaceInk}" />
+        </Style>
+
         <Style Selector="AutoCompleteBox.tag-entry">
             <Setter Property="FilterMode" Value="None" />
             <Setter Property="MaxLength" Value="48" />
@@ -59,17 +144,8 @@
             <Setter Property="ShouldUseOverlayLayer" Value="True" />
             <Setter Property="OverlayDismissEventPassThrough" Value="True" />
         </Style>
-        <Style Selector="Button.document-location">
-            <Setter Property="Padding" Value="0,1" />
-            <Setter Property="Background" Value="Transparent" />
-            <Setter Property="BorderThickness" Value="0" />
-            <Setter Property="HorizontalAlignment" Value="Stretch" />
-            <Setter Property="HorizontalContentAlignment" Value="Left" />
-            <Setter Property="Cursor" Value="Hand" />
-        </Style>
-        <Style Selector="Button.document-location:pointerover /template/ ContentPresenter">
-            <Setter Property="Background" Value="{DynamicResource TagSurface}" />
-        </Style>
+
+        <!-- The page preview keeps its fit and zoom scrolling rules. -->
         <Style Selector="ScrollViewer.pdf-preview">
             <Setter Property="HorizontalScrollBarVisibility" Value="Disabled" />
             <Setter Property="VerticalScrollBarVisibility" Value="Disabled" />
@@ -81,421 +157,526 @@
             <Setter Property="HorizontalScrollBarVisibility" Value="Auto" />
             <Setter Property="VerticalScrollBarVisibility" Value="Auto" />
         </Style>
-        <Style Selector="ToggleButton.preview-thumbnails">
-            <Setter Property="Background" Value="{DynamicResource ControlSurface}" />
-            <Setter Property="Foreground" Value="{DynamicResource ControlInk}" />
-            <Setter Property="BorderBrush" Value="{DynamicResource ControlOutline}" />
+
+        <!-- Page bar: one floating pill of quiet controls over the desk. -->
+        <Style Selector="Border.pagebar">
+            <Setter Property="Background" Value="{DynamicResource PopupSurface}" />
+            <Setter Property="BorderBrush" Value="{DynamicResource LineBrush}" />
             <Setter Property="BorderThickness" Value="1" />
+            <Setter Property="CornerRadius" Value="10" />
+            <Setter Property="Padding" Value="4" />
+            <Setter Property="BoxShadow" Value="0 1 2 0 #14000000, 0 6 18 0 #1F000000" />
         </Style>
-        <Style Selector="ToggleButton.preview-thumbnails:checked /template/ ContentPresenter">
+        <Style Selector="Border.pagebar Button, Grid.viewer-bar Button, Grid.viewer-bar ToggleButton">
+            <Setter Property="Background" Value="Transparent" />
+            <Setter Property="BorderThickness" Value="0" />
+            <Setter Property="MinHeight" Value="30" />
+            <Setter Property="Padding" Value="9,3" />
+            <Setter Property="FontSize" Value="13" />
+            <Setter Property="Foreground" Value="{DynamicResource WorkspaceInk}" />
+        </Style>
+        <Style Selector="Border.pagebar Button:pointerover /template/ ContentPresenter#PART_ContentPresenter, Grid.viewer-bar Button:pointerover /template/ ContentPresenter#PART_ContentPresenter, Grid.viewer-bar ToggleButton:pointerover /template/ ContentPresenter#PART_ContentPresenter">
+            <Setter Property="Background" Value="{DynamicResource HoverFill}" />
+            <Setter Property="Foreground" Value="{DynamicResource WorkspaceInk}" />
+        </Style>
+        <Style Selector="Grid.viewer-bar ToggleButton:checked /template/ ContentPresenter#PART_ContentPresenter">
             <Setter Property="Background" Value="{DynamicResource SelectionSurface}" />
             <Setter Property="Foreground" Value="{DynamicResource WorkspaceInk}" />
         </Style>
-        <Style Selector="WrapPanel.document-actions > Button">
-            <Setter Property="FontSize" Value="12" />
-            <Setter Property="Padding" Value="7,4" />
-            <Setter Property="Margin" Value="0,0,5,3" />
+        <Style Selector="Border.pagebar Button:disabled /template/ ContentPresenter#PART_ContentPresenter, Grid.viewer-bar Button:disabled /template/ ContentPresenter#PART_ContentPresenter, Grid.viewer-bar ToggleButton:disabled /template/ ContentPresenter#PART_ContentPresenter">
+            <Setter Property="Background" Value="Transparent" />
+            <Setter Property="Foreground" Value="{DynamicResource FaintInk}" />
+        </Style>
+        <Style Selector="Grid.compact Panel.queue-footer">
+            <Setter Property="IsVisible" Value="False" />
+        </Style>
+
+        <!-- Queue rows -->
+        <Style Selector="ListBox#DocumentList ListBoxItem">
+            <Setter Property="Padding" Value="8,8" />
+        </Style>
+        <Style Selector="Grid.compact ListBox#DocumentList ListBoxItem">
+            <Setter Property="Padding" Value="6" />
+            <Setter Property="Margin" Value="4,1" />
+        </Style>
+        <Style Selector="Grid.compact StackPanel.row-text">
+            <Setter Property="IsVisible" Value="False" />
+        </Style>
+        <Style Selector="Grid.compact Panel.queue-chrome">
+            <Setter Property="IsVisible" Value="False" />
+        </Style>
+
+        <Style Selector="Border.overlay-scrim">
+            <Setter Property="Background" Value="{DynamicResource ScrimSurface}" />
         </Style>
     </Window.Styles>
 
-    <Grid ColumnDefinitions="204,*">
-        <Border Background="{DynamicResource RailSurface}" Padding="17,21,17,16">
-            <Grid RowDefinitions="Auto,Auto,*,Auto" RowSpacing="10">
-                <StackPanel Orientation="Horizontal" Spacing="11" Margin="5,0">
-                    <Border Width="34" Height="34" Background="{DynamicResource BadgeSurface}" CornerRadius="9">
-                        <PathIcon Width="20" Height="20" Foreground="{DynamicResource BadgeInk}"
-                                  Data="M4,3 L13,3 L19,9 L19,21 L4,21 Z M13,3 L13,9 L19,9 M7,13 L16,13 M7,17 L16,17" />
-                    </Border>
-                    <TextBlock Text="Plico" FontSize="23" FontWeight="SemiBold" Foreground="{DynamicResource BrandInk}" VerticalAlignment="Center" />
-                </StackPanel>
-                <StackPanel Grid.Row="1" Spacing="3">
-                    <Button x:Name="InboxButton" Classes="rail" Classes.current="{Binding InboxSelected}"
-                            Command="{Binding ShowInboxCommand}" HorizontalContentAlignment="Stretch"
-                            AutomationProperties.Name="{Binding InboxAutomationName}">
-                        <Grid ColumnDefinitions="*,Auto" ColumnSpacing="8">
-                            <TextBlock Text="{translation:Tr Inbox}" />
-                            <TextBlock Grid.Column="1" x:Name="InboxReviewCount" Text="{Binding InboxCount}" IsVisible="{Binding HasInboxCount}"
-                                       Foreground="{DynamicResource RailCountInk}" />
-                        </Grid>
-                    </Button>
-                    <Button x:Name="AllDocumentsButton" Classes="rail" Classes.current="{Binding AllSelected}"
-                            Command="{Binding ShowAllCommand}" Content="{translation:Tr AllDocuments}" />
-                    <Button x:Name="WithoutTextButton" Classes="rail" Classes.current="{Binding WithoutTextSelected}"
-                            Command="{Binding ShowWithoutTextCommand}" Content="{translation:Tr WithoutText}"
-                            ToolTip.Tip="{translation:Tr FindPDFsWithoutSearchableText}" />
-                </StackPanel>
-                <ScrollViewer Grid.Row="2" HorizontalScrollBarVisibility="Disabled">
-                    <StackPanel Spacing="16">
-                        <StackPanel Spacing="6" IsVisible="{Binding HasSavedSearches}">
-                            <TextBlock Text="{translation:Tr SavedSearches}" Foreground="{DynamicResource RailSectionInk}" FontSize="12" FontWeight="SemiBold" Margin="12,0,0,0" />
-                            <ItemsControl x:Name="SavedSearchList" ItemsSource="{Binding SavedSearches}" IsEnabled="{Binding CanWork}">
-                                <ItemsControl.ItemTemplate>
-                                    <DataTemplate x:DataType="core:SavedSearch">
-                                        <Button Classes="rail" Click="OpenSavedSearch_Click" ToolTip.Tip="{Binding Query}"
-                                                AutomationProperties.Name="{Binding Name}">
-                                            <TextBlock Text="{Binding Name}" MaxWidth="138" TextTrimming="CharacterEllipsis" />
-                                        </Button>
-                                    </DataTemplate>
-                                </ItemsControl.ItemTemplate>
-                            </ItemsControl>
-                        </StackPanel>
-                        <StackPanel Spacing="6" IsVisible="{Binding HasTags}">
-                            <Grid ColumnDefinitions="*,Auto">
-                                <TextBlock Text="{translation:Tr Tags}" Foreground="{DynamicResource RailSectionInk}" FontSize="12" FontWeight="SemiBold"
-                                           VerticalAlignment="Center" Margin="12,0,0,0" />
-                                <Button Grid.Column="1" x:Name="RenameActiveTagButton" Classes="rail" Content="{translation:Tr Rename}"
-                                        Padding="7,3" IsVisible="{Binding HasActiveTag}" IsEnabled="{Binding CanWork}"
-                                        Command="{Binding RenameActiveTagCommand}" AutomationProperties.Name="{translation:Tr RenameSelectedTag}" />
-                            </Grid>
-                            <ItemsControl ItemsSource="{Binding TagNavigation}">
-                                <ItemsControl.ItemTemplate>
-                                    <DataTemplate x:DataType="local:TagNavigationItem">
-                                        <Button Classes="rail" Click="FilterTag_Click">
-                                            <StackPanel Orientation="Horizontal" Spacing="9" Margin="{Binding Indent}">
-                                                <Grid Width="6" Height="6" VerticalAlignment="Center">
-                                                    <Ellipse Fill="{DynamicResource RailTagMarker}" />
-                                                    <Ellipse Fill="{Binding Color}" />
-                                                </Grid>
-                                                <TextBlock Text="{Binding Label}" MaxWidth="130" TextTrimming="CharacterEllipsis" />
-                                            </StackPanel>
-                                        </Button>
-                                    </DataTemplate>
-                                </ItemsControl.ItemTemplate>
-                            </ItemsControl>
-                        </StackPanel>
-                    </StackPanel>
-                </ScrollViewer>
-                <StackPanel Grid.Row="3" Spacing="3">
-                    <Grid ColumnDefinitions="*,Auto" Margin="0,0,0,3">
-                        <TextBlock Text="{translation:Tr Library}" Foreground="{DynamicResource RailSectionInk}" FontSize="12" FontWeight="SemiBold"
-                                   Margin="12,0,0,0" VerticalAlignment="Center" />
-                        <Button Grid.Column="1" x:Name="OpenTrashButton" Classes="rail" Content="{translation:Tr Trash2}" Command="{Binding OpenTrashCommand}"
-                                IsEnabled="{Binding CanWork}" Padding="6,0" FontSize="12" MinHeight="0" />
-                    </Grid>
-                    <Button Classes="rail" Command="{Binding ChooseLibraryCommand}" IsEnabled="{Binding IsIdle}"
+    <Panel>
+        <Grid x:Name="ShellGrid" ColumnDefinitions="224,*">
+            <!-- ─────────── Sidebar: places only ─────────── -->
+            <Border Background="{DynamicResource SidebarSurface}" BorderBrush="{DynamicResource LineBrush}" BorderThickness="0,0,1,0">
+                <Grid RowDefinitions="Auto,*,Auto">
+                    <Button x:Name="LibrarySwitcherButton" Classes="nav" Margin="8,10,8,6" MinHeight="40" IsEnabled="{Binding IsIdle}"
                             ToolTip.Tip="{Binding LibraryPath}" AutomationProperties.Name="{translation:Tr ChooseLibraryFolder}">
-                        <TextBlock Text="{Binding LibraryName}" MaxWidth="142" TextTrimming="CharacterEllipsis" FontWeight="SemiBold" />
-                    </Button>
-                    <Button Classes="rail" Content="{translation:Tr ShowPDFFolder}" Command="{Binding OpenPdfFolderCommand}" IsEnabled="{Binding HasLibrary}" />
-                    <Button x:Name="IntakeFolderButton" Classes="rail" Command="{Binding ChooseIntakeFolderCommand}"
-                            IsEnabled="{Binding CanWork}" ToolTip.Tip="{Binding IntakeFolderLabel}" AutomationProperties.Name="{translation:Tr ChooseIntakeFolder}">
-                        <StackPanel Spacing="2">
-                            <TextBlock Text="{translation:Tr IntakeFolder}" />
-                            <TextBlock Text="{Binding IntakeFolderLabel}" IsVisible="{Binding HasCustomIntakeFolder}"
-                                       Foreground="{DynamicResource SelectionOutline}" FontSize="12" MaxWidth="142" TextTrimming="CharacterEllipsis" />
-                        </StackPanel>
-                    </Button>
-                    <CheckBox x:Name="IncludeWatchedScansCheckBox" Content="{translation:Tr IncludeWatchedScans}" FontSize="13"
-                              Foreground="{DynamicResource DropSurface}" Margin="12,0,0,0" IsVisible="{Binding HasCustomIntakeFolder}"
-                              IsEnabled="{Binding CanWork}" IsChecked="{Binding IncludeWatchedScans, Mode=TwoWay}"
-                              ToolTip.Tip="{translation:Tr FileScansFromTheWatchedFolderInThisIntakeFolder}" />
-                    <Button x:Name="LibraryToolsButton" Classes="rail" Content="{translation:Tr LibraryTools}" IsEnabled="{Binding CanWork}">
+                        <Grid ColumnDefinitions="Auto,*,Auto" ColumnSpacing="10">
+                            <local:Icon Data="{StaticResource Mark.Full}" IsFilled="True" GridSize="468" Width="20" Height="17"
+                                        Foreground="{DynamicResource WorkspaceInk}" VerticalAlignment="Center" />
+                            <TextBlock Grid.Column="1" Text="{Binding LibraryName}" FontWeight="SemiBold" TextTrimming="CharacterEllipsis"
+                                       VerticalAlignment="Center" />
+                            <local:Icon Grid.Column="2" Data="{StaticResource Icon.ChevronDown}" Width="14" Height="14"
+                                        Foreground="{DynamicResource MutedInk}" VerticalAlignment="Center" />
+                        </Grid>
                         <Button.Flyout>
-                            <MenuFlyout Placement="RightEdgeAlignedTop">
-                                <MenuItem Header="{translation:Tr TagRules2}" Command="{Binding ManageFilingRulesCommand}" />
-                                <MenuItem Header="{translation:Tr CheckLibraryIntegrity}" Command="{Binding CheckIntegrityCommand}" />
-                                <MenuItem Header="{translation:Tr ExportLibraryMetadataJSON}" Command="{Binding ExportMetadataCommand}" />
-                                <MenuItem Header="{translation:Tr ExportSearchResultsCSV}" Command="{Binding ExportSearchCsvCommand}" />
-                                <MenuItem Header="{translation:Tr ArchiveSerialMenu}">
-                                    <MenuItem Header="{translation:Tr ArchiveSerialSet}" Command="{Binding EditArchiveSerialCommand}"
-                                              IsEnabled="{Binding HasSelection}" />
-                                    <MenuItem Header="{translation:Tr ArchiveSerialFind}" Command="{Binding FindArchiveSerialCommand}" />
-                                    <MenuItem Header="{translation:Tr ArchiveLabelSheets}" Command="{Binding PrintArchiveLabelsCommand}" />
-                                    <MenuItem Header="{translation:Tr ArchiveSeparator}" Command="{Binding PrintSeparatorSheetCommand}" />
-                                </MenuItem>
-                                <MenuItem Header="{translation:Tr MigrationMenu}">
-                                    <MenuItem Header="{translation:Tr MigratePaperlessFolder}" Command="{Binding MigratePaperlessFolderCommand}" />
-                                    <MenuItem Header="{translation:Tr MigratePaperlessZip}" Command="{Binding MigratePaperlessZipCommand}" />
-                                    <MenuItem Header="{translation:Tr MigrateEvernote}" Command="{Binding MigrateEvernoteCommand}" />
-                                    <MenuItem Header="{translation:Tr MigrateMariner}" Command="{Binding MigrateMarinerCommand}" />
-                                </MenuItem>
+                            <MenuFlyout Placement="BottomEdgeAlignedLeft">
+                                <MenuItem Header="{translation:Tr ChooseLibraryFolder}" Command="{Binding ChooseLibraryCommand}" />
+                                <MenuItem Header="{translation:Tr ShowPDFFolder}" Command="{Binding OpenPdfFolderCommand}" IsEnabled="{Binding HasLibrary}" />
+                                <MenuItem Header="{translation:Tr BackUpLibrary}" Command="{Binding BackUpLibraryCommand}" IsEnabled="{Binding CanWork}" />
                                 <Separator />
-                                <MenuItem Header="{translation:Tr RefreshIndex}" Command="{Binding RefreshIndexCommand}" />
-                                <MenuItem Header="{translation:Tr MetadataDefinitions}" Command="{Binding ManageMetadataCommand}" />
-                                <MenuItem Header="{Binding ReminderMenuTitle}" Command="{Binding RemindersCommand}" />
-                                <MenuItem Header="{translation:Tr LocalModels}" Command="{Binding ConfigureLocalModelsCommand}" />
-                                <MenuItem Header="{translation:Tr SemanticSearchAction}" Command="{Binding SearchSemanticallyCommand}" IsEnabled="{Binding HasSemanticSearch}" />
-                                <MenuItem Header="{translation:Tr ClearSemanticIndex}" Command="{Binding RebuildSemanticIndexCommand}" IsEnabled="{Binding HasSemanticSearch}" />
-                                <MenuItem Header="{translation:Tr AskLocalModelAction}" Command="{Binding AskLocalModelCommand}" IsEnabled="{Binding HasLocalChat}" />
-                                <MenuItem Header="{translation:Tr UndoLocalFiling}" Command="{Binding UndoLocalFilingCommand}" IsEnabled="{Binding HasSelection}" />
-                                <MenuItem Header="{translation:Tr ImportPasswordProtectedPDF2}" Command="{Binding ImportProtectedPdfCommand}" />
-                                <MenuItem Header="{translation:Tr Appearance2}" Command="{Binding ShowAppearanceCommand}" />
+                                <MenuItem Header="{translation:Tr SettingsAction}" Click="OpenSettings_Click" InputGesture="Ctrl+OemComma" />
                             </MenuFlyout>
                         </Button.Flyout>
                     </Button>
-                    <Button x:Name="BackUpLibraryButton" Classes="rail" Content="{translation:Tr BackUpLibrary}"
-                            Command="{Binding BackUpLibraryCommand}" IsEnabled="{Binding CanWork}" />
-                    <Button x:Name="StartFolderWatchButton" Classes="rail" Content="{translation:Tr WatchAFolder}"
-                            Command="{Binding StartFolderWatchCommand}" IsVisible="{Binding !IsWatchingFolder}"
-                            IsEnabled="{Binding CanStartFolderWatch}" />
-                    <Button x:Name="ResumeFolderWatchButton" Classes="rail" Content="{translation:Tr ResumeFolderWatch}"
-                            Command="{Binding ResumeFolderWatchCommand}" IsVisible="{Binding CanOfferResumeFolderWatch}"
-                            IsEnabled="{Binding CanWork}" ToolTip.Tip="{Binding RememberedWatchFolder}" />
-                    <TextBlock IsVisible="{Binding IsWatchingFolder}" Text="{Binding WatchedFolderName, StringFormat='Watching {0}'}"
-                               ToolTip.Tip="{Binding WatchedFolderPath}" TextTrimming="CharacterEllipsis"
-                               Foreground="{DynamicResource SelectionOutline}" FontSize="12" Margin="12,7,0,0" />
-                    <Button x:Name="ImportWatchFolderFilesButton" Classes="rail" Content="{Binding ImportWatchFilesLabel}"
-                            Command="{Binding ImportWatchFolderFilesCommand}" IsVisible="{Binding CanOfferImportWatchFiles}"
-                            IsEnabled="{Binding CanWork}" ToolTip.Tip="{Binding RememberedWatchFolder}" />
-                    <Button x:Name="StopFolderWatchButton" Classes="rail" Content="{translation:Tr StopWatching}"
-                            Command="{Binding StopFolderWatchCommand}" IsVisible="{Binding IsWatchingFolder}" />
-                    <CheckBox x:Name="CatchUpOnOpenCheckBox" Content="{translation:Tr CatchUpOnOpen}" FontSize="13"
-                              Foreground="{DynamicResource DropSurface}" Margin="12,0,0,0" IsVisible="{Binding CanOfferCatchUpOnOpen}"
-                              IsEnabled="{Binding CanWork}" IsChecked="{Binding CatchUpOnOpen, Mode=TwoWay}"
-                              ToolTip.Tip="{translation:Tr ResumeTheSavedWatchAndCheckScansWhenThisLibraryOpens}" />
-                    <Button x:Name="PhoneInboxButton" Classes="rail" Content="{Binding PhoneInboxLabel}"
-                            IsEnabled="{Binding HasLibrary}" ToolTip.Tip="{Binding PhoneInboxFolder}">
-                        <Button.Flyout>
-                            <MenuFlyout Placement="RightEdgeAlignedTop">
-                                <MenuItem x:Name="ChoosePhoneInboxFolder" Header="{translation:Tr ChoosePhoneFolder}" Command="{Binding ChoosePhoneInboxFolderCommand}"
-                                          IsVisible="{Binding !IsWatchingPhoneInbox}" IsEnabled="{Binding CanWork}" />
-                                <MenuItem Header="{translation:Tr ResumePhoneInbox}" Command="{Binding ResumePhoneInboxCommand}"
-                                          IsVisible="{Binding CanResumePhoneInbox}" IsEnabled="{Binding CanWork}" />
-                                <MenuItem x:Name="CatchUpPhoneInbox" Header="{Binding PhoneCatchUpLabel}" Command="{Binding CatchUpPhoneInboxCommand}"
-                                          IsVisible="{Binding CanCatchUpPhoneInbox}" IsEnabled="{Binding CanWork}" />
-                                <MenuItem x:Name="StopPhoneInbox" Header="{translation:Tr StopPhoneInbox}" Command="{Binding StopPhoneInboxCommand}"
-                                          IsVisible="{Binding IsWatchingPhoneInbox}" />
-                                <MenuItem x:Name="PhoneCatchUpOnOpen" Header="{translation:Tr CatchUpOnOpen}" ToggleType="CheckBox"
-                                          IsChecked="{Binding PhoneCatchUpOnOpen, Mode=TwoWay}" IsVisible="{Binding CanSetPhoneCatchUpOnOpen}"
-                                          IsEnabled="{Binding CanWork}" />
-                            </MenuFlyout>
-                        </Button.Flyout>
-                    </Button>
-                </StackPanel>
-            </Grid>
-        </Border>
 
-        <Grid Grid.Column="1" RowDefinitions="Auto,*,Auto">
-            <Border Background="{DynamicResource CardSurface}" BorderBrush="{DynamicResource PanelOutline}" BorderThickness="0,0,0,1" Padding="25,16">
-                <Grid ColumnDefinitions="*,Auto,Auto,Auto,Auto" ColumnSpacing="10">
-                    <TextBox x:Name="SearchBox" Text="{Binding Query, Mode=TwoWay}" MaxLength="256"
-                             PlaceholderText="{translation:Tr SearchTextStatusTagDated}" AutomationProperties.Name="{translation:Tr SearchDocuments}"
-                             ToolTip.Tip="Try (receipt OR invoice) -tag:archive. Use uppercase AND, OR, NOT, and quotes for phrases.&#10;Use status:inbox or status:reviewed for review status.&#10;Use text:missing or text:present for searchable text.&#10;dated:2024-02 matches the document date. added:2026-11 matches the date added.&#10;Use folder:&quot;Filed/Property&quot; for a folder branch."
-                             VerticalContentAlignment="Center" CornerRadius="8" MinHeight="38">
-                        <TextBox.InnerLeftContent>
-                            <PathIcon Width="15" Height="15" Margin="11,0,1,0" Foreground="{DynamicResource FieldHintInk}"
-                                      Data="M10,2 A8,8 0 1 0 10,18 A8,8 0 1 0 10,2 M10,4 A6,6 0 1 1 10,16 A6,6 0 1 1 10,4 M15,16 L21,22 L23,20 L17,14 Z" />
-                        </TextBox.InnerLeftContent>
-                    </TextBox>
-                    <Button Grid.Column="1" x:Name="ChooseSearchFolderButton" Classes="secondary"
-                            Command="{Binding ChooseSearchFolderCommand}" Content="{translation:Tr Folder}" IsEnabled="{Binding CanWork}"
-                            AutomationProperties.Name="{translation:Tr ChooseALibraryFolderToSearch}" MinHeight="38" />
-                    <StackPanel Grid.Column="2" Orientation="Horizontal" Spacing="6">
-                        <Button x:Name="OcrProcessingButton" Classes="secondary" Content="{translation:Tr OcrToolbox}" IsEnabled="{Binding IsIdle}"
-                                AutomationProperties.Name="{translation:Tr OcrEngineOrientation}">
-                            <Button.Flyout>
-                                <MenuFlyout>
-                                    <MenuItem x:Name="RapidOcrChoice" Header="{translation:Tr UseRapidOcr}" ToggleType="CheckBox"
-                                              IsChecked="{Binding UseRapidOcr, Mode=TwoWay}" IsEnabled="{Binding CanUseRapidOcr}" />
-                                    <MenuItem x:Name="OrientPagesChoice" Header="{translation:Tr AutoOrientPages}" ToggleType="CheckBox"
-                                              IsChecked="{Binding AutoOrientPages, Mode=TwoWay}" />
-                                </MenuFlyout>
-                            </Button.Flyout>
-                        </Button>
-                        <ComboBox x:Name="OcrLanguageBox" ItemsSource="{Binding RecognitionLanguages}"
-                                  SelectedItem="{Binding RecognitionLanguage, Mode=TwoWay}" MinWidth="96" MinHeight="38"
-                                  IsEnabled="{Binding IsIdle}" AutomationProperties.Name="{translation:Tr OCRLanguage}" />
-                    </StackPanel>
-                    <Button Grid.Column="3" x:Name="ScanButton" Classes="secondary" Command="{Binding ScanCommand}"
-                            Content="{translation:Tr Scan}" IsEnabled="{Binding CanWork}" MinHeight="38" ToolTip.Tip="{Binding IntakeFolderLabel}" />
-                    <Button Grid.Column="4" x:Name="AddFilesButton" Classes="primary"
-                            IsEnabled="{Binding CanWork}" Command="{Binding AddFilesCommand}" Content="{translation:Tr AddFiles}" MinHeight="38"
-                            ToolTip.Tip="{Binding IntakeFolderLabel}" />
+                    <ScrollViewer Grid.Row="1" HorizontalScrollBarVisibility="Disabled" Padding="8,0">
+                        <StackPanel Spacing="18" Margin="0,2,0,12">
+                            <StackPanel Spacing="1">
+                                <Button x:Name="InboxButton" Classes="nav" Classes.current="{Binding InboxSelected}"
+                                        Command="{Binding ShowInboxCommand}" AutomationProperties.Name="{Binding InboxAutomationName}"
+                                        ToolTip.Tip="{translation:Tr Inbox}">
+                                    <Grid ColumnDefinitions="Auto,*,Auto" ColumnSpacing="10">
+                                        <local:Icon Data="{StaticResource Mark.Full}" IsFilled="True" GridSize="468" Width="16" Height="14"
+                                                    VerticalAlignment="Center" />
+                                        <TextBlock Grid.Column="1" Text="{translation:Tr Inbox}" VerticalAlignment="Center" />
+                                        <Border Grid.Column="2" Classes="badge" IsVisible="{Binding HasInboxCount}">
+                                            <TextBlock x:Name="InboxReviewCount" Text="{Binding InboxCount}" IsVisible="{Binding HasInboxCount}" />
+                                        </Border>
+                                    </Grid>
+                                </Button>
+                                <Button x:Name="AllDocumentsButton" Classes="nav" Classes.current="{Binding AllSelected}" Command="{Binding ShowAllCommand}">
+                                    <StackPanel Orientation="Horizontal" Spacing="10">
+                                        <local:Icon Data="{StaticResource Icon.AllDocuments}" VerticalAlignment="Center" />
+                                        <TextBlock Text="{translation:Tr AllDocuments}" VerticalAlignment="Center" />
+                                    </StackPanel>
+                                </Button>
+                                <Button x:Name="UpcomingButton" Classes="nav" Command="{Binding RemindersCommand}" IsEnabled="{Binding CanWork}"
+                                        ToolTip.Tip="{translation:Tr UpcomingHelp}">
+                                    <Grid ColumnDefinitions="Auto,*,Auto" ColumnSpacing="10">
+                                        <local:Icon Data="{StaticResource Icon.Upcoming}" VerticalAlignment="Center" />
+                                        <TextBlock Grid.Column="1" Text="{translation:Tr Upcoming}" VerticalAlignment="Center" />
+                                        <TextBlock Grid.Column="2" Classes="count" Text="{Binding DueReminderLabel}" Foreground="{DynamicResource WarningInk}"
+                                                   IsVisible="{Binding HasDueReminders}" />
+                                    </Grid>
+                                </Button>
+                                <Button x:Name="WithoutTextButton" Classes="nav" Classes.current="{Binding WithoutTextSelected}"
+                                        Command="{Binding ShowWithoutTextCommand}" ToolTip.Tip="{translation:Tr FindPDFsWithoutSearchableText}">
+                                    <StackPanel Orientation="Horizontal" Spacing="10">
+                                        <local:Icon Data="{StaticResource Icon.Recognize}" VerticalAlignment="Center" />
+                                        <TextBlock Text="{translation:Tr WithoutText}" VerticalAlignment="Center" />
+                                    </StackPanel>
+                                </Button>
+                            </StackPanel>
+
+                            <StackPanel Spacing="2" IsVisible="{Binding HasSavedSearches}">
+                                <TextBlock Classes="section" Text="{translation:Tr SavedSearches}" Margin="8,0,0,4" />
+                                <ItemsControl x:Name="SavedSearchList" ItemsSource="{Binding SavedSearches}" IsEnabled="{Binding CanWork}">
+                                    <ItemsControl.ItemTemplate>
+                                        <DataTemplate x:DataType="core:SavedSearch">
+                                            <Button Classes="nav" Click="OpenSavedSearch_Click" ToolTip.Tip="{Binding Query}"
+                                                    AutomationProperties.Name="{Binding Name}">
+                                                <StackPanel Orientation="Horizontal" Spacing="10">
+                                                    <local:Icon Data="{StaticResource Icon.Bookmark}" VerticalAlignment="Center" />
+                                                    <TextBlock Text="{Binding Name}" MaxWidth="150" TextTrimming="CharacterEllipsis" VerticalAlignment="Center" />
+                                                </StackPanel>
+                                            </Button>
+                                        </DataTemplate>
+                                    </ItemsControl.ItemTemplate>
+                                </ItemsControl>
+                            </StackPanel>
+
+                            <StackPanel Spacing="2" IsVisible="{Binding HasTags}">
+                                <Grid ColumnDefinitions="*,Auto" Margin="0,0,0,2">
+                                    <TextBlock Classes="section" Text="{translation:Tr Tags}" />
+                                    <Button Grid.Column="1" x:Name="RenameActiveTagButton" Classes="subaction" Margin="0" Content="{translation:Tr Rename}"
+                                            IsVisible="{Binding HasActiveTag}" IsEnabled="{Binding CanWork}"
+                                            Command="{Binding RenameActiveTagCommand}" AutomationProperties.Name="{translation:Tr RenameSelectedTag}" />
+                                </Grid>
+                                <ItemsControl ItemsSource="{Binding TagNavigation}">
+                                    <ItemsControl.ItemTemplate>
+                                        <DataTemplate x:DataType="local:TagNavigationItem">
+                                            <Button Classes="rail" Click="FilterTag_Click" AutomationProperties.Name="{Binding Label}">
+                                                <StackPanel Orientation="Horizontal" Spacing="10" Margin="{Binding Indent}">
+                                                    <Grid Width="8" Height="8" Margin="4,0" VerticalAlignment="Center">
+                                                        <Ellipse Fill="{DynamicResource RailTagMarker}" />
+                                                        <Ellipse Fill="{Binding Color}" />
+                                                    </Grid>
+                                                    <TextBlock Text="{Binding Label}" MaxWidth="150" TextTrimming="CharacterEllipsis" VerticalAlignment="Center" />
+                                                </StackPanel>
+                                            </Button>
+                                        </DataTemplate>
+                                    </ItemsControl.ItemTemplate>
+                                </ItemsControl>
+                            </StackPanel>
+                        </StackPanel>
+                    </ScrollViewer>
+
+                    <!-- Intake: where paperwork comes from, the language it is read in, and the watches. -->
+                    <Border Grid.Row="2" BorderBrush="{DynamicResource LineBrush}" BorderThickness="0,1,0,0" Padding="8,10,8,8">
+                        <StackPanel Spacing="1">
+                            <TextBlock Classes="section" Text="{translation:Tr IntakeSection}" Margin="8,0,0,4" />
+                            <Button x:Name="IntakeFolderButton" Classes="nav" Command="{Binding ChooseIntakeFolderCommand}"
+                                    IsEnabled="{Binding CanWork}" ToolTip.Tip="{Binding IntakeFolderLabel}" AutomationProperties.Name="{translation:Tr ChooseIntakeFolder}">
+                                <Grid ColumnDefinitions="Auto,*" ColumnSpacing="10">
+                                    <local:Icon Data="{StaticResource Icon.Folder}" VerticalAlignment="Center" />
+                                    <StackPanel Grid.Column="1" VerticalAlignment="Center">
+                                        <TextBlock Text="{translation:Tr IntakeFolder}" TextTrimming="CharacterEllipsis" />
+                                        <TextBlock Text="{Binding IntakeFolderLabel}" IsVisible="{Binding HasCustomIntakeFolder}" Classes="caption"
+                                                   TextTrimming="CharacterEllipsis" />
+                                    </StackPanel>
+                                </Grid>
+                            </Button>
+                            <CheckBox x:Name="IncludeWatchedScansCheckBox" Classes="inline" Content="{translation:Tr IncludeWatchedScans}"
+                                      IsVisible="{Binding HasCustomIntakeFolder}" IsEnabled="{Binding CanWork}" IsChecked="{Binding IncludeWatchedScans, Mode=TwoWay}"
+                                      ToolTip.Tip="{translation:Tr FileScansFromTheWatchedFolderInThisIntakeFolder}" />
+
+                            <Button x:Name="StartFolderWatchButton" Classes="nav" Command="{Binding StartFolderWatchCommand}"
+                                    IsVisible="{Binding !IsWatchingFolder}" IsEnabled="{Binding CanStartFolderWatch}">
+                                <StackPanel Orientation="Horizontal" Spacing="10">
+                                    <local:Icon Data="{StaticResource Icon.Watch}" VerticalAlignment="Center" />
+                                    <TextBlock Text="{translation:Tr WatchAFolder}" VerticalAlignment="Center" />
+                                </StackPanel>
+                            </Button>
+                            <Grid ColumnDefinitions="*,Auto" IsVisible="{Binding IsWatchingFolder}" MinHeight="30">
+                                <StackPanel Orientation="Horizontal" Spacing="10" Margin="8,0,0,0" VerticalAlignment="Center"
+                                            ToolTip.Tip="{Binding WatchedFolderPath}">
+                                    <local:Icon Data="{StaticResource Icon.Watch}" Foreground="{DynamicResource SecondaryInk}" VerticalAlignment="Center" />
+                                    <StackPanel VerticalAlignment="Center">
+                                        <TextBlock Text="{Binding WatchedFolderName}" MaxWidth="120" TextTrimming="CharacterEllipsis" />
+                                        <StackPanel Orientation="Horizontal" Spacing="5">
+                                            <Ellipse Width="6" Height="6" Fill="{DynamicResource LiveInk}" VerticalAlignment="Center" />
+                                            <TextBlock Text="{translation:Tr Watching}" FontSize="12" Foreground="{DynamicResource LiveInk}" />
+                                        </StackPanel>
+                                    </StackPanel>
+                                </StackPanel>
+                                <Button Grid.Column="1" x:Name="StopFolderWatchButton" Classes="icon small" Command="{Binding StopFolderWatchCommand}"
+                                        IsVisible="{Binding IsWatchingFolder}" ToolTip.Tip="{translation:Tr StopWatching}"
+                                        AutomationProperties.Name="{translation:Tr StopWatching}">
+                                    <local:Icon Data="{StaticResource Icon.Close}" Width="14" Height="14" />
+                                </Button>
+                            </Grid>
+                            <Button x:Name="ResumeFolderWatchButton" Classes="subaction" Content="{translation:Tr ResumeFolderWatch}"
+                                    Command="{Binding ResumeFolderWatchCommand}" IsVisible="{Binding CanOfferResumeFolderWatch}"
+                                    IsEnabled="{Binding CanWork}" ToolTip.Tip="{Binding RememberedWatchFolder}" />
+                            <Button x:Name="ImportWatchFolderFilesButton" Classes="subaction" Content="{Binding ImportWatchFilesLabel}"
+                                    Command="{Binding ImportWatchFolderFilesCommand}" IsVisible="{Binding CanOfferImportWatchFiles}"
+                                    IsEnabled="{Binding CanWork}" ToolTip.Tip="{Binding RememberedWatchFolder}" />
+                            <CheckBox x:Name="CatchUpOnOpenCheckBox" Classes="inline" Content="{translation:Tr CatchUpOnOpen}"
+                                      IsVisible="{Binding CanOfferCatchUpOnOpen}" IsEnabled="{Binding CanWork}" IsChecked="{Binding CatchUpOnOpen, Mode=TwoWay}"
+                                      ToolTip.Tip="{translation:Tr ResumeTheSavedWatchAndCheckScansWhenThisLibraryOpens}" />
+
+                            <Button x:Name="PhoneInboxButton" Classes="nav" IsEnabled="{Binding HasLibrary}" ToolTip.Tip="{Binding PhoneInboxFolder}">
+                                <Grid ColumnDefinitions="Auto,*,Auto" ColumnSpacing="10">
+                                    <local:Icon Data="{StaticResource Icon.Phone}" VerticalAlignment="Center" />
+                                    <TextBlock Grid.Column="1" Text="{Binding PhoneInboxLabel}" TextTrimming="CharacterEllipsis" VerticalAlignment="Center" />
+                                    <Ellipse Grid.Column="2" Width="6" Height="6" Fill="{DynamicResource LiveInk}" VerticalAlignment="Center"
+                                             IsVisible="{Binding IsWatchingPhoneInbox}" />
+                                </Grid>
+                                <Button.Flyout>
+                                    <MenuFlyout Placement="RightEdgeAlignedBottom">
+                                        <MenuItem x:Name="ChoosePhoneInboxFolder" Header="{translation:Tr ChoosePhoneFolder}" Command="{Binding ChoosePhoneInboxFolderCommand}"
+                                                  IsVisible="{Binding !IsWatchingPhoneInbox}" IsEnabled="{Binding CanWork}" />
+                                        <MenuItem Header="{translation:Tr ResumePhoneInbox}" Command="{Binding ResumePhoneInboxCommand}"
+                                                  IsVisible="{Binding CanResumePhoneInbox}" IsEnabled="{Binding CanWork}" />
+                                        <MenuItem x:Name="CatchUpPhoneInbox" Header="{Binding PhoneCatchUpLabel}" Command="{Binding CatchUpPhoneInboxCommand}"
+                                                  IsVisible="{Binding CanCatchUpPhoneInbox}" IsEnabled="{Binding CanWork}" />
+                                        <MenuItem x:Name="StopPhoneInbox" Header="{translation:Tr StopPhoneInbox}" Command="{Binding StopPhoneInboxCommand}"
+                                                  IsVisible="{Binding IsWatchingPhoneInbox}" />
+                                        <MenuItem x:Name="PhoneCatchUpOnOpen" Header="{translation:Tr CatchUpOnOpen}" ToggleType="CheckBox"
+                                                  IsChecked="{Binding PhoneCatchUpOnOpen, Mode=TwoWay}" IsVisible="{Binding CanSetPhoneCatchUpOnOpen}"
+                                                  IsEnabled="{Binding CanWork}" />
+                                    </MenuFlyout>
+                                </Button.Flyout>
+                            </Button>
+
+                            <Grid ColumnDefinitions="Auto,*,Auto" ColumnSpacing="6" Margin="8,2,0,0" MinHeight="30">
+                                <local:Icon Data="{StaticResource Icon.Text}" Foreground="{DynamicResource SecondaryInk}" VerticalAlignment="Center" />
+                                <ComboBox Grid.Column="1" x:Name="OcrLanguageBox" ItemsSource="{Binding RecognitionLanguages}" Margin="4,0,0,0"
+                                          SelectedItem="{Binding RecognitionLanguage, Mode=TwoWay}" HorizontalAlignment="Stretch" MinHeight="28"
+                                          Padding="8,2" FontSize="13" BorderThickness="0" Background="Transparent"
+                                          IsEnabled="{Binding IsIdle}" AutomationProperties.Name="{translation:Tr OCRLanguage}"
+                                          ToolTip.Tip="{translation:Tr TextLanguageHelp}" />
+                                <Button Grid.Column="2" x:Name="OcrProcessingButton" Classes="icon small" IsEnabled="{Binding IsIdle}"
+                                        AutomationProperties.Name="{translation:Tr OcrEngineOrientation}" ToolTip.Tip="{translation:Tr OcrEngineOrientation}">
+                                    <local:Icon Data="{StaticResource Icon.Sliders}" />
+                                    <Button.Flyout>
+                                        <MenuFlyout Placement="RightEdgeAlignedBottom">
+                                            <MenuItem x:Name="RapidOcrChoice" Header="{translation:Tr UseRapidOcr}" ToggleType="CheckBox"
+                                                      IsChecked="{Binding UseRapidOcr, Mode=TwoWay}" IsEnabled="{Binding CanUseRapidOcr}" />
+                                            <MenuItem x:Name="OrientPagesChoice" Header="{translation:Tr AutoOrientPages}" ToggleType="CheckBox"
+                                                      IsChecked="{Binding AutoOrientPages, Mode=TwoWay}" />
+                                        </MenuFlyout>
+                                    </Button.Flyout>
+                                </Button>
+                            </Grid>
+
+                            <Separator Classes="hairline" Margin="0,6" />
+                            <Grid ColumnDefinitions="*,Auto,Auto">
+                                <Button x:Name="OpenTrashButton" Classes="nav" Command="{Binding OpenTrashCommand}" IsEnabled="{Binding CanWork}">
+                                    <StackPanel Orientation="Horizontal" Spacing="10">
+                                        <local:Icon Data="{StaticResource Icon.Trash}" VerticalAlignment="Center" />
+                                        <TextBlock Text="{translation:Tr Trash}" VerticalAlignment="Center" />
+                                    </StackPanel>
+                                </Button>
+                                <Button Grid.Column="1" x:Name="BackUpLibraryButton" Classes="icon" Command="{Binding BackUpLibraryCommand}"
+                                        IsEnabled="{Binding CanWork}" ToolTip.Tip="{translation:Tr BackUpLibrary}"
+                                        AutomationProperties.Name="{translation:Tr BackUpLibrary}">
+                                    <local:Icon Data="{StaticResource Icon.Binder}" />
+                                </Button>
+                                <Button Grid.Column="2" x:Name="SettingsButton" Classes="icon" Click="OpenSettings_Click"
+                                        ToolTip.Tip="{translation:Tr SettingsTip}" AutomationProperties.Name="{translation:Tr SettingsAction}">
+                                    <local:Icon Data="{StaticResource Icon.Settings}" />
+                                </Button>
+                            </Grid>
+                        </StackPanel>
+                    </Border>
                 </Grid>
             </Border>
-            <Grid Grid.Row="1" Margin="25,21,25,20" RowDefinitions="Auto,*" RowSpacing="16">
-                <Grid ColumnDefinitions="*,Auto,Auto,Auto" ColumnSpacing="12">
-                    <TextBlock x:Name="InboxHeading" Text="{Binding Heading}" FontSize="31" FontWeight="SemiBold"
-                               TextTrimming="CharacterEllipsis" AutomationProperties.HeadingLevel="1" />
-                    <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center">
-                        <Button x:Name="SaveSearchButton" Classes="secondary" Content="{translation:Tr SaveSearch2}" Command="{Binding SaveSearchCommand}"
-                                IsVisible="{Binding ShowSaveSearch}" IsEnabled="{Binding CanWork}" />
-                        <Button x:Name="EditSavedSearchButton" Classes="secondary" Content="{translation:Tr EditSearch}" Command="{Binding EditActiveSavedSearchCommand}"
-                                IsVisible="{Binding HasActiveSavedSearch}" IsEnabled="{Binding CanWork}" />
-                    </StackPanel>
-                    <TextBlock Grid.Column="2" Classes="muted" Text="{Binding ResultCount}" VerticalAlignment="Center"
-                               MaxWidth="154" TextTrimming="CharacterEllipsis" ToolTip.Tip="{Binding ResultCount}" />
-                    <StackPanel Grid.Column="3" Orientation="Horizontal" Spacing="6" VerticalAlignment="Center">
-                        <TextBlock Text="{translation:Tr Sort}" Classes="muted" VerticalAlignment="Center" />
-                        <ComboBox x:Name="DocumentSortBox" ItemsSource="{Binding SortChoices}"
-                                  SelectedItem="{Binding SortOption, Mode=TwoWay}" MinWidth="140"
-                                  IsEnabled="{Binding HasLibrary}" AutomationProperties.Name="{translation:Tr SortDocuments}" />
-                    </StackPanel>
-                </Grid>
-                <Grid Grid.Row="1" ColumnDefinitions="2*,3*" ColumnSpacing="15">
-                    <Border CornerRadius="11" Background="{DynamicResource CardSurface}" BorderBrush="{DynamicResource PanelOutline}" BorderThickness="1" ClipToBounds="True">
-                        <Grid RowDefinitions="*,Auto">
-                            <TextBlock x:Name="EmptyResultsMessage" Text="{Binding EmptyMessage}" IsVisible="{Binding !HasDocuments}"
-                                       Foreground="{DynamicResource SubtleInk}" MaxWidth="220" TextAlignment="Center" TextWrapping="Wrap"
-                                       HorizontalAlignment="Center" VerticalAlignment="Center" Margin="12"
-                                       AutomationProperties.LiveSetting="Polite" />
-                            <ListBox x:Name="DocumentList" ItemsSource="{Binding Documents}" SelectedItem="{Binding SelectedDocument, Mode=TwoWay}"
-                                     KeyUp="DocumentList_KeyUp"
-                                     ToolTip.Tip="{translation:Tr ReviewShortcutsInThisListRReviewTTagXTrashJNextKPrevious}"
-                                     IsVisible="{Binding HasDocuments}" Background="Transparent" Padding="4"
-                                     SelectionMode="Multiple" SelectionChanged="Documents_SelectionChanged"
-                                     ScrollViewer.HorizontalScrollBarVisibility="Disabled" AutomationProperties.Name="{translation:Tr Documents}">
-                                <ListBox.Styles>
-                                    <Style Selector="ListBoxItem">
-                                        <Setter Property="Padding" Value="13,11" />
-                                        <Setter Property="Margin" Value="1,2" />
-                                        <Setter Property="HorizontalContentAlignment" Value="Stretch" />
-                                    </Style>
-                                    <Style Selector="ListBoxItem:selected /template/ ContentPresenter">
-                                        <Setter Property="Background" Value="{DynamicResource SelectionSurface}" />
-                                        <Setter Property="Foreground" Value="{DynamicResource WorkspaceInk}" />
-                                    </Style>
-                                </ListBox.Styles>
-                                <ListBox.ItemTemplate>
-                                    <DataTemplate x:DataType="core:DocumentSummary">
-                                        <Grid ColumnDefinitions="34,*" ColumnSpacing="11">
-                                            <Border Background="{DynamicResource HeaderSurface}" Height="39" CornerRadius="6" VerticalAlignment="Top">
-                                                <TextBlock Text="PDF" Foreground="{DynamicResource AccentInk}" FontWeight="Bold" FontSize="9"
-                                                           HorizontalAlignment="Center" VerticalAlignment="Center" />
-                                            </Border>
-                                            <StackPanel Grid.Column="1" Spacing="4">
-                                                <TextBlock Text="{Binding Title}" FontSize="13" FontWeight="SemiBold" TextTrimming="CharacterEllipsis" />
-                                                <WrapPanel Orientation="Horizontal">
-                                                    <TextBlock Text="{Binding DocumentDate, StringFormat='Dated {0:dd MMM yyyy}'}" Classes="muted"
-                                                               IsVisible="{Binding HasDocumentDate}" Margin="0,0,10,0" />
-                                                    <TextBlock Text="{Binding AddedAt.LocalDateTime, StringFormat={translation:Tr DocumentAddedDateFormat}}" Classes="muted" />
-                                                </WrapPanel>
-                                                <local:SearchExcerpt Document="{Binding}" Classes="muted" TextWrapping="Wrap"
-                                                           MaxLines="2" TextTrimming="CharacterEllipsis" />
-                                            </StackPanel>
-                                        </Grid>
-                                    </DataTemplate>
-                                </ListBox.ItemTemplate>
-                            </ListBox>
-                            <StackPanel Grid.Row="1" Margin="8" Spacing="6" IsVisible="{Binding HasResultActions}">
-                                <Button x:Name="RefreshWatchedResultsButton" Classes="secondary" Content="{translation:Tr RefreshResults}"
+
+            <!-- ─────────── Main column ─────────── -->
+            <Grid Grid.Column="1" RowDefinitions="Auto,*,Auto">
+                <!-- Toolbar: search and the two ways in. -->
+                <Border BorderBrush="{DynamicResource LineBrush}" BorderThickness="0,0,0,1" Padding="14,9">
+                    <Grid ColumnDefinitions="*,Auto,Auto" ColumnSpacing="8">
+                        <Grid ColumnDefinitions="*,Auto" ColumnSpacing="2" MaxWidth="620" HorizontalAlignment="Stretch">
+                            <TextBox x:Name="SearchBox" Classes="search" Text="{Binding Query, Mode=TwoWay}" MaxLength="256"
+                                     PlaceholderText="{translation:Tr SearchTextStatusTagDated}" AutomationProperties.Name="{translation:Tr SearchDocuments}"
+                                     ToolTip.Tip="Try (receipt OR invoice) -tag:archive. Use uppercase AND, OR, NOT, and quotes for phrases.&#10;Use status:inbox or status:reviewed for review status.&#10;Use text:missing or text:present for searchable text.&#10;dated:2024-02 matches the document date. added:2026-11 matches the date added.&#10;Use folder:&quot;Filed/Property&quot; for a folder branch.">
+                                <TextBox.InnerLeftContent>
+                                    <local:Icon Data="{StaticResource Icon.Search}" Margin="10,0,2,0" Foreground="{DynamicResource MutedInk}" />
+                                </TextBox.InnerLeftContent>
+                                <TextBox.InnerRightContent>
+                                    <Border Classes="key" Margin="0,0,7,0" IsHitTestVisible="False">
+                                        <TextBlock Text="/" />
+                                    </Border>
+                                </TextBox.InnerRightContent>
+                            </TextBox>
+                            <Button Grid.Column="1" x:Name="ChooseSearchFolderButton" Classes="icon" Command="{Binding ChooseSearchFolderCommand}"
+                                    IsEnabled="{Binding CanWork}" AutomationProperties.Name="{translation:Tr ChooseALibraryFolderToSearch}"
+                                    ToolTip.Tip="{translation:Tr ChooseALibraryFolderToSearch}">
+                                <local:Icon Data="{StaticResource Icon.Folder}" />
+                            </Button>
+                        </Grid>
+                        <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="8">
+                            <Button x:Name="ScanButton" Classes="secondary with-icon" local:Ui.Icon="{StaticResource Icon.Scan}"
+                                    Command="{Binding ScanCommand}" Content="{translation:Tr Scan}" IsEnabled="{Binding CanWork}" ToolTip.Tip="{translation:Tr ScanTip}" />
+                            <StackPanel Orientation="Horizontal" Spacing="1">
+                                <Button x:Name="AddFilesButton" Classes="primary with-icon" local:Ui.Icon="{StaticResource Icon.Plus}" CornerRadius="7,0,0,7"
+                                        IsEnabled="{Binding CanWork}" Command="{Binding AddFilesCommand}" Content="{translation:Tr AddFiles}"
+                                        ToolTip.Tip="{translation:Tr AddFilesTip}" />
+                                <Button x:Name="AddFromMenuButton" Classes="primary" CornerRadius="0,7,7,0" Padding="8,5" IsEnabled="{Binding CanWork}"
+                                        AutomationProperties.Name="{translation:Tr MoreWaysToAdd}" ToolTip.Tip="{translation:Tr MoreWaysToAdd}">
+                                    <local:Icon Data="{StaticResource Icon.ChevronDown}" Width="14" Height="14" />
+                                    <Button.Flyout>
+                                        <MenuFlyout Placement="BottomEdgeAlignedRight">
+                                            <MenuItem Header="{translation:Tr AddFiles}" Command="{Binding AddFilesCommand}" InputGesture="Ctrl+O" />
+                                            <MenuItem Header="{translation:Tr ImportPasswordProtectedPDF2}" Command="{Binding ImportProtectedPdfCommand}" />
+                                            <Separator />
+                                            <MenuItem Header="{translation:Tr MigratePaperlessFolder}" Command="{Binding MigratePaperlessFolderCommand}" />
+                                            <MenuItem Header="{translation:Tr MigratePaperlessZip}" Command="{Binding MigratePaperlessZipCommand}" />
+                                            <MenuItem Header="{translation:Tr MigrateEvernote}" Command="{Binding MigrateEvernoteCommand}" />
+                                            <MenuItem Header="{translation:Tr MigrateMariner}" Command="{Binding MigrateMarinerCommand}" />
+                                        </MenuFlyout>
+                                    </Button.Flyout>
+                                </Button>
+                            </StackPanel>
+                        </StackPanel>
+                        <StackPanel Grid.Column="2" Orientation="Horizontal" Spacing="2">
+                            <Button x:Name="CommandPaletteButton" Classes="icon" Click="OpenPalette_Click"
+                                    AutomationProperties.Name="{translation:Tr Commands}" ToolTip.Tip="{translation:Tr CommandsTip}">
+                                <local:Icon Data="{StaticResource Icon.Keyboard}" />
+                            </Button>
+                            <Button x:Name="LibraryToolsButton" Classes="icon" IsEnabled="{Binding CanWork}"
+                                    AutomationProperties.Name="{translation:Tr LibraryTools}" ToolTip.Tip="{translation:Tr LibraryTools}">
+                                <local:Icon Data="{StaticResource Icon.More}" StrokeWidth="2.2" />
+                                <Button.Flyout>
+                                    <!-- Verification reads items 2–4 by position: integrity, JSON and CSV. -->
+                                    <MenuFlyout Placement="BottomEdgeAlignedRight">
+                                        <MenuItem Header="{translation:Tr TagRules2}" Command="{Binding ManageFilingRulesCommand}" />
+                                        <MenuItem Header="{translation:Tr CheckLibraryIntegrity}" Command="{Binding CheckIntegrityCommand}" />
+                                        <MenuItem Header="{translation:Tr ExportLibraryMetadataJSON}" Command="{Binding ExportMetadataCommand}" />
+                                        <MenuItem Header="{translation:Tr ExportSearchResultsCSV}" Command="{Binding ExportSearchCsvCommand}" />
+                                        <MenuItem Header="{translation:Tr ArchiveSerialMenu}">
+                                            <MenuItem Header="{translation:Tr ArchiveSerialSet}" Command="{Binding EditArchiveSerialCommand}"
+                                                      IsEnabled="{Binding HasSelection}" />
+                                            <MenuItem Header="{translation:Tr ArchiveSerialFind}" Command="{Binding FindArchiveSerialCommand}" />
+                                            <MenuItem Header="{translation:Tr ArchiveLabelSheets}" Command="{Binding PrintArchiveLabelsCommand}" />
+                                            <MenuItem Header="{translation:Tr ArchiveSeparator}" Command="{Binding PrintSeparatorSheetCommand}" />
+                                        </MenuItem>
+                                        <MenuItem Header="{translation:Tr MigrationMenu}">
+                                            <MenuItem Header="{translation:Tr MigratePaperlessFolder}" Command="{Binding MigratePaperlessFolderCommand}" />
+                                            <MenuItem Header="{translation:Tr MigratePaperlessZip}" Command="{Binding MigratePaperlessZipCommand}" />
+                                            <MenuItem Header="{translation:Tr MigrateEvernote}" Command="{Binding MigrateEvernoteCommand}" />
+                                            <MenuItem Header="{translation:Tr MigrateMariner}" Command="{Binding MigrateMarinerCommand}" />
+                                        </MenuItem>
+                                        <Separator />
+                                        <MenuItem Header="{translation:Tr RefreshIndex}" Command="{Binding RefreshIndexCommand}" />
+                                        <MenuItem Header="{translation:Tr MetadataDefinitions}" Command="{Binding ManageMetadataCommand}" />
+                                        <MenuItem Header="{Binding ReminderMenuTitle}" Command="{Binding RemindersCommand}" />
+                                        <MenuItem Header="{translation:Tr LocalModels}" Command="{Binding ConfigureLocalModelsCommand}" />
+                                        <MenuItem Header="{translation:Tr SemanticSearchAction}" Command="{Binding SearchSemanticallyCommand}" IsEnabled="{Binding HasSemanticSearch}" />
+                                        <MenuItem Header="{translation:Tr ClearSemanticIndex}" Command="{Binding RebuildSemanticIndexCommand}" IsEnabled="{Binding HasSemanticSearch}" />
+                                        <MenuItem Header="{translation:Tr AskLocalModelAction}" Command="{Binding AskLocalModelCommand}" IsEnabled="{Binding HasLocalChat}" />
+                                        <MenuItem Header="{translation:Tr UndoLocalFiling}" Command="{Binding UndoLocalFilingCommand}" IsEnabled="{Binding HasSelection}" />
+                                        <MenuItem Header="{translation:Tr ImportPasswordProtectedPDF2}" Command="{Binding ImportProtectedPdfCommand}" />
+                                        <MenuItem Header="{translation:Tr Appearance2}" Command="{Binding ShowAppearanceCommand}" />
+                                        <Separator />
+                                        <MenuItem Header="{translation:Tr Commands}" Click="OpenPalette_Click" InputGesture="Ctrl+K" />
+                                        <MenuItem Header="{translation:Tr KeyboardShortcuts}" Click="OpenShortcuts_Click" />
+                                        <MenuItem Header="{translation:Tr SettingsAction}" Click="OpenSettings_Click" InputGesture="Ctrl+OemComma" />
+                                    </MenuFlyout>
+                                </Button.Flyout>
+                            </Button>
+                        </StackPanel>
+                    </Grid>
+                </Border>
+
+                <!-- ─────────── Workspace: queue, page and filing card ─────────── -->
+                <Grid Grid.Row="1" x:Name="WorkspaceGrid" ColumnDefinitions="296,*,316">
+                    <!-- Queue -->
+                    <Grid RowDefinitions="Auto,*,Auto" Background="{DynamicResource WorkspaceSurface}">
+                        <Panel Classes="queue-chrome" Margin="16,14,10,8">
+                            <Grid RowDefinitions="Auto,Auto" ColumnDefinitions="*,Auto" RowSpacing="6">
+                                <TextBlock x:Name="InboxHeading" Classes="title" Text="{Binding Heading}" TextTrimming="CharacterEllipsis"
+                                           AutomationProperties.HeadingLevel="1" VerticalAlignment="Center" />
+                                <ComboBox Grid.Column="1" x:Name="DocumentSortBox" ItemsSource="{Binding SortChoices}" VerticalAlignment="Center"
+                                          SelectedItem="{Binding SortOption, Mode=TwoWay}" MinWidth="0" MinHeight="28" Padding="8,2" FontSize="13"
+                                          BorderThickness="0" Background="Transparent"
+                                          IsEnabled="{Binding HasLibrary}" AutomationProperties.Name="{translation:Tr SortDocuments}" ToolTip.Tip="{translation:Tr Sort}" />
+                                <WrapPanel Grid.Row="1" Grid.ColumnSpan="2" Orientation="Horizontal" ItemSpacing="6">
+                                    <TextBlock Classes="label" Text="{Binding ResultCount}" VerticalAlignment="Center" Margin="0,0,4,0"
+                                               MaxWidth="200" TextTrimming="CharacterEllipsis" ToolTip.Tip="{Binding ResultCount}" FontFeatures="+tnum" />
+                                    <Button x:Name="SaveSearchButton" Classes="chip" Content="{translation:Tr SaveSearch2}" Command="{Binding SaveSearchCommand}"
+                                            IsVisible="{Binding ShowSaveSearch}" IsEnabled="{Binding CanWork}" />
+                                    <Button x:Name="EditSavedSearchButton" Classes="chip" Content="{translation:Tr EditSearch}" Command="{Binding EditActiveSavedSearchCommand}"
+                                            IsVisible="{Binding HasActiveSavedSearch}" IsEnabled="{Binding CanWork}" />
+                                </WrapPanel>
+                            </Grid>
+                        </Panel>
+                        <TextBlock Grid.Row="1" x:Name="EmptyResultsMessage" Text="{Binding EmptyMessage}" IsVisible="{Binding !HasDocuments}"
+                                   Foreground="{DynamicResource MutedInk}" MaxWidth="230" TextAlignment="Center" TextWrapping="Wrap"
+                                   HorizontalAlignment="Center" VerticalAlignment="Center" Margin="12"
+                                   AutomationProperties.LiveSetting="Polite" />
+                        <ListBox Grid.Row="1" x:Name="DocumentList" Classes="plain" ItemsSource="{Binding Documents}" SelectedItem="{Binding SelectedDocument, Mode=TwoWay}"
+                                 KeyUp="DocumentList_KeyUp" IsVisible="{Binding HasDocuments}" Padding="0,0,0,6"
+                                 SelectionMode="Multiple" SelectionChanged="Documents_SelectionChanged"
+                                 ScrollViewer.HorizontalScrollBarVisibility="Disabled" AutomationProperties.Name="{translation:Tr Documents}">
+                            <ListBox.ItemTemplate>
+                                <DataTemplate x:DataType="core:DocumentSummary">
+                                    <Grid ColumnDefinitions="Auto,*" ColumnSpacing="11">
+                                        <local:DocumentThumbnail Document="{Binding}" Width="40" Height="52" VerticalAlignment="Top"
+                                                                 Background="{DynamicResource PaperSurface}" CornerRadius="1.5"
+                                                                 BorderBrush="{DynamicResource LineBrush}" BorderThickness="1"
+                                                                 ToolTip.Tip="{Binding Title}" />
+                                        <StackPanel Grid.Column="1" Classes="row-text" Spacing="2" VerticalAlignment="Center">
+                                            <TextBlock Text="{Binding Title}" FontWeight="SemiBold" TextTrimming="CharacterEllipsis" />
+                                            <WrapPanel Orientation="Horizontal">
+                                                <TextBlock Text="{Binding DocumentDate, StringFormat='Dated {0:d MMM yyyy}'}" Classes="caption"
+                                                           IsVisible="{Binding HasDocumentDate}" Margin="0,0,8,0" />
+                                                <TextBlock Text="{Binding AddedAt.LocalDateTime, StringFormat={translation:Tr DocumentAddedDateFormat}}" Classes="caption" />
+                                            </WrapPanel>
+                                            <local:SearchExcerpt Document="{Binding}" Classes="muted" FontSize="13" TextWrapping="Wrap"
+                                                                 MaxLines="2" TextTrimming="CharacterEllipsis" />
+                                        </StackPanel>
+                                    </Grid>
+                                </DataTemplate>
+                            </ListBox.ItemTemplate>
+                        </ListBox>
+                        <Panel Grid.Row="2" Classes="queue-footer">
+                        <Border BorderBrush="{DynamicResource LineBrush}" BorderThickness="0,1,0,0" Padding="10,6" IsVisible="{Binding HasResultActions}">
+                            <StackPanel Spacing="4">
+                                <Button x:Name="RefreshWatchedResultsButton" Classes="secondary small" Content="{translation:Tr RefreshResults}" HorizontalAlignment="Stretch"
                                         Command="{Binding RefreshWatchedResultsCommand}" IsVisible="{Binding HasDeferredWatchResults}"
                                         IsEnabled="{Binding CanWork}" ToolTip.Tip="{translation:Tr RefreshAfterWatchedImports}" />
-                                <Grid ColumnDefinitions="*,Auto" ColumnSpacing="8" IsVisible="{Binding HasBatchCandidates}">
-                                    <Button x:Name="SelectShownButton" Classes="secondary" Content="{Binding SelectShownAction}"
+                                <Grid ColumnDefinitions="Auto,*,Auto" ColumnSpacing="6" IsVisible="{Binding HasBatchCandidates}">
+                                    <Button x:Name="SelectShownButton" Classes="ghost small" Content="{Binding SelectShownAction}"
                                             Click="SelectShown_Click" AutomationProperties.Name="{Binding SelectShownAction}" />
-                                    <Button Grid.Column="1" Content="{translation:Tr LoadMore}" IsVisible="{Binding HasMore}" Command="{Binding LoadMoreCommand}" />
+                                    <Button Grid.Column="2" Classes="ghost small" Content="{translation:Tr LoadMore}" IsVisible="{Binding HasMore}" Command="{Binding LoadMoreCommand}" />
                                 </Grid>
-                                <Border IsVisible="{Binding HasBatchSelection}" Background="{DynamicResource TagSurface}" CornerRadius="8" Padding="8">
-                                    <StackPanel Spacing="7">
-                                        <Grid ColumnDefinitions="*,Auto" ColumnSpacing="6">
-                                            <TextBlock Text="{Binding BatchCountLabel}" Classes="muted" VerticalAlignment="Center" />
-                                            <Button Grid.Column="1" x:Name="BatchReviewButton" Classes="secondary"
-                                                    Content="{Binding BatchReviewAction}" Command="{Binding ReviewSelectedCommand}"
-                                                    IsEnabled="{Binding CanWork}" />
-                                        </Grid>
-                                        <Grid ColumnDefinitions="*,Auto" ColumnSpacing="6" IsEnabled="{Binding CanWork}">
-                                            <AutoCompleteBox x:Name="BatchTagBox" Classes="tag-entry" Text="{Binding BatchTagInput, Mode=TwoWay}"
-                                                             PlaceholderText="{translation:Tr Tag}" AutomationProperties.Name="{translation:Tr TagForTheSelectedDocuments}"
-                                                             Populating="TagBox_Populating" KeyDown="BatchTag_KeyDown" />
-                                            <Button Grid.Column="1" x:Name="ApplyBatchTagButton" Classes="secondary"
-                                                    Content="{translation:Tr TagSelected}" Click="ApplyBatchTag_Click" />
-                                        </Grid>
-                                        <WrapPanel Orientation="Horizontal" HorizontalAlignment="Right">
-                                            <Button x:Name="RemoveBatchTagButton" Classes="secondary" Content="{translation:Tr RemoveTag2}"
-                                                    Click="RemoveBatchTag_Click" IsVisible="{Binding HasTaggedBatchSelection}"
-                                                    IsEnabled="{Binding CanWork}" AutomationProperties.Name="{translation:Tr RemoveATagFromTheSelectedPDFs}"
-                                                    Margin="6,0,0,4" Padding="10,7" />
-                                            <Button x:Name="EditBatchDocumentDateButton" Classes="secondary" Content="{translation:Tr DocumentDate2}"
-                                                    Click="EditBatchDocumentDate_Click" IsEnabled="{Binding CanWork}"
-                                                    AutomationProperties.Name="{translation:Tr EditTheDocumentDateOfTheSelectedPDFs}" Margin="6,0,0,4" Padding="10,7" />
-                                            <Button x:Name="SuggestSelectedFilingButton" Classes="secondary" Content="{translation:Tr FilingSuggestions2}"
-                                                    Click="SuggestSelectedFiling_Click" IsEnabled="{Binding CanWork}"
-                                                    AutomationProperties.Name="{translation:Tr FilingSuggestionsForSelectedPDFs}" Margin="6,0,0,4" Padding="10,7" />
-                                            <Button x:Name="CreateSelectedOcrCopiesButton" Classes="secondary" Content="{translation:Tr CreateOCRCopies}"
-                                                    Command="{Binding CreateSelectedOcrCopiesCommand}" IsEnabled="{Binding CanWork}"
-                                                    AutomationProperties.Name="{translation:Tr CreateOCRCopiesOfTheSelectedPDFs}" Margin="6,0,0,4" Padding="10,7" />
-                                            <Button x:Name="MoveSelectedPdfsButton" Classes="secondary" Content="{translation:Tr MovePDFs}"
-                                                    Command="{Binding MoveSelectedPdfsCommand}" IsEnabled="{Binding CanWork}"
-                                                    AutomationProperties.Name="{translation:Tr MoveSelectedPDFsToAFolder}" Margin="6,0,0,4" Padding="10,7" />
-                                            <Button x:Name="CombinePdfsButton" Classes="secondary" Content="{translation:Tr CombinePDFs2}"
-                                                    Command="{Binding CombinePdfsCommand}" IsEnabled="{Binding CanWork}"
-                                                    Margin="6,0,0,4" Padding="10,7" />
-                                            <Button x:Name="ExportSelectedPdfsButton" Classes="secondary"
-                                                    Content="{translation:Tr ExportPDFs}" Command="{Binding ExportSelectedPdfsCommand}"
-                                                    IsEnabled="{Binding CanWork}" AutomationProperties.Name="{translation:Tr ExportSelectedPDFs}"
-                                                    Margin="6,0,0,4" Padding="10,7" />
-                                            <Button x:Name="ExportHouseholdBinderButton" Classes="secondary" Content="{translation:Tr ExportBinder}"
-                                                    Command="{Binding ExportHouseholdBinderCommand}" IsEnabled="{Binding CanWork}"
-                                                    AutomationProperties.Name="{translation:Tr ExportTheSelectedPDFsAsAHouseholdBinder}"
-                                                    Margin="6,0,0,4" Padding="10,7" />
-                                        </WrapPanel>
-                                    </StackPanel>
-                                </Border>
                             </StackPanel>
-                        </Grid>
-                    </Border>
-                    <Border Grid.Column="1" CornerRadius="11" Background="{DynamicResource CardSurface}" BorderBrush="{DynamicResource PanelOutline}" BorderThickness="1" ClipToBounds="True">
+                        </Border>
+                        </Panel>
+                    </Grid>
+
+                    <!-- Page: paper on the desk -->
+                    <Border Grid.Column="1" Background="{DynamicResource DeskSurface}" ClipToBounds="True">
                         <Panel>
                             <TextBlock Text="{translation:Tr SelectADocumentToPreviewIt}" IsVisible="{Binding !HasSelection}"
-                                       Foreground="{DynamicResource SubtleInk}" FontSize="13" HorizontalAlignment="Center" VerticalAlignment="Center" />
-                            <Grid IsVisible="{Binding HasSelection}" RowDefinitions="Auto,*,Auto" RowSpacing="8" Margin="12">
-                                <Grid RowDefinitions="Auto,Auto" ColumnDefinitions="*,Auto" RowSpacing="4" ColumnSpacing="10">
-                                    <StackPanel Spacing="4">
-                                        <TextBlock Text="{Binding SelectedDocument.Title}" TextTrimming="CharacterEllipsis" FontSize="17" FontWeight="SemiBold" />
-                                        <Button x:Name="PdfLocationButton" Classes="document-location" Command="{Binding OpenDocumentFolderCommand}"
-                                                ToolTip.Tip="{translation:Tr OpenContainingFolder}" AutomationProperties.Name="{translation:Tr OpenPDFSContainingFolder}">
-                                            <TextBlock Text="{Binding SelectedDocument.RelativePath}" Foreground="{DynamicResource LinkInk}" FontSize="12"
-                                                       TextDecorations="Underline" TextTrimming="CharacterEllipsis" />
-                                        </Button>
+                                       Foreground="{DynamicResource MutedInk}" HorizontalAlignment="Center" VerticalAlignment="Center" />
+                            <Grid IsVisible="{Binding HasSelection}" RowDefinitions="Auto,*">
+                                <Grid Classes="viewer-bar" ColumnDefinitions="*,Auto" Margin="10,8,10,0">
+                                    <StackPanel Orientation="Horizontal" Spacing="2" IsVisible="{Binding HasPageMatchAction}" VerticalAlignment="Center">
+                                        <Button x:Name="PreviousMatchButton" Content="{translation:Tr PreviousMatch}"
+                                                Command="{Binding PreviousMatchCommand}"
+                                                IsVisible="{Binding PageMatchNavigationActive}" IsEnabled="{Binding CanWork}"
+                                                ToolTip.Tip="{translation:Tr GoToThePreviousPageThatMatchesTheTextTerms}" />
+                                        <Button x:Name="GoToMatchButton" Content="{Binding PageMatchActionLabel}"
+                                                Command="{Binding GoToMatchCommand}" Background="{DynamicResource HighlightSurface}"
+                                                Foreground="{DynamicResource HighlightInk}"
+                                                IsVisible="{Binding HasPageMatchAction}" IsEnabled="{Binding CanWork}"
+                                                ToolTip.Tip="{Binding PageMatchActionHelp}" />
                                     </StackPanel>
-                                    <WrapPanel Grid.Row="1" Grid.ColumnSpan="2" Orientation="Horizontal" ItemSpacing="10">
-                                        <Button x:Name="EditDocumentDateButton" Classes="document-location" Command="{Binding EditDocumentDateCommand}"
-                                                IsEnabled="{Binding CanWork}" ToolTip.Tip="{translation:Tr EditDocumentDate}" AutomationProperties.Name="{translation:Tr EditDocumentDate}">
-                                            <TextBlock Text="{Binding DocumentDateAction}" Foreground="{DynamicResource LinkInk}" FontSize="12"
-                                                       TextDecorations="Underline" TextTrimming="CharacterEllipsis" />
+                                    <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="2" VerticalAlignment="Center">
+                                        <Button x:Name="PreviewFitButton" Content="{Binding PreviewFitAction}" Command="{Binding TogglePreviewFitCommand}"
+                                                IsEnabled="{Binding HasPreview}" IsVisible="{Binding !IsPageTextView}" />
+                                        <ToggleButton x:Name="PageThumbnailsButton" IsChecked="{Binding ShowPageThumbnails, Mode=OneWay}"
+                                                      Command="{Binding TogglePageThumbnailsCommand}" IsEnabled="{Binding HasMultiplePages}"
+                                                      IsVisible="{Binding !IsPageTextView}" ToolTip.Tip="{translation:Tr Thumbnails}"
+                                                      AutomationProperties.Name="{translation:Tr Thumbnails}" Padding="7,3">
+                                            <local:Icon Data="{StaticResource Icon.Pages}" />
+                                        </ToggleButton>
+                                        <Button x:Name="ZoomOutButton" Command="{Binding ZoomOutCommand}" IsVisible="{Binding !IsPageTextView}"
+                                                IsEnabled="{Binding CanZoomOut}" AutomationProperties.Name="{translation:Tr ZoomOut}" ToolTip.Tip="{translation:Tr ZoomOut}" Padding="7,3">
+                                            <local:Icon Data="{StaticResource Icon.Minus}" />
                                         </Button>
-                                        <Button x:Name="EditMetadataButton" Classes="document-location" Command="{Binding EditMetadataCommand}"
-                                                IsEnabled="{Binding CanWork}" AutomationProperties.Name="{translation:Tr EditDocumentMetadata}">
-                                            <TextBlock Text="{translation:Tr DocumentMetadataAction}" Foreground="{DynamicResource LinkInk}" FontSize="12" TextDecorations="Underline" />
+                                        <TextBlock Text="{Binding PreviewZoomLabel}" IsVisible="{Binding !IsPageTextView}" VerticalAlignment="Center" FontSize="13"
+                                                   MinWidth="38" TextAlignment="Center" FontFeatures="+tnum" Foreground="{DynamicResource SecondaryInk}" />
+                                        <Button x:Name="ZoomInButton" Command="{Binding ZoomInCommand}" IsVisible="{Binding !IsPageTextView}"
+                                                IsEnabled="{Binding CanZoomIn}" AutomationProperties.Name="{translation:Tr ZoomIn}" ToolTip.Tip="{translation:Tr ZoomIn}" Padding="7,3">
+                                            <local:Icon Data="{StaticResource Icon.Plus}" />
                                         </Button>
-                                        <Button x:Name="EditDeadlinesButton" Classes="document-location" Command="{Binding EditDeadlinesCommand}"
-                                                IsEnabled="{Binding CanWork}" AutomationProperties.Name="{translation:Tr EditDocumentDeadlines}">
-                                            <TextBlock Text="{translation:Tr DocumentDeadlinesAction}" Foreground="{DynamicResource LinkInk}" FontSize="12" TextDecorations="Underline" />
+                                        <Button x:Name="OpenPdfButton" Command="{Binding OpenPdfCommand}" ToolTip.Tip="{translation:Tr OpenInPdfViewer}"
+                                                AutomationProperties.Name="{translation:Tr OpenPDF}" Padding="7,3">
+                                            <local:Icon Data="{StaticResource Icon.Open}" />
                                         </Button>
-                                    </WrapPanel>
-                                    <StackPanel Grid.Column="1" Spacing="4" VerticalAlignment="Top">
-                                        <StackPanel Orientation="Horizontal" Spacing="5">
-                                            <Button x:Name="EditTitleButton" Classes="secondary" Content="{translation:Tr EditTitle}" Command="{Binding EditDocumentTitleCommand}"
-                                                    IsEnabled="{Binding CanWork}" />
-                                            <Button Classes="secondary" Content="{translation:Tr OpenPDF}" Command="{Binding OpenPdfCommand}" />
-                                        </StackPanel>
-                                        <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" Spacing="5"
-                                                    IsVisible="{Binding HasPageMatchAction}">
-                                            <Button x:Name="PreviousMatchButton" Classes="secondary" Content="{translation:Tr PreviousMatch}"
-                                                    Padding="8,3" Command="{Binding PreviousMatchCommand}"
-                                                    IsVisible="{Binding PageMatchNavigationActive}" IsEnabled="{Binding CanWork}"
-                                                    ToolTip.Tip="{translation:Tr GoToThePreviousPageThatMatchesTheTextTerms}" />
-                                            <Button x:Name="GoToMatchButton" Classes="secondary" Content="{Binding PageMatchActionLabel}"
-                                                    Padding="8,3" Command="{Binding GoToMatchCommand}"
-                                                    IsVisible="{Binding HasPageMatchAction}" IsEnabled="{Binding CanWork}"
-                                                    ToolTip.Tip="{Binding PageMatchActionHelp}" />
-                                        </StackPanel>
                                     </StackPanel>
                                 </Grid>
-                                <Border Grid.Row="1" Background="{DynamicResource PreviewSurface}" CornerRadius="8" Padding="8" ClipToBounds="True">
-                                    <Grid RowDefinitions="*,Auto,Auto" RowSpacing="5">
-                                        <Grid ColumnDefinitions="Auto,*">
-                                            <ScrollViewer HorizontalScrollBarVisibility="Disabled" VerticalScrollBarVisibility="Auto"
-                                                          Width="68" Margin="0,0,7,0" IsVisible="{Binding HasVisiblePageThumbnails}">
-                                                <ItemsControl x:Name="PageThumbnailList" ItemsSource="{Binding PageThumbnails}">
-                                                    <ItemsControl.ItemsPanel>
-                                                        <ItemsPanelTemplate><StackPanel Spacing="6" /></ItemsPanelTemplate>
-                                                    </ItemsControl.ItemsPanel>
-                                                    <ItemsControl.ItemTemplate>
-                                                        <DataTemplate x:DataType="local:PdfPageThumbnail">
-                                                            <Button Classes="secondary" Click="PageThumbnail_Click" Padding="4"
-                                                                    AutomationProperties.Name="{Binding PageNumber, StringFormat='Page {0}'}">
-                                                                <StackPanel Spacing="2">
-                                                                    <Image Source="{Binding Image}" Width="42" Height="53" Stretch="Uniform" />
-                                                                    <TextBlock Text="{Binding PageNumber}" HorizontalAlignment="Center" FontSize="11" />
-                                                                </StackPanel>
-                                                            </Button>
-                                                        </DataTemplate>
-                                                    </ItemsControl.ItemTemplate>
-                                                </ItemsControl>
-                                            </ScrollViewer>
-                                            <ScrollViewer Grid.Column="1" x:Name="PreviewScroll" Classes="pdf-preview" Classes.fitWidth="{Binding FitPreviewWidth}"
+
+                                <Grid Grid.Row="1" ColumnDefinitions="Auto,*">
+                                    <ScrollViewer HorizontalScrollBarVisibility="Disabled" VerticalScrollBarVisibility="Auto"
+                                                  Width="76" Margin="10,10,0,64" IsVisible="{Binding HasVisiblePageThumbnails}">
+                                        <ItemsControl x:Name="PageThumbnailList" ItemsSource="{Binding PageThumbnails}">
+                                            <ItemsControl.ItemsPanel>
+                                                <ItemsPanelTemplate><StackPanel Spacing="8" /></ItemsPanelTemplate>
+                                            </ItemsControl.ItemsPanel>
+                                            <ItemsControl.ItemTemplate>
+                                                <DataTemplate x:DataType="local:PdfPageThumbnail">
+                                                    <Button Classes="ghost" Click="PageThumbnail_Click" Padding="4" HorizontalAlignment="Center"
+                                                            AutomationProperties.Name="{Binding PageNumber, StringFormat='Page {0}'}">
+                                                        <StackPanel Spacing="3">
+                                                            <Border Classes="paper">
+                                                                <Image Source="{Binding Image}" Width="48" Height="62" Stretch="Uniform" />
+                                                            </Border>
+                                                            <TextBlock Text="{Binding PageNumber}" HorizontalAlignment="Center" Classes="caption" />
+                                                        </StackPanel>
+                                                    </Button>
+                                                </DataTemplate>
+                                            </ItemsControl.ItemTemplate>
+                                        </ItemsControl>
+                                    </ScrollViewer>
+
+                                    <Panel Grid.Column="1" x:Name="DeskPanel" Margin="12,10,12,62">
+                                        <Border x:Name="PreviewPaper" Classes="paper" IsVisible="{Binding !IsPageTextView}" ClipToBounds="True"
+                                                HorizontalAlignment="Center" VerticalAlignment="Stretch">
+                                            <ScrollViewer x:Name="PreviewScroll" Classes="pdf-preview" Classes.fitWidth="{Binding FitPreviewWidth}"
                                                           Classes.zoomed="{Binding IsPreviewZoomed}"
                                                           Focusable="{Binding IsPreviewScrollable}" IsVisible="{Binding !IsPageTextView}"
                                                           AutomationProperties.Name="{translation:Tr PDFPagePreview}">
@@ -505,155 +686,466 @@
                                                                                   IsHitTestVisible="False" />
                                                 </Grid>
                                             </ScrollViewer>
-                                            <ScrollViewer Grid.Column="1" x:Name="PageTextScroll" IsVisible="{Binding HasPageText}"
+                                        </Border>
+                                        <Border Classes="paper" IsVisible="{Binding IsPageTextView}" MaxWidth="660" HorizontalAlignment="Center">
+                                            <ScrollViewer x:Name="PageTextScroll" IsVisible="{Binding HasPageText}"
                                                           HorizontalScrollBarVisibility="Disabled" VerticalScrollBarVisibility="Auto">
                                                 <SelectableTextBlock x:Name="PageTextContent" Text="{Binding PageText}" TextWrapping="Wrap"
-                                                                     Padding="12,8" FontSize="15" LineHeight="22" Focusable="True" />
+                                                                     Padding="28,22" FontSize="15" LineHeight="23" Focusable="True"
+                                                                     Foreground="#1D1D1F" />
                                             </ScrollViewer>
-                                            <TextBlock Grid.Column="1" Text="{Binding PreviewMessage}" IsVisible="{Binding HasPreviewMessage}"
-                                                       HorizontalAlignment="Center" VerticalAlignment="Center" TextWrapping="Wrap"
+                                        </Border>
+                                        <Border Classes="callout" IsVisible="{Binding HasPreviewMessage}" HorizontalAlignment="Center" VerticalAlignment="Center" MaxWidth="320">
+                                            <TextBlock Text="{Binding PreviewMessage}" TextWrapping="Wrap" TextAlignment="Center"
                                                        AutomationProperties.LiveSetting="Polite" />
-                                        </Grid>
-                                        <Grid Grid.Row="1" ColumnDefinitions="Auto,*,Auto" ColumnSpacing="4">
-                                            <Button x:Name="CopyDocumentTextButton" Classes="secondary" HorizontalAlignment="Left"
-                                                    Content="{translation:Tr CopyText}" Command="{Binding CopyDocumentTextCommand}"
-                                                    IsVisible="{Binding !HasNoSearchableText}" IsEnabled="{Binding CanWork}" Padding="8,3"
-                                                    AutomationProperties.Name="{translation:Tr CopyDocumentText}" ToolTip.Tip="{translation:Tr CopyTheSearchableTextFromAllPages}" />
-                                            <Grid Grid.Column="1" x:Name="PreviewPageNavigation" ColumnDefinitions="Auto,*,Auto"
-                                                  HorizontalAlignment="Center" ColumnSpacing="4">
-                                                <Button Content="‹" Command="{Binding PreviousPageCommand}" IsEnabled="{Binding CanGoBack}"
-                                                        AutomationProperties.Name="{translation:Tr PreviousPage}" Padding="9,3" />
-                                                <TextBlock Grid.Column="1" Text="{Binding PageLabel}" Classes="muted" VerticalAlignment="Center"
-                                                           TextAlignment="Center" TextTrimming="CharacterEllipsis" ToolTip.Tip="{Binding PageLabel}" />
-                                                <Button Grid.Column="2" Content="›" Command="{Binding NextPageCommand}" IsEnabled="{Binding CanGoForward}"
-                                                        AutomationProperties.Name="{translation:Tr NextPage}" Padding="9,3" />
-                                            </Grid>
-                                            <StackPanel Grid.Column="2" Orientation="Horizontal" HorizontalAlignment="Right" Spacing="4">
-                                                <Button x:Name="ReadPageTextButton" Classes="secondary" Content="{Binding PageTextAction}"
-                                                        Command="{Binding TogglePageTextCommand}" IsVisible="{Binding !HasNoSearchableText}" Padding="8,3" />
-                                                <Button x:Name="PreviewFitButton" Classes="secondary"
-                                                        Content="{Binding PreviewFitAction}" Command="{Binding TogglePreviewFitCommand}"
-                                                        IsEnabled="{Binding HasPreview}" IsVisible="{Binding !IsPageTextView}" Padding="8,3" />
+                                        </Border>
+                                        <Border Classes="callout" IsVisible="{Binding HasNoSearchableText}" HorizontalAlignment="Center" VerticalAlignment="Top"
+                                                Margin="0,8,0,0" Padding="12,6">
+                                            <StackPanel Orientation="Horizontal" Spacing="10">
+                                                <local:Icon Data="{StaticResource Icon.Recognize}" Foreground="{DynamicResource WarningInk}" VerticalAlignment="Center" />
+                                                <TextBlock Text="{translation:Tr NoSearchableTextFound}" VerticalAlignment="Center" FontSize="13" />
+                                                <Button Classes="secondary small" Content="{Binding SearchableCopyAction}" Command="{Binding CreateSearchableCopyCommand}"
+                                                        IsEnabled="{Binding CanWork}" />
                                             </StackPanel>
+                                        </Border>
+                                    </Panel>
+                                </Grid>
+
+                                <!-- Floating page bar -->
+                                <Border Grid.Row="1" Classes="pagebar" HorizontalAlignment="Center" VerticalAlignment="Bottom" Margin="0,0,0,14">
+                                    <StackPanel Orientation="Horizontal" Spacing="2">
+                                        <Button x:Name="CopyDocumentTextButton" Command="{Binding CopyDocumentTextCommand}"
+                                                IsVisible="{Binding !HasNoSearchableText}" IsEnabled="{Binding CanWork}" Padding="8,3"
+                                                AutomationProperties.Name="{translation:Tr CopyDocumentText}" ToolTip.Tip="{translation:Tr CopyTheSearchableTextFromAllPages}">
+                                            <local:Icon Data="{StaticResource Icon.Combine}" />
+                                        </Button>
+                                        <Grid x:Name="PreviewPageNavigation" ColumnDefinitions="Auto,Auto,Auto" ColumnSpacing="2">
+                                            <Button Command="{Binding PreviousPageCommand}" IsEnabled="{Binding CanGoBack}" Padding="7,3"
+                                                    AutomationProperties.Name="{translation:Tr PreviousPage}" ToolTip.Tip="{translation:Tr PreviousPage}">
+                                                <local:Icon Data="{StaticResource Icon.ChevronLeft}" />
+                                            </Button>
+                                            <TextBlock Grid.Column="1" Text="{Binding PageLabel}" VerticalAlignment="Center" FontSize="13" MinWidth="44"
+                                                       TextAlignment="Center" TextTrimming="CharacterEllipsis" ToolTip.Tip="{Binding PageLabel}" FontFeatures="+tnum" />
+                                            <Button Grid.Column="2" Command="{Binding NextPageCommand}" IsEnabled="{Binding CanGoForward}" Padding="7,3"
+                                                    AutomationProperties.Name="{translation:Tr NextPage}" ToolTip.Tip="{translation:Tr NextPage}">
+                                                <local:Icon Data="{StaticResource Icon.ChevronRight}" />
+                                            </Button>
                                         </Grid>
-                                        <Grid Grid.Row="2" ColumnDefinitions="*,Auto" IsVisible="{Binding !IsPageTextView}">
-                                            <ToggleButton x:Name="PageThumbnailsButton" Classes="preview-thumbnails"
-                                                          Content="{translation:Tr Thumbnails}" HorizontalAlignment="Left"
-                                                          IsChecked="{Binding ShowPageThumbnails, Mode=OneWay}"
-                                                          Command="{Binding TogglePageThumbnailsCommand}" IsEnabled="{Binding HasMultiplePages}"
-                                                          Padding="8,3" />
-                                            <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="5">
-                                                <Button x:Name="ZoomOutButton" Classes="secondary" Content="−" Command="{Binding ZoomOutCommand}"
-                                                        IsEnabled="{Binding CanZoomOut}" AutomationProperties.Name="{translation:Tr ZoomOut}" Padding="10,3" />
-                                                <TextBlock Text="{Binding PreviewZoomLabel}" VerticalAlignment="Center" FontSize="12" />
-                                                <Button x:Name="ZoomInButton" Classes="secondary" Content="+" Command="{Binding ZoomInCommand}"
-                                                        IsEnabled="{Binding CanZoomIn}" AutomationProperties.Name="{translation:Tr ZoomIn}" Padding="10,3" />
-                                            </StackPanel>
-                                        </Grid>
-                                    </Grid>
+                                        <Button x:Name="ReadPageTextButton" Content="{Binding PageTextAction}"
+                                                Command="{Binding TogglePageTextCommand}" IsVisible="{Binding !HasNoSearchableText}" />
+                                    </StackPanel>
                                 </Border>
-                                <StackPanel Grid.Row="2" Spacing="6">
-                                    <ScrollViewer x:Name="DocumentActionsScroll" MaxHeight="58" Focusable="True"
-                                                  HorizontalScrollBarVisibility="Disabled" VerticalScrollBarVisibility="Auto"
-                                                  AllowAutoHide="False"
-                                                  AutomationProperties.Name="{translation:Tr DocumentActions}">
-                                        <StackPanel Spacing="4">
-                                            <WrapPanel Orientation="Horizontal" Classes="document-actions">
-                                                <Button x:Name="PdfToolsButton" Classes="secondary" Content="{translation:Tr PDFTools}"
-                                                        IsEnabled="{Binding CanWork}">
-                                                    <Button.Flyout>
-                                                        <MenuFlyout>
-                                                            <MenuItem x:Name="EditPdfPagesItem" Header="{translation:Tr EditPages}" Command="{Binding EditPdfPagesCommand}" />
-                                                            <MenuItem x:Name="PdfVersionsItem" Header="{translation:Tr VersionHistory}" Command="{Binding ShowPdfVersionsCommand}" />
-                                                            <Separator />
-                                                            <MenuItem Header="{translation:Tr ExportBinder}" Command="{Binding ExportHouseholdBinderCommand}" />
-                                                            <MenuItem Header="{translation:Tr ExportRedactedPDF}" Command="{Binding ExportRedactedPdfCommand}" />
-                                                            <MenuItem Header="{translation:Tr ExportStampedPDF}" Command="{Binding ExportStampedPdfCommand}" />
-                                                            <MenuItem Header="{translation:Tr ExportCompressedPDF}" Command="{Binding ExportCompressedPdfCommand}" />
-                                                        </MenuFlyout>
-                                                    </Button.Flyout>
-                                                </Button>
-                                                <Button x:Name="MovePdfButton" Classes="secondary" Content="{translation:Tr MoveToFolder}"
-                                                        Command="{Binding MovePdfCommand}" IsEnabled="{Binding CanWork}" />
-                                                <Button x:Name="ExportPdfButton" Classes="secondary" Content="{translation:Tr ExportPDF2}"
-                                                        Command="{Binding ExportPdfCommand}" IsEnabled="{Binding CanWork}" />
-                                                <Button x:Name="CreateSearchableCopyButton" Classes="secondary" Content="{Binding SearchableCopyAction}"
-                                                        Command="{Binding CreateSearchableCopyCommand}" IsEnabled="{Binding CanWork}"
-                                                        ToolTip.Tip="{translation:Tr CreateASeparatePDFUsingTheSelectedOCRLanguage}" />
-                                                <Button x:Name="TrashDocumentButton" Classes="secondary" Content="{translation:Tr TrashNext}"
-                                                        Command="{Binding TrashDocumentCommand}" IsEnabled="{Binding CanWork}"
-                                                        ToolTip.Tip="{translation:Tr MoveTheOpenPDFToTrashXInTheResultsList}" />
-                                                <Button x:Name="SuggestFilingButton" Classes="secondary" Content="{translation:Tr FilingSuggestions2}"
-                                                        Command="{Binding SuggestFilingCommand}" IsEnabled="{Binding CanWork}" />
-                                                <Button x:Name="FindRelatedButton" Classes="secondary" Content="{translation:Tr RelatedAction}"
-                                                        Command="{Binding FindRelatedCommand}" IsEnabled="{Binding CanWork}"
-                                                        AutomationProperties.Name="{translation:Tr FindRelatedDocuments}" />
-                                                <Button x:Name="SuggestLocalFilingButton" Classes="secondary" Content="{translation:Tr LocalFilingAction}"
-                                                        Command="{Binding SuggestLocalFilingCommand}" IsVisible="{Binding HasLocalChat}" IsEnabled="{Binding CanWork}"
-                                                        AutomationProperties.Name="{translation:Tr AskLocalModelForFilingSuggestions}" />
-                                                <Button x:Name="ExtractPdfPagesButton" Classes="secondary" Content="{translation:Tr ExtractPages}"
-                                                        Command="{Binding ExtractPdfPagesCommand}" IsEnabled="{Binding CanWork}"
-                                                        IsVisible="{Binding HasMultiplePages}" />
-                                                <Button x:Name="RotatePdfPagesButton" Classes="secondary" Content="{translation:Tr RotatePages2}"
-                                                        Command="{Binding RotatePdfPagesCommand}" IsEnabled="{Binding CanWork}" />
-                                            </WrapPanel>
-                                            <TextBlock Text="{translation:Tr NoSearchableTextFound}" Foreground="{DynamicResource WarningInk}" FontSize="12"
-                                                       TextWrapping="Wrap" IsVisible="{Binding HasNoSearchableText}" />
-                                            <ItemsControl ItemsSource="{Binding SelectedDocument.Tags}">
-                                                <ItemsControl.ItemsPanel><ItemsPanelTemplate><WrapPanel /></ItemsPanelTemplate></ItemsControl.ItemsPanel>
-                                                <ItemsControl.ItemTemplate>
-                                                    <DataTemplate x:DataType="x:String">
-                                                        <Button Click="RemoveTag_Click" Margin="0,0,5,3" Padding="8,4"
-                                                                Background="{DynamicResource TagSurface}" MaxWidth="144"
-                                                                AutomationProperties.Name="{Binding StringFormat='Remove tag {0}'}">
-                                                            <TextBlock Text="{Binding StringFormat='{}{0}  ×'}" FontSize="11" TextTrimming="CharacterEllipsis" />
-                                                        </Button>
-                                                    </DataTemplate>
-                                                </ItemsControl.ItemTemplate>
-                                            </ItemsControl>
-                                        </StackPanel>
-                                    </ScrollViewer>
-                                    <Grid ColumnDefinitions="*,Auto,Auto" ColumnSpacing="6" IsEnabled="{Binding CanWork}">
-                                        <AutoCompleteBox x:Name="TagBox" Classes="tag-entry" Text="{Binding TagInput, Mode=TwoWay}"
-                                                         PlaceholderText="{translation:Tr Tag}" AutomationProperties.Name="{translation:Tr TagForThisDocument}" FontSize="12"
-                                                         Populating="TagBox_Populating" KeyDown="TagBox_KeyDown" />
-                                        <Button Grid.Column="1" x:Name="AddTagButton" Classes="secondary" Content="{translation:Tr Add}" Command="{Binding AddTagCommand}"
-                                                AutomationProperties.Name="{translation:Tr AddTag}" />
-                                        <Button Grid.Column="2" x:Name="ReviewButton" Classes="secondary" Content="{Binding ReviewAction}" Command="{Binding ToggleReviewCommand}" />
-                                    </Grid>
-                                </StackPanel>
                             </Grid>
                         </Panel>
                     </Border>
+
+                    <!-- Filing card and batch card -->
+                    <Border Grid.Column="2" BorderBrush="{DynamicResource LineBrush}" BorderThickness="1,0,0,0" Background="{DynamicResource WorkspaceSurface}">
+                        <Panel>
+                            <!-- Batch card -->
+                            <Grid RowDefinitions="Auto,*,Auto" IsVisible="{Binding HasBatchSelection}">
+                                <StackPanel Margin="18,16,18,10" Spacing="4">
+                                    <TextBlock Classes="heading" Text="{Binding BatchCountLabel}" />
+                                    <TextBlock Classes="label" Text="{translation:Tr BatchHelp}" TextWrapping="Wrap" />
+                                </StackPanel>
+                                <!-- No scroll viewer: hidden scroll viewers skip their template, which would detach these actions. -->
+                                <Panel Grid.Row="1" Margin="12,0">
+                                    <StackPanel Spacing="14" Margin="0,4,0,12">
+                                        <StackPanel Spacing="6" Margin="6,0">
+                                            <TextBlock Classes="field-label" Text="{translation:Tr Tags}" Margin="0" />
+                                            <Grid ColumnDefinitions="*,Auto" ColumnSpacing="6" IsEnabled="{Binding CanWork}">
+                                                <AutoCompleteBox x:Name="BatchTagBox" Classes="tag-entry" Text="{Binding BatchTagInput, Mode=TwoWay}"
+                                                                 PlaceholderText="{translation:Tr AddATag}" AutomationProperties.Name="{translation:Tr TagForTheSelectedDocuments}"
+                                                                 Populating="TagBox_Populating" KeyDown="BatchTag_KeyDown" />
+                                                <Button Grid.Column="1" x:Name="ApplyBatchTagButton" Classes="secondary"
+                                                        Content="{translation:Tr TagSelected}" Click="ApplyBatchTag_Click" />
+                                            </Grid>
+                                        </StackPanel>
+                                        <StackPanel Spacing="1">
+                                            <Button x:Name="RemoveBatchTagButton" Classes="action" local:Ui.Icon="{StaticResource Icon.Tag}" Content="{translation:Tr RemoveTag2}"
+                                                    Click="RemoveBatchTag_Click" IsVisible="{Binding HasTaggedBatchSelection}"
+                                                    IsEnabled="{Binding CanWork}" AutomationProperties.Name="{translation:Tr RemoveATagFromTheSelectedPDFs}" />
+                                            <Button x:Name="EditBatchDocumentDateButton" Classes="action" local:Ui.Icon="{StaticResource Icon.Calendar}" Content="{translation:Tr DocumentDate2}"
+                                                    Click="EditBatchDocumentDate_Click" IsEnabled="{Binding CanWork}"
+                                                    AutomationProperties.Name="{translation:Tr EditTheDocumentDateOfTheSelectedPDFs}" />
+                                            <Button x:Name="SuggestSelectedFilingButton" Classes="action" local:Ui.Icon="{StaticResource Icon.Check}" Content="{translation:Tr FilingSuggestions2}"
+                                                    Click="SuggestSelectedFiling_Click" IsEnabled="{Binding CanWork}"
+                                                    AutomationProperties.Name="{translation:Tr FilingSuggestionsForSelectedPDFs}" />
+                                            <Button x:Name="MoveSelectedPdfsButton" Classes="action" local:Ui.Icon="{StaticResource Icon.Move}" Content="{translation:Tr MovePDFs}"
+                                                    Command="{Binding MoveSelectedPdfsCommand}" IsEnabled="{Binding CanWork}"
+                                                    AutomationProperties.Name="{translation:Tr MoveSelectedPDFsToAFolder}" />
+                                            <Button x:Name="CombinePdfsButton" Classes="action" local:Ui.Icon="{StaticResource Icon.Combine}" Content="{translation:Tr CombinePDFs2}"
+                                                    Command="{Binding CombinePdfsCommand}" IsEnabled="{Binding CanWork}" />
+                                            <Button x:Name="CreateSelectedOcrCopiesButton" Classes="action" local:Ui.Icon="{StaticResource Icon.Recognize}" Content="{translation:Tr CreateOCRCopies}"
+                                                    Command="{Binding CreateSelectedOcrCopiesCommand}" IsEnabled="{Binding CanWork}"
+                                                    AutomationProperties.Name="{translation:Tr CreateOCRCopiesOfTheSelectedPDFs}" />
+                                            <Button x:Name="ExportSelectedPdfsButton" Classes="action" local:Ui.Icon="{StaticResource Icon.Share}"
+                                                    Content="{translation:Tr ExportPDFs}" Command="{Binding ExportSelectedPdfsCommand}"
+                                                    IsEnabled="{Binding CanWork}" AutomationProperties.Name="{translation:Tr ExportSelectedPDFs}" />
+                                            <Button x:Name="ExportHouseholdBinderButton" Classes="action" local:Ui.Icon="{StaticResource Icon.Binder}" Content="{translation:Tr ExportBinder}"
+                                                    Command="{Binding ExportHouseholdBinderCommand}" IsEnabled="{Binding CanWork}"
+                                                    AutomationProperties.Name="{translation:Tr ExportTheSelectedPDFsAsAHouseholdBinder}" />
+                                        </StackPanel>
+                                    </StackPanel>
+                                </Panel>
+                                <Border Grid.Row="2" BorderBrush="{DynamicResource LineBrush}" BorderThickness="0,1,0,0" Padding="16,12">
+                                    <Button x:Name="BatchReviewButton" Classes="primary large" HorizontalAlignment="Stretch" HorizontalContentAlignment="Center"
+                                            Content="{Binding BatchReviewAction}" Command="{Binding ReviewSelectedCommand}" IsEnabled="{Binding CanWork}" />
+                                </Border>
+                            </Grid>
+
+                            <!-- Filing card -->
+                            <Grid RowDefinitions="Auto,*,Auto" IsVisible="{Binding ShowFilingCard}">
+                                <StackPanel Margin="18,16,12,8" Spacing="4">
+                                    <Grid ColumnDefinitions="*,Auto" ColumnSpacing="4">
+                                        <TextBlock Classes="heading" Text="{Binding SelectedDocument.Title}" TextWrapping="Wrap" MaxLines="3"
+                                                   TextTrimming="CharacterEllipsis" />
+                                        <Button Grid.Column="1" x:Name="EditTitleButton" Classes="icon small" Command="{Binding EditDocumentTitleCommand}"
+                                                IsEnabled="{Binding CanWork}" VerticalAlignment="Top" ToolTip.Tip="{translation:Tr EditTitle}"
+                                                AutomationProperties.Name="{translation:Tr EditTitle}">
+                                            <local:Icon Data="{StaticResource Icon.Note}" Width="15" Height="15" />
+                                        </Button>
+                                    </Grid>
+                                    <Button x:Name="PdfLocationButton" Classes="link" Command="{Binding OpenDocumentFolderCommand}"
+                                            ToolTip.Tip="{translation:Tr OpenContainingFolder}" AutomationProperties.Name="{translation:Tr OpenPDFSContainingFolder}">
+                                        <StackPanel Orientation="Horizontal" Spacing="6">
+                                            <local:Icon Data="{StaticResource Icon.Folder}" Width="14" Height="14" VerticalAlignment="Center" />
+                                            <TextBlock Classes="mono" Text="{Binding SelectedDocument.RelativePath}" TextTrimming="CharacterEllipsis" MaxWidth="250"
+                                                       Foreground="{DynamicResource MutedInk}" VerticalAlignment="Center" />
+                                        </StackPanel>
+                                    </Button>
+                                </StackPanel>
+
+                                <ScrollViewer Grid.Row="1" x:Name="DocumentActionsScroll" HorizontalScrollBarVisibility="Disabled"
+                                              VerticalScrollBarVisibility="Auto" Focusable="True" Padding="12,0"
+                                              AutomationProperties.Name="{translation:Tr DocumentActions}">
+                                    <StackPanel Spacing="14" Margin="0,4,0,14">
+                                        <!-- Suggestions: dashed until accepted. -->
+                                        <Border Classes="callout" IsVisible="{Binding HasSuggestions}" BorderBrush="{DynamicResource StrongLineBrush}">
+                                            <Grid ColumnDefinitions="*,Auto" ColumnSpacing="10">
+                                                <StackPanel Spacing="2">
+                                                    <TextBlock Text="{Binding SuggestionSummary}" FontWeight="SemiBold" FontSize="13" />
+                                                    <TextBlock Text="{Binding SuggestionReason}" Classes="caption" TextWrapping="Wrap" />
+                                                </StackPanel>
+                                                <Button Grid.Column="1" x:Name="AcceptSuggestionsButton" Classes="secondary small" VerticalAlignment="Center"
+                                                        Command="{Binding AcceptSuggestionsCommand}" IsEnabled="{Binding CanWork}"
+                                                        AutomationProperties.Name="{translation:Tr AcceptAll}" ToolTip.Tip="{translation:Tr AcceptAllTip}">
+                                                    <StackPanel Orientation="Horizontal" Spacing="6">
+                                                        <TextBlock Text="{translation:Tr AcceptAll}" VerticalAlignment="Center" />
+                                                        <Border Classes="key"><TextBlock Text="A" /></Border>
+                                                    </StackPanel>
+                                                </Button>
+                                            </Grid>
+                                        </Border>
+
+                                        <Grid ColumnDefinitions="72,*" RowDefinitions="Auto,Auto,Auto,Auto" RowSpacing="6" Margin="6,0,0,0">
+                                            <TextBlock Classes="field-label" Text="{translation:Tr MetaDateKind}" />
+                                            <StackPanel Grid.Column="1" Spacing="4">
+                                                <Button x:Name="EditDocumentDateButton" Classes="field" Command="{Binding EditDocumentDateCommand}"
+                                                        IsEnabled="{Binding CanWork}" ToolTip.Tip="{translation:Tr EditDocumentDate}"
+                                                        AutomationProperties.Name="{translation:Tr EditDocumentDate}">
+                                                    <TextBlock Text="{Binding DocumentDateAction}" TextTrimming="CharacterEllipsis" />
+                                                </Button>
+                                                <Button Classes="suggested" HorizontalAlignment="Left" Margin="4,0,0,0" IsVisible="{Binding HasSuggestedDate}"
+                                                        Command="{Binding AcceptSuggestedDateCommand}" IsEnabled="{Binding CanWork}"
+                                                        ToolTip.Tip="{translation:Tr SuggestedDateTip}">
+                                                    <TextBlock Text="{Binding SuggestedDateLabel}" />
+                                                </Button>
+                                            </StackPanel>
+
+                                            <TextBlock Grid.Row="1" Classes="field-label" Text="{translation:Tr Tags}" />
+                                            <StackPanel Grid.Row="1" Grid.Column="1" Spacing="6" Margin="4,3,0,0">
+                                                <ItemsControl ItemsSource="{Binding SelectedDocument.Tags}">
+                                                    <ItemsControl.ItemsPanel><ItemsPanelTemplate><WrapPanel ItemSpacing="4" LineSpacing="4" /></ItemsPanelTemplate></ItemsControl.ItemsPanel>
+                                                    <ItemsControl.ItemTemplate>
+                                                        <DataTemplate x:DataType="x:String">
+                                                            <Button Classes="chip" Click="RemoveTag_Click" MaxWidth="160"
+                                                                    AutomationProperties.Name="{Binding StringFormat='Remove tag {0}'}" ToolTip.Tip="{Binding}">
+                                                                <Grid ColumnDefinitions="*,Auto" ColumnSpacing="5">
+                                                                    <TextBlock Text="{Binding}" TextTrimming="CharacterEllipsis" VerticalAlignment="Center" />
+                                                                    <local:Icon Grid.Column="1" Data="{StaticResource Icon.Close}" Width="11" Height="11" Foreground="{DynamicResource MutedInk}" VerticalAlignment="Center" />
+                                                                </Grid>
+                                                            </Button>
+                                                        </DataTemplate>
+                                                    </ItemsControl.ItemTemplate>
+                                                </ItemsControl>
+                                                <ItemsControl ItemsSource="{Binding SuggestedTags}" IsVisible="{Binding HasSuggestedTags}">
+                                                    <ItemsControl.ItemsPanel><ItemsPanelTemplate><WrapPanel ItemSpacing="4" LineSpacing="4" /></ItemsPanelTemplate></ItemsControl.ItemsPanel>
+                                                    <ItemsControl.ItemTemplate>
+                                                        <DataTemplate x:DataType="local:SuggestedTag">
+                                                            <Button Classes="suggested" Command="{Binding $parent[Window].((local:InboxViewModel)DataContext).AcceptSuggestedTagCommand}"
+                                                                    CommandParameter="{Binding}" ToolTip.Tip="{Binding Reason}"
+                                                                    AutomationProperties.Name="{Binding Label, StringFormat='Add suggested tag {0}'}">
+                                                                <StackPanel Orientation="Horizontal" Spacing="5">
+                                                                    <local:Icon Data="{StaticResource Icon.Plus}" Width="11" Height="11" VerticalAlignment="Center" />
+                                                                    <TextBlock Text="{Binding Label}" VerticalAlignment="Center" />
+                                                                </StackPanel>
+                                                            </Button>
+                                                        </DataTemplate>
+                                                    </ItemsControl.ItemTemplate>
+                                                </ItemsControl>
+                                                <Grid ColumnDefinitions="*,Auto" ColumnSpacing="6" IsEnabled="{Binding CanWork}">
+                                                    <AutoCompleteBox x:Name="TagBox" Classes="tag-entry" Text="{Binding TagInput, Mode=TwoWay}"
+                                                                     PlaceholderText="{translation:Tr AddATag}" AutomationProperties.Name="{translation:Tr TagForThisDocument}"
+                                                                     MinHeight="30" FontSize="13" Populating="TagBox_Populating" KeyDown="TagBox_KeyDown" />
+                                                    <Button Grid.Column="1" x:Name="AddTagButton" Classes="secondary small" Content="{translation:Tr Add}" Command="{Binding AddTagCommand}"
+                                                            AutomationProperties.Name="{translation:Tr AddTag}" />
+                                                </Grid>
+                                            </StackPanel>
+
+                                            <TextBlock Grid.Row="2" Classes="field-label" Text="{translation:Tr ReminderField}" />
+                                            <Button Grid.Row="2" Grid.Column="1" x:Name="EditDeadlinesButton" Classes="field" Command="{Binding EditDeadlinesCommand}"
+                                                    IsEnabled="{Binding CanWork}" AutomationProperties.Name="{translation:Tr EditDocumentDeadlines}">
+                                                <TextBlock Text="{translation:Tr DocumentDeadlinesAction}" Foreground="{DynamicResource SecondaryInk}" />
+                                            </Button>
+
+                                            <TextBlock Grid.Row="3" Classes="field-label" Text="{translation:Tr FieldsField}" />
+                                            <Button Grid.Row="3" Grid.Column="1" x:Name="EditMetadataButton" Classes="field" Command="{Binding EditMetadataCommand}"
+                                                    IsEnabled="{Binding CanWork}" AutomationProperties.Name="{translation:Tr EditDocumentMetadata}">
+                                                <TextBlock Text="{translation:Tr DocumentMetadataAction}" Foreground="{DynamicResource SecondaryInk}" />
+                                            </Button>
+                                        </Grid>
+
+                                        <Separator Classes="hairline" Margin="6,0" />
+                                        <Grid ColumnDefinitions="72,*" RowDefinitions="Auto,Auto,Auto" RowSpacing="4" Margin="6,0">
+                                            <TextBlock Classes="caption" Text="{translation:Tr StatusField}" />
+                                            <TextBlock Grid.Column="1" Classes="caption" Foreground="{DynamicResource SecondaryInk}" Text="{Binding SelectedReviewState}" Margin="8,0,0,0" />
+                                            <TextBlock Grid.Row="1" Classes="caption" Text="{translation:Tr Pages}" />
+                                            <TextBlock Grid.Row="1" Grid.Column="1" Classes="caption" Foreground="{DynamicResource SecondaryInk}" Text="{Binding SelectedPagesLabel}" Margin="8,0,0,0" />
+                                            <TextBlock Grid.Row="2" Classes="caption" Text="{translation:Tr AddedField}" />
+                                            <TextBlock Grid.Row="2" Grid.Column="1" Classes="caption" Foreground="{DynamicResource SecondaryInk}" Text="{Binding SelectedAddedLabel}" Margin="8,0,0,0" />
+                                        </Grid>
+
+                                        <StackPanel Spacing="1">
+                                            <TextBlock Classes="section" Text="{translation:Tr ActionsSection}" Margin="8,0,0,4" />
+                                            <Button x:Name="PdfToolsButton" Classes="action" local:Ui.Icon="{StaticResource Icon.Pages}" Content="{translation:Tr PDFTools}"
+                                                    IsEnabled="{Binding CanWork}">
+                                                <Button.Flyout>
+                                                    <MenuFlyout Placement="LeftEdgeAlignedTop">
+                                                        <MenuItem x:Name="EditPdfPagesItem" Header="{translation:Tr EditPages}" Command="{Binding EditPdfPagesCommand}" />
+                                                        <MenuItem x:Name="PdfVersionsItem" Header="{translation:Tr VersionHistory}" Command="{Binding ShowPdfVersionsCommand}" />
+                                                        <Separator />
+                                                        <MenuItem Header="{translation:Tr ExportBinder}" Command="{Binding ExportHouseholdBinderCommand}" />
+                                                        <MenuItem Header="{translation:Tr ExportRedactedPDF}" Command="{Binding ExportRedactedPdfCommand}" />
+                                                        <MenuItem Header="{translation:Tr ExportStampedPDF}" Command="{Binding ExportStampedPdfCommand}" />
+                                                        <MenuItem Header="{translation:Tr ExportCompressedPDF}" Command="{Binding ExportCompressedPdfCommand}" />
+                                                    </MenuFlyout>
+                                                </Button.Flyout>
+                                            </Button>
+                                            <Button x:Name="RotatePdfPagesButton" Classes="action" local:Ui.Icon="{StaticResource Icon.RotateRight}" Content="{translation:Tr RotatePages2}"
+                                                    Command="{Binding RotatePdfPagesCommand}" IsEnabled="{Binding CanWork}" />
+                                            <Button x:Name="ExtractPdfPagesButton" Classes="action" local:Ui.Icon="{StaticResource Icon.Split}" Content="{translation:Tr ExtractPages}"
+                                                    Command="{Binding ExtractPdfPagesCommand}" IsEnabled="{Binding CanWork}" IsVisible="{Binding HasMultiplePages}" />
+                                            <Button x:Name="MovePdfButton" Classes="action" local:Ui.Icon="{StaticResource Icon.Move}" Content="{translation:Tr MoveToFolder}"
+                                                    Command="{Binding MovePdfCommand}" IsEnabled="{Binding CanWork}" />
+                                            <Button x:Name="ExportPdfButton" Classes="action" local:Ui.Icon="{StaticResource Icon.Share}" Content="{translation:Tr ExportPDF2}"
+                                                    Command="{Binding ExportPdfCommand}" IsEnabled="{Binding CanWork}" />
+                                            <Button x:Name="CreateSearchableCopyButton" Classes="action" local:Ui.Icon="{StaticResource Icon.Recognize}" Content="{Binding SearchableCopyAction}"
+                                                    Command="{Binding CreateSearchableCopyCommand}" IsEnabled="{Binding CanWork}"
+                                                    ToolTip.Tip="{translation:Tr CreateASeparatePDFUsingTheSelectedOCRLanguage}" />
+                                            <Button x:Name="SuggestFilingButton" Classes="action" local:Ui.Icon="{StaticResource Icon.Check}" Content="{translation:Tr FilingSuggestions2}"
+                                                    Command="{Binding SuggestFilingCommand}" IsEnabled="{Binding CanWork}" />
+                                            <Button x:Name="FindRelatedButton" Classes="action" local:Ui.Icon="{StaticResource Icon.Link}" Content="{translation:Tr RelatedAction}"
+                                                    Command="{Binding FindRelatedCommand}" IsEnabled="{Binding CanWork}"
+                                                    AutomationProperties.Name="{translation:Tr FindRelatedDocuments}" />
+                                            <Button x:Name="SuggestLocalFilingButton" Classes="action" local:Ui.Icon="{StaticResource Icon.Chat}" Content="{translation:Tr LocalFilingAction}"
+                                                    Command="{Binding SuggestLocalFilingCommand}" IsVisible="{Binding HasLocalChat}" IsEnabled="{Binding CanWork}"
+                                                    AutomationProperties.Name="{translation:Tr AskLocalModelForFilingSuggestions}" />
+                                        </StackPanel>
+                                    </StackPanel>
+                                </ScrollViewer>
+
+                                <Border Grid.Row="2" BorderBrush="{DynamicResource LineBrush}" BorderThickness="0,1,0,0" Padding="14,12">
+                                    <Grid ColumnDefinitions="*,Auto" ColumnSpacing="6">
+                                        <Button x:Name="ReviewButton" Classes="primary large" HorizontalAlignment="Stretch" HorizontalContentAlignment="Center"
+                                                Command="{Binding ToggleReviewCommand}" Click="ReviewButton_Click">
+                                            <StackPanel Orientation="Horizontal" Spacing="8">
+                                                <TextBlock Text="{Binding ReviewAction}" VerticalAlignment="Center" />
+                                                <Border Classes="key"><TextBlock Text="R" /></Border>
+                                            </StackPanel>
+                                        </Button>
+                                        <Button Grid.Column="1" x:Name="TrashDocumentButton" Classes="secondary" Width="36" Height="36" Padding="0"
+                                                HorizontalContentAlignment="Center" Command="{Binding TrashDocumentCommand}" IsEnabled="{Binding CanWork}"
+                                                ToolTip.Tip="{translation:Tr MoveTheOpenPDFToTrashXInTheResultsList}" AutomationProperties.Name="{translation:Tr TrashNext}">
+                                            <local:Icon Data="{StaticResource Icon.Trash}" />
+                                        </Button>
+                                    </Grid>
+                                </Border>
+                            </Grid>
+                        </Panel>
+                    </Border>
+
+                    <!-- Inbox zero and first run -->
+                    <Border Grid.ColumnSpan="3" Background="{DynamicResource WorkspaceSurface}" IsVisible="{Binding ShowInboxZero}">
+                        <Panel>
+                            <StackPanel IsVisible="{Binding ShowInboxClear}" HorizontalAlignment="Center" VerticalAlignment="Center" Spacing="14" MaxWidth="420">
+                                <local:Icon Data="{StaticResource Mark.Full}" IsFilled="True" GridSize="468" Width="56" Height="47"
+                                            Foreground="{DynamicResource FaintInk}" HorizontalAlignment="Center" />
+                                <TextBlock Classes="display" Text="{translation:Tr InboxClear}" HorizontalAlignment="Center" />
+                                <TextBlock Text="{Binding ZeroStateDetail}" Foreground="{DynamicResource SecondaryInk}" TextWrapping="Wrap" TextAlignment="Center" />
+                                <StackPanel Orientation="Horizontal" Spacing="8" HorizontalAlignment="Center" Margin="0,6,0,0">
+                                    <Button Classes="secondary" Content="{translation:Tr AllDocuments}" Command="{Binding ShowAllCommand}" />
+                                    <Button Classes="secondary" Content="{translation:Tr Upcoming}" Command="{Binding RemindersCommand}" IsVisible="{Binding HasDueReminders}" />
+                                </StackPanel>
+                            </StackPanel>
+                            <ScrollViewer IsVisible="{Binding ShowWelcome}" HorizontalScrollBarVisibility="Disabled">
+                                <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center" Spacing="22" MaxWidth="600" Margin="32">
+                                    <local:Icon Data="{StaticResource Mark.Full}" IsFilled="True" GridSize="468" Width="48" Height="40" HorizontalAlignment="Left" />
+                                    <StackPanel Spacing="10">
+                                        <TextBlock Classes="display" Text="{translation:Tr WelcomeTitle}" />
+                                        <TextBlock Text="{translation:Tr WelcomeLede}" Foreground="{DynamicResource SecondaryInk}" FontSize="15" LineHeight="23" TextWrapping="Wrap" />
+                                    </StackPanel>
+                                    <Border Classes="callout">
+                                        <Grid ColumnDefinitions="Auto,*,Auto" ColumnSpacing="10">
+                                            <local:Icon Data="{StaticResource Icon.Folder}" VerticalAlignment="Center" />
+                                            <StackPanel Grid.Column="1" Spacing="2">
+                                                <TextBlock Classes="mono" Text="{Binding LibraryPath}" TextTrimming="CharacterEllipsis" />
+                                                <TextBlock Classes="caption" Text="{translation:Tr LibraryFolderHelp}" TextWrapping="Wrap" />
+                                            </StackPanel>
+                                            <Button Grid.Column="2" Classes="secondary small" Content="{translation:Tr ChangeEllipsis}" Command="{Binding ChooseLibraryCommand}"
+                                                    IsEnabled="{Binding IsIdle}" VerticalAlignment="Center" />
+                                        </Grid>
+                                    </Border>
+                                    <UniformGrid Columns="2" RowSpacing="8" ColumnSpacing="8">
+                                        <Button Classes="secondary" HorizontalAlignment="Stretch" HorizontalContentAlignment="Left" Padding="14,12" Command="{Binding AddFilesCommand}" IsEnabled="{Binding CanWork}">
+                                            <StackPanel Spacing="4">
+                                                <StackPanel Orientation="Horizontal" Spacing="8"><local:Icon Data="{StaticResource Icon.Upload}" /><TextBlock Text="{translation:Tr AddFiles}" FontWeight="SemiBold" /></StackPanel>
+                                                <TextBlock Classes="caption" Text="{translation:Tr WayAddFiles}" TextWrapping="Wrap" />
+                                            </StackPanel>
+                                        </Button>
+                                        <Button Classes="secondary" HorizontalAlignment="Stretch" HorizontalContentAlignment="Left" Padding="14,12" Command="{Binding ScanCommand}" IsEnabled="{Binding CanWork}">
+                                            <StackPanel Spacing="4">
+                                                <StackPanel Orientation="Horizontal" Spacing="8"><local:Icon Data="{StaticResource Icon.Scan}" /><TextBlock Text="{translation:Tr ScanPaper}" FontWeight="SemiBold" /></StackPanel>
+                                                <TextBlock Classes="caption" Text="{translation:Tr WayScan}" TextWrapping="Wrap" />
+                                            </StackPanel>
+                                        </Button>
+                                        <Button Classes="secondary" HorizontalAlignment="Stretch" HorizontalContentAlignment="Left" Padding="14,12" Command="{Binding StartFolderWatchCommand}" IsEnabled="{Binding CanStartFolderWatch}">
+                                            <StackPanel Spacing="4">
+                                                <StackPanel Orientation="Horizontal" Spacing="8"><local:Icon Data="{StaticResource Icon.Watch}" /><TextBlock Text="{translation:Tr WatchAFolder}" FontWeight="SemiBold" /></StackPanel>
+                                                <TextBlock Classes="caption" Text="{translation:Tr WayWatch}" TextWrapping="Wrap" />
+                                            </StackPanel>
+                                        </Button>
+                                        <Button Classes="secondary" HorizontalAlignment="Stretch" HorizontalContentAlignment="Left" Padding="14,12" Command="{Binding MigratePaperlessFolderCommand}" IsEnabled="{Binding CanWork}">
+                                            <StackPanel Spacing="4">
+                                                <StackPanel Orientation="Horizontal" Spacing="8"><local:Icon Data="{StaticResource Icon.Share}" /><TextBlock Text="{translation:Tr WayMoveTitle}" FontWeight="SemiBold" /></StackPanel>
+                                                <TextBlock Classes="caption" Text="{translation:Tr WayMove}" TextWrapping="Wrap" />
+                                            </StackPanel>
+                                        </Button>
+                                    </UniformGrid>
+                                    <StackPanel Orientation="Horizontal" Spacing="10">
+                                        <local:Icon Data="{StaticResource Icon.Lock}" Foreground="{DynamicResource MutedInk}" VerticalAlignment="Top" />
+                                        <TextBlock Classes="caption" FontSize="13" Text="{translation:Tr PrivacyLine}" TextWrapping="Wrap" MaxWidth="540" />
+                                    </StackPanel>
+                                </StackPanel>
+                            </ScrollViewer>
+                        </Panel>
+                    </Border>
                 </Grid>
+
+                <!-- Messages: status, undo, results and progress -->
+                <Border Grid.Row="2" Padding="14,5" BorderBrush="{DynamicResource LineBrush}" BorderThickness="0,1,0,0" Background="{DynamicResource RaisedSurface}">
+                    <Grid ColumnDefinitions="*,Auto,Auto,Auto,Auto,Auto,Auto,Auto,Auto" ColumnSpacing="6" MinHeight="26">
+                        <TextBlock Text="{Binding Status}" Classes="label" VerticalAlignment="Center" TextTrimming="CharacterEllipsis"
+                                   ToolTip.Tip="{Binding Status}" AutomationProperties.LiveSetting="Polite" />
+                        <Button Grid.Column="1" x:Name="UndoButton" Classes="ghost small" Command="{Binding UndoCommand}" IsVisible="{Binding HasUndo}"
+                                IsEnabled="{Binding CanWork}" ToolTip.Tip="{Binding UndoLabel}">
+                            <StackPanel Orientation="Horizontal" Spacing="6">
+                                <local:Icon Data="{StaticResource Icon.History}" Width="14" Height="14" VerticalAlignment="Center" />
+                                <TextBlock Text="{translation:Tr UndoAction}" VerticalAlignment="Center" />
+                            </StackPanel>
+                        </Button>
+                        <Button Grid.Column="2" x:Name="ImportErrorsButton" Classes="ghost small" Content="{translation:Tr ImportErrors}" Foreground="{DynamicResource ErrorInk}"
+                                Command="{Binding InspectImportErrorsCommand}" IsVisible="{Binding HasImportFailures}" IsEnabled="{Binding CanWork}" />
+                        <Button Grid.Column="3" x:Name="OpenBackupFolderButton" Classes="ghost small" Content="{translation:Tr OpenBackup}"
+                                Command="{Binding OpenBackupFolderCommand}" IsVisible="{Binding HasLatestBackup}" IsEnabled="{Binding CanWork}" />
+                        <Button Grid.Column="4" x:Name="OpenExportFolderButton" Classes="ghost small" Content="{translation:Tr OpenExport}"
+                                Command="{Binding OpenExportFolderCommand}" IsVisible="{Binding HasLatestExport}" IsEnabled="{Binding CanWork}" />
+                        <Button Grid.Column="5" x:Name="OcrCopyBatchResultsButton" Classes="ghost small" Content="{translation:Tr OCRResults}"
+                                Command="{Binding InspectOcrCopyBatchResultsCommand}" IsVisible="{Binding HasOcrCopyBatchResults}" IsEnabled="{Binding CanWork}" />
+                        <Button Grid.Column="6" x:Name="IndexReportButton" Classes="ghost small" Content="{translation:Tr IndexReport}"
+                                Command="{Binding ShowIndexReportCommand}" IsVisible="{Binding ShowIndexReport}" />
+                        <ProgressBar Grid.Column="7" Width="72" IsIndeterminate="True" IsVisible="{Binding IsBusy}" VerticalAlignment="Center" />
+                        <Button Grid.Column="8" Classes="ghost small" Content="{translation:Tr Cancel}" Command="{Binding CancelCommand}" IsVisible="{Binding IsBusy}" />
+                    </Grid>
+                </Border>
             </Grid>
-            <Border Grid.Row="2" Padding="25,7" Background="{DynamicResource CardSurface}" BorderBrush="{DynamicResource PanelOutline}" BorderThickness="0,1,0,0">
-                <Grid ColumnDefinitions="*,Auto,Auto,Auto,Auto,Auto,Auto,Auto" ColumnSpacing="10" MinHeight="24">
-                    <TextBlock Text="{Binding Status}" Classes="muted" VerticalAlignment="Center" TextTrimming="CharacterEllipsis"
-                               ToolTip.Tip="{Binding Status}" AutomationProperties.LiveSetting="Polite" />
-                    <Button Grid.Column="1" x:Name="ImportErrorsButton" Classes="secondary" Content="{translation:Tr ImportErrors}"
-                            Command="{Binding InspectImportErrorsCommand}" IsVisible="{Binding HasImportFailures}"
-                            IsEnabled="{Binding CanWork}" Padding="8,3" />
-                    <Button Grid.Column="2" x:Name="OpenBackupFolderButton" Classes="secondary" Content="{translation:Tr OpenBackup}"
-                            Command="{Binding OpenBackupFolderCommand}" IsVisible="{Binding HasLatestBackup}"
-                            IsEnabled="{Binding CanWork}" Padding="8,3" />
-                    <Button Grid.Column="3" x:Name="OpenExportFolderButton" Classes="secondary" Content="{translation:Tr OpenExport}"
-                            Command="{Binding OpenExportFolderCommand}" IsVisible="{Binding HasLatestExport}"
-                            IsEnabled="{Binding CanWork}" Padding="8,3" />
-                    <Button Grid.Column="4" x:Name="OcrCopyBatchResultsButton" Classes="secondary" Content="{translation:Tr OCRResults}"
-                            Command="{Binding InspectOcrCopyBatchResultsCommand}" IsVisible="{Binding HasOcrCopyBatchResults}"
-                            IsEnabled="{Binding CanWork}" Padding="8,3" />
-                    <Button Grid.Column="5" x:Name="IndexReportButton" Classes="secondary" Content="{translation:Tr IndexReport}"
-                            Command="{Binding ShowIndexReportCommand}" IsVisible="{Binding ShowIndexReport}" Padding="8,3" />
-                    <ProgressBar Grid.Column="6" Width="74" IsIndeterminate="True" IsVisible="{Binding IsBusy}" VerticalAlignment="Center" />
-                    <Button Grid.Column="7" Content="{translation:Tr Cancel}" Command="{Binding CancelCommand}" IsVisible="{Binding IsBusy}" Padding="8,3" />
+        </Grid>
+
+        <!-- Motion layer for the review animation. Never takes input. -->
+        <Canvas x:Name="MotionLayer" IsHitTestVisible="False" />
+
+        <!-- Drop target -->
+        <Border x:Name="DropTarget" IsVisible="False" IsHitTestVisible="False" Classes="overlay-scrim">
+            <Border Classes="popover" HorizontalAlignment="Center" VerticalAlignment="Center" Padding="40,32" MinWidth="360">
+                <StackPanel Spacing="12" HorizontalAlignment="Center">
+                    <local:Icon Data="{StaticResource Mark.Full}" IsFilled="True" GridSize="468" Width="64" Height="54" HorizontalAlignment="Center" />
+                    <TextBlock Classes="title" Text="{translation:Tr DropPDFsOrImagesToAddThem}" HorizontalAlignment="Center" TextAlignment="Center" />
+                    <TextBlock Classes="label" HorizontalAlignment="Center" Text="{Binding IntakeFolderLabel, StringFormat={translation:Tr DropDestinationFormat}}" />
+                </StackPanel>
+            </Border>
+        </Border>
+
+        <!-- Command palette -->
+        <Border x:Name="PaletteOverlay" IsVisible="False" Classes="overlay-scrim" PointerPressed="Overlay_PointerPressed">
+            <Border Classes="popover" HorizontalAlignment="Center" VerticalAlignment="Top" Margin="0,72,0,0" Width="580" MaxHeight="460"
+                    PointerPressed="OverlayContent_PointerPressed">
+                <Grid RowDefinitions="Auto,*,Auto">
+                    <TextBox x:Name="PaletteQuery" BorderThickness="0" Background="Transparent" FontSize="16" MinHeight="48" Padding="6,0"
+                             PlaceholderText="{translation:Tr PalettePlaceholder}" KeyDown="PaletteQuery_KeyDown"
+                             AutomationProperties.Name="{translation:Tr Commands}">
+                        <TextBox.InnerLeftContent>
+                            <local:Icon Data="{StaticResource Icon.Search}" Margin="14,0,4,0" Foreground="{DynamicResource MutedInk}" />
+                        </TextBox.InnerLeftContent>
+                    </TextBox>
+                    <ListBox Grid.Row="1" x:Name="PaletteList" Classes="plain" BorderBrush="{DynamicResource LineBrush}" BorderThickness="0,1,0,0"
+                             Padding="0,4" DoubleTapped="PaletteList_DoubleTapped" KeyDown="PaletteList_KeyDown">
+                        <ListBox.ItemTemplate>
+                            <DataTemplate x:DataType="local:PaletteCommand">
+                                <Grid ColumnDefinitions="Auto,*,Auto" ColumnSpacing="11" MinHeight="22">
+                                    <local:Icon Data="{Binding Icon}" Foreground="{DynamicResource SecondaryInk}" VerticalAlignment="Center" />
+                                    <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="8" VerticalAlignment="Center">
+                                        <TextBlock Text="{Binding Title}" TextTrimming="CharacterEllipsis" />
+                                        <TextBlock Text="{Binding Group}" Classes="caption" VerticalAlignment="Center" />
+                                    </StackPanel>
+                                    <ItemsControl Grid.Column="2" ItemsSource="{Binding Keys}" VerticalAlignment="Center">
+                                        <ItemsControl.ItemsPanel><ItemsPanelTemplate><StackPanel Orientation="Horizontal" Spacing="3" /></ItemsPanelTemplate></ItemsControl.ItemsPanel>
+                                        <ItemsControl.ItemTemplate>
+                                            <DataTemplate x:DataType="x:String"><Border Classes="key"><TextBlock Text="{Binding}" /></Border></DataTemplate>
+                                        </ItemsControl.ItemTemplate>
+                                    </ItemsControl>
+                                </Grid>
+                            </DataTemplate>
+                        </ListBox.ItemTemplate>
+                    </ListBox>
+                    <TextBlock Grid.Row="1" x:Name="PaletteEmpty" Text="{translation:Tr PaletteEmpty}" Classes="label" IsVisible="False"
+                               HorizontalAlignment="Center" Margin="0,24" />
+                    <Border Grid.Row="2" BorderBrush="{DynamicResource LineBrush}" BorderThickness="0,1,0,0" Padding="14,8">
+                        <StackPanel Orientation="Horizontal" Spacing="14">
+                            <StackPanel Orientation="Horizontal" Spacing="5"><Border Classes="key"><TextBlock Text="↑↓" /></Border><TextBlock Classes="caption" Text="{translation:Tr PaletteMove}" VerticalAlignment="Center" /></StackPanel>
+                            <StackPanel Orientation="Horizontal" Spacing="5"><Border Classes="key"><TextBlock Text="Enter" /></Border><TextBlock Classes="caption" Text="{translation:Tr PaletteRun}" VerticalAlignment="Center" /></StackPanel>
+                            <StackPanel Orientation="Horizontal" Spacing="5"><Border Classes="key"><TextBlock Text="Esc" /></Border><TextBlock Classes="caption" Text="{translation:Tr Close}" VerticalAlignment="Center" /></StackPanel>
+                        </StackPanel>
+                    </Border>
                 </Grid>
             </Border>
-        </Grid>
-        <Border Grid.Column="1" x:Name="DropTarget" IsVisible="False" IsHitTestVisible="False" Margin="19"
-                Background="{DynamicResource CardActiveSurface}" BorderBrush="{DynamicResource DropOutline}" BorderThickness="2" CornerRadius="13">
-            <TextBlock Text="{translation:Tr DropPDFsOrImagesToAddThem}" HorizontalAlignment="Center" VerticalAlignment="Center"
-                       FontWeight="SemiBold" FontSize="23" Foreground="{DynamicResource PanelInk}" />
         </Border>
-    </Grid>
+
+        <!-- Keyboard shortcuts sheet -->
+        <Border x:Name="ShortcutsOverlay" IsVisible="False" Classes="overlay-scrim" PointerPressed="Overlay_PointerPressed">
+            <Border Classes="popover" HorizontalAlignment="Center" VerticalAlignment="Center" Width="640" MaxHeight="560"
+                    PointerPressed="OverlayContent_PointerPressed">
+                <Grid RowDefinitions="Auto,*">
+                    <Grid ColumnDefinitions="*,Auto" Margin="22,16,12,6">
+                        <TextBlock Classes="heading" Text="{translation:Tr KeyboardShortcuts}" VerticalAlignment="Center" />
+                        <Button Grid.Column="1" Classes="icon" Click="CloseOverlays_Click" AutomationProperties.Name="{translation:Tr Close}">
+                            <local:Icon Data="{StaticResource Icon.Close}" />
+                        </Button>
+                    </Grid>
+                    <ScrollViewer Grid.Row="1" HorizontalScrollBarVisibility="Disabled">
+                        <Grid x:Name="ShortcutsGrid" ColumnDefinitions="*,*" ColumnSpacing="28" Margin="22,4,22,22" />
+                    </ScrollViewer>
+                </Grid>
+            </Border>
+        </Border>
+    </Panel>
 </Window>

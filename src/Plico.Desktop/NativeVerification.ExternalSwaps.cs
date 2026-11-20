@@ -37,6 +37,7 @@ internal static partial class NativeVerification
         Require(model.SelectedDocument?.Tags.Contains(tag) == true, "The source PDF did not receive its tag.");
 
         string holdingPath = Path.Combine(folder, "held-for-exchange.tmp");
+        await SettleAsync(model);
         File.Move(firstPath, holdingPath);
         File.Move(secondPath, firstPath);
         File.Move(holdingPath, secondPath);

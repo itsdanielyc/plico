@@ -30,6 +30,7 @@ internal sealed partial class InboxViewModel
         OnPropertyChanged(nameof(BatchCountLabel));
         OnPropertyChanged(nameof(SelectShownAction));
         OnPropertyChanged(nameof(BatchReviewAction));
+        OnPropertyChanged(nameof(ShowFilingCard));
         if (HasDeferredWatchResults && !HasBatchSelection && !HasExpandedResults)
         {
             Dispatcher.UIThread.Post(() =>
@@ -68,6 +69,7 @@ internal sealed partial class InboxViewModel
         try
         {
             RequireLibrary().SetReviewed(document.Id, reviewed);
+            OfferReviewUndo([document.Id], reviewed);
             RefreshInboxCount();
             LoadResults(document.Id, retainLoadedResults: true, reviewPosition: position);
             Status = reviewed ? DesktopText.Translate("Marked as reviewed.") : DesktopText.Translate("Returned to inbox.");
@@ -89,6 +91,7 @@ internal sealed partial class InboxViewModel
         {
             var library = RequireLibrary();
             await Task.Run(() => library.SetReviewedDocuments(selectedIds, reviewed), token);
+            OfferReviewUndo(selectedIds, reviewed);
             RefreshInboxCount();
             LoadResults(retainLoadedResults: true, reviewPosition: position);
             var count = DocumentCount(selectedIds.Length);

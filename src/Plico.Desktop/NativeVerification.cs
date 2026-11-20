@@ -117,9 +117,10 @@ internal static partial class NativeVerification
             await VerifyAdditionalIntakeAsync(window, model, dialogs, fixture, evidenceDirectory);
             await VerifyMigrationAsync(window, model, dialogs, evidenceDirectory);
             await VerifyPhoneInboxAsync(window, model, dialogs, fixture, evidenceDirectory);
+        await VerifyRedesignSurfacesAsync(window, model, evidenceDirectory);
 
             File.WriteAllText(Path.Combine(evidenceDirectory, "passed.txt"),
-                $"Verified {runtime}. Native window completed multilingual OCR and correction, oriented JPEG and multi-page TIFF import, PDF combination, page extraction and rotation, phrase, tag, review-status, folder, and text-availability search, query correction, saved search restoration, single and batch document-date editing, date filtering and inheritance, result sorting, continued review across loaded results, fit-width and selectable page text previews, match navigation, tag merging, suggestions, and edits across loaded result pages, duplicate drop, folder watch with catch-up on open and intake routing, inbox counting, title edit, single and batch PDF moves, external relocation and PDF swaps, index reporting and PDF restoration from files and folders, single and batch PDF export, library backup, text copy, single and batch OCR copies, saved import error recovery and retry destinations, per-scanner capture option restoration, and filing through the chosen intake folder. {scanRecoveryEvidence}");
+                $"Verified {runtime}. Native window completed multilingual OCR and correction, oriented JPEG and multi-page TIFF import, PDF combination, page extraction and rotation, phrase, tag, review-status, folder, and text-availability search, query correction, saved search restoration, single and batch document-date editing, date filtering and inheritance, result sorting, continued review across loaded results, fit-width and selectable page text previews, match navigation, tag merging, suggestions, and edits across loaded result pages, duplicate drop, folder watch with catch-up on open and intake routing, inbox counting, title edit, single and batch PDF moves, external relocation and PDF swaps, index reporting and PDF restoration from files and folders, single and batch PDF export, library backup, text copy, single and batch OCR copies, saved import error recovery and retry destinations, per-scanner capture option restoration, filing through the chosen intake folder, and the command palette, shortcuts sheet, Settings window and review undo. {scanRecoveryEvidence}");
             desktop.Shutdown(0);
         }
         catch (Exception error)
@@ -814,6 +815,7 @@ internal static partial class NativeVerification
         var pdfFolder = Path.Combine(model.LibraryPath, "PDFs");
         var filingFolder = Directory.CreateDirectory(Path.Combine(pdfFolder, "Filed")).FullName;
         var movedPdf = Path.Combine(filingFolder, "Housing renewal.pdf");
+        await SettleAsync(model);
         File.Move(Path.Combine(pdfFolder, selected.RelativePath), movedPdf);
         await model.RefreshIndexCommand.ExecuteAsync(null);
         Require(model.Status.Contains("1 document moved.", StringComparison.Ordinal), model.Status);

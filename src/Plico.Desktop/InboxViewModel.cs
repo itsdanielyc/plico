@@ -67,6 +67,7 @@ internal sealed partial class InboxViewModel : ObservableObject, IDisposable
         _intakeFolderPreference = intakeFolderPreference;
         _searchDocuments = searchDocuments ?? (static (library, filter, token) => library.Find(filter, token));
         _searchTimer.Tick += (_, _) => _ = LoadTypedSearchAsync();
+        _suggestionTimer.Tick += (_, _) => StartSuggestionRequest();
     }
 
     public bool HasLibrary => _library is not null;
@@ -278,6 +279,10 @@ internal sealed partial class InboxViewModel : ObservableObject, IDisposable
         _library = replacement;
         replacement.ConfigureOcr(_ocrProcessing);
         CancelPreview();
+        PendingUndo = null;
+        ClearSuggestions();
+        StopBackgroundReads();
+        ForgetAllThumbnails();
         previous?.Dispose();
         var importNotice = RestoreImportFailures(replacement.RootPath);
         var intakeNotice = RestoreIntakeFolder(replacement.RootPath);
@@ -395,6 +400,7 @@ internal sealed partial class InboxViewModel : ObservableObject, IDisposable
             ? CancellationTokenSource.CreateLinkedTokenSource(externalCancellation)
             : new CancellationTokenSource();
         var completion = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+        long[] touched = [.. _batchSelection.Select(document => document.Id), .. SelectedDocument is { } open ? [open.Id] : Array.Empty<long>()];
         _operationCancellation = cancellation;
         _operationCompletion = completion;
         IsBusy = true;
@@ -415,6 +421,7 @@ internal sealed partial class InboxViewModel : ObservableObject, IDisposable
         {
             _operationCancellation = null;
             _operationCompletion = null;
+            ForgetThumbnails(touched);
             IsBusy = false;
             completion.SetResult();
         }
@@ -489,6 +496,7 @@ internal sealed partial class InboxViewModel : ObservableObject, IDisposable
         OnPropertyChanged(nameof(HasDocuments));
         OnPropertyChanged(nameof(HasBatchCandidates));
         OnPropertyChanged(nameof(HasResultActions));
+        NotifyZeroState();
     }
     partial void OnPreviewMessageChanged(string value) => OnPropertyChanged(nameof(HasPreviewMessage));
 
@@ -532,6 +540,7 @@ internal sealed partial class InboxViewModel : ObservableObject, IDisposable
         OnPropertyChanged(nameof(SearchableCopyAction));
         OnPropertyChanged(nameof(HasPageMatchAction));
         NotifyPageChanged();
+        NotifyWorkspaceSelection();
     }
 
     private void NavigatePage(int direction) => ShowPreviewPage(_pageNumber + direction);
@@ -572,7 +581,7 @@ internal sealed partial class InboxViewModel : ObservableObject, IDisposable
             var token = request.Token;
             if (readText)
             {
-                string text = await Task.Run(() => library.ReadPageText(document, page, token), token);
+                string text = await TrackBackgroundRead(() => library.ReadPageText(document, page, token));
                 if (token.IsCancellationRequested) return;
                 PageText = text;
                 PreviewMessage = text.Length == 0 ? DesktopText.Translate("This page has no searchable text.") : "";
@@ -582,7 +591,7 @@ internal sealed partial class InboxViewModel : ObservableObject, IDisposable
             int zoom = PreviewZoomPercent;
             if (zoom != 0)
             {
-                var scaled = await Task.Run(() => library.RenderScaledPdfPageAsync(document, page, zoom, token), token);
+                var scaled = await TrackBackgroundRead(() => library.RenderScaledPdfPageAsync(document, page, zoom, token));
                 using var image = scaled.Image;
                 if (token.IsCancellationRequested) return;
                 var bitmap = new Bitmap(image);
@@ -594,7 +603,7 @@ internal sealed partial class InboxViewModel : ObservableObject, IDisposable
                 return;
             }
 
-            using var rendered = await Task.Run(() => library.RenderPageAsync(document, page, token), token);
+            using var rendered = await TrackBackgroundRead(() => library.RenderPageAsync(document, page, token));
             if (!token.IsCancellationRequested)
             {
                 Preview = new Bitmap(rendered);
@@ -629,6 +638,9 @@ internal sealed partial class InboxViewModel : ObservableObject, IDisposable
     {
         CancelTypedSearch();
         CancelPreview();
+        _suggestionTimer.Stop();
+        ClearSuggestions();
+        StopBackgroundReads();
         _reminderTimer?.Stop();
         ClearPageThumbnails();
         var library = _library;

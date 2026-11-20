@@ -675,3 +675,133 @@ TagAdded	Tag added.	Étiquette ajoutée.
 ImportAddedFormat	{0} added.	Ajout de {0}.
 ImportAlreadyPresentFormat	{0} already in the library.	{0} déjà dans la bibliothèque.
 ImportUnreadableFormat	No text recognized in {0}.	Aucun texte reconnu dans {0}.
+AcceptAll	Accept all	Tout accepter
+AcceptAllTip	Add every suggested value to this document (A)	Ajouter toutes les valeurs suggérées à ce document (A)
+ActionsSection	Actions	Actions
+AddATag	Add a tag	Ajouter une étiquette
+AddedField	Added	Ajouté
+AddFilesTip	Add PDFs, photos, scans, email and Office files to the Inbox	Ajouter des PDF, photos, numérisations, e-mails et fichiers Office à la boîte de réception
+AppearanceHelp	Light, dark or the system setting, and the interface language.	Clair, sombre ou le réglage du système, et la langue de l’interface.
+AppearanceTitle	Theme and language	Thème et langue
+BackupTitle	A complete copy you can open as a library	Une copie complète que vous pouvez ouvrir comme bibliothèque
+BatchHelp	Changes apply to every selected document.	Les modifications s’appliquent à chaque document sélectionné.
+ChangeEllipsis	Change…	Modifier…
+ClearAction	Clear	Effacer
+Commands	Commands	Commandes
+CommandsTip	Every action in Plico, with its shortcut	Toutes les actions de Plico, avec leur raccourci
+DropDestinationFormat	New documents go to {0}	Les nouveaux documents vont dans {0}
+EditAction	Edit…	Modifier…
+ExportsTitle	Export metadata	Exporter les métadonnées
+FieldsField	Fields	Champs
+InboxClear	Inbox clear	Tout est classé
+IntakeSection	Intake	Réception
+KeyboardShortcuts	Keyboard shortcuts	Raccourcis clavier
+LibraryFolderHelp	An ordinary folder of PDFs. Back it up or move it like any other folder.	Un dossier ordinaire de PDF. Sauvegardez-le ou déplacez-le comme n’importe quel dossier.
+LocalModelsHelp	Optional. A model server on this computer for filing suggestions and questions.	Facultatif. Un serveur de modèles sur cet ordinateur pour les suggestions de classement et les questions.
+MaintenanceTitle	Check and refresh	Vérifier et actualiser
+MoreWaysToAdd	More ways to add	Autres façons d’ajouter
+OpenInPdfViewer	Open in your PDF viewer (O)	Ouvrir dans votre lecteur PDF (O)
+PaletteEmpty	No matching commands	Aucune commande correspondante
+PaletteMove	Move	Parcourir
+PalettePlaceholder	Type a command or a tool	Tapez une commande ou un outil
+PaletteRun	Run	Exécuter
+PhoneInboxHelp	A second watched folder for transfers from your phone.	Un deuxième dossier surveillé pour les transferts depuis votre téléphone.
+PrivacyLine	Text recognition, search and suggestions run on this computer. Plico works offline and reaches your local network only to find scanners.	La reconnaissance du texte, la recherche et les suggestions s’exécutent sur cet ordinateur. Plico fonctionne hors ligne et n’utilise votre réseau local que pour trouver des scanners.
+ReminderField	Reminder	Rappel
+RemoveTagTip	Remove this tag	Retirer cette étiquette
+ScanPaper	Scan paper	Numériser du papier
+ScanTip	Scan from a USB or network scanner	Numériser depuis un scanner USB ou réseau
+SettingsAction	Settings…	Réglages…
+SettingsFiling	Filing	Classement
+SettingsGeneral	General	Général
+SettingsRecognition	Text recognition	Reconnaissance du texte
+SettingsTip	Settings	Réglages
+SettingsTitle	Plico settings	Réglages de Plico
+ShowAction	Show	Afficher
+StatusField	Status	Statut
+SuggestedDateTip	The date printed on the page. Select it to file it.	La date imprimée sur la page. Sélectionnez-la pour la classer.
+TagRulesHelp	Words in a document that suggest a tag.	Des mots qui suggèrent une étiquette.
+TextLanguageHelp	New files and scans are read in this language.	Les nouveaux fichiers et numérisations sont lus dans cette langue.
+UndoAction	Undo	Annuler
+Upcoming	Upcoming	À venir
+UpcomingHelp	Reminders and deadlines that are due	Rappels et échéances arrivés à terme
+WatchedFolderHelp	Plico adds new files from the folder your scanner or phone app saves to.	Plico ajoute les nouveaux fichiers du dossier où votre scanner ou votre application enregistre.
+WatchedFolderTitle	Watched folder	Dossier surveillé
+Watching	Watching	Surveillé
+WayAddFiles	PDFs, photos, scans, email and Office documents.	PDF, photos, numérisations, e-mails et documents Office.
+WayMove	Paperless-ngx, Evernote or Mariner Paperless, with tags and dates.	Paperless-ngx, Evernote ou Mariner Paperless, avec étiquettes et dates.
+WayMoveTitle	Move from another app	Venir d’une autre application
+WayScan	From a USB or network scanner, with a feeder or flatbed.	Depuis un scanner USB ou réseau, avec chargeur ou vitre.
+WayWatch	Where your scanner software or phone app already saves.	Là où votre logiciel de numérisation ou votre téléphone enregistre déjà.
+WelcomeLede	Plico turns receipts, letters and forms into searchable PDFs in a folder on this computer. Review each one once, then find it again by anything it says.	Plico transforme reçus, courriers et formulaires en PDF consultables dans un dossier de cet ordinateur. Vérifiez chacun une fois, puis retrouvez-le grâce à n’importe quel mot qu’il contient.
+WelcomeTitle	Welcome to Plico	Bienvenue dans Plico
+RedesignOneSuggestion	1 suggestion	1 suggestion
+RedesignSuggestions	{0} suggestions	{0} suggestions
+RedesignRuleSource	your tag rules	vos règles d’étiquettes
+RedesignReviewedSource	documents you have reviewed	les documents que vous avez vérifiés
+RedesignDateSource	the date printed on the page	la date imprimée sur la page
+RedesignFromOne	From {0}.	D’après {0}.
+RedesignFromTwo	From {0} and {1}.	D’après {0} et {1}.
+RedesignFromThree	From {0}, {1} and {2}.	D’après {0}, {1} et {2}.
+RedesignRuleReason	From a tag rule	D’après une règle d’étiquette
+RedesignLearnedReason	Like documents you have reviewed	Comme des documents que vous avez vérifiés
+RedesignSuggestionAccepted	Suggestion accepted.	Suggestion acceptée.
+RedesignSuggestionsAccepted	{0} suggestions accepted.	{0} suggestions acceptées.
+RedesignUndoing	Undoing…	Annulation…
+RedesignUndone	Undone: {0}.	Annulé : {0}.
+RedesignMarkedReviewed	Marked reviewed	Marqué comme vérifié
+RedesignReturnedInbox	Returned to Inbox	Remis dans la boîte de réception
+RedesignMarkedReviewedLower	marked reviewed	marqués comme vérifiés
+RedesignReturnedInboxLower	returned to Inbox	remis dans la boîte de réception
+RedesignMovedToTrash	Moved {0} to Trash	{0} placé dans la corbeille
+RedesignZeroNone	Everything you have added is filed. New scans and files will wait here.	Tout ce que vous avez ajouté est classé. Les nouveaux fichiers et numérisations attendront ici.
+RedesignZeroOne	Everything is filed. One reminder is due.	Tout est classé. Un rappel arrive à échéance.
+RedesignZeroMany	Everything is filed. {0} reminders are due.	Tout est classé. {0} rappels arrivent à échéance.
+RedesignOnePage	1 page	1 page
+RedesignPages	{0} pages	{0} pages
+RedesignReviewed	Reviewed	Vérifié
+RedesignInInbox	In the Inbox	Dans la boîte de réception
+PaletteReview	Review	Vérification
+PaletteGoTo	Go to	Aller à
+PaletteDocument	Document	Document
+PaletteSelection	Selection	Sélection
+PaletteReturnInbox	Return to Inbox	Remettre dans la boîte de réception
+PaletteAcceptAll	Accept all suggestions	Accepter toutes les suggestions
+PaletteSetDate	Set the document date…	Définir la date du document…
+PaletteMoveTrash	Move to Trash	Placer dans la corbeille
+PaletteOpenViewer	Open in your PDF viewer	Ouvrir dans votre lecteur PDF
+PaletteReminders	Reminders and deadlines…	Rappels et échéances…
+PaletteCustomFields	Custom fields…	Champs personnalisés…
+PaletteUpcoming	Upcoming reminders…	Rappels à venir…
+PaletteSearchFolder	Search a folder…	Rechercher dans un dossier…
+PaletteAddFiles	Add files…	Ajouter des fichiers…
+PaletteScan	Scan…	Numériser…
+PaletteProtected	Import a password-protected PDF…	Importer un PDF protégé par mot de passe…
+PalettePaperlessFolder	Move from Paperless-ngx (folder)…	Venir de Paperless-ngx (dossier)…
+PalettePaperlessExport	Move from Paperless-ngx (export)…	Venir de Paperless-ngx (export)…
+PaletteEvernote	Move from Evernote…	Venir d’Evernote…
+PaletteMariner	Move from Mariner Paperless…	Venir de Mariner Paperless…
+PalettePhoneFolder	Phone inbox folder…	Dossier de réception du téléphone…
+PaletteRedacted	Export a redacted PDF…	Exporter un PDF caviardé…
+PaletteStamped	Export a stamped PDF…	Exporter un PDF tamponné…
+PaletteCompressed	Export a compressed PDF…	Exporter un PDF compressé…
+PaletteRelated	Related documents…	Documents similaires…
+PaletteAskFiling	Ask the local model for filing…	Demander un classement au modèle local…
+PaletteShowInFolder	Show in folder	Afficher dans le dossier
+PaletteSetArchive	Set the archive number…	Définir le numéro d’archive…
+PaletteSelectAll	Select all shown	Tout sélectionner
+PaletteChooseLibrary	Choose library folder…	Choisir le dossier de la bibliothèque…
+PaletteIntegrity	Check library integrity	Vérifier l’intégrité de la bibliothèque
+PaletteIndexReport	Index report…	Rapport d’index…
+PaletteImportErrors	Import errors…	Erreurs d’importation…
+PaletteFindArchive	Find an archive number…	Trouver un numéro d’archive…
+PalettePrintLabels	Print archive label sheets…	Imprimer des planches d’étiquettes…
+PalettePrintSeparator	Print a separator sheet…	Imprimer une feuille de séparation…
+PaletteAskModel	Ask the local model…	Interroger le modèle local…
+ShortcutReviewing	Reviewing	Vérification
+ShortcutEverywhere	Everywhere	Partout
+ShortcutNextPrevious	Next and previous document	Document suivant et précédent
+ShortcutReviewNext	Mark reviewed and open the next	Marquer comme vérifié et ouvrir le suivant
+ShortcutTrashNext	Move to Trash and open the next	Placer dans la corbeille et ouvrir le suivant
+ShortcutPages	Previous and next page	Page précédente et suivante
+IntakeFolderTitle	Intake folder	Dossier de réception

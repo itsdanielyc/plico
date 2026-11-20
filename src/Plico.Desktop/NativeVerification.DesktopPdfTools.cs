@@ -19,9 +19,13 @@ internal static partial class NativeVerification
     {
         var actions = Control<ScrollViewer>(window, "DocumentActionsScroll");
         actions.Offset = default;
-        await UntilAsync(() => IsInsideViewport(Control<Button>(window, "CreateSearchableCopyButton"), actions) &&
-            IsInsideViewport(Control<Button>(window, "TrashDocumentButton"), actions),
-            () => "OCR and Trash must be visible in the action tray at the initial window size.");
+        await UntilAsync(() => IsInsideViewport(Control<Button>(window, "ReviewButton"), window) &&
+            IsInsideViewport(Control<Button>(window, "TrashDocumentButton"), window),
+            () => "Mark reviewed and Trash must stay on the filing card at the initial window size.");
+        var searchableCopy = Control<Button>(window, "CreateSearchableCopyButton");
+        searchableCopy.BringIntoView();
+        await UntilAsync(() => IsInsideViewport(searchableCopy, actions), () => "The OCR copy action must scroll into the filing card.");
+        actions.Offset = default;
         window.Width = window.MinWidth;
         window.Height = window.MinHeight;
         await UntilAsync(() => window.Bounds.Width <= window.MinWidth + LayoutRoundingTolerance &&
@@ -50,7 +54,7 @@ internal static partial class NativeVerification
         await CaptureAsync(window, evidence, "pdf-thumbnails-and-zoom.png");
         Require(previewScroll.HorizontalScrollBarVisibility == ScrollBarVisibility.Auto && previewScroll.Viewport.Height >= MinimumPreviewViewport,
             $"The zoomed PDF could not scroll or fit a usable viewport. Preview height {previewScroll.Viewport.Height}.");
-        RequireCompactDocumentActions(window);
+        await RequireCompactDocumentActionsAsync(window);
         foreach (string actionName in new[] { "FindRelatedButton", "SuggestLocalFilingButton" })
         {
             var action = Control<Button>(window, actionName);
@@ -79,7 +83,7 @@ internal static partial class NativeVerification
         {
             await model.ShowAppearanceCommand.ExecuteAsync(null);
             await UntilAsync(() => model.Preview is not null && window.ActualThemeVariant == ThemeVariant.Dark &&
-                window.Background is ISolidColorBrush { Color: { R: 23, G: 36, B: 29 } }, () => model.Status);
+                window.Background is ISolidColorBrush { Color: { R: 28, G: 28, B: 31 } }, () => model.Status);
             await CaptureAsync(window, evidence, "desktop-dark.png");
 
             DesktopText.SetLanguage(InterfaceLanguage.French);
@@ -95,7 +99,7 @@ internal static partial class NativeVerification
                 await UntilAsync(() => localizedModel.Preview is not null, () => localizedModel.Status);
                 Require(Control<Button>(localized, "AddFilesButton").Content as string == "Ajouter des fichiers" &&
                     Control<TextBlock>(localized, "InboxHeading").Text == "Boîte de réception", "The French labels did not load.");
-                RequireCompactDocumentActions(localized);
+                await RequireCompactDocumentActionsAsync(localized);
                 Require(Control<ScrollViewer>(localized, "PreviewScroll").Viewport.Height >= MinimumPreviewViewport,
                     "The French interface crowded the PDF viewport at the minimum window size.");
                 await CaptureAsync(localized, evidence, "desktop-french.png");
@@ -135,14 +139,25 @@ internal static partial class NativeVerification
         }
     }
 
-    private static void RequireCompactDocumentActions(MainWindow window)
+    /// <summary>At the minimum size, review and Trash stay pinned to the card and every PDF action scrolls into view.</summary>
+    private static async Task RequireCompactDocumentActionsAsync(MainWindow window)
     {
-        var tray = Control<ScrollViewer>(window, "DocumentActionsScroll");
-        Require(IsInsideViewport(Control<Button>(window, "PdfToolsButton"), tray) &&
-            IsInsideViewport(Control<Button>(window, "ExportPdfButton"), tray) &&
-            IsInsideViewport(Control<Button>(window, "ReviewButton"), window),
-            "PDF tools, export, and review must remain visible at the minimum window size.");
+        var card = Control<ScrollViewer>(window, "DocumentActionsScroll");
+        Require(IsInsideViewport(Control<Button>(window, "ReviewButton"), window) &&
+            IsInsideViewport(Control<Button>(window, "TrashDocumentButton"), window),
+            "Mark reviewed and Trash must remain visible at the minimum window size.");
+        foreach (string name in new[] { "PdfToolsButton", "ExportPdfButton" })
+        {
+            var action = Control<Button>(window, name);
+            action.BringIntoView();
+            await UntilAsync(() => IsInsideViewport(action, card), () => $"{name} could not scroll into the filing card at the minimum size.");
+        }
+        card.Offset = default;
     }
+
+    /// <summary>Waits until row thumbnails, suggestions and page renders have released the library's files.</summary>
+    private static Task SettleAsync(InboxViewModel model) =>
+        UntilAsync(() => !model.IsReadingInBackground, () => "Thumbnails and suggestions were still reading the library.");
 
     private static bool IsInsideViewport(Control control, Control viewport) =>
         control.IsEffectivelyVisible && control.TranslatePoint(default, viewport) is { } origin &&

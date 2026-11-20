@@ -244,6 +244,7 @@ internal sealed partial class InboxViewModel
         OnPropertyChanged(nameof(InboxSelected));
         OnPropertyChanged(nameof(AllSelected));
         OnPropertyChanged(nameof(WithoutTextSelected));
+        NotifyZeroState();
     }
 
     private void ApplyResultPage(DocumentFilter filter, DocumentPage page, long? preferredId = null, bool reloadPreview = false)
