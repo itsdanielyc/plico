@@ -291,13 +291,14 @@
 | 2026-11-20 21:02 UTC | L0, L1, L3, L4 | With the review amendments at `6d29845`, every `keel.json` command passed. `integration` now includes the catalog concurrency tests. `contracts` is null and was skipped. | windows-x64, local Windows 11, .NET SDK 10.0.404 | `lint` exited 0 with no warnings. `unit` passed 336 and skipped 1 in 77 s. `integration` passed 168 and skipped 1 in 34 s. `ui` passed 102 in 73 s. |
 | 2026-11-20 21:01 UTC | L6 | At `6d29845` the native journey passed 20 times in a row, against one failure in six runs before the catalog change. Screenshots reviewed: Select shown in the compact header at the minimum size, the dark French window, the command palette, and the review with undo. | windows-x64, local | `Plico.exe --verify` 20 times between 20:46 and 21:01 UTC. Each exited 0 in 41 to 54 s with 103 screenshots. `Test-Native.ps1` needs PowerShell 7, which this machine lacks. |
 | 2026-11-20 20:56 UTC | L1–L4, L6 | At `6d29845` the suite and the native journey passed on all six targets. It is the first green hosted run on this branch, and win-arm64 had failed in each of the three runs before it. The run also carries the post-v0.18.0 maintenance commits through `992dc63`, whose tests had been waiting on four of these targets. The compact header was reviewed in the win-x64 captures at 1028 × 749: `saved-search.png` shows Edit search and Select shown beside the count, and `review-position.png` shows Save search and Select shown. | win-x64, win-arm64, osx-arm64, osx-x64, linux-x64, linux-arm64 | [CI 44814812116](https://github.com/itsdanielyc/plico/actions/runs/44814812116), 6 of 6 green. Artifact `native-win-x64`. |
+| 2026-11-20 21:12 UTC | L1–L4, L6 | At `1ce9e0b`, the same product code with the ledger rows and the wider `integration` command, the suite and the native journey passed on all six targets again. Twelve hosted journeys have passed since the catalog change. Five of the eighteen before it failed on the lock. | win-x64, win-arm64, osx-arm64, osx-x64, linux-x64, linux-arm64 | [CI 44816924809](https://github.com/itsdanielyc/plico/actions/runs/44816924809), 6 of 6 green. |
 
 ## Unverified
 
 - Physical scanner interoperability requires a compatible device.
 - Developer ID signing and notarization on macOS, and Authenticode signing on Windows.
 - The desktop redesign with a real screen reader. The window tests check that every visible button has a name.
-- The 20-run repeat of the native journey ran on windows-x64 only. The other five targets have one hosted pass each at `6d29845`.
+- The 20-run repeat of the native journey ran on windows-x64 only. The other five targets have two hosted passes each since the catalog change.
 - Reduced motion on macOS and Linux follows only `PLICO_REDUCE_MOTION`. Reading the system setting there is planned under R8.
 
 ## Earlier hosted runs
