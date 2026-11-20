@@ -176,6 +176,7 @@ internal static class ShortcutSheet
         ]);
     }
 
+    // Every label needs its own row in DesktopText.tsv: Translate falls back to English without a notice.
     private static void AddGroup(Grid grid, int column, string title, IReadOnlyList<(string Keys, string Label)> rows)
     {
         var panel = new StackPanel { Spacing = 0 };

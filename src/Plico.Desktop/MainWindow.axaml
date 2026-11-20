@@ -187,8 +187,15 @@
             <Setter Property="Background" Value="Transparent" />
             <Setter Property="Foreground" Value="{DynamicResource FaintInk}" />
         </Style>
+        <!-- The thumbnail strip has no room for the list's footer, so compact windows offer the same actions in the header. -->
         <Style Selector="Grid.compact Panel.queue-footer">
             <Setter Property="IsVisible" Value="False" />
+        </Style>
+        <Style Selector="StackPanel.compact-only">
+            <Setter Property="IsVisible" Value="False" />
+        </Style>
+        <Style Selector="Grid.compact StackPanel.compact-only">
+            <Setter Property="IsVisible" Value="True" />
         </Style>
 
         <!-- Queue rows -->
@@ -558,6 +565,15 @@
                                             IsVisible="{Binding ShowSaveSearch}" IsEnabled="{Binding CanWork}" />
                                     <Button x:Name="EditSavedSearchButton" Classes="chip" Content="{translation:Tr EditSearch}" Command="{Binding EditActiveSavedSearchCommand}"
                                             IsVisible="{Binding HasActiveSavedSearch}" IsEnabled="{Binding CanWork}" />
+                                    <StackPanel Classes="compact-only" Orientation="Horizontal" Spacing="6">
+                                        <Button x:Name="CompactRefreshResultsButton" Classes="chip" Content="{translation:Tr RefreshResults}"
+                                                Command="{Binding RefreshWatchedResultsCommand}" IsVisible="{Binding HasDeferredWatchResults}"
+                                                IsEnabled="{Binding CanWork}" ToolTip.Tip="{translation:Tr RefreshAfterWatchedImports}" />
+                                        <Button x:Name="CompactSelectShownButton" Classes="chip" Content="{Binding SelectShownAction}"
+                                                Click="SelectShown_Click" IsVisible="{Binding HasBatchCandidates}" />
+                                        <Button x:Name="CompactLoadMoreButton" Classes="chip" Content="{translation:Tr LoadMore}"
+                                                Command="{Binding LoadMoreCommand}" IsVisible="{Binding HasMore}" />
+                                    </StackPanel>
                                 </WrapPanel>
                             </Grid>
                         </Panel>

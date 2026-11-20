@@ -17,6 +17,7 @@ public sealed partial class MainWindow : Window
         InitializeComponent();
         ApplyWorkspaceLayout(Width);
         WirePalette();
+        WireShortcutKeys();
         PreviewPage.PropertyChanged += (_, change) =>
         {
             if (change.Property == Image.SourceProperty) UpdatePreviewScrollPosition();
@@ -110,7 +111,7 @@ public sealed partial class MainWindow : Window
 
     private void DocumentList_KeyUp(object? sender, KeyEventArgs e)
     {
-        if (e.KeyModifiers != KeyModifiers.None || ViewModel is not { CanWork: true, HasSelection: true } model) return;
+        if (!IsShortcutRelease(e) || e.KeyModifiers != KeyModifiers.None || ViewModel is not { CanWork: true, HasSelection: true } model) return;
         switch (e.Key)
         {
             case Key.R:

@@ -804,4 +804,6 @@ ShortcutNextPrevious	Next and previous document	Document suivant et précédent
 ShortcutReviewNext	Mark reviewed and open the next	Marquer comme vérifié et ouvrir le suivant
 ShortcutTrashNext	Move to Trash and open the next	Placer dans la corbeille et ouvrir le suivant
 ShortcutPages	Previous and next page	Page précédente et suivante
+ShortcutSetDate	Set the document date	Définir la date du document
+ShortcutRename	Rename	Renommer
 IntakeFolderTitle	Intake folder	Dossier de réception

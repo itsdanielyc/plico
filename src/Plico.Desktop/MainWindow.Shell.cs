@@ -21,6 +21,8 @@ public partial class MainWindow
     private DateTime _lastReview = DateTime.MinValue;
     private IReadOnlyList<PaletteCommand> _paletteCommands = [];
     private SettingsWindow? _settings;
+    private readonly HashSet<Key> _armedKeys = [];
+    private Key? _releasedKey;
 
     /// <summary>Collapse order: the filing card narrows, then the queue becomes a thumbnail strip.</summary>
     private void ApplyWorkspaceLayout(double width)
@@ -53,11 +55,32 @@ public partial class MainWindow
 
     private bool IsOverlayOpen => PaletteOverlay.IsVisible || ShortcutsOverlay.IsVisible;
 
+    /// <summary>
+    /// Single-key shortcuts run on release, so the character never lands in a field the shortcut focuses. A release
+    /// only counts when the same key went down outside a text field, with no overlay open and without Ctrl, ⌘ or
+    /// Alt. A letter typed into search or the palette, or a chord let go modifier first, comes back up after focus
+    /// has moved and must not review or trash a document. O(1) per key event.
+    /// </summary>
+    private void WireShortcutKeys()
+    {
+        AddHandler(KeyDownEvent, (_, e) =>
+        {
+            bool plain = (e.KeyModifiers & (KeyModifiers.Control | KeyModifiers.Meta | KeyModifiers.Alt)) == 0;
+            if (plain && !IsTyping && !IsOverlayOpen) _armedKeys.Add(e.Key);
+            else _armedKeys.Remove(e.Key);
+        }, RoutingStrategies.Tunnel, handledEventsToo: true);
+        AddHandler(KeyUpEvent, (_, e) => _releasedKey = _armedKeys.Remove(e.Key) ? e.Key : null,
+            RoutingStrategies.Tunnel, handledEventsToo: true);
+    }
+
+    /// <summary>True when this release ends a press that began as a shortcut.</summary>
+    private bool IsShortcutRelease(KeyEventArgs e) => _releasedKey == e.Key;
+
     /// <summary>Single-key review shortcuts. Keys follow the character on the user's layout.</summary>
     protected override void OnKeyUp(KeyEventArgs e)
     {
         base.OnKeyUp(e);
-        if (e.Handled || IsTyping || IsOverlayOpen || ViewModel is not { } model) return;
+        if (e.Handled || !IsShortcutRelease(e) || IsTyping || IsOverlayOpen || ViewModel is not { } model) return;
         if ((e.KeyModifiers & (KeyModifiers.Control | KeyModifiers.Meta | KeyModifiers.Alt)) != 0) return;
         string key = (e.KeySymbol ?? "").ToLowerInvariant();
         bool handled = true;
@@ -93,6 +116,7 @@ public partial class MainWindow
             case Key.S when shift: Run(model.ScanCommand); return true;
             case Key.OemComma: OpenSettings(); return true;
             case Key.Z when !IsTyping && !shift: Run(model.UndoCommand); return true;
+            case Key.A when !IsTyping && !shift && !IsOverlayOpen: SelectAllShown(); return true;
             default: return false;
         }
     }

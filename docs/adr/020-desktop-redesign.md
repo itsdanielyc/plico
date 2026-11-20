@@ -10,8 +10,10 @@ Rarely used tools leave the permanent chrome. They stay reachable from the ⋯ m
 
 Buttons that tests or screen readers read by their text keep plain-string content. A style template draws their icon from the `Ui.Icon` attached property.
 
-Optional background reads (row thumbnails, inline filing suggestions, page previews) go through one tracked path. Switching libraries or closing Plico cancels them and waits for them to release their files before the library closes. This keeps the PDF folder and SQLite catalog free of stray handles.
+Optional background reads (row thumbnails, inline filing suggestions, page previews) go through one tracked path. Switching libraries or closing Plico cancels them and waits for them to release their files before the library closes. This keeps the PDF folder and SQLite catalog free of stray handles. These reads run beside catalog writes, so every catalog connection sets SQLite's busy timeout. A write then waits for a reader on another connection. Without it, an insert that returns its row ID commits as its reader closes, a step Microsoft.Data.Sqlite does not retry, and the write fails at once with "database is locked".
 
 Undo covers review changes and Trash for the latest action. Each revert goes back through `InboxLibrary`, so files and the catalog stay consistent.
+
+Single-key shortcuts act on key release, so the character never lands in a field the shortcut focuses. The window arms a key only when it goes down outside a text field, with no overlay open and without Ctrl, ⌘ or Alt, and a release counts only for an armed key. A letter typed into search or the palette is therefore inert when it comes back up after focus has moved.
 
 **Consequences.** The window keeps every named control that the headless tests and the native journey drive. The native checks now assert that review and Trash stay on the filing card, and that every PDF action scrolls into view at the minimum window size. The motion layer works on a snapshot and never blocks a state change. It skips repeated reviews within 1.2 seconds, and it skips entirely when Windows asks for reduced animation or `PLICO_REDUCE_MOTION=1` is set.

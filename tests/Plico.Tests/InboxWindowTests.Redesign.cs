@@ -275,6 +275,10 @@ public sealed partial class InboxWindowTests
 
     private static string RedesignFixture(string name) => Path.Combine(AppContext.BaseDirectory, "fixtures", name);
 
-    private static void PressWindowKey(Window window, Key key, string symbol) =>
+    /// <summary>A whole key press: down, then up. Single-key shortcuts act on the release of a press they saw begin.</summary>
+    private static void PressWindowKey(Window window, Key key, string symbol)
+    {
+        window.RaiseEvent(new KeyEventArgs { RoutedEvent = InputElement.KeyDownEvent, Key = key, KeySymbol = symbol });
         window.RaiseEvent(new KeyEventArgs { RoutedEvent = InputElement.KeyUpEvent, Key = key, KeySymbol = symbol });
+    }
 }

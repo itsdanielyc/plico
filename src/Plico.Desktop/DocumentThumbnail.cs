@@ -55,8 +55,9 @@ public sealed class DocumentThumbnail : Border
         if (Document is not { PageCount: > 0 } document || TopLevel.GetTopLevel(this)?.DataContext is not InboxViewModel model) return;
         if (model.TryGetCachedThumbnail(document) is { } cached)
         {
+            // A thumbnail an operation marked stale stays on the row until its new render arrives, so rows never flash blank.
             _image.Source = cached;
-            return;
+            if (!model.IsThumbnailStale(document)) return;
         }
         var request = new CancellationTokenSource();
         _request = request;
