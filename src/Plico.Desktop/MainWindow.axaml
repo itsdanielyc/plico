@@ -202,8 +202,8 @@
         <Style Selector="Grid.compact StackPanel.row-text">
             <Setter Property="IsVisible" Value="False" />
         </Style>
-        <Style Selector="Grid.compact Panel.queue-chrome">
-            <Setter Property="IsVisible" Value="False" />
+        <Style Selector="Grid.compact Border.queue-header">
+            <Setter Property="BorderThickness" Value="0,0,0,1" />
         </Style>
 
         <Style Selector="Border.overlay-scrim">
@@ -540,10 +540,10 @@
                 </Border>
 
                 <!-- ─────────── Workspace: queue, page and filing card ─────────── -->
-                <Grid Grid.Row="1" x:Name="WorkspaceGrid" ColumnDefinitions="296,*,316">
-                    <!-- Queue -->
-                    <Grid RowDefinitions="Auto,*,Auto" Background="{DynamicResource WorkspaceSurface}">
-                        <Panel Classes="queue-chrome" Margin="16,14,10,8">
+                <Grid Grid.Row="1" x:Name="WorkspaceGrid" ColumnDefinitions="296,*,316" RowDefinitions="Auto,*">
+                    <!-- Queue header. In compact windows it spans the thumbnail strip and the page, so it stays readable. -->
+                    <Border x:Name="QueueHeader" Classes="queue-header" Background="{DynamicResource WorkspaceSurface}" BorderBrush="{DynamicResource LineBrush}">
+                        <Panel Margin="16,14,10,8">
                             <Grid RowDefinitions="Auto,Auto" ColumnDefinitions="*,Auto" RowSpacing="6">
                                 <TextBlock x:Name="InboxHeading" Classes="title" Text="{Binding Heading}" TextTrimming="CharacterEllipsis"
                                            AutomationProperties.HeadingLevel="1" VerticalAlignment="Center" />
@@ -561,6 +561,10 @@
                                 </WrapPanel>
                             </Grid>
                         </Panel>
+                    </Border>
+
+                    <!-- Queue -->
+                    <Grid Grid.Row="1" RowDefinitions="0,*,Auto" Background="{DynamicResource WorkspaceSurface}">
                         <TextBlock Grid.Row="1" x:Name="EmptyResultsMessage" Text="{Binding EmptyMessage}" IsVisible="{Binding !HasDocuments}"
                                    Foreground="{DynamicResource MutedInk}" MaxWidth="230" TextAlignment="Center" TextWrapping="Wrap"
                                    HorizontalAlignment="Center" VerticalAlignment="Center" Margin="12"
@@ -607,7 +611,7 @@
                     </Grid>
 
                     <!-- Page: paper on the desk -->
-                    <Border Grid.Column="1" Background="{DynamicResource DeskSurface}" ClipToBounds="True">
+                    <Border Grid.Column="1" Grid.RowSpan="2" x:Name="PageColumn" Background="{DynamicResource DeskSurface}" ClipToBounds="True">
                         <Panel>
                             <TextBlock Text="{translation:Tr SelectADocumentToPreviewIt}" IsVisible="{Binding !HasSelection}"
                                        Foreground="{DynamicResource MutedInk}" HorizontalAlignment="Center" VerticalAlignment="Center" />
@@ -740,7 +744,7 @@
                     </Border>
 
                     <!-- Filing card and batch card -->
-                    <Border Grid.Column="2" BorderBrush="{DynamicResource LineBrush}" BorderThickness="1,0,0,0" Background="{DynamicResource WorkspaceSurface}">
+                    <Border Grid.Column="2" Grid.RowSpan="2" BorderBrush="{DynamicResource LineBrush}" BorderThickness="1,0,0,0" Background="{DynamicResource WorkspaceSurface}">
                         <Panel>
                             <!-- Batch card -->
                             <Grid RowDefinitions="Auto,*,Auto" IsVisible="{Binding HasBatchSelection}">
@@ -976,7 +980,7 @@
                     </Border>
 
                     <!-- Inbox zero and first run -->
-                    <Border Grid.ColumnSpan="3" Background="{DynamicResource WorkspaceSurface}" IsVisible="{Binding ShowInboxZero}">
+                    <Border Grid.ColumnSpan="3" Grid.RowSpan="2" Background="{DynamicResource WorkspaceSurface}" IsVisible="{Binding ShowInboxZero}">
                         <Panel>
                             <StackPanel IsVisible="{Binding ShowInboxClear}" HorizontalAlignment="Center" VerticalAlignment="Center" Spacing="14" MaxWidth="420">
                                 <local:Icon Data="{StaticResource Mark.Full}" IsFilled="True" GridSize="468" Width="56" Height="47"

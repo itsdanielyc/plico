@@ -26,13 +26,17 @@ public partial class MainWindow
     private void ApplyWorkspaceLayout(double width)
     {
         // Window size changes arrive while the XAML is still loading, before the named grids exist.
-        if (ShellGrid is null || WorkspaceGrid is null || double.IsNaN(width)) return;
+        if (ShellGrid is null || WorkspaceGrid is null || QueueHeader is null || PageColumn is null || double.IsNaN(width)) return;
         bool compact = width < CompactWidth;
         bool medium = width < MediumWidth;
         ShellGrid.ColumnDefinitions[0].Width = new GridLength(compact ? 200 : medium ? 208 : 216);
         WorkspaceGrid.ColumnDefinitions[0].Width = new GridLength(compact ? 84 : medium ? 252 : 272);
         WorkspaceGrid.ColumnDefinitions[2].Width = new GridLength(compact ? 280 : medium ? 288 : 296);
         WorkspaceGrid.Classes.Set("compact", compact);
+        // Compact: the header spans the thumbnail strip and the page, and the page starts below it.
+        Grid.SetColumnSpan(QueueHeader, compact ? 2 : 1);
+        Grid.SetRow(PageColumn, compact ? 1 : 0);
+        Grid.SetRowSpan(PageColumn, compact ? 1 : 2);
     }
 
     protected override Size MeasureOverride(Size availableSize)

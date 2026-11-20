@@ -232,6 +232,35 @@ public sealed partial class InboxWindowTests
         }
     }
 
+    [AvaloniaFact]
+    public async Task NarrowWindowsKeepTheHeadingSortAndSaveSearch()
+    {
+        using var temporary = new TemporaryLibrary();
+        using (var library = InboxLibrary.Open(temporary.Path)) BatchFixtures.AddTwoDocuments(library, TestContext.Current.CancellationToken);
+        using var model = new InboxViewModel(new FixtureDialogs());
+        model.InitializeLibrary(() => temporary.Path);
+        // A 1024 × 768 screen leaves about this much room, as on the hosted Windows and macOS runners.
+        var window = new MainWindow { DataContext = model, Width = 1028, Height = 749 };
+        window.Show();
+        try
+        {
+            await WaitForPreviewAsync(model);
+            model.Query = "lease";
+            await WaitForAsync(() => model.Heading == "Search results" && model.Documents.Count == 2);
+            window.UpdateLayout();
+            Assert.Contains("compact", window.FindControl<Grid>("WorkspaceGrid")!.Classes);
+            var heading = window.FindControl<TextBlock>("InboxHeading")!;
+            Assert.True(heading.IsEffectivelyVisible);
+            Assert.True(heading.Bounds.Width > 120, $"Heading width {heading.Bounds.Width}");
+            Assert.True(window.FindControl<ComboBox>("DocumentSortBox")!.IsEffectivelyVisible);
+            Assert.True(window.FindControl<Button>("SaveSearchButton")!.IsEffectivelyVisible);
+        }
+        finally
+        {
+            window.Close();
+        }
+    }
+
     [Fact]
     public void PaletteRanksTitlePrefixesBeforeAliasesAndSubsequences()
     {
