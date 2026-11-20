@@ -5,13 +5,19 @@ namespace Plico.Desktop;
 
 internal static partial class NativeVerification
 {
-    /// <summary>The command palette, shortcuts sheet, Settings window and the review loop with undo.</summary>
-    private static async Task VerifyRedesignSurfacesAsync(MainWindow window, InboxViewModel model, string evidence)
+    /// <summary>
+    /// The welcome page, command palette, shortcuts sheet, Settings window, and the review loop with its motion and
+    /// undo on a document imported into the Inbox.
+    /// </summary>
+    private static async Task VerifyRedesignSurfacesAsync(MainWindow window, InboxViewModel model, string evidence, string fixture)
     {
         window.Width = 1280;
         window.Height = 800;
         model.ShowInboxCommand.Execute(null);
         await UntilAsync(() => model.ShowInboxZero || (model.HasSelection && model.Preview is not null), () => model.Status);
+        // The journey ends in an empty second library, which opens on the welcome page.
+        Require(model.ShowWelcome, $"An empty library did not open on the welcome page. {model.Status}");
+        await CaptureAsync(window, evidence, "welcome.png");
 
         window.RaiseEvent(new KeyEventArgs { RoutedEvent = InputElement.KeyDownEvent, Key = Key.K, KeyModifiers = KeyModifiers.Control });
         var palette = Control<Border>(window, "PaletteOverlay");
@@ -37,15 +43,21 @@ internal static partial class NativeVerification
         await CaptureAsync(settings, evidence, "settings.png");
         settings.Close();
 
-        if (model.SelectedDocument is { Reviewed: false } document)
+        if (model.SelectedDocument is not { Reviewed: false })
         {
-            long before = model.InboxCount;
-            window.ReviewWithMotion();
-            await UntilAsync(() => model.InboxCount == before - 1 && model.HasUndo, () => model.Status);
-            await CaptureAsync(window, evidence, "review-undo.png");
-            await model.UndoCommand.ExecuteAsync(null);
-            await UntilAsync(() => model.InboxCount == before && model.SelectedDocument?.Id == document.Id, () => model.Status);
+            await model.ImportAssociatedPdfsAsync([Path.Combine(Path.GetDirectoryName(fixture)!, "Lease Renewal.pdf")]);
+            model.ShowInboxCommand.Execute(null);
         }
+        await UntilAsync(() => model.SelectedDocument is { Reviewed: false } && model.Preview is not null && !model.IsReadingInBackground,
+            () => $"No Inbox document to review. {model.Status}");
+        var document = model.SelectedDocument!;
+        long before = model.InboxCount;
+        window.ReviewWithMotion();
+        Require(model.InboxCount == before - 1 && model.HasUndo, $"R did not mark the document reviewed with an undo. {model.Status}");
+        await CaptureAsync(window, evidence, "review-undo.png");
+        await model.UndoCommand.ExecuteAsync(null);
+        await UntilAsync(() => model.InboxCount == before && model.SelectedDocument is { Reviewed: false } restored && restored.Id == document.Id,
+            () => model.Status);
     }
 
     private static async Task<T> WaitForOwnedAsync<T>(Window owner) where T : Window
