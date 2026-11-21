@@ -18,7 +18,7 @@ internal sealed partial class InboxViewModel
     private static readonly TimeSpan SuggestionDelay = TimeSpan.FromMilliseconds(180);
     private readonly DispatcherTimer _suggestionTimer = new() { Interval = SuggestionDelay };
     private CancellationTokenSource? _suggestionRequest;
-    private long _suggestionDocument;
+    private DocumentSummary? _suggestionDocument;
 
     [ObservableProperty]
     [NotifyPropertyChangedFor(nameof(HasSuggestions), nameof(HasSuggestedTags), nameof(SuggestionCount), nameof(SuggestionSummary), nameof(SuggestionReason))]
@@ -91,32 +91,26 @@ internal sealed partial class InboxViewModel
         }
     }
 
-    private void RequestSuggestions(DocumentSummary? document)
+    private void RequestSuggestions(DocumentSummary? document, bool refresh = false)
     {
-        _suggestionTimer.Stop();
         if (document is null || document.Reviewed || _library is null)
         {
             ClearSuggestions();
             return;
         }
-        if (document.Id == _suggestionDocument && _suggestionRequest is null)
-        {
-            // The same document reloaded after an edit: drop suggestions it now carries.
-            var applied = document.Tags.Select(InboxLibrary.GetTagKey).ToHashSet(StringComparer.Ordinal);
-            if (SuggestedTags.Any(tag => applied.Contains(InboxLibrary.GetTagKey(tag.Label))))
-                SuggestedTags = SuggestedTags.Where(tag => !applied.Contains(InboxLibrary.GetTagKey(tag.Label))).ToArray();
-            if (document.DocumentDate is not null) SuggestedDate = null;
+        if (!refresh && _suggestionDocument is { } previous && previous.Id == document.Id &&
+            previous.ContentRevision == document.ContentRevision && previous.Title == document.Title &&
+            previous.DocumentDate == document.DocumentDate && previous.Tags.SequenceEqual(document.Tags))
             return;
-        }
         ClearSuggestions();
-        _suggestionDocument = document.Id;
+        _suggestionDocument = document;
         _suggestionTimer.Start();
     }
 
     private void StartSuggestionRequest()
     {
         _suggestionTimer.Stop();
-        if (_library is not { } library || SelectedDocument is not { Reviewed: false } document || document.Id != _suggestionDocument) return;
+        if (_library is not { } library || SelectedDocument is not { Reviewed: false } document || document.Id != _suggestionDocument?.Id) return;
         var request = new CancellationTokenSource();
         _suggestionRequest = request;
         _ = LoadSuggestionsAsync(library, document, RecognitionLanguage, request);
@@ -135,7 +129,7 @@ internal sealed partial class InboxViewModel
             var suggestion = found[0];
             var applied = SelectedDocument.Tags.Select(InboxLibrary.GetTagKey).ToHashSet(StringComparer.Ordinal);
             SuggestedTags = suggestion.Tags.Where(tag => applied.Add(InboxLibrary.GetTagKey(tag.Tag)))
-                .Take(4).Select(tag => new SuggestedTag(tag.Tag, tag.Source)).ToArray();
+                .Select(tag => new SuggestedTag(tag.Tag, tag.Source)).ToArray();
             SuggestedDate = suggestion.Fields.DocumentDates.Count > 0 ? suggestion.Fields.DocumentDates[0] : null;
         }
         catch (OperationCanceledException) when (request.IsCancellationRequested)
@@ -144,8 +138,7 @@ internal sealed partial class InboxViewModel
         catch (Exception error) when (error is not OutOfMemoryException)
         {
             // Suggestions are optional; the fields stay editable when the catalog cannot be read.
-            SuggestedTags = [];
-            SuggestedDate = null;
+            if (_suggestionRequest == request) ClearSuggestions();
         }
         finally
         {
@@ -156,9 +149,10 @@ internal sealed partial class InboxViewModel
 
     private void ClearSuggestions()
     {
+        _suggestionTimer.Stop();
         _suggestionRequest?.Cancel();
         _suggestionRequest = null;
-        _suggestionDocument = 0;
+        _suggestionDocument = null;
         SuggestedTags = [];
         SuggestedDate = null;
     }

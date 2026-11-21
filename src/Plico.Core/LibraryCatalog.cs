@@ -297,12 +297,17 @@ internal sealed partial class LibraryCatalog
     }
 
     // O(log n + p) for p pending documents among n catalog rows, with constant application space.
-    internal long CountUnreviewedDocuments()
+    internal (long Unreviewed, bool HasDocuments) ReadInboxStatus()
     {
         using var connection = Connect();
         using var command = connection.CreateCommand();
-        command.CommandText = "SELECT count(*) FROM documents WHERE is_present = 1 AND reviewed = 0;";
-        return (long)command.ExecuteScalar()!;
+        command.CommandText = """
+            SELECT count(*), EXISTS(SELECT 1 FROM documents WHERE is_present = 1)
+            FROM documents WHERE is_present = 1 AND reviewed = 0;
+            """;
+        using var row = command.ExecuteReader();
+        row.Read();
+        return (row.GetInt64(0), row.GetBoolean(1));
     }
 
     // O(log n + m) for m unavailable entries among n catalog rows, with constant application space.
@@ -467,7 +472,9 @@ internal sealed partial class LibraryCatalog
             SELECT d.id, COALESCE(d.display_title, d.title) AS display_name, d.relative_path, d.added_at, d.reviewed, d.page_count, d.has_text,
                    (SELECT json_group_array(t.label ORDER BY t.tag_key)
                     FROM document_tags dt JOIN tags t USING (tag_key) WHERE dt.document_id = d.id),
-                   {match}, d.document_day
+                   {match}, d.document_day,
+                   CASE WHEN d.pdf_sha256 IS NULL THEN printf('%lld:%lld', d.modified_ticks, d.file_bytes)
+                        ELSE hex(d.pdf_sha256) END
             FROM {from} {join}
             WHERE {string.Join(" AND ", conditions)}
             ORDER BY {order}
@@ -507,7 +514,8 @@ internal sealed partial class LibraryCatalog
                 excerpt)
             {
                 DocumentDate = results.IsDBNull(9) ? null : DateOnly.FromDayNumber(results.GetInt32(9)),
-                MatchHighlights = highlights
+                MatchHighlights = highlights,
+                ContentRevision = results.GetString(10)
             };
             if (visit is null) documents.Add(document);
             else visit(document);

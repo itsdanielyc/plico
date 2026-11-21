@@ -16,13 +16,16 @@ public partial class MainWindow
 {
     private const double CompactWidth = 1100;
     private const double MediumWidth = 1240;
+    private const double MaximumIntakeHeightFraction = 0.4;
     private static readonly TimeSpan ReviewMotionDuration = TimeSpan.FromMilliseconds(380);
     private static readonly TimeSpan RepeatedReviewWindow = TimeSpan.FromMilliseconds(1200);
     private DateTime _lastReview = DateTime.MinValue;
     private IReadOnlyList<PaletteCommand> _paletteCommands = [];
+    private (string LibraryPath, long SelectionVersion) _paletteContext;
+    private long _queueSelectionVersion;
     private SettingsWindow? _settings;
-    private readonly HashSet<Key> _armedKeys = [];
-    private Key? _releasedKey;
+    private readonly Dictionary<Key, string> _armedKeys = [];
+    private Control? _overlayReturnFocus;
 
     /// <summary>Collapse order: the filing card narrows, then the queue becomes a thumbnail strip.</summary>
     private void ApplyWorkspaceLayout(double width)
@@ -45,6 +48,8 @@ public partial class MainWindow
     {
         // Choose the column widths for this pass before the grids measure.
         ApplyWorkspaceLayout(double.IsFinite(availableSize.Width) ? availableSize.Width : Width);
+        if (SidebarIntake is not null && double.IsFinite(availableSize.Height))
+            SidebarIntake.MaxHeight = availableSize.Height * MaximumIntakeHeightFraction;
         return base.MeasureOverride(availableSize);
     }
 
@@ -66,23 +71,19 @@ public partial class MainWindow
         AddHandler(KeyDownEvent, (_, e) =>
         {
             bool plain = (e.KeyModifiers & (KeyModifiers.Control | KeyModifiers.Meta | KeyModifiers.Alt)) == 0;
-            if (plain && !IsTyping && !IsOverlayOpen) _armedKeys.Add(e.Key);
+            if (plain && !IsTyping && !IsOverlayOpen) _armedKeys[e.Key] = (e.KeySymbol ?? "").ToLowerInvariant();
             else _armedKeys.Remove(e.Key);
         }, RoutingStrategies.Tunnel, handledEventsToo: true);
-        AddHandler(KeyUpEvent, (_, e) => _releasedKey = _armedKeys.Remove(e.Key) ? e.Key : null,
-            RoutingStrategies.Tunnel, handledEventsToo: true);
+        AddHandler(KeyUpEvent, ReviewKeyReleased, RoutingStrategies.Bubble, handledEventsToo: true);
+        Deactivated += (_, _) => _armedKeys.Clear();
     }
 
-    /// <summary>True when this release ends a press that began as a shortcut.</summary>
-    private bool IsShortcutRelease(KeyEventArgs e) => _releasedKey == e.Key;
-
     /// <summary>Single-key review shortcuts. Keys follow the character on the user's layout.</summary>
-    protected override void OnKeyUp(KeyEventArgs e)
+    private void ReviewKeyReleased(object? sender, KeyEventArgs e)
     {
-        base.OnKeyUp(e);
-        if (e.Handled || !IsShortcutRelease(e) || IsTyping || IsOverlayOpen || ViewModel is not { } model) return;
+        if (!_armedKeys.Remove(e.Key, out var key) || e.Handled || IsTyping || IsOverlayOpen || ViewModel is not { } model) return;
         if ((e.KeyModifiers & (KeyModifiers.Control | KeyModifiers.Meta | KeyModifiers.Alt)) != 0) return;
-        string key = (e.KeySymbol ?? "").ToLowerInvariant();
+        if (model.HasBatchSelection && key is "r" or "a" or "d" or "e" or "t" or "x") return;
         bool handled = true;
         switch (key)
         {
@@ -90,8 +91,7 @@ public partial class MainWindow
             case "?": ShowShortcuts(); break;
             case "j": case "k":
                 if (!model.HasSelection) { handled = false; break; }
-                model.SelectReviewNeighbour(key == "j" ? 1 : -1);
-                if (model.SelectedDocument is { } next) DocumentList.ScrollIntoView(next);
+                MoveInQueue(key == "j" ? 1 : -1);
                 break;
             case "r" when (e.KeyModifiers & KeyModifiers.Shift) == 0: Review(); break;
             case "a": Run(model.AcceptSuggestionsCommand); break;
@@ -112,9 +112,9 @@ public partial class MainWindow
         bool shift = (e.KeyModifiers & KeyModifiers.Shift) != 0;
         switch (e.Key)
         {
-            case Key.K: ShowPalette(); return true;
+            case Key.K when !shift: ShowPalette(); return true;
             case Key.S when shift: Run(model.ScanCommand); return true;
-            case Key.OemComma: OpenSettings(); return true;
+            case Key.OemComma when !shift: OpenSettings(); return true;
             case Key.Z when !IsTyping && !shift: Run(model.UndoCommand); return true;
             case Key.A when !IsTyping && !shift && !IsOverlayOpen: SelectAllShown(); return true;
             default: return false;
@@ -226,18 +226,30 @@ public partial class MainWindow
         bool wasOpen = IsOverlayOpen;
         PaletteOverlay.IsVisible = false;
         ShortcutsOverlay.IsVisible = false;
-        if (wasOpen) DocumentList.Focus();
+        if (!wasOpen) return;
+        ShellGrid.IsEnabled = true;
+        if (_overlayReturnFocus?.Focus() != true && !DocumentList.Focus()) SearchBox.Focus();
+        _overlayReturnFocus = null;
+    }
+
+    private void EnterOverlay()
+    {
+        if (!IsOverlayOpen) _overlayReturnFocus = FocusManager?.GetFocusedElement() as Control;
+        _armedKeys.Clear();
+        ShellGrid.IsEnabled = false;
     }
 
     private void ShowPalette()
     {
         if (ViewModel is not { } model) return;
+        EnterOverlay();
         ShortcutsOverlay.IsVisible = false;
+        _paletteContext = (model.LibraryPath, _queueSelectionVersion);
         _paletteCommands = PaletteCommands.Build(this, model);
         PaletteQuery.Text = "";
         FilterPalette();
         PaletteOverlay.IsVisible = true;
-        Dispatcher.UIThread.Post(() => PaletteQuery.Focus(), DispatcherPriority.Input);
+        PaletteQuery.Focus();
     }
 
     /// <summary>Filters as the query text changes, including text set by code.</summary>
@@ -286,16 +298,21 @@ public partial class MainWindow
 
     private void RunSelectedPaletteCommand()
     {
-        if (PaletteList.SelectedItem is not PaletteCommand command) return;
+        if (!PaletteOverlay.IsVisible || PaletteList.SelectedItem is not PaletteCommand command || ViewModel is not { } model) return;
         CloseOverlays();
-        Dispatcher.UIThread.Post(command.Run, DispatcherPriority.Input);
+        // Settings and watched imports can change the library or selection while the palette has focus.
+        if (_paletteContext != (model.LibraryPath, _queueSelectionVersion)) return;
+        var available = PaletteCommands.Build(this, model);
+        available.FirstOrDefault(command.MatchesAction)?.Run();
     }
 
     private void ShowShortcuts()
     {
+        EnterOverlay();
         PaletteOverlay.IsVisible = false;
         if (ShortcutsGrid.Children.Count == 0) ShortcutSheet.Fill(ShortcutsGrid);
         ShortcutsOverlay.IsVisible = true;
+        CloseShortcutsButton.Focus();
     }
 
     internal void OpenSettings()
@@ -313,6 +330,13 @@ public partial class MainWindow
     }
 
     internal void FocusTagEntry() => TagBox.Focus();
+    internal void FocusBatchTagEntry() => BatchTagBox.Focus();
+    internal void MoveInQueue(int step)
+    {
+        if (ViewModel is not { } model) return;
+        model.SelectReviewNeighbour(step);
+        if (model.SelectedDocument is { } next) DocumentList.ScrollIntoView(next);
+    }
     internal void FocusSearchField() => FocusSearch();
     internal void ReviewWithMotion() => Review();
     internal void SelectAllShown()

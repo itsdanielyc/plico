@@ -198,7 +198,10 @@ public sealed partial class InboxLibrary : IDisposable
     public IReadOnlyList<string> GetTags() => _catalog.Tags();
 
     /// <summary>Counts present PDFs that are awaiting review in the library.</summary>
-    public long CountUnreviewedDocuments() => _catalog.CountUnreviewedDocuments();
+    public long CountUnreviewedDocuments() => _catalog.ReadInboxStatus().Unreviewed;
+
+    /// <summary>Reads the inbox count and whether the library contains any present PDF in one catalog snapshot.</summary>
+    public (long Unreviewed, bool HasDocuments) ReadInboxStatus() => _catalog.ReadInboxStatus();
 
     /// <summary>Counts catalog records whose PDFs were unavailable at the last refresh.</summary>
     public long CountUnavailableDocuments() => _catalog.CountUnavailableDocuments();

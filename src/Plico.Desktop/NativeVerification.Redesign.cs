@@ -52,7 +52,10 @@ internal static partial class NativeVerification
             () => $"No Inbox document to review. {model.Status}");
         var document = model.SelectedDocument!;
         long before = model.InboxCount;
-        window.ReviewWithMotion();
+        var review = Control<Button>(window, "ReviewButton");
+        Require(review.Focus(), "The filing card could not receive keyboard focus.");
+        review.RaiseEvent(new KeyEventArgs { RoutedEvent = InputElement.KeyDownEvent, Key = Key.R, KeySymbol = "r" });
+        review.RaiseEvent(new KeyEventArgs { RoutedEvent = InputElement.KeyUpEvent, Key = Key.R, KeySymbol = "r" });
         Require(model.InboxCount == before - 1 && model.HasUndo, $"R did not mark the document reviewed with an undo. {model.Status}");
         await CaptureAsync(window, evidence, "review-undo.png");
         await model.UndoCommand.ExecuteAsync(null);

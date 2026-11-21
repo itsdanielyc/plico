@@ -101,7 +101,7 @@ internal sealed partial class InboxViewModel
             for (int number = firstPage; number < firstPage + count; number++)
             {
                 int page = number;
-                using var png = await Task.Run(() => library.RenderPageThumbnailAsync(document, page, request.Token), request.Token);
+                using var png = await TrackBackgroundRead(() => library.RenderPageThumbnailAsync(document, page, request.Token));
                 if (request.IsCancellationRequested) return;
                 images.Add(new PdfPageThumbnail(page, new Bitmap(png)));
             }

@@ -10,6 +10,7 @@ namespace Plico.Desktop;
 public sealed partial class MainWindow : Window
 {
     private bool _closeWhenIdle;
+    private bool _closePrepared;
     private InboxViewModel? ViewModel => DataContext as InboxViewModel;
 
     public MainWindow()
@@ -46,9 +47,10 @@ public sealed partial class MainWindow : Window
             e.Handled = true;
             return;
         }
-        bool command = (e.KeyModifiers & (KeyModifiers.Control | KeyModifiers.Meta)) != 0;
+        if (IsOverlayOpen) return;
+        bool command = (e.KeyModifiers & ~KeyModifiers.Shift) is KeyModifiers.Control or KeyModifiers.Meta;
         if (!command || e.Handled || ViewModel is not { } model) return;
-        if (e.Key == Key.F)
+        if (e.Key == Key.F && !e.KeyModifiers.HasFlag(KeyModifiers.Shift))
         {
             FocusSearch();
             e.Handled = true;
@@ -67,12 +69,15 @@ public sealed partial class MainWindow : Window
     protected override async void OnClosing(WindowClosingEventArgs e)
     {
         base.OnClosing(e);
-        if (ViewModel is not { } model || (!model.IsBusy && !model.HasActiveWatches)) return;
+        if (e.Cancel || _closePrepared || ViewModel is not { } model ||
+            (!model.IsBusy && !model.HasActiveWatches && !model.IsReadingInBackground)) return;
         e.Cancel = true;
         if (_closeWhenIdle) return;
         _closeWhenIdle = true;
         IsEnabled = false;
         await model.PrepareCloseAsync();
+        await model.StopBackgroundReads().ConfigureAwait(ConfigureAwaitOptions.ContinueOnCapturedContext | ConfigureAwaitOptions.SuppressThrowing);
+        _closePrepared = true;
         Close();
     }
 
@@ -109,29 +114,11 @@ public sealed partial class MainWindow : Window
         e.Handled = true;
     }
 
-    private void DocumentList_KeyUp(object? sender, KeyEventArgs e)
-    {
-        if (!IsShortcutRelease(e) || e.KeyModifiers != KeyModifiers.None || ViewModel is not { CanWork: true, HasSelection: true } model) return;
-        switch (e.Key)
-        {
-            case Key.R:
-                PlayReviewMotion();
-                model.ToggleReviewCommand.Execute(null);
-                break;
-            case Key.T: TagBox.Focus(); break;
-            case Key.X: model.TrashDocumentCommand.Execute(null); break;
-            case Key.J: model.SelectReviewNeighbour(1); break;
-            case Key.K: model.SelectReviewNeighbour(-1); break;
-            default: return;
-        }
-        e.Handled = true;
-        if (model.SelectedDocument is { } selected) DocumentList.ScrollIntoView(selected);
-    }
-
     private void Documents_SelectionChanged(object? sender, SelectionChangedEventArgs e)
     {
         if (ViewModel is { } model && sender is ListBox list)
         {
+            _queueSelectionVersion++;
             model.SetBatchSelection(list.Selection.SelectedItems.OfType<DocumentSummary>().ToArray());
         }
     }
@@ -168,7 +155,7 @@ public sealed partial class MainWindow : Window
 
     private Task ApplyBatchTagAsync() => UpdateSelectedDocumentsAsync(static model => model.ApplySelectedTagAsync());
 
-    private async Task UpdateSelectedDocumentsAsync(Func<InboxViewModel, Task> update)
+    internal async Task UpdateSelectedDocumentsAsync(Func<InboxViewModel, Task> update)
     {
         if (ViewModel is not { CanWork: true, HasBatchSelection: true } model) return;
         var originalDocuments = model.Documents;

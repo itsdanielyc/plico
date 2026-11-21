@@ -105,7 +105,8 @@ internal sealed partial class InboxViewModel : ObservableObject, IDisposable
     {
         try
         {
-            if (OpenDifferentLibrary(locate()) is { } library) ActivateLibrary(library);
+            string target = Path.GetFullPath(locate());
+            if (!AlreadyOpen(target)) _ = ActivateLibrary(InboxLibrary.Open(target));
         }
         catch (Exception error)
         {
@@ -156,15 +157,25 @@ internal sealed partial class InboxViewModel : ObservableObject, IDisposable
             return;
         }
         token.ThrowIfCancellationRequested();
-        var replacement = OpenDifferentLibrary(selected);
-        if (replacement is not null)
+        string target = Path.GetFullPath(selected);
+        if (!AlreadyOpen(target))
         {
-            // Acquire the new library's lease before stopping intake for the current one.
-            await StopAllWatchesAsync();
-            ActivateLibrary(replacement);
+            var replacement = await Task.Run(() => InboxLibrary.Open(target), token);
+            try
+            {
+                token.ThrowIfCancellationRequested();
+                await StopAllWatchesAsync();
+                await ActivateLibrary(replacement);
+            }
+            finally
+            {
+                if (!ReferenceEquals(_library, replacement)) replacement.Dispose();
+            }
+            _rememberLocation?.Invoke(LibraryPath);
+            await CatchUpSavedWatchesAsync(token);
+            return;
         }
         _rememberLocation?.Invoke(LibraryPath);
-        if (replacement is not null) await CatchUpSavedWatchesAsync(token);
     });
 
     [RelayCommand] private void Cancel() => _operationCancellation?.Cancel();
@@ -261,29 +272,26 @@ internal sealed partial class InboxViewModel : ObservableObject, IDisposable
     internal void RemoveTag(string tag) =>
         UpdateDocument((library, document) => library.RemoveTag(document.Id, tag), DesktopText.Translate("Tag removed."));
 
-    private InboxLibrary? OpenDifferentLibrary(string directory)
+    private bool AlreadyOpen(string target)
     {
-        string target = Path.GetFullPath(directory);
-        if (_library is not null && Path.GetRelativePath(_library.RootPath, target) == ".")
-        {
-            Status = DesktopText.Translate("Library already open.");
-            return null;
-        }
-        return InboxLibrary.Open(target);
+        if (_library is null || Path.GetRelativePath(_library.RootPath, target) != ".") return false;
+        Status = DesktopText.Translate("Library already open.");
+        return true;
     }
 
-    private void ActivateLibrary(InboxLibrary replacement)
+    private Task ActivateLibrary(InboxLibrary replacement)
     {
-        var previous = _library;
-        CancelTypedSearch();
+        Task released = Task.CompletedTask;
+        if (_library is { } previous)
+        {
+            released = ReleaseLibraryAfterReadsAsync(previous, StopBackgroundReads());
+            _backgroundLifetime.Dispose();
+            _backgroundLifetime = new CancellationTokenSource();
+        }
         _library = replacement;
         replacement.ConfigureOcr(_ocrProcessing);
-        CancelPreview();
         PendingUndo = null;
-        ClearSuggestions();
-        StopBackgroundReads();
         ForgetAllThumbnails();
-        previous?.Dispose();
         var importNotice = RestoreImportFailures(replacement.RootPath);
         var intakeNotice = RestoreIntakeFolder(replacement.RootPath);
         OcrCopyBatchResults = [];
@@ -310,6 +318,14 @@ internal sealed partial class InboxViewModel : ObservableObject, IDisposable
         if (importNotice is not null) Status += $" {importNotice}";
         if (intakeNotice is not null) Status += $" {intakeNotice}";
         if (replacement.MoveRecoveryNotice is { } moveNotice) Status += $" {moveNotice}";
+        return released;
+    }
+
+    private static async Task ReleaseLibraryAfterReadsAsync(InboxLibrary library, Task reads)
+    {
+        // The requesting UI reports any read failure. Lease release only depends on the workers having exited.
+        await reads.ConfigureAwait(ConfigureAwaitOptions.SuppressThrowing);
+        library.Dispose();
     }
 
     private Task ImportFilesAsync(IReadOnlyList<string> files, CancellationToken token,
@@ -400,7 +416,6 @@ internal sealed partial class InboxViewModel : ObservableObject, IDisposable
             ? CancellationTokenSource.CreateLinkedTokenSource(externalCancellation)
             : new CancellationTokenSource();
         var completion = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
-        long[] touched = [.. _batchSelection.Select(document => document.Id), .. SelectedDocument is { } open ? [open.Id] : Array.Empty<long>()];
         _operationCancellation = cancellation;
         _operationCompletion = completion;
         IsBusy = true;
@@ -421,7 +436,6 @@ internal sealed partial class InboxViewModel : ObservableObject, IDisposable
         {
             _operationCancellation = null;
             _operationCompletion = null;
-            ForgetThumbnails(touched);
             IsBusy = false;
             completion.SetResult();
         }
@@ -636,20 +650,16 @@ internal sealed partial class InboxViewModel : ObservableObject, IDisposable
 
     public void Dispose()
     {
-        CancelTypedSearch();
-        CancelPreview();
-        _suggestionTimer.Stop();
-        ClearSuggestions();
-        StopBackgroundReads();
+        if (_library is not { } library) return;
+        Task reads = StopBackgroundReads();
         _reminderTimer?.Stop();
-        ClearPageThumbnails();
-        var library = _library;
         _library = null;
-        if (IsBusy || HasActiveWatches || _thumbnailLoad is { IsCompleted: false }) _ = FinishDisposalAsync(library);
-        else library?.Dispose();
+        ForgetAllThumbnails();
+        if (IsBusy || HasActiveWatches) _ = FinishDisposalAsync(library, reads);
+        else ReleaseLibraryAfterReadsAsync(library, reads).GetAwaiter().GetResult();
     }
 
-    private async Task FinishDisposalAsync(InboxLibrary? library)
+    private async Task FinishDisposalAsync(InboxLibrary library, Task reads)
     {
         try
         {
@@ -657,7 +667,7 @@ internal sealed partial class InboxViewModel : ObservableObject, IDisposable
         }
         finally
         {
-            library?.Dispose();
+            await ReleaseLibraryAfterReadsAsync(library, reads);
         }
     }
 

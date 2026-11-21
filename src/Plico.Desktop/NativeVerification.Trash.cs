@@ -15,8 +15,8 @@ internal static partial class NativeVerification
         var document = model.Documents[0];
         var next = model.Documents[1];
         list.SetCurrentValue(ListBox.SelectedItemProperty, document);
-        list.RaiseEvent(new KeyEventArgs { RoutedEvent = InputElement.KeyDownEvent, Key = Key.X });
-        list.RaiseEvent(new KeyEventArgs { RoutedEvent = InputElement.KeyUpEvent, Key = Key.X });
+        list.RaiseEvent(new KeyEventArgs { RoutedEvent = InputElement.KeyDownEvent, Key = Key.X, KeySymbol = "x" });
+        list.RaiseEvent(new KeyEventArgs { RoutedEvent = InputElement.KeyUpEvent, Key = Key.X, KeySymbol = "x" });
         await UntilAsync(() => !model.IsBusy && model.SelectedDocument?.Id == next.Id, () => model.Status);
         Require(model.Documents.All(result => result.Id != document.Id), "Trash left the current PDF in the review results.");
 

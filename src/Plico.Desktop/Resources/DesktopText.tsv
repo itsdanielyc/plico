@@ -806,4 +806,9 @@ ShortcutTrashNext	Move to Trash and open the next	Placer dans la corbeille et ou
 ShortcutPages	Previous and next page	Page précédente et suivante
 ShortcutSetDate	Set the document date	Définir la date du document
 ShortcutRename	Rename	Renommer
+PaletteNextDocument	Next document	Document suivant
+PalettePreviousDocument	Previous document	Document précédent
+PageNumberAutomationFormat	Page {0}	Page {0}
+RemoveTagAutomationFormat	Remove tag {0}	Retirer l’étiquette {0}
+SuggestedTagAutomationFormat	Add suggested tag {0}	Ajouter l’étiquette suggérée {0}
 IntakeFolderTitle	Intake folder	Dossier de réception

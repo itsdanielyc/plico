@@ -35,11 +35,13 @@ internal sealed partial class InboxViewModel
         if (decision.Purge)
         {
             await Task.Run(() => library.PurgeTrashedPdfAsync(decision.DocumentId, token), token);
+            if (PendingUndo?.TrashedDocumentId == decision.DocumentId) PendingUndo = null;
             Status = DesktopText.Translate("PDF permanently deleted.");
             return;
         }
 
         var restored = await Task.Run(() => library.RestoreTrashedPdfAsync(decision.DocumentId, token), token);
+        if (PendingUndo?.TrashedDocumentId == restored.Id) PendingUndo = null;
         Tags = library.GetTags();
         RefreshInboxCount();
         Navigate(inboxOnly: false, preferredId: restored.Id);

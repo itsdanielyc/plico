@@ -8,9 +8,9 @@ internal sealed partial class InboxViewModel
 {
     private const int ThumbnailCacheLimit = 240;
     private const int ConcurrentThumbnailRenders = 2;
-    private readonly Dictionary<ThumbnailKey, LinkedListNode<(ThumbnailKey Key, Bitmap Image)>> _thumbnailIndex = [];
-    private readonly LinkedList<(ThumbnailKey Key, Bitmap Image)> _thumbnailOrder = new();
-    private readonly HashSet<ThumbnailKey> _staleThumbnails = [];
+    private sealed record CachedThumbnail(long DocumentId, string ContentRevision, Bitmap Image);
+    private readonly Dictionary<long, LinkedListNode<CachedThumbnail>> _thumbnailIndex = [];
+    private readonly LinkedList<CachedThumbnail> _thumbnailOrder = new();
     private readonly SemaphoreSlim _thumbnailRenders = new(ConcurrentThumbnailRenders);
     private readonly HashSet<Task> _backgroundReads = [];
     private CancellationTokenSource _backgroundLifetime = new();
@@ -35,22 +35,15 @@ internal sealed partial class InboxViewModel
 
     private Task<T> TrackBackgroundRead<T>(Func<T> read) => TrackBackgroundRead(() => Task.FromResult(read()));
 
-    /// <summary>Cancels optional reads and waits up to five seconds for them to finish with the open library.</summary>
-    private void StopBackgroundReads()
+    /// <summary>Cancels readers and returns their worker tasks, so the library lease can outlive every file handle.</summary>
+    internal Task StopBackgroundReads()
     {
+        CancelTypedSearch();
+        CancelPreview();
+        ClearPageThumbnails();
+        ClearSuggestions();
         _backgroundLifetime.Cancel();
-        var pending = _backgroundReads.Where(task => !task.IsCompleted).ToArray();
-        try
-        {
-            if (pending.Length > 0) Task.WaitAll(pending, TimeSpan.FromSeconds(5));
-        }
-        catch (AggregateException)
-        {
-            // Cancelled or failed reads have already released the library.
-        }
-        _backgroundReads.Clear();
-        _backgroundLifetime.Dispose();
-        _backgroundLifetime = new CancellationTokenSource();
+        return Task.WhenAll(_backgroundReads);
     }
 
     /// <summary>The Inbox is empty: show "Inbox clear" or, for a new library, the ways to bring paperwork in.</summary>
@@ -92,17 +85,6 @@ internal sealed partial class InboxViewModel
 
     private void NotifyZeroState()
     {
-        if (ShowInboxZero && _library is { } library)
-        {
-            try
-            {
-                _libraryHasDocuments = library.Find(new DocumentFilter()).Items.Count > 0;
-            }
-            catch (Exception error) when (error is IOException or Microsoft.Data.Sqlite.SqliteException)
-            {
-                _libraryHasDocuments = true;
-            }
-        }
         OnPropertyChanged(nameof(ShowInboxZero));
         OnPropertyChanged(nameof(ShowWelcome));
         OnPropertyChanged(nameof(ShowInboxClear));
@@ -141,15 +123,15 @@ internal sealed partial class InboxViewModel
             using var linked = CancellationTokenSource.CreateLinkedTokenSource(token, lifetime);
             var cancel = linked.Token;
             using var png = await TrackBackgroundRead(() => library.RenderPageThumbnailAsync(document, 1, cancel));
-            if (!ReferenceEquals(library, _library)) return null;
+            if (cancel.IsCancellationRequested || !ReferenceEquals(library, _library)) return null;
             var image = new Bitmap(png);
-            CacheThumbnail(ThumbnailKey.For(document), image);
+            CacheThumbnail(document, image);
             return image;
         }
         catch (Exception error) when (error is not OperationCanceledException and not OutOfMemoryException)
         {
             // The file can no longer be read, so its earlier picture is no longer true either.
-            DropThumbnail(ThumbnailKey.For(document));
+            if (!token.IsCancellationRequested && !lifetime.IsCancellationRequested) DropThumbnail(document.Id);
             return null;
         }
         finally
@@ -159,8 +141,9 @@ internal sealed partial class InboxViewModel
         }
     }
 
-    /// <summary>True when an operation may have changed the document since its cached thumbnail was rendered.</summary>
-    internal bool IsThumbnailStale(DocumentSummary document) => _staleThumbnails.Contains(ThumbnailKey.For(document));
+    /// <summary>True when the cached first page was rendered from an earlier revision of this PDF.</summary>
+    internal bool IsThumbnailStale(DocumentSummary document) =>
+        _thumbnailIndex.TryGetValue(document.Id, out var node) && node.Value.ContentRevision != document.ContentRevision;
 
     private Bitmap? TryGetFreshThumbnail(DocumentSummary document) =>
         IsThumbnailStale(document) ? null : TryGetCachedThumbnail(document);
@@ -168,47 +151,28 @@ internal sealed partial class InboxViewModel
     /// <summary>Returns the cached thumbnail, which may be stale. Rows show it while a new render is on its way.</summary>
     internal Bitmap? TryGetCachedThumbnail(DocumentSummary document)
     {
-        if (!_thumbnailIndex.TryGetValue(ThumbnailKey.For(document), out var node)) return null;
+        if (!_thumbnailIndex.TryGetValue(document.Id, out var node)) return null;
         _thumbnailOrder.Remove(node);
         _thumbnailOrder.AddFirst(node);
         return node.Value.Image;
     }
 
-    private void CacheThumbnail(ThumbnailKey key, Bitmap image)
+    private void CacheThumbnail(DocumentSummary document, Bitmap image)
     {
-        DropThumbnail(key);
-        _thumbnailIndex[key] = _thumbnailOrder.AddFirst((key, image));
-        while (_thumbnailOrder.Count > ThumbnailCacheLimit && _thumbnailOrder.Last is { } oldest) DropThumbnail(oldest.Value.Key);
+        DropThumbnail(document.Id);
+        _thumbnailIndex[document.Id] = _thumbnailOrder.AddFirst(new CachedThumbnail(document.Id, document.ContentRevision, image));
+        if (_thumbnailOrder.Count > ThumbnailCacheLimit) DropThumbnail(_thumbnailOrder.Last!.Value.DocumentId);
     }
 
     // Rows may still show a dropped bitmap, so it is released by the collector rather than disposed here.
-    private void DropThumbnail(ThumbnailKey key)
+    private void DropThumbnail(long documentId)
     {
-        _staleThumbnails.Remove(key);
-        if (_thumbnailIndex.Remove(key, out var node)) _thumbnailOrder.Remove(node);
-    }
-
-    /// <summary>
-    /// Marks thumbnails stale for documents an operation may have changed, so the next row render reads the new file.
-    /// The earlier picture stays available until then. O(c) for c cached thumbnails, at most the cache limit.
-    /// </summary>
-    private void ForgetThumbnails(IEnumerable<long> documentIds)
-    {
-        var ids = documentIds.ToHashSet();
-        if (ids.Count == 0) return;
-        foreach (var key in _thumbnailIndex.Keys.Where(key => ids.Contains(key.DocumentId))) _staleThumbnails.Add(key);
+        if (_thumbnailIndex.Remove(documentId, out var node)) _thumbnailOrder.Remove(node);
     }
 
     private void ForgetAllThumbnails()
     {
         _thumbnailIndex.Clear();
         _thumbnailOrder.Clear();
-        _staleThumbnails.Clear();
-    }
-
-    private readonly record struct ThumbnailKey(long DocumentId, string RelativePath, int PageCount, bool HasText)
-    {
-        internal static ThumbnailKey For(DocumentSummary document) =>
-            new(document.Id, document.RelativePath, document.PageCount, document.HasText);
     }
 }

@@ -35,6 +35,8 @@ Tag renaming updates the label for a capitalization change or moves the catalog 
 
 The desktop builds a sorted index of the sidebar's tag keys when a tag field first requests suggestions. The same index serves both fields until the label list changes. Each edit starts at the matching prefix by binary search and reads at most eight eligible labels, with no catalog read for the edit.
 
+Inline filing reads up to 32 reviewed examples or eight selected documents at a time. Each SQLite reader closes before classification or field extraction uses those excerpts. Training pages descend by document ID. Selected inputs retain the caller's order and deduplicate IDs across pages. The Inbox count and presence of any PDF come from a single indexed query, which also supplies the welcome and Inbox-clear states.
+
 Schema v2 indexes the SHA-256 digest of the source. Import computes it while copying a snapshot to staging. Repeating an unchanged source can reuse its existing PDF and avoid OCR. For a v1 entry, a PDF candidate with matching size is hashed on demand. Paths reserved by missing entries keep newly imported documents from inheriting unrelated metadata.
 
 The desktop stores its intake folder as a relative PDF path in per-library settings. Core checks the resolved directory inside `PDFs/` before preparing the file or capturing pages, then checks it again before publishing. Each operation claims an available name in the destination and records its relative path in SQLite. Exact-source detection spans the library. The scanner watcher files at the PDF root by default. An optional per-library choice uses the same intake folder for ready scans and catch-up batches. The desktop records failures through the usual import error list.

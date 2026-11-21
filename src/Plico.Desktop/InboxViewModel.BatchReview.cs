@@ -86,12 +86,13 @@ internal sealed partial class InboxViewModel
         if (!HasBatchSelection) return Task.CompletedTask;
         var selectedIds = _batchSelection.Select(document => document.Id).ToArray();
         bool reviewed = !AllSelectedAreReviewed;
+        var changedIds = _batchSelection.Where(document => document.Reviewed != reviewed).Select(document => document.Id).ToArray();
         var position = CaptureReviewPosition(SelectedDocument?.Id ?? selectedIds[0]);
         return RunOperationAsync("Updating the selected documents…", async token =>
         {
             var library = RequireLibrary();
             await Task.Run(() => library.SetReviewedDocuments(selectedIds, reviewed), token);
-            OfferReviewUndo(selectedIds, reviewed);
+            OfferReviewUndo(changedIds, reviewed);
             RefreshInboxCount();
             LoadResults(retainLoadedResults: true, reviewPosition: position);
             var count = DocumentCount(selectedIds.Length);

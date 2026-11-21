@@ -14,6 +14,10 @@ Optional background reads (row thumbnails, inline filing suggestions, page previ
 
 Undo covers review changes and Trash for the latest action. Each revert goes back through `InboxLibrary`, so files and the catalog stay consistent.
 
+Batch review records the IDs whose review state changed. A failed restore keeps its Undo available for another attempt. The command palette checks the library, selection and available actions again when a person invokes a command. Opening either keyboard overlay gives it focus and disables the workspace behind it.
+
+The queue caches a first-page bitmap by document ID and compares the indexed PDF revision on every row refresh. A metadata edit reuses the bitmap. A change to the PDF bytes starts a new render and the existing image stays visible until it finishes. A library switch clears this cache. Closing or switching libraries cancels and drains search, highlights, page renders, thumbnails and filing suggestions before releasing the old writer lease.
+
 Single-key shortcuts act on key release, so the character never lands in a field the shortcut focuses. The window arms a key only when it goes down outside a text field, with no overlay open and without Ctrl, ⌘ or Alt, and a release counts only for an armed key. A letter typed into search or the palette is therefore inert when it comes back up after focus has moved.
 
 **Consequences.** The window keeps every named control that the headless tests and the native journey drive. The native checks now assert that review and Trash stay on the filing card, and that every PDF action scrolls into view at the minimum window size. The motion layer works on a snapshot and never blocks a state change. It skips repeated reviews within 1.2 seconds, and it skips entirely when Windows asks for reduced animation or `PLICO_REDUCE_MOTION=1` is set.

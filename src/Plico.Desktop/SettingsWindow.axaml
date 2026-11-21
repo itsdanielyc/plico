@@ -69,7 +69,7 @@
                             <Separator />
                             <Grid ColumnDefinitions="*,Auto">
                                 <TextBlock Classes="row-title" Text="{translation:Tr KeyboardShortcuts}" />
-                                <Button Grid.Column="1" Classes="secondary" Content="{translation:Tr ShowAction}" Click="ShowShortcuts_Click" />
+                                <Button Grid.Column="1" Classes="secondary" Content="{translation:Tr ShowAction}" Click="ShowShortcuts_Click" AutomationProperties.Name="{translation:Tr KeyboardShortcuts}" />
                             </Grid>
                         </StackPanel>
                     </Border>
@@ -113,12 +113,12 @@
                                     <TextBlock Classes="row-title" Text="{translation:Tr IntakeFolderTitle}" />
                                     <TextBlock Classes="row-help" Text="{Binding IntakeFolderLabel}" />
                                 </StackPanel>
-                                <Button Grid.Column="1" Classes="secondary" Content="{translation:Tr ChangeEllipsis}" Command="{Binding ChooseIntakeFolderCommand}" IsEnabled="{Binding CanWork}" />
+                                <Button Grid.Column="1" Classes="secondary" Content="{translation:Tr ChangeEllipsis}" Command="{Binding ChooseIntakeFolderCommand}" IsEnabled="{Binding CanWork}" AutomationProperties.Name="{translation:Tr ChooseIntakeFolder}" />
                             </Grid>
                             <Separator IsVisible="{Binding HasCustomIntakeFolder}" />
                             <Grid ColumnDefinitions="*,Auto" ColumnSpacing="16" IsVisible="{Binding HasCustomIntakeFolder}">
                                 <TextBlock Classes="row-title" Text="{translation:Tr IncludeWatchedScans}" />
-                                <ToggleSwitch Grid.Column="1" IsChecked="{Binding IncludeWatchedScans, Mode=TwoWay}" IsEnabled="{Binding CanWork}" OnContent="" OffContent="" />
+                                <ToggleSwitch Grid.Column="1" IsChecked="{Binding IncludeWatchedScans, Mode=TwoWay}" IsEnabled="{Binding CanWork}" OnContent="" OffContent="" AutomationProperties.Name="{translation:Tr IncludeWatchedScans}" />
                             </Grid>
                             <Separator />
                             <Grid ColumnDefinitions="*,Auto" ColumnSpacing="16">
@@ -135,7 +135,7 @@
                             <Separator IsVisible="{Binding CanOfferCatchUpOnOpen}" />
                             <Grid ColumnDefinitions="*,Auto" ColumnSpacing="16" IsVisible="{Binding CanOfferCatchUpOnOpen}">
                                 <TextBlock Classes="row-title" Text="{translation:Tr CatchUpOnOpen}" />
-                                <ToggleSwitch Grid.Column="1" IsChecked="{Binding CatchUpOnOpen, Mode=TwoWay}" IsEnabled="{Binding CanWork}" OnContent="" OffContent="" />
+                                <ToggleSwitch Grid.Column="1" IsChecked="{Binding CatchUpOnOpen, Mode=TwoWay}" IsEnabled="{Binding CanWork}" OnContent="" OffContent="" AutomationProperties.Name="{translation:Tr CatchUpOnOpen}" />
                             </Grid>
                             <Separator />
                             <Grid ColumnDefinitions="*,Auto" ColumnSpacing="16">
@@ -164,7 +164,7 @@
                                 </StackPanel>
                                 <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="6">
                                     <Button Classes="secondary" Content="{translation:Tr ShowPDFFolder}" Command="{Binding OpenPdfFolderCommand}" IsEnabled="{Binding HasLibrary}" />
-                                    <Button Classes="secondary" Content="{translation:Tr ChangeEllipsis}" Command="{Binding ChooseLibraryCommand}" IsEnabled="{Binding IsIdle}" />
+                                    <Button Classes="secondary" Content="{translation:Tr ChangeEllipsis}" Command="{Binding ChooseLibraryCommand}" IsEnabled="{Binding IsIdle}" AutomationProperties.Name="{translation:Tr ChooseLibraryFolder}" />
                                 </StackPanel>
                             </Grid>
                             <Separator />
@@ -185,9 +185,9 @@
                                 <TextBlock Classes="row-title" Text="{translation:Tr ExportsTitle}" />
                                 <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="6">
                                     <Button Classes="secondary" Content="JSON…" Command="{Binding ExportMetadataCommand}" IsEnabled="{Binding CanWork}"
-                                            ToolTip.Tip="{translation:Tr ExportLibraryMetadataJSON}" />
+                                            ToolTip.Tip="{translation:Tr ExportLibraryMetadataJSON}" AutomationProperties.Name="{translation:Tr ExportLibraryMetadataJSON}" />
                                     <Button Classes="secondary" Content="CSV…" Command="{Binding ExportSearchCsvCommand}" IsEnabled="{Binding CanWork}"
-                                            ToolTip.Tip="{translation:Tr ExportSearchResultsCSV}" />
+                                            ToolTip.Tip="{translation:Tr ExportSearchResultsCSV}" AutomationProperties.Name="{translation:Tr ExportSearchResultsCSV}" />
                                 </StackPanel>
                             </Grid>
                         </StackPanel>
@@ -203,17 +203,17 @@
                                     <TextBlock Classes="row-title" Text="{translation:Tr TagRules2}" />
                                     <TextBlock Classes="row-help" Text="{translation:Tr TagRulesHelp}" />
                                 </StackPanel>
-                                <Button Grid.Column="1" Classes="secondary" Content="{translation:Tr EditAction}" Command="{Binding ManageFilingRulesCommand}" IsEnabled="{Binding CanWork}" />
+                                <Button Grid.Column="1" Classes="secondary" Content="{translation:Tr EditAction}" Command="{Binding ManageFilingRulesCommand}" IsEnabled="{Binding CanWork}" AutomationProperties.Name="{translation:Tr TagRules2}" />
                             </Grid>
                             <Separator />
                             <Grid ColumnDefinitions="*,Auto" ColumnSpacing="16">
                                 <TextBlock Classes="row-title" Text="{translation:Tr MetadataDefinitions}" />
-                                <Button Grid.Column="1" Classes="secondary" Content="{translation:Tr EditAction}" Command="{Binding ManageMetadataCommand}" IsEnabled="{Binding CanWork}" />
+                                <Button Grid.Column="1" Classes="secondary" Content="{translation:Tr EditAction}" Command="{Binding ManageMetadataCommand}" IsEnabled="{Binding CanWork}" AutomationProperties.Name="{translation:Tr MetadataDefinitions}" />
                             </Grid>
                             <Separator />
                             <Grid ColumnDefinitions="*,Auto" ColumnSpacing="16">
                                 <TextBlock Classes="row-title" Text="{Binding ReminderMenuTitle}" />
-                                <Button Grid.Column="1" Classes="secondary" Content="{translation:Tr ShowAction}" Command="{Binding RemindersCommand}" IsEnabled="{Binding CanWork}" />
+                                <Button Grid.Column="1" Classes="secondary" Content="{translation:Tr ShowAction}" Command="{Binding RemindersCommand}" IsEnabled="{Binding CanWork}" AutomationProperties.Name="{Binding ReminderMenuTitle}" />
                             </Grid>
                             <Separator />
                             <Grid ColumnDefinitions="*,Auto" ColumnSpacing="16">
@@ -236,13 +236,13 @@
                                     <TextBlock Classes="row-title" Text="{translation:Tr LocalModels}" />
                                     <TextBlock Classes="row-help" Text="{translation:Tr LocalModelsHelp}" />
                                 </StackPanel>
-                                <Button Grid.Column="1" Classes="secondary" Content="{translation:Tr EditAction}" Command="{Binding ConfigureLocalModelsCommand}" IsEnabled="{Binding CanWork}" />
+                                <Button Grid.Column="1" Classes="secondary" Content="{translation:Tr EditAction}" Command="{Binding ConfigureLocalModelsCommand}" IsEnabled="{Binding CanWork}" AutomationProperties.Name="{translation:Tr LocalModels}" />
                             </Grid>
                             <Separator />
                             <Grid ColumnDefinitions="*,Auto" ColumnSpacing="16">
                                 <TextBlock Classes="row-title" Text="{translation:Tr ClearSemanticIndex}" TextWrapping="Wrap" />
                                 <Button Grid.Column="1" Classes="secondary" Content="{translation:Tr ClearAction}" Command="{Binding RebuildSemanticIndexCommand}"
-                                        IsEnabled="{Binding HasSemanticSearch}" />
+                                        IsEnabled="{Binding HasSemanticSearch}" AutomationProperties.Name="{translation:Tr ClearSemanticIndex}" />
                             </Grid>
                         </StackPanel>
                     </Border>

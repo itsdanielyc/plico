@@ -44,6 +44,7 @@ internal sealed partial class InboxViewModel
 
     partial void OnRecognitionLanguageChanged(OcrLanguage value)
     {
+        RequestSuggestions(SelectedDocument, refresh: true);
         try
         {
             _rememberRecognitionLanguage?.Invoke(value);

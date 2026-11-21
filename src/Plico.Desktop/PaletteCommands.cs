@@ -1,36 +1,55 @@
 using System.Windows.Input;
 using Avalonia.Controls;
+using Avalonia.Input;
 using Avalonia.Layout;
 using Avalonia.Media;
 
 namespace Plico.Desktop;
 
 /// <summary>One entry in the Ctrl+K / ⌘K command palette.</summary>
-internal sealed record PaletteCommand(string Title, string Group, Geometry? Icon, IReadOnlyList<string> Keys, string Aliases, Action Run);
+internal sealed record PaletteCommand(string Title, string Group, Geometry? Icon, IReadOnlyList<string> Keys, string Aliases,
+    Action Run, ICommand? Source = null)
+{
+    internal bool MatchesAction(PaletteCommand other) => Source is null
+        ? other.Source is null && Group == other.Group && Title == other.Title
+        : ReferenceEquals(Source, other.Source);
+}
 
 /// <summary>Builds and filters the command palette. Every tool in Plico is reachable here, with its shortcut.</summary>
 internal static class PaletteCommands
 {
     internal static string Mod => OperatingSystem.IsMacOS() ? "⌘" : "Ctrl";
+    private static KeyModifiers CommandModifier => OperatingSystem.IsMacOS() ? KeyModifiers.Meta : KeyModifiers.Control;
+    public static KeyGesture SettingsGesture { get; } = new(Key.OemComma, CommandModifier);
+    public static KeyGesture AddFilesGesture { get; } = new(Key.O, CommandModifier);
+    public static KeyGesture PaletteGesture { get; } = new(Key.K, CommandModifier);
 
     internal static IReadOnlyList<PaletteCommand> Build(MainWindow window, InboxViewModel model)
     {
         var commands = new List<PaletteCommand>(80);
         string review = T("Review"), go = T("Go to"), add = T("Add"), document = T("Document"), selection = T("Selection"), library = T("Library");
 
-        void Add(string title, string group, string icon, string keys, string aliases, ICommand command, object? parameter = null)
+        void Add(string title, string group, string icon, string keys, string aliases, ICommand command, bool available = true)
         {
-            if (command.CanExecute(parameter)) commands.Add(new(T(title), group, Icon(icon), Split(keys), aliases, () => command.Execute(parameter)));
+            Act(title, group, icon, keys, aliases, () => command.Execute(null), available && command.CanExecute(null), command);
         }
-        void Act(string title, string group, string icon, string keys, string aliases, Action action, bool available = true)
+        void Act(string title, string group, string icon, string keys, string aliases, Action action, bool available = true, ICommand? source = null)
         {
-            if (available) commands.Add(new(T(title), group, Icon(icon), Split(keys), aliases, action));
+            if (available) commands.Add(new(T(title), group, Icon(icon), Split(keys), aliases, action, source));
         }
 
-        if (model is { CanWork: true, HasSelection: true })
+        Add("Choose library folder…", library, "Icon.Folder", "", "switch open library", model.ChooseLibraryCommand, model.IsIdle);
+        Act("Settings…", library, "Icon.Sliders", Mod + " ,", "preferences options", window.OpenSettings);
+        Act("Keyboard shortcuts", library, "Icon.Keyboard", "?", "keys help", window.ShowShortcutSheet);
+        if (!model.CanWork)
+        {
+            Add("Cancel", library, "Icon.Close", "", "stop operation", model.CancelCommand, model.IsBusy);
+            return commands;
+        }
+        if (model.ShowFilingCard)
         {
             Act(model.SelectedIsReviewed ? "Return to Inbox" : "Mark reviewed", review, "Icon.Check", "R", "done file reviewed", window.ReviewWithMotion);
-            Add("Accept all suggestions", review, "Icon.Check", "A", "suggestion accept", model.AcceptSuggestionsCommand);
+            Add("Accept all suggestions", review, "Icon.Check", "A", "suggestion accept", model.AcceptSuggestionsCommand, model.HasSuggestions);
             Act("Add a tag", review, "Icon.Tag", "T", "label", window.FocusTagEntry, model.ShowFilingCard);
             Add("Set the document date…", review, "Icon.Calendar", "D", "date dated", model.EditDocumentDateCommand);
             Add("Rename…", review, "Icon.Note", "E", "title edit", model.EditDocumentTitleCommand);
@@ -39,7 +58,7 @@ internal static class PaletteCommands
             Add("Reminders and deadlines…", review, "Icon.Bell", "", "deadline due renewal expiry", model.EditDeadlinesCommand);
             Add("Custom fields…", review, "Icon.Sliders", "", "metadata structured", model.EditMetadataCommand);
         }
-        Add("Undo", review, "Icon.History", Mod + " Z", "revert", model.UndoCommand);
+        Add("Undo", review, "Icon.History", Mod + " Z", "revert", model.UndoCommand, model.HasUndo);
 
         Add("Inbox", go, "Icon.AllDocuments", "", "queue review", model.ShowInboxCommand);
         Add("All documents", go, "Icon.AllDocuments", "", "library everything", model.ShowAllCommand);
@@ -48,7 +67,13 @@ internal static class PaletteCommands
         Add("Trash…", go, "Icon.Trash", "", "restore deleted bin", model.OpenTrashCommand);
         Act("Search", go, "Icon.Search", "/", "find query", window.FocusSearchField);
         Add("Search a folder…", go, "Icon.Folder", "", "folder path", model.ChooseSearchFolderCommand);
-        Add("Save search…", go, "Icon.Bookmark", "", "saved shortcut", model.SaveSearchCommand);
+        Add("Save search…", go, "Icon.Bookmark", "", "saved shortcut", model.SaveSearchCommand, model.ShowSaveSearch);
+        Add("Edit search…", go, "Icon.Bookmark", "", "saved shortcut", model.EditActiveSavedSearchCommand, model.HasActiveSavedSearch);
+        Add("Rename selected tag", go, "Icon.Tag", "", "tag label", model.RenameActiveTagCommand, model.HasActiveTag);
+        Add("Load more", go, "Icon.Plus", "", "next results", model.LoadMoreCommand, model.HasMore);
+        Add("Refresh results", go, "Icon.Refresh", "", "watched scans", model.RefreshWatchedResultsCommand, model.HasDeferredWatchResults);
+        Act("Next document", go, "Icon.ChevronRight", "J", "queue", () => window.MoveInQueue(1), model.HasDocuments && model.Documents[^1].Id != model.SelectedDocument?.Id);
+        Act("Previous document", go, "Icon.ChevronLeft", "K", "queue", () => window.MoveInQueue(-1), model.HasDocuments && model.Documents[0].Id != model.SelectedDocument?.Id);
 
         Add("Add files…", add, "Icon.Upload", Mod + " O", "import open", model.AddFilesCommand);
         Add("Scan…", add, "Icon.Scan", Mod + " Shift S", "scanner paper feeder", model.ScanCommand);
@@ -57,12 +82,17 @@ internal static class PaletteCommands
         Add("Move from Paperless-ngx (export)…", add, "Icon.Share", "", "migrate paperless zip", model.MigratePaperlessZipCommand);
         Add("Move from Evernote…", add, "Icon.Share", "", "migrate enex", model.MigrateEvernoteCommand);
         Add("Move from Mariner Paperless…", add, "Icon.Share", "", "migrate mariner", model.MigrateMarinerCommand);
-        Add("Watch a folder…", add, "Icon.Watch", "", "folder watch scanner output", model.StartFolderWatchCommand);
-        Add("Stop watching", add, "Icon.Watch", "", "folder watch", model.StopFolderWatchCommand);
+        Add("Watch a folder…", add, "Icon.Watch", "", "folder watch scanner output", model.StartFolderWatchCommand, model.CanStartFolderWatch);
+        Add("Stop watching", add, "Icon.Watch", "", "folder watch", model.StopFolderWatchCommand, model.IsWatchingFolder);
+        Add("Resume folder watch", add, "Icon.Watch", "", "folder watch", model.ResumeFolderWatchCommand, model.CanOfferResumeFolderWatch);
+        Add(model.ImportWatchFilesLabel, add, "Icon.Watch", "", "catch up", model.ImportWatchFolderFilesCommand, model.CanOfferImportWatchFiles);
         Add("Intake folder…", add, "Icon.Folder", "", "destination", model.ChooseIntakeFolderCommand);
-        Add("Phone inbox folder…", add, "Icon.Phone", "", "phone mobile", model.ChoosePhoneInboxFolderCommand);
+        Add("Phone inbox folder…", add, "Icon.Phone", "", "phone mobile", model.ChoosePhoneInboxFolderCommand, !model.IsWatchingPhoneInbox);
+        Add("Resume phone inbox", add, "Icon.Phone", "", "mobile watch", model.ResumePhoneInboxCommand, model.CanResumePhoneInbox);
+        Add(model.PhoneCatchUpLabel, add, "Icon.Phone", "", "phone scans", model.CatchUpPhoneInboxCommand, model.CanCatchUpPhoneInbox);
+        Add("Stop phone inbox", add, "Icon.Phone", "", "mobile watch", model.StopPhoneInboxCommand, model.IsWatchingPhoneInbox);
 
-        if (model is { CanWork: true, HasSelection: true })
+        if (model.ShowFilingCard)
         {
             Add("Edit pages…", document, "Icon.Pages", "", "reorder delete pages", model.EditPdfPagesCommand);
             Add("Rotate pages…", document, "Icon.RotateRight", "", "rotate turn", model.RotatePdfPagesCommand);
@@ -76,12 +106,17 @@ internal static class PaletteCommands
             Act(model.SearchableCopyAction, document, "Icon.Recognize", "", "ocr searchable copy", () => model.CreateSearchableCopyCommand.Execute(null));
             Add("Filing suggestions…", document, "Icon.Check", "", "suggest tag date", model.SuggestFilingCommand);
             Add("Related documents…", document, "Icon.Link", "", "similar", model.FindRelatedCommand);
-            Add("Ask the local model for filing…", document, "Icon.Chat", "", "ai assistant", model.SuggestLocalFilingCommand);
-            Add("Copy text", document, "Icon.Combine", "", "clipboard", model.CopyDocumentTextCommand);
-            Add(model.PageTextAction, document, "Icon.Text", "", "read text page", model.TogglePageTextCommand);
+            Add("Ask the local model for filing…", document, "Icon.Chat", "", "ai assistant", model.SuggestLocalFilingCommand, model.HasLocalChat);
+            Add("Copy text", document, "Icon.Combine", "", "clipboard", model.CopyDocumentTextCommand, !model.HasNoSearchableText);
+            Add(model.PageTextAction, document, "Icon.Text", "", "read text page", model.TogglePageTextCommand, !model.HasNoSearchableText);
+            Add("Previous page", document, "Icon.ChevronLeft", "[", "page back", model.PreviousPageCommand, model.CanGoBack);
+            Add("Next page", document, "Icon.ChevronRight", "]", "page forward", model.NextPageCommand, model.CanGoForward);
+            Add(model.PageMatchActionLabel, document, "Icon.Search", "", "search match", model.GoToMatchCommand, model.HasPageMatchAction);
+            Add("Previous match", document, "Icon.Search", "", "search match", model.PreviousMatchCommand, model.PageMatchNavigationActive);
+            Add("Thumbnails", document, "Icon.Pages", "", "page preview", model.TogglePageThumbnailsCommand, model.HasMultiplePages && !model.IsPageTextView);
             Add(model.PreviewFitAction, document, "Icon.Fit", "", "zoom fit width", model.TogglePreviewFitCommand);
-            Add("Zoom in", document, "Icon.Plus", "", "bigger", model.ZoomInCommand);
-            Add("Zoom out", document, "Icon.Minus", "", "smaller", model.ZoomOutCommand);
+            Add("Zoom in", document, "Icon.Plus", "", "bigger", model.ZoomInCommand, model.HasPreview && model.CanZoomIn);
+            Add("Zoom out", document, "Icon.Minus", "", "smaller", model.ZoomOutCommand, model.HasPreview && model.CanZoomOut);
             Add("Show in folder", document, "Icon.Folder", "", "reveal explorer finder", model.OpenDocumentFolderCommand);
             Add("Set the archive number…", document, "Icon.Tag", "", "asn serial", model.EditArchiveSerialCommand);
         }
@@ -89,6 +124,13 @@ internal static class PaletteCommands
         Act("Select all shown", selection, "Icon.Check", Mod + " A", "batch select", window.SelectAllShown, model.HasBatchCandidates);
         if (model.HasBatchSelection)
         {
+            Act("Tag selected", selection, "Icon.Tag", "", "batch label", window.FocusBatchTagEntry);
+            Act("Remove tag…", selection, "Icon.Tag", "", "batch remove label",
+                () => _ = window.UpdateSelectedDocumentsAsync(static batch => batch.RemoveSelectedTagAsync()), model.HasTaggedBatchSelection);
+            Act("Document date…", selection, "Icon.Calendar", "", "batch date",
+                () => _ = window.UpdateSelectedDocumentsAsync(static batch => batch.EditBatchDocumentDatesAsync()));
+            Act("Filing suggestions…", selection, "Icon.Check", "", "batch suggestions",
+                () => _ = window.UpdateSelectedDocumentsAsync(static batch => batch.SuggestSelectedFilingAsync()));
             Add(model.BatchReviewAction, selection, "Icon.Check", "", "batch review", model.ReviewSelectedCommand);
             Add("Combine PDFs…", selection, "Icon.Combine", "", "merge", model.CombinePdfsCommand);
             Add("Move PDFs…", selection, "Icon.Move", "", "batch move", model.MoveSelectedPdfsCommand);
@@ -97,13 +139,15 @@ internal static class PaletteCommands
             Add("Create OCR copies", selection, "Icon.Recognize", "", "batch ocr", model.CreateSelectedOcrCopiesCommand);
         }
 
-        Add("Choose library folder…", library, "Icon.Folder", "", "switch open library", model.ChooseLibraryCommand);
         Add("Show PDF folder", library, "Icon.Folder", "", "reveal", model.OpenPdfFolderCommand);
         Add("Back up library…", library, "Icon.Binder", "", "backup copy", model.BackUpLibraryCommand);
         Add("Check library integrity", library, "Icon.Check", "", "verify", model.CheckIntegrityCommand);
         Add("Refresh index", library, "Icon.Refresh", "", "rescan reindex", model.RefreshIndexCommand);
-        Add("Index report…", library, "Icon.Info", "", "unavailable missing", model.ShowIndexReportCommand);
-        Add("Import errors…", library, "Icon.Warning", "", "failed retry", model.InspectImportErrorsCommand);
+        Add("Index report…", library, "Icon.Info", "", "unavailable missing", model.ShowIndexReportCommand, model.ShowIndexReport);
+        Add("Import errors…", library, "Icon.Warning", "", "failed retry", model.InspectImportErrorsCommand, model.HasImportFailures);
+        Add("Open backup", library, "Icon.Folder", "", "recent backup", model.OpenBackupFolderCommand, model.HasLatestBackup);
+        Add("Open export", library, "Icon.Folder", "", "recent export", model.OpenExportFolderCommand, model.HasLatestExport);
+        Add("OCR results", library, "Icon.Recognize", "", "batch ocr", model.InspectOcrCopyBatchResultsCommand, model.HasOcrCopyBatchResults);
         Add("Export library metadata (JSON)…", library, "Icon.Share", "", "json", model.ExportMetadataCommand);
         Add("Export search results (CSV)…", library, "Icon.Share", "", "csv spreadsheet", model.ExportSearchCsvCommand);
         Add("Tag rules…", library, "Icon.Tag", "", "filing rules", model.ManageFilingRulesCommand);
@@ -112,18 +156,18 @@ internal static class PaletteCommands
         Add("Print archive label sheets…", library, "Icon.Tag", "", "asn labels", model.PrintArchiveLabelsCommand);
         Add("Print a separator sheet…", library, "Icon.Split", "", "patch separator", model.PrintSeparatorSheetCommand);
         Add("Local models…", library, "Icon.Chat", "", "ollama ai", model.ConfigureLocalModelsCommand);
-        Add("Semantic search…", library, "Icon.Search", "", "meaning ai", model.SearchSemanticallyCommand);
-        Add("Ask the local model…", library, "Icon.Chat", "", "chat question", model.AskLocalModelCommand);
-        Add("Undo local filing", library, "Icon.History", "", "revert ai", model.UndoLocalFilingCommand);
+        Add("Semantic search…", library, "Icon.Search", "", "meaning ai", model.SearchSemanticallyCommand, model.HasSemanticSearch);
+        Add("Clear semantic index", library, "Icon.Refresh", "", "embedding index", model.RebuildSemanticIndexCommand, model.HasSemanticSearch);
+        Add("Ask the local model…", library, "Icon.Chat", "", "chat question", model.AskLocalModelCommand, model.HasLocalChat);
+        Add("Undo local filing", library, "Icon.History", "", "revert ai", model.UndoLocalFilingCommand, model.ShowFilingCard);
         Add("Appearance…", library, "Icon.Sliders", "", "theme dark light language", model.ShowAppearanceCommand);
-        Act("Settings…", library, "Icon.Sliders", Mod + " ,", "preferences options", window.OpenSettings);
-        Act("Keyboard shortcuts", library, "Icon.Keyboard", "?", "keys help", window.ShowShortcutSheet);
         return commands;
     }
 
     /// <summary>
     /// Ranks commands by how well the query matches: whole-title prefix, then word prefix, then alias, then an
-    /// in-order subsequence of the title. O(c · q) for c commands and query length q.
+    /// in-order subsequence of the title. Scoring scans the command labels. Sorting m matches takes O(m log m)
+    /// time and O(m) space.
     /// </summary>
     internal static IReadOnlyList<PaletteCommand> Filter(IReadOnlyList<PaletteCommand> commands, string query)
     {

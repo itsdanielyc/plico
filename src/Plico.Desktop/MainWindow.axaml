@@ -199,8 +199,9 @@
         </Style>
 
         <!-- Queue rows -->
-        <Style Selector="ListBox#DocumentList ListBoxItem">
+        <Style Selector="ListBox#DocumentList ListBoxItem" x:DataType="core:DocumentSummary">
             <Setter Property="Padding" Value="8,8" />
+            <Setter Property="AutomationProperties.Name" Value="{Binding Title}" />
         </Style>
         <Style Selector="Grid.compact ListBox#DocumentList ListBoxItem">
             <Setter Property="Padding" Value="6" />
@@ -239,7 +240,7 @@
                                 <MenuItem Header="{translation:Tr ShowPDFFolder}" Command="{Binding OpenPdfFolderCommand}" IsEnabled="{Binding HasLibrary}" />
                                 <MenuItem Header="{translation:Tr BackUpLibrary}" Command="{Binding BackUpLibraryCommand}" IsEnabled="{Binding CanWork}" />
                                 <Separator />
-                                <MenuItem Header="{translation:Tr SettingsAction}" Click="OpenSettings_Click" InputGesture="Ctrl+OemComma" />
+                                <MenuItem Header="{translation:Tr SettingsAction}" Click="OpenSettings_Click" InputGesture="{x:Static local:PaletteCommands.SettingsGesture}" />
                             </MenuFlyout>
                         </Button.Flyout>
                     </Button>
@@ -250,10 +251,10 @@
                                 <Button x:Name="InboxButton" Classes="nav" Classes.current="{Binding InboxSelected}"
                                         Command="{Binding ShowInboxCommand}" AutomationProperties.Name="{Binding InboxAutomationName}"
                                         ToolTip.Tip="{translation:Tr Inbox}">
-                                    <Grid ColumnDefinitions="Auto,*,Auto" ColumnSpacing="10">
+                                    <Grid ColumnDefinitions="Auto,*,Auto" ColumnSpacing="5">
                                         <local:Icon Data="{StaticResource Mark.Full}" IsFilled="True" GridSize="468" Width="16" Height="14"
                                                     VerticalAlignment="Center" />
-                                        <TextBlock Grid.Column="1" Text="{translation:Tr Inbox}" VerticalAlignment="Center" />
+                                        <TextBlock Grid.Column="1" Text="{translation:Tr Inbox}" TextWrapping="Wrap" VerticalAlignment="Center" />
                                         <Border Grid.Column="2" Classes="badge" IsVisible="{Binding HasInboxCount}">
                                             <TextBlock x:Name="InboxReviewCount" Text="{Binding InboxCount}" IsVisible="{Binding HasInboxCount}" />
                                         </Border>
@@ -327,7 +328,8 @@
                     </ScrollViewer>
 
                     <!-- Intake: where paperwork comes from, the language it is read in, and the watches. -->
-                    <Border Grid.Row="2" BorderBrush="{DynamicResource LineBrush}" BorderThickness="0,1,0,0" Padding="8,10,8,8">
+                    <Border Grid.Row="2" x:Name="SidebarIntake" BorderBrush="{DynamicResource LineBrush}" BorderThickness="0,1,0,0" Padding="8,10,8,8">
+                        <ScrollViewer HorizontalScrollBarVisibility="Disabled" VerticalScrollBarVisibility="Auto">
                         <StackPanel Spacing="1">
                             <TextBlock Classes="section" Text="{translation:Tr IntakeSection}" Margin="8,0,0,4" />
                             <Button x:Name="IntakeFolderButton" Classes="nav" Command="{Binding ChooseIntakeFolderCommand}"
@@ -444,6 +446,7 @@
                                 </Button>
                             </Grid>
                         </StackPanel>
+                        </ScrollViewer>
                     </Border>
                 </Grid>
             </Border>
@@ -484,7 +487,7 @@
                                     <local:Icon Data="{StaticResource Icon.ChevronDown}" Width="14" Height="14" />
                                     <Button.Flyout>
                                         <MenuFlyout Placement="BottomEdgeAlignedRight">
-                                            <MenuItem Header="{translation:Tr AddFiles}" Command="{Binding AddFilesCommand}" InputGesture="Ctrl+O" />
+                                            <MenuItem Header="{translation:Tr AddFiles}" Command="{Binding AddFilesCommand}" InputGesture="{x:Static local:PaletteCommands.AddFilesGesture}" />
                                             <MenuItem Header="{translation:Tr ImportPasswordProtectedPDF2}" Command="{Binding ImportProtectedPdfCommand}" />
                                             <Separator />
                                             <MenuItem Header="{translation:Tr MigratePaperlessFolder}" Command="{Binding MigratePaperlessFolderCommand}" />
@@ -536,9 +539,9 @@
                                         <MenuItem Header="{translation:Tr ImportPasswordProtectedPDF2}" Command="{Binding ImportProtectedPdfCommand}" />
                                         <MenuItem Header="{translation:Tr Appearance2}" Command="{Binding ShowAppearanceCommand}" />
                                         <Separator />
-                                        <MenuItem Header="{translation:Tr Commands}" Click="OpenPalette_Click" InputGesture="Ctrl+K" />
+                                        <MenuItem Header="{translation:Tr Commands}" Click="OpenPalette_Click" InputGesture="{x:Static local:PaletteCommands.PaletteGesture}" />
                                         <MenuItem Header="{translation:Tr KeyboardShortcuts}" Click="OpenShortcuts_Click" />
-                                        <MenuItem Header="{translation:Tr SettingsAction}" Click="OpenSettings_Click" InputGesture="Ctrl+OemComma" />
+                                        <MenuItem Header="{translation:Tr SettingsAction}" Click="OpenSettings_Click" InputGesture="{x:Static local:PaletteCommands.SettingsGesture}" />
                                     </MenuFlyout>
                                 </Button.Flyout>
                             </Button>
@@ -586,7 +589,7 @@
                                    HorizontalAlignment="Center" VerticalAlignment="Center" Margin="12"
                                    AutomationProperties.LiveSetting="Polite" />
                         <ListBox Grid.Row="1" x:Name="DocumentList" Classes="plain" ItemsSource="{Binding Documents}" SelectedItem="{Binding SelectedDocument, Mode=TwoWay}"
-                                 KeyUp="DocumentList_KeyUp" IsVisible="{Binding HasDocuments}" Padding="0,0,0,6"
+                                 IsVisible="{Binding HasDocuments}" Padding="0,0,0,6"
                                  SelectionMode="Multiple" SelectionChanged="Documents_SelectionChanged"
                                  ScrollViewer.HorizontalScrollBarVisibility="Disabled" AutomationProperties.Name="{translation:Tr Documents}">
                             <ListBox.ItemTemplate>
@@ -599,7 +602,7 @@
                                         <StackPanel Grid.Column="1" Classes="row-text" Spacing="2" VerticalAlignment="Center">
                                             <TextBlock Text="{Binding Title}" FontWeight="SemiBold" TextTrimming="CharacterEllipsis" />
                                             <WrapPanel Orientation="Horizontal">
-                                                <TextBlock Text="{Binding DocumentDate, StringFormat='Dated {0:d MMM yyyy}'}" Classes="caption"
+                                                <TextBlock Text="{Binding DocumentDate, StringFormat={translation:Tr DatedDateFormat}}" Classes="caption"
                                                            IsVisible="{Binding HasDocumentDate}" Margin="0,0,8,0" />
                                                 <TextBlock Text="{Binding AddedAt.LocalDateTime, StringFormat={translation:Tr DocumentAddedDateFormat}}" Classes="caption" />
                                             </WrapPanel>
@@ -632,8 +635,8 @@
                             <TextBlock Text="{translation:Tr SelectADocumentToPreviewIt}" IsVisible="{Binding !HasSelection}"
                                        Foreground="{DynamicResource MutedInk}" HorizontalAlignment="Center" VerticalAlignment="Center" />
                             <Grid IsVisible="{Binding HasSelection}" RowDefinitions="Auto,*">
-                                <Grid Classes="viewer-bar" ColumnDefinitions="*,Auto" Margin="10,8,10,0">
-                                    <StackPanel Orientation="Horizontal" Spacing="2" IsVisible="{Binding HasPageMatchAction}" VerticalAlignment="Center">
+                                <Grid Classes="viewer-bar" RowDefinitions="Auto,Auto" Margin="10,8,10,0">
+                                    <WrapPanel ItemSpacing="2" IsVisible="{Binding HasPageMatchAction}" VerticalAlignment="Center">
                                         <Button x:Name="PreviousMatchButton" Content="{translation:Tr PreviousMatch}"
                                                 Command="{Binding PreviousMatchCommand}"
                                                 IsVisible="{Binding PageMatchNavigationActive}" IsEnabled="{Binding CanWork}"
@@ -643,8 +646,8 @@
                                                 Foreground="{DynamicResource HighlightInk}"
                                                 IsVisible="{Binding HasPageMatchAction}" IsEnabled="{Binding CanWork}"
                                                 ToolTip.Tip="{Binding PageMatchActionHelp}" />
-                                    </StackPanel>
-                                    <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="2" VerticalAlignment="Center">
+                                    </WrapPanel>
+                                    <WrapPanel Grid.Row="1" HorizontalAlignment="Right" ItemSpacing="2" VerticalAlignment="Center">
                                         <Button x:Name="PreviewFitButton" Content="{Binding PreviewFitAction}" Command="{Binding TogglePreviewFitCommand}"
                                                 IsEnabled="{Binding HasPreview}" IsVisible="{Binding !IsPageTextView}" />
                                         <ToggleButton x:Name="PageThumbnailsButton" IsChecked="{Binding ShowPageThumbnails, Mode=OneWay}"
@@ -667,7 +670,7 @@
                                                 AutomationProperties.Name="{translation:Tr OpenPDF}" Padding="7,3">
                                             <local:Icon Data="{StaticResource Icon.Open}" />
                                         </Button>
-                                    </StackPanel>
+                                    </WrapPanel>
                                 </Grid>
 
                                 <Grid Grid.Row="1" ColumnDefinitions="Auto,*">
@@ -680,7 +683,7 @@
                                             <ItemsControl.ItemTemplate>
                                                 <DataTemplate x:DataType="local:PdfPageThumbnail">
                                                     <Button Classes="ghost" Click="PageThumbnail_Click" Padding="4" HorizontalAlignment="Center"
-                                                            AutomationProperties.Name="{Binding PageNumber, StringFormat='Page {0}'}">
+                                                            AutomationProperties.Name="{Binding PageNumber, StringFormat={translation:Tr PageNumberAutomationFormat}}">
                                                         <StackPanel Spacing="3">
                                                             <Border Classes="paper">
                                                                 <Image Source="{Binding Image}" Width="48" Height="62" Stretch="Uniform" />
@@ -880,7 +883,7 @@
                                                     <ItemsControl.ItemTemplate>
                                                         <DataTemplate x:DataType="x:String">
                                                             <Button Classes="chip" Click="RemoveTag_Click" MaxWidth="160"
-                                                                    AutomationProperties.Name="{Binding StringFormat='Remove tag {0}'}" ToolTip.Tip="{Binding}">
+                                                                    AutomationProperties.Name="{Binding StringFormat={translation:Tr RemoveTagAutomationFormat}}" ToolTip.Tip="{Binding}">
                                                                 <Grid ColumnDefinitions="*,Auto" ColumnSpacing="5">
                                                                     <TextBlock Text="{Binding}" TextTrimming="CharacterEllipsis" VerticalAlignment="Center" />
                                                                     <local:Icon Grid.Column="1" Data="{StaticResource Icon.Close}" Width="11" Height="11" Foreground="{DynamicResource MutedInk}" VerticalAlignment="Center" />
@@ -895,7 +898,7 @@
                                                         <DataTemplate x:DataType="local:SuggestedTag">
                                                             <Button Classes="suggested" Command="{Binding $parent[Window].((local:InboxViewModel)DataContext).AcceptSuggestedTagCommand}"
                                                                     CommandParameter="{Binding}" ToolTip.Tip="{Binding Reason}"
-                                                                    AutomationProperties.Name="{Binding Label, StringFormat='Add suggested tag {0}'}">
+                                                                    AutomationProperties.Name="{Binding Label, StringFormat={translation:Tr SuggestedTagAutomationFormat}}">
                                                                 <StackPanel Orientation="Horizontal" Spacing="5">
                                                                     <local:Icon Data="{StaticResource Icon.Plus}" Width="11" Height="11" VerticalAlignment="Center" />
                                                                     <TextBlock Text="{Binding Label}" VerticalAlignment="Center" />
@@ -1106,7 +1109,7 @@
         </Border>
 
         <!-- Command palette -->
-        <Border x:Name="PaletteOverlay" IsVisible="False" Classes="overlay-scrim" PointerPressed="Overlay_PointerPressed">
+        <Border x:Name="PaletteOverlay" IsVisible="False" Classes="overlay-scrim" KeyboardNavigation.TabNavigation="Cycle" PointerPressed="Overlay_PointerPressed">
             <Border Classes="popover" HorizontalAlignment="Center" VerticalAlignment="Top" Margin="0,72,0,0" Width="580" MaxHeight="460"
                     PointerPressed="OverlayContent_PointerPressed">
                 <Grid RowDefinitions="Auto,*,Auto">
@@ -1151,13 +1154,13 @@
         </Border>
 
         <!-- Keyboard shortcuts sheet -->
-        <Border x:Name="ShortcutsOverlay" IsVisible="False" Classes="overlay-scrim" PointerPressed="Overlay_PointerPressed">
+        <Border x:Name="ShortcutsOverlay" IsVisible="False" Classes="overlay-scrim" KeyboardNavigation.TabNavigation="Cycle" PointerPressed="Overlay_PointerPressed">
             <Border Classes="popover" HorizontalAlignment="Center" VerticalAlignment="Center" Width="640" MaxHeight="560"
                     PointerPressed="OverlayContent_PointerPressed">
                 <Grid RowDefinitions="Auto,*">
                     <Grid ColumnDefinitions="*,Auto" Margin="22,16,12,6">
                         <TextBlock Classes="heading" Text="{translation:Tr KeyboardShortcuts}" VerticalAlignment="Center" />
-                        <Button Grid.Column="1" Classes="icon" Click="CloseOverlays_Click" AutomationProperties.Name="{translation:Tr Close}">
+                        <Button Grid.Column="1" x:Name="CloseShortcutsButton" Classes="icon" Click="CloseOverlays_Click" AutomationProperties.Name="{translation:Tr Close}">
                             <local:Icon Data="{StaticResource Icon.Close}" />
                         </Button>
                     </Grid>

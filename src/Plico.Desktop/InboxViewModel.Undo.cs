@@ -7,7 +7,7 @@ namespace Plico.Desktop;
 /// Reverses the latest review-loop change. <paramref name="Revert"/> returns the document to select afterwards.
 /// Each revert goes through the library, so the PDF folder and the catalog stay consistent.
 /// </summary>
-internal sealed record UndoAction(string Label, Func<CancellationToken, Task<long?>> Revert);
+internal sealed record UndoAction(string Label, Func<CancellationToken, Task<long?>> Revert, long? TrashedDocumentId = null);
 
 internal sealed partial class InboxViewModel
 {
@@ -22,11 +22,11 @@ internal sealed partial class InboxViewModel
     private Task UndoAsync()
     {
         if (!CanWork || PendingUndo is not { } undo) return Task.CompletedTask;
-        PendingUndo = null;
         return RunOperationAsync(DesktopText.Translate("Undoing…"), async token =>
         {
             var library = RequireLibrary();
             long? restored = await undo.Revert(token);
+            PendingUndo = null;
             Tags = library.GetTags();
             RefreshInboxCount();
             LoadResults(restored, retainLoadedResults: true);
@@ -56,6 +56,6 @@ internal sealed partial class InboxViewModel
         {
             var restored = await library.RestoreTrashedPdfAsync(documentId, token);
             return restored.Id;
-        });
+        }, TrashedDocumentId: documentId);
     }
 }
