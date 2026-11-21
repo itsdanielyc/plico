@@ -203,6 +203,10 @@
             <Setter Property="Padding" Value="8,8" />
             <Setter Property="AutomationProperties.Name" Value="{Binding Title}" />
         </Style>
+        <Style Selector="ListBox#PaletteList ListBoxItem" x:DataType="local:PaletteCommand">
+            <Setter Property="AutomationProperties.Name" Value="{Binding Title}" />
+            <Setter Property="AutomationProperties.HelpText" Value="{Binding Group}" />
+        </Style>
         <Style Selector="Grid.compact ListBox#DocumentList ListBoxItem">
             <Setter Property="Padding" Value="6" />
             <Setter Property="Margin" Value="4,1" />

@@ -206,6 +206,23 @@ internal static partial class NativeVerification
         read.Command.Execute(null);
         await UntilAsync(() => model.PageLabel == "2 / 2" && model.Preview is not null, () => model.Status);
         await CaptureAsync(window, directory, "matching-page.png");
+        double originalWidth = window.Bounds.Width;
+        try
+        {
+            window.Width = window.MinWidth;
+            var page = Control<Border>(window, "PageColumn");
+            var fit = Control<Button>(window, "PreviewFitButton");
+            await UntilAsync(() => Math.Abs(window.Bounds.Width - window.MinWidth) <= LayoutRoundingTolerance &&
+                IsInsideViewport(jump, page) && IsInsideViewport(fit, page) &&
+                jump.TranslatePoint(default, page) is { } matchOrigin && fit.TranslatePoint(default, page) is { } fitOrigin &&
+                !new Rect(matchOrigin, jump.Bounds.Size).Intersects(new Rect(fitOrigin, fit.Bounds.Size)),
+                () => "The search-match and zoom buttons overlap or fall outside the minimum-width page.");
+            await CaptureAsync(window, directory, "matching-page-compact.png");
+        }
+        finally
+        {
+            window.Width = originalWidth;
+        }
     }
 
     private static async Task<long> VerifySearchableCopyAsync(MainWindow window, InboxViewModel model, string fixture, string directory)
