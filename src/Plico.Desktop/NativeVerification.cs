@@ -1093,6 +1093,7 @@ internal sealed partial class FixtureDialogs(params string[] documents) : IWorks
     internal string? FolderPath { get; set; }
     internal string? MigrationSource { get; set; }
     internal LibraryMigrationReport? MigrationReport { get; private set; }
+    internal Action<string>? MigrationReportWriter { get; private set; }
     internal string? LastFolderStart { get; private set; }
     internal int FolderPickerCalls { get; private set; }
     internal string? EditedTitle { get; init; }
@@ -1130,9 +1131,10 @@ internal sealed partial class FixtureDialogs(params string[] documents) : IWorks
     }
     public Task<ScanRequest?> PickScannerAsync() => Task.FromResult(ScannerChoice);
     public Task<string?> PickMigrationSourceAsync(LibraryMigrationFormat format, bool isFolder) => Task.FromResult(MigrationSource);
-    public Task ShowMigrationReportAsync(LibraryMigrationReport report)
+    public Task ShowMigrationReportAsync(LibraryMigrationReport report, Action<string> saveReport)
     {
         MigrationReport = report;
+        MigrationReportWriter = saveReport;
         return Task.CompletedTask;
     }
     public Task<bool> ConfirmPartialScanAsync(ScanInterruption interruption, CancellationToken cancellationToken) =>

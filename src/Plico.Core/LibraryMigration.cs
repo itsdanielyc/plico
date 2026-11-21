@@ -1,4 +1,5 @@
 using System.Security.Cryptography;
+using System.Text.Json;
 
 namespace Plico.Core;
 
@@ -17,6 +18,33 @@ internal sealed record MigrationEntry(MigrationSourceKey Key, ImportedDocumentMe
 
 public sealed partial class InboxLibrary
 {
+    private static readonly JsonSerializerOptions MigrationReportJson = new() { WriteIndented = true };
+
+    /// <summary>Saves a migration report to the chosen file outside the library, atomically replacing a confirmed destination.</summary>
+    public void SaveMigrationReport(string destination, LibraryMigrationReport report)
+    {
+        ArgumentNullException.ThrowIfNull(report);
+        string fullPath = Path.GetFullPath(destination);
+        string filename = Path.GetFileName(fullPath);
+        if (filename.Length == 0) throw new ArgumentException("Choose a file for the migration report.", nameof(destination));
+        string folder = Path.GetDirectoryName(fullPath)!;
+        string target = ResolveExternalTarget(folder);
+        string stage = CreateCopyStage(target, ExportStagePrefix);
+        try
+        {
+            string stagedReport = Path.Combine(stage, filename);
+            using (var output = File.Open(stagedReport, FileMode.CreateNew, FileAccess.Write, FileShare.None))
+                JsonSerializer.Serialize(output, report, MigrationReportJson);
+            if (Path.GetRelativePath(target, ResolveExternalTarget(folder)) != ".")
+                throw new IOException("The export folder changed during the copy. Choose it again.");
+            File.Move(stagedReport, Path.Combine(target, filename), overwrite: true);
+        }
+        finally
+        {
+            TryRemoveStage(stage);
+        }
+    }
+
     /// <summary>Copies documents from a vendor export and preserves the source archive and any local catalog edits.</summary>
     public async Task<LibraryMigrationReport> MigrateLibraryAsync(string source, LibraryMigrationFormat format,
         CancellationToken cancellationToken = default, OcrLanguage language = OcrLanguage.English, string? destinationFolder = null)

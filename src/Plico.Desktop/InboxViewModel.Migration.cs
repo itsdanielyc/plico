@@ -28,7 +28,7 @@ internal sealed partial class InboxViewModel
             RefreshInboxCount();
             Tags = library.GetTags();
             Navigate(inboxOnly: false);
-            await _dialogs.ShowMigrationReportAsync(report);
+            await _dialogs.ShowMigrationReportAsync(report, destination => library.SaveMigrationReport(destination, report));
             Status = report.Cancelled ? "Migration paused. Completed documents are in the library." : "Migration report ready.";
         });
 }

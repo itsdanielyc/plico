@@ -1052,11 +1052,19 @@
                                                 <TextBlock Classes="caption" Text="{translation:Tr WayWatch}" TextWrapping="Wrap" />
                                             </StackPanel>
                                         </Button>
-                                        <Button Classes="secondary" HorizontalAlignment="Stretch" HorizontalContentAlignment="Left" Padding="14,12" Command="{Binding MigratePaperlessFolderCommand}" IsEnabled="{Binding CanWork}">
+                                        <Button Classes="secondary" HorizontalAlignment="Stretch" HorizontalContentAlignment="Left" Padding="14,12" IsEnabled="{Binding CanWork}">
                                             <StackPanel Spacing="4">
                                                 <StackPanel Orientation="Horizontal" Spacing="8"><local:Icon Data="{StaticResource Icon.Share}" /><TextBlock Text="{translation:Tr WayMoveTitle}" FontWeight="SemiBold" /></StackPanel>
                                                 <TextBlock Classes="caption" Text="{translation:Tr WayMove}" TextWrapping="Wrap" />
                                             </StackPanel>
+                                            <Button.Flyout>
+                                                <MenuFlyout Placement="BottomEdgeAlignedLeft">
+                                                    <MenuItem Header="{translation:Tr MigratePaperlessFolder}" Command="{Binding MigratePaperlessFolderCommand}" />
+                                                    <MenuItem Header="{translation:Tr MigratePaperlessZip}" Command="{Binding MigratePaperlessZipCommand}" />
+                                                    <MenuItem Header="{translation:Tr MigrateEvernote}" Command="{Binding MigrateEvernoteCommand}" />
+                                                    <MenuItem Header="{translation:Tr MigrateMariner}" Command="{Binding MigrateMarinerCommand}" />
+                                                </MenuFlyout>
+                                            </Button.Flyout>
                                         </Button>
                                     </UniformGrid>
                                     <StackPanel Orientation="Horizontal" Spacing="10">

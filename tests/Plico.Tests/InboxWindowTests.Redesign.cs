@@ -1,6 +1,9 @@
+using Avalonia;
 using Avalonia.Controls;
+using Avalonia.Headless;
 using Avalonia.Headless.XUnit;
 using Avalonia.Input;
+using Avalonia.VisualTree;
 using CommunityToolkit.Mvvm.Input;
 using Plico.Core;
 using Plico.Desktop;
@@ -10,6 +13,39 @@ namespace Plico.Tests;
 
 public sealed partial class InboxWindowTests
 {
+    [AvaloniaFact]
+    public async Task WelcomeMigrationOpensAllFourImportChoices()
+    {
+        using var temporary = new TemporaryLibrary();
+        using var model = new InboxViewModel(new FixtureDialogs());
+        model.InitializeLibrary(() => temporary.Path);
+        var window = new MainWindow { DataContext = model };
+        window.Show();
+        try
+        {
+            Assert.True(model.ShowWelcome);
+            var tile = Assert.Single(window.GetVisualDescendants().OfType<Button>(), button =>
+                button.IsEffectivelyVisible && button.GetVisualDescendants().OfType<TextBlock>()
+                    .Any(label => label.Text == DesktopText.ByKey("WayMoveTitle")));
+            var choices = Assert.IsType<MenuFlyout>(tile.Flyout);
+            tile.BringIntoView();
+            window.UpdateLayout();
+            var center = Assert.IsType<Point>(tile.TranslatePoint(new Point(tile.Bounds.Width / 2, tile.Bounds.Height / 2), window));
+            window.MouseDown(center, MouseButton.Left);
+            window.MouseUp(center, MouseButton.Left);
+            await WaitForAsync(() => choices.IsOpen);
+
+            var items = choices.Items.Cast<MenuItem>().ToArray();
+            Assert.Equal(new[] { "MigratePaperlessFolder", "MigratePaperlessZip", "MigrateEvernote", "MigrateMariner" }.Select(DesktopText.ByKey),
+                items.Select(item => item.Header as string));
+            Assert.Equal<System.Windows.Input.ICommand?>(
+                [model.MigratePaperlessFolderCommand, model.MigratePaperlessZipCommand, model.MigrateEvernoteCommand, model.MigrateMarinerCommand],
+                items.Select(item => item.Command));
+            choices.Hide();
+        }
+        finally { window.Close(); }
+    }
+
     [AvaloniaFact]
     public async Task FilingCardOffersRuleSuggestionsAndAcceptsThemInOneStep()
     {

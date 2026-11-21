@@ -44,7 +44,7 @@ internal partial interface IWorkspaceDialogs
     Task ShowFilingRulesAsync(IReadOnlyList<FilingRule> rules, Func<FilingRule, FilingRule> save, Action<long> remove);
     Task ShowIntegrityReportAsync(IntegrityReport report);
     Task<string?> PickMigrationSourceAsync(LibraryMigrationFormat format, bool isFolder);
-    Task ShowMigrationReportAsync(LibraryMigrationReport report);
+    Task ShowMigrationReportAsync(LibraryMigrationReport report, Action<string> saveReport);
     Task CopyTextAsync(string text);
     void OpenPath(string path);
 }
@@ -128,7 +128,8 @@ internal sealed partial class WorkspaceDialogs(Window owner) : IWorkspaceDialogs
         return files.FirstOrDefault()?.TryGetLocalPath();
     }
 
-    public Task ShowMigrationReportAsync(LibraryMigrationReport report) => new MigrationReportDialog(report).ShowDialog(owner);
+    public Task ShowMigrationReportAsync(LibraryMigrationReport report, Action<string> saveReport) =>
+        new MigrationReportDialog(report, saveReport).ShowDialog(owner);
 
     public Task<bool> ConfirmPartialScanAsync(ScanInterruption interruption, CancellationToken cancellationToken) =>
         new ScanInterruptedDialog(interruption).ShowDecisionAsync(owner, cancellationToken);

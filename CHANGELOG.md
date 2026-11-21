@@ -10,8 +10,14 @@
 - Keep suggestions current after changing a filing rule and refresh thumbnails when a PDF changes. Background suggestion reads now let imports and catalog writes proceed between pages.
 - Resume an unfinished manual duplex scan from a library backup. Recovery handles interrupted PDF moves and edits, including when another file has taken the original name.
 - Filing uses the document’s recognition language for dates and preserves negative amounts on credits. This release also fixes stale archive-number search results and a Windows file lock during redacted PDF export.
+- Choose a Paperless-ngx folder or ZIP, an Evernote ENEX file, or a Mariner Paperless library from the welcome screen. Saving a migration report now protects the open library’s catalog and PDFs.
 
 The Windows executable and setup are unsigned. SmartScreen may show “Windows protected your PC.” The macOS app is ad-hoc signed and unnotarized, so Gatekeeper may ask you to approve it on first launch. [First-launch instructions](https://github.com/itsdanielyc/plico/blob/v0.19.0/README.md#download)
+
+### Known issues
+
+- A Paperless-ngx document record with a missing or invalid primary key can be skipped without appearing in the migration totals. Compare the totals with the source export. Records with identical PDF bytes share one Plico document, and the migration report lists conflicting source metadata.
+- If a catalog note already contains damaged UTF-8 text, the editor displays replacement characters. Saving the note writes those characters back. Restore the original note from a backup before editing it.
 
 ## [0.18.0] - 2026-11-18
 

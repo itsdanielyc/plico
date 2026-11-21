@@ -16,7 +16,7 @@ internal static partial class NativeVerification
         dialogs.MigrationSource = enex;
         await model.MigrateEvernoteCommand.ExecuteAsync(null);
         Require(dialogs.MigrationReport is { Added: 1, Failed: 0 }, $"The desktop migration did not file the note. {model.Status}");
-        var dialog = new MigrationReportDialog(dialogs.MigrationReport!);
+        var dialog = new MigrationReportDialog(dialogs.MigrationReport!, dialogs.MigrationReportWriter!);
         var opened = dialog.ShowDialog(window);
         try
         {

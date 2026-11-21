@@ -1,4 +1,5 @@
 using System.IO.Compression;
+using System.Text.Json;
 using Microsoft.Data.Sqlite;
 using Plico.Core;
 using Xunit;
@@ -8,6 +9,28 @@ namespace Plico.Tests;
 public sealed class LibraryMigrationTests
 {
     private static string Fixture(string path) => Path.Combine(AppContext.BaseDirectory, "fixtures", path);
+
+    [Fact]
+    public void MigrationReportsProtectTheLibraryAndCanReplaceAnExternalReport()
+    {
+        using var directory = new TemporaryLibrary();
+        using var external = new TemporaryLibrary();
+        using var library = InboxLibrary.Open(directory.Path);
+        var report = new LibraryMigrationReport(1, 0, 0, false, [new("Receipt", "Tag", "Review the imported tag.")]);
+        string catalog = Path.Combine(directory.Path, ".plico", "catalog.sqlite3");
+        byte[] original = File.ReadAllBytes(catalog);
+
+        Assert.Throws<ArgumentException>(() => library.SaveMigrationReport(catalog, report));
+        Assert.Equal(original, File.ReadAllBytes(catalog));
+
+        string output = Path.Combine(external.Path, "my migration.json");
+        File.WriteAllText(output, "older report");
+        library.SaveMigrationReport(output, report);
+        using var saved = JsonDocument.Parse(File.ReadAllBytes(output));
+        Assert.Equal(report.Added, saved.RootElement.GetProperty("Added").GetInt32());
+        Assert.Equal(report.Notices[0].Message, saved.RootElement.GetProperty("Notices")[0].GetProperty("Message").GetString());
+        Assert.Equal(output, Assert.Single(Directory.EnumerateFileSystemEntries(external.Path)));
+    }
 
     [Fact]
     public async Task PaperlessZipResolvesForwardLinksAndKeepsRecordsDuringARetry()

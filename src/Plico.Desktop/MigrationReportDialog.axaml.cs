@@ -1,4 +1,3 @@
-using System.Text.Json;
 using Avalonia.Controls;
 using Avalonia.Interactivity;
 using Avalonia.Platform.Storage;
@@ -9,11 +8,11 @@ namespace Plico.Desktop;
 /// <summary>Shows the migrated records and offers a structured report for unresolved source fields.</summary>
 internal sealed partial class MigrationReportDialog : Window
 {
-    private readonly LibraryMigrationReport _report;
+    private readonly Action<string> _saveReport;
 
-    internal MigrationReportDialog(LibraryMigrationReport report)
+    internal MigrationReportDialog(LibraryMigrationReport report, Action<string> saveReport)
     {
-        _report = report;
+        _saveReport = saveReport;
         InitializeComponent();
         string outcome = report.Cancelled ? "Paused" : "Finished";
         MigrationSummary.Text = $"{outcome} · {report.Added} added · {report.Reused} reused · {report.Failed} failed";
@@ -36,11 +35,10 @@ internal sealed partial class MigrationReportDialog : Window
             });
             string? path = file?.TryGetLocalPath();
             if (path is null) return;
-            string json = JsonSerializer.Serialize(_report, new JsonSerializerOptions { WriteIndented = true });
-            ApplicationSettings.WriteAtomically(path, json);
+            _saveReport(path);
             MigrationSaveStatus.Text = "Report saved.";
         }
-        catch (Exception error) when (error is IOException or UnauthorizedAccessException)
+        catch (Exception error) when (error is ArgumentException or IOException or UnauthorizedAccessException)
         {
             MigrationSaveStatus.Text = error.Message;
         }

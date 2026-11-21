@@ -306,6 +306,13 @@
 | 2026-11-21 13:23–13:31 UTC | L4, L6 | A full Windows run at `9920ca6` hit a ContentPresenter when the center of Previous match was checked after a resize. Repeated resizing also hit the page background in both languages. The test now waits for the compositor to render the measured layout before checking the pointer target. Thirty cycles per language passed at all three widths. The committed form of both cases then passed in 20 consecutive test processes. The full suite passed 359 tests with one Windows skip, and the native journey passed with 104 captures. | Windows x64, .NET SDK 10.0.404 | `artifacts/pr1-head-9920ca6/resize/resize-before.trx`, `resize-frame.trx`, `artifacts/pr1-resize-repeat/`, `artifacts/pr1-resize-final/tests/solution.trx` and `artifacts/pr1-resize-final/native/passed.txt`. [PR review finding](https://github.com/itsdanielyc/plico/pull/1#discussion_r4652696277) |
 | 2026-11-21 13:33 UTC | L0, L1, L3, L4, L6 | All six hosted jobs passed the solution and the native journey on product head `9920ca6`, including the minimum-width search navigation capture. | Windows, macOS and Linux on x64 and ARM64 | [CI 44908380325](https://github.com/itsdanielyc/plico/actions/runs/44908380325) |
 
+## v0.19.0 release
+
+| Date | Level | Claim | Platform | Evidence |
+| --- | --- | --- | --- | --- |
+| 2026-11-21 | L0, L3, L4, L6, L7 | The first candidate, `cc85815`, passed all six archive jobs. On Windows, 359 tests passed with one Unix-only skip. The independent pre-tag reader found that the welcome migration tile opened only the Paperless folder picker. The Save As callback could replace the active catalog when that file was selected. | All six hosted targets and local Windows x64 | [Initial archive run 44929442930](https://github.com/itsdanielyc/plico/actions/runs/44929442930). The welcome test found a missing flyout and the Save As probe observed JSON at the catalog path. |
+| 2026-11-21 | L3, L4 | The welcome button opens four labelled migration choices. Saving a report preserves the catalog bytes and still atomically replaces a chosen external report. | Windows x64 | `WelcomeMigrationOpensAllFourImportChoices` and `LibraryMigrationTests`, five passed. The two known limitations involving malformed Paperless records and already-damaged catalog note text are documented in the v0.19.0 changelog. |
+
 ## Unverified
 
 - Physical scanner interoperability requires a compatible device.
