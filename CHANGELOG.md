@@ -2,6 +2,17 @@
 
 ## Unreleased
 
+## [0.19.0] - 2026-11-21
+
+- Review documents with a first-page thumbnail queue, a page preview and a filing card. The queue adapts to narrow windows and keeps paging, sorting and selection controls within reach.
+- Open the command palette with **Ctrl+K** on Windows and Linux or **⌘K** on macOS. Press **?** for the shortcut list, or open Settings to manage recognition, intake and filing.
+- See why Plico suggests a tag or document date, then accept one suggestion or apply them together. Undo a review, a batch review or a move to Trash.
+- Keep suggestions current after changing a filing rule and refresh thumbnails when a PDF changes. Background suggestion reads now let imports and catalog writes proceed between pages.
+- Resume an unfinished manual duplex scan from a library backup. Recovery handles interrupted PDF moves and edits, including when another file has taken the original name.
+- Filing uses the document’s recognition language for dates and preserves negative amounts on credits. This release also fixes stale archive-number search results and a Windows file lock during redacted PDF export.
+
+The Windows executable and setup are unsigned. SmartScreen may show “Windows protected your PC.” The macOS app is ad-hoc signed and unnotarized, so Gatekeeper may ask you to approve it on first launch. [First-launch instructions](https://github.com/itsdanielyc/plico/blob/v0.19.0/README.md#download)
+
 ## [0.18.0] - 2026-11-18
 
 The Windows executable and setup are unsigned. SmartScreen may show “Windows protected your PC.” The macOS app is ad-hoc signed and may require approval in Gatekeeper because it has no Apple notarization. [First-launch instructions](https://github.com/itsdanielyc/plico/blob/v0.18.0/README.md#download)
