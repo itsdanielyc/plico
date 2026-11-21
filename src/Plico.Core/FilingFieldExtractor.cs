@@ -19,6 +19,8 @@ internal static partial class FilingFieldExtractor
     private const string Month = @"(?<name>\p{L}{3,12})";
     private const string Year = @"(?<year>[0-9]{4})";
     private const string Currency = @"(?<currency>EUR|GBP|USD|CAD|CHF|AUD|[€£$])";
+    private const string Minus = @"(?<negative>-)";
+    private const string SignedCurrencyPrefix = "(?:" + Minus + Currency + "?|" + Currency + @"[ \t]*" + Minus + "?)?";
 
     private enum DateRole { Document, Due, Omit }
     private readonly record struct DateCandidate(DateOnly Date, DateRole Role, int Score, int Position);
@@ -39,10 +41,15 @@ internal static partial class FilingFieldExtractor
     {
         string fallback = language switch
         {
+            OcrLanguage.English => "en-GB",
             OcrLanguage.French => "fr-FR",
             OcrLanguage.German => "de-DE",
             OcrLanguage.Spanish => "es-ES",
-            _ => "en-GB"
+            OcrLanguage.Italian => "it-IT",
+            OcrLanguage.Portuguese => "pt-PT",
+            OcrLanguage.Dutch => "nl-NL",
+            OcrLanguage.Polish => "pl-PL",
+            _ => throw new ArgumentOutOfRangeException(nameof(language))
         };
         return locale.TwoLetterISOLanguageName.Equals(fallback[..2], StringComparison.OrdinalIgnoreCase)
             ? locale : CultureInfo.GetCultureInfo(fallback);
@@ -77,10 +84,14 @@ internal static partial class FilingFieldExtractor
         }
 
         var months = new Dictionary<string, int>(StringComparer.Create(culture, ignoreCase: true));
+        var genitiveNames = culture.DateTimeFormat.MonthGenitiveNames;
+        var abbreviatedGenitiveNames = culture.DateTimeFormat.AbbreviatedMonthGenitiveNames;
         for (int month = 1; month <= 12; month++)
         {
             months.TryAdd(culture.DateTimeFormat.GetMonthName(month).TrimEnd('.'), month);
             months.TryAdd(culture.DateTimeFormat.GetAbbreviatedMonthName(month).TrimEnd('.'), month);
+            months.TryAdd(genitiveNames[month - 1].TrimEnd('.'), month);
+            months.TryAdd(abbreviatedGenitiveNames[month - 1].TrimEnd('.'), month);
         }
         ReadNamedDates(DayFirstDates());
         ReadNamedDates(MonthFirstDates());
@@ -130,10 +141,10 @@ internal static partial class FilingFieldExtractor
             for (int index = 0; index < raw.Length; index++)
             {
                 char character = raw[index];
-                if (char.IsAsciiDigit(character) || character == '-') normalized.Append(character);
+                if (char.IsAsciiDigit(character)) normalized.Append(character);
                 else if (decimalAmount && index == lastSeparator) normalized.Append('.');
             }
-            if (!decimal.TryParse(normalized.ToString(), NumberStyles.AllowDecimalPoint | NumberStyles.AllowLeadingSign,
+            if (!decimal.TryParse(normalized.ToString(), NumberStyles.AllowDecimalPoint,
                     CultureInfo.InvariantCulture, out decimal value)) continue;
             string? currency = match.Groups["currency"].Value.ToUpperInvariant() switch
             {
@@ -142,7 +153,7 @@ internal static partial class FilingFieldExtractor
                 "" => null,
                 var code => code
             };
-            return new(value, currency);
+            return new(match.Groups["negative"].Success ? -value : value, currency);
         }
         return null;
     }
@@ -208,11 +219,14 @@ internal static partial class FilingFieldExtractor
     [GeneratedRegex(@"\b" + Month + @"\.?[ \t]+" + Day + @"(?:st|nd|rd|th)?,?[ \t]+" + Year + @"\b", PatternOptions)]
     private static partial Regex MonthFirstDates();
 
-    [GeneratedRegex(@"\b(?:(?<due>due(?: date)?|payable by|échéance|echeance|fällig(?:keit)?|faellig|vencimiento|fecha límite)|(?<omit>born|date of birth|dob|naissance|geburtsdatum|nacimiento)|invoice date|issued|date de facture|rechnungsdatum|fecha de factura)\b", PatternOptions)]
+    [GeneratedRegex(@"\b(?:(?<due>due(?: date)?|payable by|échéance|echeance|fällig(?:keit)?|faellig|vencimiento|fecha límite" +
+        @"|scadenza|vencimento|vervaldatum|termin płatności)|(?<omit>born|date of birth|dob|naissance|geburtsdatum|nacimiento" +
+        @"|data di nascita|data de nascimento|geboortedatum|data urodzenia)|invoice date|issued|date de facture|rechnungsdatum" +
+        @"|fecha de factura|data fattura|data de emissão|factuurdatum|data wystawienia)\b", PatternOptions)]
     private static partial Regex DateLabels();
 
-    [GeneratedRegex(@"\b(?:total(?:[ \t]+(?:due|ttc|amount|a pagar))?|amount due|montant(?: ttc)?|gesamtbetrag|endbetrag|importe total)\b[ \t]*[:=\-]?[ \t]*" +
-        Currency + @"?[ \t]*(?<amount>-?[0-9](?:[0-9.,'\u00a0\u202f ]{0,20}[0-9])?)[ \t]*" + Currency + "?", PatternOptions)]
+    [GeneratedRegex(@"\b(?:total(?:[ \t]+(?:due|ttc|amount|a pagar))?|amount due|montant(?: ttc)?|gesamtbetrag|endbetrag|importe total)\b[ \t]*(?:[:=]|-[ \t]+)?[ \t]*" +
+        SignedCurrencyPrefix + @"[ \t]*(?<amount>[0-9](?:[0-9.,'\u00a0\u202f ]{0,20}[0-9])?)[ \t]*" + Currency + "?", PatternOptions)]
     private static partial Regex Amounts();
 
     [GeneratedRegex(@"\b[A-Z]{2}[0-9]{2}", PatternOptions)]

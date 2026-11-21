@@ -133,3 +133,23 @@ Items 10–23 shipped in the v0.18.0 prerelease at `0b3dcd9`. Fresh runners veri
 | #17 Additional import formats | HEIC still photos, email, text and Markdown become searchable PDFs. Readable attachments travel with email. Office uses a private local LibreOffice process and reports a recoverable error when it is unavailable. | L0, L3, L6, L7 | Verified in the combined packages |
 | #18 Library migration | Paperless-ngx, Evernote ENEX, and Mariner Paperless import through source-keyed metadata writes. Forward links resolve after documents are indexed. Originals and local assignments survive retries, and the report carries unresolved source values. | L0, L3, L6 | Verified in the combined packages |
 | #19 OCR languages, orientation and RapidOCR | Four additional packaged Tesseract models are selectable. Optional orientation rotates confident sideways pages before OCR. RapidOCR writes a searchable layer on its supported targets and Tesseract is available on all six. Repeated OCR copies distinguish engine and orientation choices. | L0, L1, L3, L6, L7 | Verified in the combined packages |
+
+## Post-v0.18.0 maintenance
+
+Duplex backup, move and version recovery, Trash purge, OCR copy reuse, watch lifecycle, archive-number search, filing suggestions, and redaction file handling were tested locally on Windows x64 and Ubuntu x64 (L0, L1, L3, L4, L6). The suite and native journey then passed on all six targets with the redesign branch at `6d29845`. [CI 44814812116](https://github.com/itsdanielyc/plico/actions/runs/44814812116) · [Verification ledger](VERIFICATION.md)
+
+## Desktop redesign
+
+Direction, mockups and research: [docs/design/redesign](docs/design/redesign/DIRECTION.md). Decision record: [ADR 020](docs/adr/020-desktop-redesign.md).
+
+| Slice | Done when | Levels | Status |
+|---|---|---|---|
+| R1 Foundation | Graphite light and dark tokens keep every earlier key, Inter type scale never below 12, shared control styles, stroke icon set | L0, L4, L6 | Tested on all six targets at `6d29845` (L0–L4, L6): [CI 44814812116](https://github.com/itsdanielyc/plico/actions/runs/44814812116). Reviewed and amended, with the findings in the [ledger](VERIFICATION.md) |
+| R2 Shell | Places-only sidebar with Intake sources, quiet toolbar, ⋯ menu, Settings window, Ctrl+K command palette, shortcuts sheet, window-level single-key shortcuts that never fire while typing | L4, L6 | Tested on all six targets at `6d29845` (L0–L4, L6): [CI 44814812116](https://github.com/itsdanielyc/plico/actions/runs/44814812116). Reviewed and amended, with the findings in the [ledger](VERIFICATION.md) |
+| R3 Review | Queue rows with first-page thumbnails, paper on a desk with a floating page bar, filing card with inline dashed suggestions and Accept all, Mark reviewed and Trash pinned, Undo for review and Trash, review motion with repeat and reduced-motion skips | L3, L4, L6 | Tested on all six targets at `6d29845` (L0–L4, L6): [CI 44814812116](https://github.com/itsdanielyc/plico/actions/runs/44814812116). Reviewed and amended, with the findings in the [ledger](VERIFICATION.md) |
+| R4 Batch, empty states and narrow windows | Batch card replaces the filing card, welcome page for a new library, Inbox clear, thumbnail-strip queue below 1100 px | L4, L6 | Tested on all six targets at `6d29845` (L0–L4, L6): [CI 44814812116](https://github.com/itsdanielyc/plico/actions/runs/44814812116). Reviewed and amended, with the findings in the [ledger](VERIFICATION.md) |
+| R5 Upcoming list | A library query for reminders and deadlines by date replaces the reminders dialog behind Upcoming | L1, L3, L4 | Not started. Upcoming opens the existing due-reminders dialog. |
+| R6 Search tokens and browse grid | Filter tokens with a suggestions dropdown, a month-grouped thumbnail grid (G) and quick look (Space) | L4, L6 | Not started |
+| R7 Capture surfaces | Activity panel with per-file intake progress, one scan sheet with a live page stream and inline interruption, and a single Edit pages surface | L1, L3, L4, L6 | Not started. Needs the intake progress and scanner page stream contracts in the direction document. |
+| R8 Platform edges | macOS menu bar mirroring the palette, Windows title-bar integration, and system reduced motion on macOS and Linux | L6, L7 | Not started |
+| R9 Review follow-ups | At minimum height the sidebar has room for two tag rows, Settings actions announce their target, and the French Inbox label fits. Library switching drains background reads off the interface thread. | L4, L6 | Implemented in [PR #1](https://github.com/itsdanielyc/plico/pull/1). The regression tests and native evidence are in [VERIFICATION.md](VERIFICATION.md). View-model and window size limits remain an architecture follow-up. |

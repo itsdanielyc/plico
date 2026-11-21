@@ -67,6 +67,7 @@ internal sealed partial class InboxViewModel : ObservableObject, IDisposable
         _intakeFolderPreference = intakeFolderPreference;
         _searchDocuments = searchDocuments ?? (static (library, filter, token) => library.Find(filter, token));
         _searchTimer.Tick += (_, _) => _ = LoadTypedSearchAsync();
+        _suggestionTimer.Tick += (_, _) => StartSuggestionRequest();
     }
 
     public bool HasLibrary => _library is not null;
@@ -104,7 +105,8 @@ internal sealed partial class InboxViewModel : ObservableObject, IDisposable
     {
         try
         {
-            OpenLibrary(locate());
+            string target = Path.GetFullPath(locate());
+            if (!AlreadyOpen(target)) _ = ActivateLibrary(InboxLibrary.Open(target));
         }
         catch (Exception error)
         {
@@ -155,14 +157,25 @@ internal sealed partial class InboxViewModel : ObservableObject, IDisposable
             return;
         }
         token.ThrowIfCancellationRequested();
-        if (_library is { } library && Path.GetRelativePath(library.RootPath, selected) != ".")
+        string target = Path.GetFullPath(selected);
+        if (!AlreadyOpen(target))
         {
-            await StopAllWatchesAsync();
+            var replacement = await Task.Run(() => InboxLibrary.Open(target), token);
+            try
+            {
+                token.ThrowIfCancellationRequested();
+                await StopAllWatchesAsync();
+                await ActivateLibrary(replacement);
+            }
+            finally
+            {
+                if (!ReferenceEquals(_library, replacement)) replacement.Dispose();
+            }
+            _rememberLocation?.Invoke(LibraryPath);
+            await CatchUpSavedWatchesAsync(token);
+            return;
         }
-        token.ThrowIfCancellationRequested();
-        bool opened = OpenLibrary(selected);
         _rememberLocation?.Invoke(LibraryPath);
-        if (opened) await CatchUpSavedWatchesAsync(token);
     });
 
     [RelayCommand] private void Cancel() => _operationCancellation?.Cancel();
@@ -259,22 +272,26 @@ internal sealed partial class InboxViewModel : ObservableObject, IDisposable
     internal void RemoveTag(string tag) =>
         UpdateDocument((library, document) => library.RemoveTag(document.Id, tag), DesktopText.Translate("Tag removed."));
 
-    private bool OpenLibrary(string directory)
+    private bool AlreadyOpen(string target)
     {
-        string target = Path.GetFullPath(directory);
-        if (_library is not null && Path.GetRelativePath(_library.RootPath, target) == ".")
-        {
-            Status = DesktopText.Translate("Library already open.");
-            return false;
-        }
+        if (_library is null || Path.GetRelativePath(_library.RootPath, target) != ".") return false;
+        Status = DesktopText.Translate("Library already open.");
+        return true;
+    }
 
-        var replacement = InboxLibrary.Open(target);
-        var previous = _library;
-        CancelTypedSearch();
+    private Task ActivateLibrary(InboxLibrary replacement)
+    {
+        Task released = Task.CompletedTask;
+        if (_library is { } previous)
+        {
+            released = ReleaseLibraryAfterReadsAsync(previous, StopBackgroundReads());
+            _backgroundLifetime.Dispose();
+            _backgroundLifetime = new CancellationTokenSource();
+        }
         _library = replacement;
         replacement.ConfigureOcr(_ocrProcessing);
-        CancelPreview();
-        previous?.Dispose();
+        PendingUndo = null;
+        ForgetAllThumbnails();
         var importNotice = RestoreImportFailures(replacement.RootPath);
         var intakeNotice = RestoreIntakeFolder(replacement.RootPath);
         OcrCopyBatchResults = [];
@@ -301,7 +318,14 @@ internal sealed partial class InboxViewModel : ObservableObject, IDisposable
         if (importNotice is not null) Status += $" {importNotice}";
         if (intakeNotice is not null) Status += $" {intakeNotice}";
         if (replacement.MoveRecoveryNotice is { } moveNotice) Status += $" {moveNotice}";
-        return true;
+        return released;
+    }
+
+    private static async Task ReleaseLibraryAfterReadsAsync(InboxLibrary library, Task reads)
+    {
+        // The requesting UI reports any read failure. Lease release only depends on the workers having exited.
+        await reads.ConfigureAwait(ConfigureAwaitOptions.SuppressThrowing);
+        library.Dispose();
     }
 
     private Task ImportFilesAsync(IReadOnlyList<string> files, CancellationToken token,
@@ -486,6 +510,7 @@ internal sealed partial class InboxViewModel : ObservableObject, IDisposable
         OnPropertyChanged(nameof(HasDocuments));
         OnPropertyChanged(nameof(HasBatchCandidates));
         OnPropertyChanged(nameof(HasResultActions));
+        NotifyZeroState();
     }
     partial void OnPreviewMessageChanged(string value) => OnPropertyChanged(nameof(HasPreviewMessage));
 
@@ -529,6 +554,7 @@ internal sealed partial class InboxViewModel : ObservableObject, IDisposable
         OnPropertyChanged(nameof(SearchableCopyAction));
         OnPropertyChanged(nameof(HasPageMatchAction));
         NotifyPageChanged();
+        NotifyWorkspaceSelection();
     }
 
     private void NavigatePage(int direction) => ShowPreviewPage(_pageNumber + direction);
@@ -569,7 +595,7 @@ internal sealed partial class InboxViewModel : ObservableObject, IDisposable
             var token = request.Token;
             if (readText)
             {
-                string text = await Task.Run(() => library.ReadPageText(document, page, token), token);
+                string text = await TrackBackgroundRead(() => library.ReadPageText(document, page, token));
                 if (token.IsCancellationRequested) return;
                 PageText = text;
                 PreviewMessage = text.Length == 0 ? DesktopText.Translate("This page has no searchable text.") : "";
@@ -579,7 +605,7 @@ internal sealed partial class InboxViewModel : ObservableObject, IDisposable
             int zoom = PreviewZoomPercent;
             if (zoom != 0)
             {
-                var scaled = await Task.Run(() => library.RenderScaledPdfPageAsync(document, page, zoom, token), token);
+                var scaled = await TrackBackgroundRead(() => library.RenderScaledPdfPageAsync(document, page, zoom, token));
                 using var image = scaled.Image;
                 if (token.IsCancellationRequested) return;
                 var bitmap = new Bitmap(image);
@@ -591,7 +617,7 @@ internal sealed partial class InboxViewModel : ObservableObject, IDisposable
                 return;
             }
 
-            using var rendered = await Task.Run(() => library.RenderPageAsync(document, page, token), token);
+            using var rendered = await TrackBackgroundRead(() => library.RenderPageAsync(document, page, token));
             if (!token.IsCancellationRequested)
             {
                 Preview = new Bitmap(rendered);
@@ -624,17 +650,16 @@ internal sealed partial class InboxViewModel : ObservableObject, IDisposable
 
     public void Dispose()
     {
-        CancelTypedSearch();
-        CancelPreview();
+        if (_library is not { } library) return;
+        Task reads = StopBackgroundReads();
         _reminderTimer?.Stop();
-        ClearPageThumbnails();
-        var library = _library;
         _library = null;
-        if (IsBusy || HasActiveWatches || _thumbnailLoad is { IsCompleted: false }) _ = FinishDisposalAsync(library);
-        else library?.Dispose();
+        ForgetAllThumbnails();
+        if (IsBusy || HasActiveWatches) _ = FinishDisposalAsync(library, reads);
+        else ReleaseLibraryAfterReadsAsync(library, reads).GetAwaiter().GetResult();
     }
 
-    private async Task FinishDisposalAsync(InboxLibrary? library)
+    private async Task FinishDisposalAsync(InboxLibrary library, Task reads)
     {
         try
         {
@@ -642,7 +667,7 @@ internal sealed partial class InboxViewModel : ObservableObject, IDisposable
         }
         finally
         {
-            library?.Dispose();
+            await ReleaseLibraryAfterReadsAsync(library, reads);
         }
     }
 

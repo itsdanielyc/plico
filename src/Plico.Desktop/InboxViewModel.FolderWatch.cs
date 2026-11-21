@@ -53,7 +53,7 @@ internal sealed partial class InboxViewModel
         set => SetCatchUpOnOpen(_phoneWatch, value);
     }
 
-    private bool HasActiveWatches => IsWatchingFolder || IsWatchingPhoneInbox;
+    internal bool HasActiveWatches => IsWatchingFolder || IsWatchingPhoneInbox;
 
     internal Task CatchUpWhenWindowOpensAsync() =>
         CanWork && (CatchUpOnOpen || PhoneCatchUpOnOpen)

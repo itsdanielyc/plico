@@ -1,0 +1,55 @@
+<title>Plico Redesign Mockups</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;650;700&amp;family=Source+Serif+4:opsz,wght@8..60,400;8..60,600&amp;family=IBM+Plex+Mono:wght@400;600&amp;family=Caveat:wght@500&amp;display=swap">
+<link rel="stylesheet" href="styles.css">
+
+<div class="studio">
+  <div class="studio-bar">
+    <div class="studio-id">
+      <svg viewBox="0 0 468 388" aria-hidden="true"><path fill="currentColor" d="M391 388A77 77 0 0 0 468 311L468 232A29 29 0 0 0 410 232L410 311A19 19 0 0 1 391 330L77 330A19 19 0 0 1 58 311L58 232A29 29 0 0 0 0 232L0 311A77 77 0 0 0 77 388L391 388ZM105 232A69 69 0 0 0 174 301L294 301A69 69 0 0 0 363 232L363 113.569A69 69 0 0 0 342.79 64.778L298.222 20.21A69 69 0 0 0 249.431 0L174 0A69 69 0 0 0 105 69L105 232ZM163 69A11 11 0 0 1 174 58L249.431 58A11 11 0 0 1 257.209 61.222L301.778 105.79A11 11 0 0 1 305 113.568L305 232A11 11 0 0 1 294 243L174 243A11 11 0 0 1 163 232L163 69Z"/></svg>
+      <h1>Plico redesign</h1>
+      <span>Mockups, round 1 · sample documents</span>
+    </div>
+    <div class="studio-ctl" role="group" aria-label="Preview settings">
+      <div class="seg" role="group" aria-label="Theme" id="ctl-theme">
+        <button type="button" data-theme-set="light" aria-pressed="false">Light</button>
+        <button type="button" data-theme-set="dark" aria-pressed="false">Dark</button>
+      </div>
+      <div class="seg" role="group" aria-label="Platform" id="ctl-platform">
+        <button type="button" data-platform-set="win" aria-pressed="true">Windows</button>
+        <button type="button" data-platform-set="mac" aria-pressed="false">macOS</button>
+        <button type="button" data-platform-set="linux" aria-pressed="false">Linux</button>
+      </div>
+      <div class="seg" role="group" aria-label="Motion" id="ctl-motion">
+        <button type="button" data-motion-set="full" aria-pressed="true">Motion</button>
+        <button type="button" data-motion-set="reduced" aria-pressed="false">Reduced</button>
+      </div>
+    </div>
+  </div>
+
+  <nav class="screens" id="screens" aria-label="Screens"></nav>
+
+  <div class="stage" id="stage">
+    <div class="stage-inner" id="stage-inner">
+      <div class="win" id="win" data-platform="win" role="application" aria-label="Plico window mockup">
+        <aside class="sb" id="sb" aria-label="Sidebar"></aside>
+        <div class="main">
+          <div class="tb" id="tb"></div>
+          <div class="content" id="content"></div>
+        </div>
+        <div id="ov"></div>
+        <div id="toast-host" aria-live="polite"></div>
+      </div>
+    </div>
+  </div>
+
+  <div id="ds-host" hidden></div>
+
+  <section class="notes" id="notes" aria-live="polite"></section>
+</div>
+
+<script src="docs.js"></script>
+<script src="app.js"></script>
+<script src="screens.js"></script>

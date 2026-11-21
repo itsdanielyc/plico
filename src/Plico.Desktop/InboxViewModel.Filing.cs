@@ -19,6 +19,7 @@ internal sealed partial class InboxViewModel
         var library = RequireLibrary();
         var rules = await Task.Run(library.GetFilingRules, token);
         await _dialogs.ShowFilingRulesAsync(rules, library.SaveFilingRule, library.DeleteFilingRule);
+        RequestSuggestions(SelectedDocument, refresh: true);
         Status = DesktopText.Translate("Tag rules are ready to use in Filing suggestions.");
     });
 

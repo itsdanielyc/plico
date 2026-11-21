@@ -37,7 +37,9 @@ internal static class PdfRedactor
         string pixelsOnly = Path.Combine(stage, "redacted-pixels.pdf");
         using var context = DocumentProcessor.CreateCaptureContext(stage);
         var marks = regions.ToLookup(region => region.PageNumber);
-        using (var writer = SKDocument.CreatePdf(pixelsOnly) ?? throw new IOException("Could not create a redacted PDF."))
+        // A child started during rendering can inherit Skia's native file handle on Windows and hold it past writer.Close().
+        using (var rasterOutput = File.Open(pixelsOnly, FileMode.CreateNew, FileAccess.Write, FileShare.None))
+        using (var writer = SKDocument.CreatePdf(rasterOutput) ?? throw new IOException("Could not create a redacted PDF."))
         using (var ink = new SKPaint { Color = SKColors.Black, IsAntialias = false })
         {
             int pageNumber = 0;

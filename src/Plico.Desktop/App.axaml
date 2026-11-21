@@ -2,103 +2,185 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              x:Class="Plico.Desktop.App"
              RequestedThemeVariant="Light">
+    <!--
+        Paper on a quiet desk. Graphite and grey chrome from the miille tile recedes, so the page is the
+        brightest object and the only thing with a shadow. Colour appears only when it means something:
+        amber for search hits, tag dots, green for a live watch, orange for a coming date, red for
+        destructive actions, and the system accent for keyboard focus. See DESIGN.md.
+    -->
     <Application.Resources>
         <ResourceDictionary>
+            <ResourceDictionary.MergedDictionaries>
+                <ResourceInclude Source="/Theme/Icons.axaml" />
+            </ResourceDictionary.MergedDictionaries>
             <ResourceDictionary.ThemeDictionaries>
                 <ResourceDictionary x:Key="Light">
-                    <SolidColorBrush x:Key="RailSurface" Color="#1B302B" />
-                    <SolidColorBrush x:Key="WorkspaceInk" Color="#1F3027" />
-                    <SolidColorBrush x:Key="ControlHoverInk" Color="#223E30" />
-                    <SolidColorBrush x:Key="BadgeInk" Color="#254333" />
-                    <SolidColorBrush x:Key="PrimarySurface" Color="#254C37" />
-                    <SolidColorBrush x:Key="ControlInk" Color="#284838" />
-                    <SolidColorBrush x:Key="PanelInk" Color="#294735" />
-                    <SolidColorBrush x:Key="AccentInk" Color="#30543E" />
-                    <SolidColorBrush x:Key="RailActiveSurface" Color="#344E42" />
-                    <SolidColorBrush x:Key="PrimaryHoverSurface" Color="#346449" />
-                    <SolidColorBrush x:Key="LinkInk" Color="#386447" />
-                    <SolidColorBrush x:Key="FaintInk" Color="#526358" />
-                    <SolidColorBrush x:Key="FieldHintInk" Color="#536459" />
-                    <SolidColorBrush x:Key="SubtleInk" Color="#556358" />
-                    <SolidColorBrush x:Key="MutedInk" Color="#5C685D" />
-                    <SolidColorBrush x:Key="DropOutline" Color="#5F8A62" />
-                    <SolidColorBrush x:Key="WarningInk" Color="#795327" />
-                    <SolidColorBrush x:Key="ErrorInk" Color="#8A2E25" />
-                    <SolidColorBrush x:Key="ValidationInk" Color="#8E4037" />
-                    <SolidColorBrush x:Key="RailSectionInk" Color="#ACC2B4" />
-                    <SolidColorBrush x:Key="RailCountInk" Color="#B9CCBE" />
-                    <SolidColorBrush x:Key="RailTagMarker" Color="#C5DDA6" />
-                    <SolidColorBrush x:Key="SelectionOutline" Color="#CADDCA" />
-                    <SolidColorBrush x:Key="BadgeSurface" Color="#CBDFA9" />
-                    <SolidColorBrush x:Key="RailInk" Color="#D1DFD3" />
-                    <SolidColorBrush x:Key="ControlOutline" Color="#D4DED2" />
-                    <SolidColorBrush x:Key="PanelOutline" Color="#DDE2D7" />
-                    <SolidColorBrush x:Key="ControlHoverSurface" Color="#E2ECD6" />
-                    <SolidColorBrush x:Key="DropSurface" Color="#E3EFE4" />
-                    <SolidColorBrush x:Key="SelectionSurface" Color="#E4EEDD" />
-                    <SolidColorBrush x:Key="CardActiveSurface" Color="#E6F0E2" />
-                    <SolidColorBrush x:Key="InsetSurface" Color="#E8EEE4" />
-                    <SolidColorBrush x:Key="PreviewSurface" Color="#EAEFE6" />
-                    <SolidColorBrush x:Key="TagSurface" Color="#EAF0E5" />
-                    <SolidColorBrush x:Key="HeaderSurface" Color="#EDF2E8" />
-                    <SolidColorBrush x:Key="ControlSurface" Color="#EFF2E9" />
-                    <SolidColorBrush x:Key="WorkspaceSurface" Color="#F4F5EF" />
-                    <SolidColorBrush x:Key="RailActiveInk" Color="#F9FBF5" />
-                    <SolidColorBrush x:Key="CardSurface" Color="#FCFDF8" />
-                    <SolidColorBrush x:Key="BrandInk" Color="#FFFFFF" />
+                    <!-- Surfaces -->
+                    <SolidColorBrush x:Key="WorkspaceSurface" Color="#FFFFFF" />
+                    <SolidColorBrush x:Key="CardSurface" Color="#FFFFFF" />
+                    <SolidColorBrush x:Key="SidebarSurface" Color="#F3F3F4" />
+                    <SolidColorBrush x:Key="DeskSurface" Color="#E8E8EB" />
+                    <SolidColorBrush x:Key="RaisedSurface" Color="#FAFAFB" />
+                    <SolidColorBrush x:Key="PopupSurface" Color="#FFFFFF" />
+                    <SolidColorBrush x:Key="PaperSurface" Color="#FFFFFF" />
+                    <SolidColorBrush x:Key="ScrimSurface" Color="#42141416" />
+                    <!-- Ink -->
+                    <SolidColorBrush x:Key="WorkspaceInk" Color="#141416" />
+                    <SolidColorBrush x:Key="SecondaryInk" Color="#4C4C53" />
+                    <SolidColorBrush x:Key="MutedInk" Color="#5F5F67" />
+                    <SolidColorBrush x:Key="FaintInk" Color="#8E8E96" />
+                    <!-- Lines, fills and selection -->
+                    <SolidColorBrush x:Key="LineBrush" Color="#E4E4E7" />
+                    <SolidColorBrush x:Key="StrongLineBrush" Color="#D2D2D7" />
+                    <SolidColorBrush x:Key="HoverFill" Color="#0C141416" />
+                    <SolidColorBrush x:Key="PressedFill" Color="#16141416" />
+                    <SolidColorBrush x:Key="SelectionSurface" Color="#E6E6E9" />
+                    <SolidColorBrush x:Key="ChipSurface" Color="#EFEFF1" />
+                    <SolidColorBrush x:Key="KeySurface" Color="#ECECEF" />
+                    <SolidColorBrush x:Key="KeyInk" Color="#55555C" />
+                    <!-- Actions -->
+                    <SolidColorBrush x:Key="PrimarySurface" Color="#18181B" />
+                    <SolidColorBrush x:Key="PrimaryHoverSurface" Color="#2E2E33" />
+                    <SolidColorBrush x:Key="PrimaryInk" Color="#FAFAFA" />
+                    <!-- Meaning -->
+                    <SolidColorBrush x:Key="HighlightSurface" Color="#FBE3A0" />
+                    <SolidColorBrush x:Key="HighlightInk" Color="#3D2C00" />
+                    <SolidColorBrush x:Key="PageHighlight" Color="#6BFFBE00" />
+                    <SolidColorBrush x:Key="LiveInk" Color="#1E7F4F" />
+                    <SolidColorBrush x:Key="WarningInk" Color="#9A5800" />
+                    <SolidColorBrush x:Key="ErrorInk" Color="#B3261E" />
+                    <SolidColorBrush x:Key="ValidationInk" Color="#B3261E" />
+                    <SolidColorBrush x:Key="MessageSurface" Color="#1C1C1F" />
+                    <SolidColorBrush x:Key="MessageInk" Color="#F4F4F5" />
+                    <SolidColorBrush x:Key="MessageSecondaryInk" Color="#B4B4BB" />
+
+                    <!-- Earlier keys, kept so every dialog follows the same palette. -->
+                    <SolidColorBrush x:Key="RailSurface" Color="#F3F3F4" />
+                    <SolidColorBrush x:Key="RailInk" Color="#141416" />
+                    <SolidColorBrush x:Key="RailActiveSurface" Color="#E6E6E9" />
+                    <SolidColorBrush x:Key="RailActiveInk" Color="#141416" />
+                    <SolidColorBrush x:Key="RailSectionInk" Color="#5F5F67" />
+                    <SolidColorBrush x:Key="RailCountInk" Color="#5F5F67" />
+                    <SolidColorBrush x:Key="RailTagMarker" Color="#8E8E96" />
+                    <SolidColorBrush x:Key="BrandInk" Color="#141416" />
+                    <SolidColorBrush x:Key="BadgeSurface" Color="#FFFFFF" />
+                    <SolidColorBrush x:Key="BadgeInk" Color="#141416" />
+                    <SolidColorBrush x:Key="ControlSurface" Color="#FFFFFF" />
+                    <SolidColorBrush x:Key="ControlInk" Color="#141416" />
+                    <SolidColorBrush x:Key="ControlOutline" Color="#D2D2D7" />
+                    <SolidColorBrush x:Key="ControlHoverSurface" Color="#F4F4F5" />
+                    <SolidColorBrush x:Key="ControlHoverInk" Color="#141416" />
+                    <SolidColorBrush x:Key="PanelOutline" Color="#E4E4E7" />
+                    <SolidColorBrush x:Key="PanelInk" Color="#141416" />
+                    <SolidColorBrush x:Key="AccentInk" Color="#4C4C53" />
+                    <SolidColorBrush x:Key="LinkInk" Color="#4C4C53" />
+                    <SolidColorBrush x:Key="SubtleInk" Color="#5F5F67" />
+                    <SolidColorBrush x:Key="FieldHintInk" Color="#5F5F67" />
+                    <SolidColorBrush x:Key="SelectionOutline" Color="#1E7F4F" />
+                    <SolidColorBrush x:Key="DropOutline" Color="#8E8E96" />
+                    <SolidColorBrush x:Key="DropSurface" Color="#4C4C53" />
+                    <SolidColorBrush x:Key="CardActiveSurface" Color="#FAFAFB" />
+                    <SolidColorBrush x:Key="InsetSurface" Color="#F4F4F5" />
+                    <SolidColorBrush x:Key="PreviewSurface" Color="#E8E8EB" />
+                    <SolidColorBrush x:Key="TagSurface" Color="#EFEFF1" />
+                    <SolidColorBrush x:Key="HeaderSurface" Color="#EFEFF1" />
+
+                    <!-- Fluent text fields and lists in the same greys. -->
+                    <SolidColorBrush x:Key="TextControlBorderBrush" Color="#D2D2D7" />
+                    <SolidColorBrush x:Key="TextControlBorderBrushPointerOver" Color="#B4B4BB" />
+                    <SolidColorBrush x:Key="TextControlBackground" Color="#FFFFFF" />
+                    <SolidColorBrush x:Key="TextControlBackgroundPointerOver" Color="#FFFFFF" />
+                    <SolidColorBrush x:Key="TextControlBackgroundFocused" Color="#FFFFFF" />
+                    <SolidColorBrush x:Key="ComboBoxBorderBrush" Color="#D2D2D7" />
+                    <SolidColorBrush x:Key="ComboBoxBackground" Color="#FFFFFF" />
+                    <SolidColorBrush x:Key="MenuFlyoutPresenterBackground" Color="#FFFFFF" />
+                    <SolidColorBrush x:Key="MenuFlyoutPresenterBorderBrush" Color="#E4E4E7" />
                 </ResourceDictionary>
                 <ResourceDictionary x:Key="Dark">
-                    <SolidColorBrush x:Key="RailSurface" Color="#14231E" />
-                    <SolidColorBrush x:Key="WorkspaceInk" Color="#E4EDE5" />
-                    <SolidColorBrush x:Key="ControlHoverInk" Color="#EBF6EE" />
-                    <SolidColorBrush x:Key="BadgeInk" Color="#20362B" />
-                    <SolidColorBrush x:Key="PrimarySurface" Color="#386544" />
-                    <SolidColorBrush x:Key="ControlInk" Color="#D9EBDD" />
-                    <SolidColorBrush x:Key="PanelInk" Color="#CCE2CF" />
-                    <SolidColorBrush x:Key="AccentInk" Color="#BDD9C2" />
-                    <SolidColorBrush x:Key="RailActiveSurface" Color="#355144" />
-                    <SolidColorBrush x:Key="PrimaryHoverSurface" Color="#457A51" />
-                    <SolidColorBrush x:Key="LinkInk" Color="#9FD3AC" />
-                    <SolidColorBrush x:Key="FaintInk" Color="#B4C7B9" />
-                    <SolidColorBrush x:Key="FieldHintInk" Color="#B7CDBC" />
-                    <SolidColorBrush x:Key="SubtleInk" Color="#B7C6B9" />
-                    <SolidColorBrush x:Key="MutedInk" Color="#B6C9BA" />
-                    <SolidColorBrush x:Key="DropOutline" Color="#8ABF8F" />
-                    <SolidColorBrush x:Key="WarningInk" Color="#E8BF83" />
-                    <SolidColorBrush x:Key="ErrorInk" Color="#F4ADA5" />
-                    <SolidColorBrush x:Key="ValidationInk" Color="#F1ADA5" />
-                    <SolidColorBrush x:Key="RailSectionInk" Color="#B4CDBC" />
-                    <SolidColorBrush x:Key="RailCountInk" Color="#CADBCD" />
-                    <SolidColorBrush x:Key="RailTagMarker" Color="#C5DDA6" />
-                    <SolidColorBrush x:Key="SelectionOutline" Color="#5B8065" />
-                    <SolidColorBrush x:Key="BadgeSurface" Color="#C6DDA4" />
-                    <SolidColorBrush x:Key="RailInk" Color="#D6E5DB" />
-                    <SolidColorBrush x:Key="ControlOutline" Color="#445C4D" />
-                    <SolidColorBrush x:Key="PanelOutline" Color="#3E5144" />
-                    <SolidColorBrush x:Key="ControlHoverSurface" Color="#394F40" />
-                    <SolidColorBrush x:Key="DropSurface" Color="#263E31" />
-                    <SolidColorBrush x:Key="SelectionSurface" Color="#374F3E" />
-                    <SolidColorBrush x:Key="CardActiveSurface" Color="#304739" />
-                    <SolidColorBrush x:Key="InsetSurface" Color="#24362C" />
-                    <SolidColorBrush x:Key="PreviewSurface" Color="#23332A" />
-                    <SolidColorBrush x:Key="TagSurface" Color="#304536" />
-                    <SolidColorBrush x:Key="HeaderSurface" Color="#24332B" />
-                    <SolidColorBrush x:Key="ControlSurface" Color="#293D31" />
-                    <SolidColorBrush x:Key="WorkspaceSurface" Color="#17241D" />
-                    <SolidColorBrush x:Key="RailActiveInk" Color="#F2F9F3" />
-                    <SolidColorBrush x:Key="CardSurface" Color="#1E2E25" />
-                    <SolidColorBrush x:Key="BrandInk" Color="#FFFFFF" />
+                    <SolidColorBrush x:Key="WorkspaceSurface" Color="#1C1C1F" />
+                    <SolidColorBrush x:Key="CardSurface" Color="#1C1C1F" />
+                    <SolidColorBrush x:Key="SidebarSurface" Color="#161618" />
+                    <SolidColorBrush x:Key="DeskSurface" Color="#0F0F11" />
+                    <SolidColorBrush x:Key="RaisedSurface" Color="#1A1A1D" />
+                    <SolidColorBrush x:Key="PopupSurface" Color="#232327" />
+                    <SolidColorBrush x:Key="PaperSurface" Color="#E6E6E6" />
+                    <SolidColorBrush x:Key="ScrimSurface" Color="#80000000" />
+                    <SolidColorBrush x:Key="WorkspaceInk" Color="#F2F2F3" />
+                    <SolidColorBrush x:Key="SecondaryInk" Color="#BDBDC4" />
+                    <SolidColorBrush x:Key="MutedInk" Color="#A0A0A8" />
+                    <SolidColorBrush x:Key="FaintInk" Color="#75757D" />
+                    <SolidColorBrush x:Key="LineBrush" Color="#29292D" />
+                    <SolidColorBrush x:Key="StrongLineBrush" Color="#3A3A40" />
+                    <SolidColorBrush x:Key="HoverFill" Color="#0DFFFFFF" />
+                    <SolidColorBrush x:Key="PressedFill" Color="#16FFFFFF" />
+                    <SolidColorBrush x:Key="SelectionSurface" Color="#2C2C31" />
+                    <SolidColorBrush x:Key="ChipSurface" Color="#2A2A2E" />
+                    <SolidColorBrush x:Key="KeySurface" Color="#2A2A2E" />
+                    <SolidColorBrush x:Key="KeyInk" Color="#BDBDC4" />
+                    <SolidColorBrush x:Key="PrimarySurface" Color="#F2F2F3" />
+                    <SolidColorBrush x:Key="PrimaryHoverSurface" Color="#FFFFFF" />
+                    <SolidColorBrush x:Key="PrimaryInk" Color="#111113" />
+                    <SolidColorBrush x:Key="HighlightSurface" Color="#5A4510" />
+                    <SolidColorBrush x:Key="HighlightInk" Color="#FFE9AE" />
+                    <SolidColorBrush x:Key="PageHighlight" Color="#80FFBE00" />
+                    <SolidColorBrush x:Key="LiveInk" Color="#4CC38A" />
+                    <SolidColorBrush x:Key="WarningInk" Color="#E2A24A" />
+                    <SolidColorBrush x:Key="ErrorInk" Color="#F2827A" />
+                    <SolidColorBrush x:Key="ValidationInk" Color="#F2827A" />
+                    <SolidColorBrush x:Key="MessageSurface" Color="#F2F2F3" />
+                    <SolidColorBrush x:Key="MessageInk" Color="#141416" />
+                    <SolidColorBrush x:Key="MessageSecondaryInk" Color="#55555C" />
+
+                    <SolidColorBrush x:Key="RailSurface" Color="#161618" />
+                    <SolidColorBrush x:Key="RailInk" Color="#F2F2F3" />
+                    <SolidColorBrush x:Key="RailActiveSurface" Color="#2C2C31" />
+                    <SolidColorBrush x:Key="RailActiveInk" Color="#F2F2F3" />
+                    <SolidColorBrush x:Key="RailSectionInk" Color="#A0A0A8" />
+                    <SolidColorBrush x:Key="RailCountInk" Color="#A0A0A8" />
+                    <SolidColorBrush x:Key="RailTagMarker" Color="#75757D" />
+                    <SolidColorBrush x:Key="BrandInk" Color="#F2F2F3" />
+                    <SolidColorBrush x:Key="BadgeSurface" Color="#232327" />
+                    <SolidColorBrush x:Key="BadgeInk" Color="#F2F2F3" />
+                    <SolidColorBrush x:Key="ControlSurface" Color="#26262A" />
+                    <SolidColorBrush x:Key="ControlInk" Color="#F2F2F3" />
+                    <SolidColorBrush x:Key="ControlOutline" Color="#3A3A40" />
+                    <SolidColorBrush x:Key="ControlHoverSurface" Color="#2E2E33" />
+                    <SolidColorBrush x:Key="ControlHoverInk" Color="#FFFFFF" />
+                    <SolidColorBrush x:Key="PanelOutline" Color="#29292D" />
+                    <SolidColorBrush x:Key="PanelInk" Color="#F2F2F3" />
+                    <SolidColorBrush x:Key="AccentInk" Color="#BDBDC4" />
+                    <SolidColorBrush x:Key="LinkInk" Color="#BDBDC4" />
+                    <SolidColorBrush x:Key="SubtleInk" Color="#A0A0A8" />
+                    <SolidColorBrush x:Key="FieldHintInk" Color="#A0A0A8" />
+                    <SolidColorBrush x:Key="SelectionOutline" Color="#4CC38A" />
+                    <SolidColorBrush x:Key="DropOutline" Color="#75757D" />
+                    <SolidColorBrush x:Key="DropSurface" Color="#BDBDC4" />
+                    <SolidColorBrush x:Key="CardActiveSurface" Color="#232327" />
+                    <SolidColorBrush x:Key="InsetSurface" Color="#19191C" />
+                    <SolidColorBrush x:Key="PreviewSurface" Color="#0F0F11" />
+                    <SolidColorBrush x:Key="TagSurface" Color="#2A2A2E" />
+                    <SolidColorBrush x:Key="HeaderSurface" Color="#2A2A2E" />
+
+                    <SolidColorBrush x:Key="TextControlBorderBrush" Color="#3A3A40" />
+                    <SolidColorBrush x:Key="TextControlBorderBrushPointerOver" Color="#55555C" />
+                    <SolidColorBrush x:Key="TextControlBackground" Color="#232327" />
+                    <SolidColorBrush x:Key="TextControlBackgroundPointerOver" Color="#26262A" />
+                    <SolidColorBrush x:Key="TextControlBackgroundFocused" Color="#1C1C1F" />
+                    <SolidColorBrush x:Key="ComboBoxBorderBrush" Color="#3A3A40" />
+                    <SolidColorBrush x:Key="ComboBoxBackground" Color="#232327" />
+                    <SolidColorBrush x:Key="MenuFlyoutPresenterBackground" Color="#232327" />
+                    <SolidColorBrush x:Key="MenuFlyoutPresenterBorderBrush" Color="#3A3A40" />
                 </ResourceDictionary>
             </ResourceDictionary.ThemeDictionaries>
+
+            <!-- Geometry: a 4 px grid, 7 px controls, 10 px panels and popovers, 12 px dialogs. -->
+            <CornerRadius x:Key="ControlCornerRadius">7</CornerRadius>
+            <CornerRadius x:Key="OverlayCornerRadius">10</CornerRadius>
+            <x:Double x:Key="ControlContentThemeFontSize">14</x:Double>
         </ResourceDictionary>
     </Application.Resources>
     <Application.Styles>
         <FluentTheme />
-        <Style Selector="TextBox">
-            <Setter Property="PlaceholderForeground" Value="{DynamicResource MutedInk}" />
-        </Style>
-        <Style Selector="AutoCompleteBox">
-            <Setter Property="PlaceholderForeground" Value="{DynamicResource MutedInk}" />
-        </Style>
+        <StyleInclude Source="/Theme/Controls.axaml" />
     </Application.Styles>
 </Application>

@@ -171,7 +171,7 @@ internal sealed partial class InboxViewModel
             DocumentPage page;
             try
             {
-                page = await Task.Run(() => _searchDocuments(library, filter, token), token);
+                page = await TrackBackgroundRead(() => _searchDocuments(library, filter, token));
             }
             finally
             {
@@ -244,6 +244,7 @@ internal sealed partial class InboxViewModel
         OnPropertyChanged(nameof(InboxSelected));
         OnPropertyChanged(nameof(AllSelected));
         OnPropertyChanged(nameof(WithoutTextSelected));
+        NotifyZeroState();
     }
 
     private void ApplyResultPage(DocumentFilter filter, DocumentPage page, long? preferredId = null, bool reloadPreview = false)
@@ -306,7 +307,7 @@ internal sealed partial class InboxViewModel
         try
         {
             var token = request.Token;
-            var highlights = await Task.Run(() => library.FindPageHighlights(document, query, page, token), token);
+            var highlights = await TrackBackgroundRead(() => library.FindPageHighlights(document, query, page, token));
             if (!token.IsCancellationRequested) PreviewHighlights = highlights;
         }
         catch (OperationCanceledException) when (request.IsCancellationRequested) { }

@@ -117,9 +117,10 @@ internal static partial class NativeVerification
             await VerifyAdditionalIntakeAsync(window, model, dialogs, fixture, evidenceDirectory);
             await VerifyMigrationAsync(window, model, dialogs, evidenceDirectory);
             await VerifyPhoneInboxAsync(window, model, dialogs, fixture, evidenceDirectory);
+            await VerifyRedesignSurfacesAsync(window, model, evidenceDirectory, fixture);
 
             File.WriteAllText(Path.Combine(evidenceDirectory, "passed.txt"),
-                $"Verified {runtime}. Native window completed multilingual OCR and correction, oriented JPEG and multi-page TIFF import, PDF combination, page extraction and rotation, phrase, tag, review-status, folder, and text-availability search, query correction, saved search restoration, single and batch document-date editing, date filtering and inheritance, result sorting, continued review across loaded results, fit-width and selectable page text previews, match navigation, tag merging, suggestions, and edits across loaded result pages, duplicate drop, folder watch with catch-up on open and intake routing, inbox counting, title edit, single and batch PDF moves, external relocation and PDF swaps, index reporting and PDF restoration from files and folders, single and batch PDF export, library backup, text copy, single and batch OCR copies, saved import error recovery and retry destinations, per-scanner capture option restoration, and filing through the chosen intake folder. {scanRecoveryEvidence}");
+                $"Verified {runtime}. Native window completed multilingual OCR and correction, oriented JPEG and multi-page TIFF import, PDF combination, page extraction and rotation, phrase, tag, review-status, folder, and text-availability search, query correction, saved search restoration, single and batch document-date editing, date filtering and inheritance, result sorting, continued review across loaded results, fit-width and selectable page text previews, match navigation, tag merging, suggestions, and edits across loaded result pages, duplicate drop, folder watch with catch-up on open and intake routing, inbox counting, title edit, single and batch PDF moves, external relocation and PDF swaps, index reporting and PDF restoration from files and folders, single and batch PDF export, library backup, text copy, single and batch OCR copies, saved import error recovery and retry destinations, per-scanner capture option restoration, filing through the chosen intake folder, and the welcome page, command palette, shortcuts sheet, Settings window, and review motion with undo. {scanRecoveryEvidence}");
             desktop.Shutdown(0);
         }
         catch (Exception error)
@@ -205,6 +206,23 @@ internal static partial class NativeVerification
         read.Command.Execute(null);
         await UntilAsync(() => model.PageLabel == "2 / 2" && model.Preview is not null, () => model.Status);
         await CaptureAsync(window, directory, "matching-page.png");
+        double originalWidth = window.Bounds.Width;
+        try
+        {
+            window.Width = window.MinWidth;
+            var page = Control<Border>(window, "PageColumn");
+            var fit = Control<Button>(window, "PreviewFitButton");
+            await UntilAsync(() => Math.Abs(window.Bounds.Width - window.MinWidth) <= LayoutRoundingTolerance &&
+                IsInsideViewport(jump, page) && IsInsideViewport(fit, page) &&
+                jump.TranslatePoint(default, page) is { } matchOrigin && fit.TranslatePoint(default, page) is { } fitOrigin &&
+                !new Rect(matchOrigin, jump.Bounds.Size).Intersects(new Rect(fitOrigin, fit.Bounds.Size)),
+                () => "The search-match and zoom buttons overlap or fall outside the minimum-width page.");
+            await CaptureAsync(window, directory, "matching-page-compact.png");
+        }
+        finally
+        {
+            window.Width = originalWidth;
+        }
     }
 
     private static async Task<long> VerifySearchableCopyAsync(MainWindow window, InboxViewModel model, string fixture, string directory)
@@ -814,6 +832,7 @@ internal static partial class NativeVerification
         var pdfFolder = Path.Combine(model.LibraryPath, "PDFs");
         var filingFolder = Directory.CreateDirectory(Path.Combine(pdfFolder, "Filed")).FullName;
         var movedPdf = Path.Combine(filingFolder, "Housing renewal.pdf");
+        await SettleAsync(model);
         File.Move(Path.Combine(pdfFolder, selected.RelativePath), movedPdf);
         await model.RefreshIndexCommand.ExecuteAsync(null);
         Require(model.Status.Contains("1 document moved.", StringComparison.Ordinal), model.Status);
@@ -1077,6 +1096,7 @@ internal sealed partial class FixtureDialogs(params string[] documents) : IWorks
     internal string? LastFolderStart { get; private set; }
     internal int FolderPickerCalls { get; private set; }
     internal string? EditedTitle { get; init; }
+    internal ArchiveSerialInput? ArchiveSerialChoice { get; set; }
     internal Func<DateOnly?, Task<DocumentDateEdit?>>? DocumentDateChoice { get; set; }
     internal Func<DateOnly?, int, Task<DocumentDateEdit?>>? BatchDocumentDateChoice { get; set; }
     internal Func<SavedSearchDraft, string?, bool, Task<SavedSearchDecision?>>? SavedSearchChoice { get; set; }
@@ -1120,7 +1140,7 @@ internal sealed partial class FixtureDialogs(params string[] documents) : IWorks
     public Task<ManualDuplexDecision> ChooseDuplexActionAsync(ManualDuplexPrompt prompt, CancellationToken cancellationToken) =>
         Task.FromResult(ManualDuplexDecision.SaveForLater);
     public Task<ArchiveSerialInput?> PickArchiveSerialAsync(ArchiveSerialAction action, long? current = null) =>
-        Task.FromResult<ArchiveSerialInput?>(null);
+        Task.FromResult(ArchiveSerialChoice);
     public Task<string?> PickArchiveSheetPathAsync(string filename) => Task.FromResult<string?>(null);
     public Task<string?> EditTitleAsync(string currentTitle) => Task.FromResult(EditedTitle);
     public Task<DocumentDateEdit?> EditDocumentDateAsync(DateOnly? currentDate) =>

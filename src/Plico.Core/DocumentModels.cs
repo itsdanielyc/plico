@@ -31,6 +31,9 @@ public sealed record DocumentSummary(
     /// <summary>The calendar date recorded from the document, when supplied.</summary>
     public DateOnly? DocumentDate { get; init; }
 
+    /// <summary>Identifies the indexed PDF bytes for cached renders. Older catalogs fall back to the indexed file stamp.</summary>
+    public string ContentRevision { get; init; } = "";
+
     /// <summary>Whether a document date has been recorded.</summary>
     public bool HasDocumentDate => DocumentDate.HasValue;
 

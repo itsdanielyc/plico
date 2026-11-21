@@ -18,7 +18,8 @@ public sealed partial class LibraryTests
         using var library = InboxLibrary.Open(Directory.CreateDirectory(Path.Combine(temporary.Path, "Library")).FullName);
         string target = Directory.CreateDirectory(Path.Combine(temporary.Path, "Export")).FullName;
         string source = Path.Combine(temporary.Path, "Synthetic record.pdf");
-        using (var writer = SKDocument.CreatePdf(source, new SKDocumentPdfMetadata { Subject = secret }))
+        using (var output = File.Open(source, FileMode.CreateNew, FileAccess.Write, FileShare.None))
+        using (var writer = SKDocument.CreatePdf(output, new SKDocumentPdfMetadata { Subject = secret }))
         using (var font = new SKFont(SKTypeface.Default, 32))
         using (var paint = new SKPaint { Color = SKColors.Black, IsAntialias = true })
         {

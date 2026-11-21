@@ -35,6 +35,8 @@ Tag renaming updates the label for a capitalization change or moves the catalog 
 
 The desktop builds a sorted index of the sidebar's tag keys when a tag field first requests suggestions. The same index serves both fields until the label list changes. Each edit starts at the matching prefix by binary search and reads at most eight eligible labels, with no catalog read for the edit.
 
+Inline filing reads up to 32 reviewed examples or eight selected documents at a time. Each SQLite reader closes before classification or field extraction uses those excerpts. Training pages descend by document ID. Selected inputs retain the caller's order and deduplicate IDs across pages. The Inbox count and presence of any PDF come from a single indexed query, which also supplies the welcome and Inbox-clear states.
+
 Schema v2 indexes the SHA-256 digest of the source. Import computes it while copying a snapshot to staging. Repeating an unchanged source can reuse its existing PDF and avoid OCR. For a v1 entry, a PDF candidate with matching size is hashed on demand. Paths reserved by missing entries keep newly imported documents from inheriting unrelated metadata.
 
 The desktop stores its intake folder as a relative PDF path in per-library settings. Core checks the resolved directory inside `PDFs/` before preparing the file or capturing pages, then checks it again before publishing. Each operation claims an available name in the destination and records its relative path in SQLite. Exact-source detection spans the library. The scanner watcher files at the PDF root by default. An optional per-library choice uses the same intake folder for ready scans and catch-up batches. The desktop records failures through the usual import error list.
@@ -71,7 +73,7 @@ Batch filing checks the selected paths and file stamps before the first move. Un
 
 Plico waits for its preview and matching-page readers to release their file handles before journaling and moving a PDF. The preview consumes the rendering stream through completion so PDFium closes its input file. The move checks the source stamp again after waiting.
 
-Backup copies the PDF tree and takes an online SQLite snapshot under the library's file-operation lease. It validates the file inventory and publishes the staged backup by an atomic directory move inside the selected destination. [Microsoft.Data.Sqlite online backup](https://learn.microsoft.com/en-us/dotnet/standard/data/sqlite/backup)
+Backup copies the PDF tree and takes an online SQLite snapshot under the library's file-operation lease. Its inventory includes the settings, front pages, and any saved back pages of a pending manual duplex scan. Backup checks the inventory again before publishing the staged folder by an atomic directory move inside the selected destination. [Microsoft.Data.Sqlite online backup](https://learn.microsoft.com/en-us/dotnet/standard/data/sqlite/backup)
 
 Selected export reads the chosen catalog paths and file stamps under the same lease. It stages the PDF bytes under the chosen destination, assigns distinct portable filenames, and checks the sources again before publishing the folder. [Directory.Move](https://learn.microsoft.com/en-us/dotnet/api/system.io.directory.move?view=net-10.0)
 
@@ -101,7 +103,7 @@ A `folder:` branch uses the existing unique relative-path index to find the rows
 
 The folder picker validates the resolved directory against the PDF root. The query parser records the existing folder clause ranges and replaces them with the chosen path, retaining quoted text and other predicates. The final query is compiled again to verify the visible scope.
 
-Typed search uses a single background reader for results. Editing the query cancels the previous read and gives the newest request control of the results. SQLite checks cancellation during the read so an abandoned query can release the reader slot. [SQLite progress callbacks](https://www.sqlite.org/c3ref/progress_handler.html)
+Typed search uses a single background reader for results. Editing the query cancels the previous read and gives the newest request control of the results. SQLite checks cancellation during the read so an abandoned query can release the reader slot. Every catalog connection sets a five-second busy timeout, so a write waits for a background reader on another connection. [SQLite progress callbacks](https://www.sqlite.org/c3ref/progress_handler.html)
 
 Match navigation reads the selected PDF in the background. A scratch FTS5 index uses the catalog’s query compiler and tokenizer and holds the text index for one page. A matching-page step starts beside the current preview page and stops at the closest hit in the requested direction. Changing the search, selection, or preview page cancels a pending jump. [FTS5 contentless indexes](https://sqlite.org/fts5.html#the_delete_all_command)
 

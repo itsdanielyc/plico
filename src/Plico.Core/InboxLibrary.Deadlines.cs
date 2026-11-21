@@ -25,8 +25,11 @@ public sealed partial class InboxLibrary
     public string ResolveReminderPdf(long documentId) => ResolvePdf(_catalog.Get(documentId));
 
     /// <summary>Finds possible due dates in the document's indexed text.</summary>
-    public IReadOnlyList<DateOnly> SuggestDueDates(long documentId, OcrLanguage language, CultureInfo culture) =>
-        FilingFieldExtractor.Read(ReadIndexedText(documentId), FilingFieldExtractor.DateCulture(language, culture)).DueDates;
+    public IReadOnlyList<DateOnly> SuggestDueDates(long documentId, OcrLanguage language, CultureInfo culture)
+    {
+        var input = _catalog.ReadFilingInputs([documentId], CancellationToken.None).Single();
+        return FilingFieldExtractor.Read(input.Text, FilingFieldExtractor.DateCulture(input.Language ?? language, culture)).DueDates;
+    }
 
     /// <summary>Writes selected dates and alarms as a standard iCalendar file. A null selection exports the entire present library.</summary>
     public Task<string> ExportDeadlinesAsync(string destination, IReadOnlyList<long>? documentIds = null,

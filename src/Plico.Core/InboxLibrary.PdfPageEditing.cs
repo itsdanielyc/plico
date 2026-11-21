@@ -71,7 +71,7 @@ public sealed partial class InboxLibrary
                 throw new ArgumentException("Split points are first pages between page 2 and the end of the PDF.", nameof(partStartPages));
             var source = ResolveSelectedPdfSources(_catalog.ReadSelectedFiles([documentId]), token).Single();
             string snapshot = Path.Combine(stage, StagedSourceStem + DocumentProcessor.PdfExtension);
-            await CopyPdfAsync(source.Path, snapshot, source.Version, VersionSourceChanged, token).ConfigureAwait(false);
+            await CopyFileSnapshotAsync(source.Path, snapshot, source.Version, VersionSourceChanged, token).ConfigureAwait(false);
             var parts = new (string Path, PdfText Text)[splitPoints.Length + 1];
             using (var pdf = PdfReader.Open(snapshot, PdfDocumentOpenMode.Import))
             {

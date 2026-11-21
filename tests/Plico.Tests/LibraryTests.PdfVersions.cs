@@ -76,6 +76,43 @@ public sealed partial class LibraryTests
     }
 
     [Fact]
+    public async Task InterruptedPdfEditKeepsAnUnverifiedArchiveUntilTheOriginalIsRecovered()
+    {
+        using var temporary = new TemporaryLibrary();
+        var token = TestContext.Current.CancellationToken;
+        string? active = null;
+        long documentId;
+        using (var library = InboxLibrary.Open(temporary.Path, (source, destination, allowHardLink) =>
+        {
+            if (IsActiveVersionClaim(destination, active, allowHardLink)) throw new InterruptedVersionTestException();
+            return PdfFilePublication.TryClaim(source, destination, allowHardLink);
+        }))
+        {
+            var original = await library.ImportAsync(Fixture(Letter), token);
+            documentId = original.Id;
+            active = library.ResolvePdf(original);
+            await Assert.ThrowsAsync<InterruptedVersionTestException>(() =>
+                library.ReplacePdfVersionAsync(documentId, Fixture(LedgerFixture), cancellationToken: token));
+        }
+
+        string archived = Assert.Single(Directory.EnumerateFiles(Path.Combine(temporary.Path, ".plico", "versions"),
+            "*.pdf", SearchOption.AllDirectories));
+        byte[] originalBytes = File.ReadAllBytes(archived);
+        byte[] unrelatedBytes = File.ReadAllBytes(Fixture(LedgerFixture));
+        File.WriteAllBytes(archived, unrelatedBytes);
+        Assert.Throws<IOException>(() => { using var unexpected = InboxLibrary.Open(temporary.Path); });
+        Assert.False(File.Exists(active));
+        Assert.Equal(unrelatedBytes, File.ReadAllBytes(archived));
+
+        File.WriteAllBytes(archived, originalBytes);
+        using var recovered = InboxLibrary.Open(temporary.Path);
+        Assert.Equal(originalBytes, File.ReadAllBytes(active));
+        var repeated = await recovered.ImportFileAsync(Fixture(Letter), token);
+        Assert.False(repeated.Added);
+        Assert.Equal(documentId, repeated.Document.Id);
+    }
+
+    [Fact]
     public async Task PdfVersionPreservesAnExternalFileThatClaimsTheActivePath()
     {
         using var temporary = new TemporaryLibrary();
@@ -169,6 +206,35 @@ public sealed partial class LibraryTests
         await library.PurgeTrashedPdfAsync(entry.Id, token);
         Assert.Empty(library.GetPdfVersions(entry.Id));
         Assert.Empty(Directory.EnumerateFiles(Path.Combine(library.RootPath, ".plico", "versions"), "*.pdf", SearchOption.AllDirectories));
+    }
+
+    [Fact]
+    public async Task PurgeWithAChangedHistoryFileKeepsTheTrashedPdfAndAllOtherVersions()
+    {
+        using var temporary = new TemporaryLibrary();
+        using var library = InboxLibrary.Open(temporary.Path);
+        var token = TestContext.Current.CancellationToken;
+        var entry = await library.ImportAsync(Fixture(Letter), token);
+        await library.ReplacePdfVersionAsync(entry.Id, Fixture(LedgerFixture), cancellationToken: token);
+        var oldest = Assert.Single(library.GetPdfVersions(entry.Id));
+        await library.RestorePdfVersionAsync(entry.Id, oldest.Key, token);
+        await library.TrashPdfAsync(entry.Id, token);
+
+        string archiveRoot = Path.Combine(temporary.Path, ".plico", "versions");
+        string damaged = Assert.Single(Directory.EnumerateFiles(archiveRoot, $"{oldest.Key:N}.pdf", SearchOption.AllDirectories));
+        byte[] original = File.ReadAllBytes(damaged);
+        File.WriteAllText(damaged, "incomplete archive");
+        await Assert.ThrowsAsync<IOException>(() => library.PurgeTrashedPdfAsync(entry.Id, token));
+        Assert.Equal(2, Directory.EnumerateFiles(archiveRoot, "*.pdf", SearchOption.AllDirectories).Count());
+        var restored = await library.RestoreTrashedPdfAsync(entry.Id, token);
+        Assert.Equal(original, File.ReadAllBytes(library.ResolvePdf(restored)));
+        Assert.Equal("incomplete archive", File.ReadAllText(damaged));
+
+        File.WriteAllBytes(damaged, original);
+        await library.TrashPdfAsync(entry.Id, token);
+        await library.PurgeTrashedPdfAsync(entry.Id, token);
+        Assert.Empty(library.GetTrash());
+        Assert.Empty(Directory.EnumerateFiles(archiveRoot, "*.pdf", SearchOption.AllDirectories));
     }
 
     [Fact]

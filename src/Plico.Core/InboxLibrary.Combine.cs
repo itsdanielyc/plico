@@ -35,7 +35,7 @@ public sealed partial class InboxLibrary
             {
                 token.ThrowIfCancellationRequested();
                 string snapshot = Path.Combine(stage, Path.GetRandomFileName() + DocumentProcessor.PdfExtension);
-                await CopyPdfAsync(source.Path, snapshot, source.Version, CombineSourceChanged, token).ConfigureAwait(false);
+                await CopyFileSnapshotAsync(source.Path, snapshot, source.Version, CombineSourceChanged, token).ConfigureAwait(false);
                 expectedPages = checked(expectedPages + AppendPdfPages(combined, snapshot, Path.GetFileName(source.Path), token));
                 progress?.Report(++appended);
             }

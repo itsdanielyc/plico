@@ -106,8 +106,10 @@ public sealed partial class LibraryMoveTests
         Assert.Equal(0, library.Refresh(token).Relocated);
     }
 
-    [Fact]
-    public async Task ReopeningCompletesTheRecordedMoveEvenWhenIdenticalPdfsExist()
+    [Theory]
+    [InlineData(false)]
+    [InlineData(true)]
+    public async Task ReopeningCompletesTheRecordedMoveEvenWhenIdenticalPdfsExist(bool reuseVacatedPath)
     {
         var token = TestContext.Current.CancellationToken;
         using var temporary = new TemporaryLibrary();
@@ -148,6 +150,7 @@ public sealed partial class LibraryMoveTests
             Assert.Equal(File.ReadAllBytes(occupiedFixture), File.ReadAllBytes(Path.Combine(filing, occupiedFilename)));
             Assert.Equal(File.ReadAllBytes(Fixture), File.ReadAllBytes(Path.Combine(library.PdfDirectory, movedRelativePath)));
             Assert.False(File.Exists(library.ResolvePdf(original)));
+            if (reuseVacatedPath) File.Copy(occupiedFixture, library.ResolvePdf(original));
             command.CommandText = "DROP TRIGGER fail_test_move;";
             command.ExecuteNonQuery();
         }
@@ -161,6 +164,43 @@ public sealed partial class LibraryMoveTests
         Assert.Equal("Duplicate lease.pdf", Assert.Single(recovered.Find(new DocumentFilter(Tag: "Other copy"), token).Items).RelativePath);
         var reopenedCatalog = new LibraryCatalog(Path.Combine(temporary.Path, ".plico", "catalog.sqlite3"));
         Assert.Null(reopenedCatalog.ReadPendingPdfMove());
+        if (reuseVacatedPath)
+        {
+            recovered.Refresh(token);
+            var arrival = Assert.Single(recovered.Find(new DocumentFilter(), token).Items,
+                document => document.RelativePath == Path.GetFileName(Fixture));
+            Assert.NotEqual(sourceId, arrival.Id);
+            Assert.Empty(arrival.Tags);
+        }
+    }
+
+    [Fact]
+    public async Task AnUnstartedMoveDoesNotNeedToReadTheOccupiedDestination()
+    {
+        using var temporary = new TemporaryLibrary();
+        var token = TestContext.Current.CancellationToken;
+        long originalId;
+        string destination;
+        var catalogPath = Path.Combine(temporary.Path, ".plico", "catalog.sqlite3");
+        using (var library = InboxLibrary.Open(temporary.Path))
+        {
+            var original = await library.ImportAsync(Fixture, token);
+            originalId = original.Id;
+            library.AddTag(originalId, "Archive");
+            const string occupiedName = "Occupied.pdf";
+            destination = Path.Combine(library.PdfDirectory, occupiedName);
+            var fingerprint = SHA256.HashData(File.ReadAllBytes(library.ResolvePdf(original)));
+            new LibraryCatalog(catalogPath).RecordPdfMove(new(originalId, original.RelativePath, occupiedName, fingerprint));
+            File.Copy(Path.Combine(AppContext.BaseDirectory, "fixtures", "Match Ledger.pdf"), destination);
+        }
+
+        using var occupied = File.Open(destination, FileMode.Open, FileAccess.ReadWrite, FileShare.None);
+        using var reopened = InboxLibrary.Open(temporary.Path);
+        Assert.Null(reopened.MoveRecoveryNotice);
+        Assert.Null(new LibraryCatalog(catalogPath).ReadPendingPdfMove());
+        var originalRecord = Assert.Single(reopened.Find(new DocumentFilter(Tag: "Archive"), token).Items);
+        Assert.Equal(originalId, originalRecord.Id);
+        Assert.Equal(Path.GetFileName(Fixture), originalRecord.RelativePath);
     }
 
     [Fact]

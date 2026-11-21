@@ -15,6 +15,7 @@ internal static partial class NativeVerification
         await UntilAsync(() => model.Heading == "Search results" && model.Documents.Count == 2 &&
             model.Documents.All(document => Path.GetDirectoryName(document.RelativePath) == relativeFolder) &&
             model.Preview is not null, () => model.Status);
+        await SettleAsync(model);
         var originals = model.Documents.ToArray();
         string backup = Path.Combine(model.LibraryPath, "Folder restore archive");
         string nested = Directory.CreateDirectory(Path.Combine(backup, "Old names")).FullName;

@@ -35,7 +35,7 @@ public sealed partial class InboxLibrary
             string stagedPdf = Path.Combine(stage, StagedPdfName);
             if (options.Format == PdfExportFormat.Original)
             {
-                await CopyPdfAsync(source.Path, stagedPdf, source.Version, ExportSourceChanged, cancellationToken).ConfigureAwait(false);
+                await CopyFileSnapshotAsync(source.Path, stagedPdf, source.Version, ExportSourceChanged, cancellationToken).ConfigureAwait(false);
             }
             else
             {
@@ -81,7 +81,7 @@ public sealed partial class InboxLibrary
             {
                 cancellationToken.ThrowIfCancellationRequested();
                 string output = ReserveExportPath(stage, source.Path, nextSuffixes, allocatedNames);
-                await CopyPdfAsync(source.Path, output, source.Version, ExportSourceChanged, cancellationToken).ConfigureAwait(false);
+                await CopyFileSnapshotAsync(source.Path, output, source.Version, ExportSourceChanged, cancellationToken).ConfigureAwait(false);
                 copied++;
                 progress?.Report(copied);
             }

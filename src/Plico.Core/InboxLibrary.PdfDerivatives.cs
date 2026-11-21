@@ -81,7 +81,7 @@ public sealed partial class InboxLibrary
             {
                 // Only the completed derivative leaves private library staging.
                 string stagedResult = Path.Combine(exportStage, StagedPdfName);
-                await CopyPdfAsync(output, stagedResult, resultFile, ExportSourceChanged, token).ConfigureAwait(false);
+                await CopyFileSnapshotAsync(output, stagedResult, resultFile, ExportSourceChanged, token).ConfigureAwait(false);
                 if (Path.GetRelativePath(target, ResolveExternalTarget(target)) != ".")
                     throw new IOException("The export folder changed during the copy. Choose it again.");
                 string path = PublishExportFile(stagedResult, target, PortableStem($"{document.Title} ({suffix})"),

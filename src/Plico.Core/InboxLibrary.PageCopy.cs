@@ -39,7 +39,7 @@ public sealed partial class InboxLibrary
         {
             var source = ResolveSelectedPdfSources(_catalog.ReadSelectedFiles([documentId]), token).Single();
             string snapshot = Path.Combine(stage, StagedSourceStem + DocumentProcessor.PdfExtension);
-            await CopyPdfAsync(source.Path, snapshot, source.Version, PageCopySourceChanged, token).ConfigureAwait(false);
+            await CopyFileSnapshotAsync(source.Path, snapshot, source.Version, PageCopySourceChanged, token).ConfigureAwait(false);
 
             string output = Path.Combine(stage, StagedPdfName);
             var text = rotation is { } turn
