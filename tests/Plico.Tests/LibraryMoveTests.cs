@@ -175,6 +175,35 @@ public sealed partial class LibraryMoveTests
     }
 
     [Fact]
+    public async Task AnUnstartedMoveDoesNotNeedToReadTheOccupiedDestination()
+    {
+        using var temporary = new TemporaryLibrary();
+        var token = TestContext.Current.CancellationToken;
+        long originalId;
+        string destination;
+        var catalogPath = Path.Combine(temporary.Path, ".plico", "catalog.sqlite3");
+        using (var library = InboxLibrary.Open(temporary.Path))
+        {
+            var original = await library.ImportAsync(Fixture, token);
+            originalId = original.Id;
+            library.AddTag(originalId, "Archive");
+            const string occupiedName = "Occupied.pdf";
+            destination = Path.Combine(library.PdfDirectory, occupiedName);
+            var fingerprint = SHA256.HashData(File.ReadAllBytes(library.ResolvePdf(original)));
+            new LibraryCatalog(catalogPath).RecordPdfMove(new(originalId, original.RelativePath, occupiedName, fingerprint));
+            File.Copy(Path.Combine(AppContext.BaseDirectory, "fixtures", "Match Ledger.pdf"), destination);
+        }
+
+        using var occupied = File.Open(destination, FileMode.Open, FileAccess.ReadWrite, FileShare.None);
+        using var reopened = InboxLibrary.Open(temporary.Path);
+        Assert.Null(reopened.MoveRecoveryNotice);
+        Assert.Null(new LibraryCatalog(catalogPath).ReadPendingPdfMove());
+        var originalRecord = Assert.Single(reopened.Find(new DocumentFilter(Tag: "Archive"), token).Items);
+        Assert.Equal(originalId, originalRecord.Id);
+        Assert.Equal(Path.GetFileName(Fixture), originalRecord.RelativePath);
+    }
+
+    [Fact]
     public async Task MoveRecoveryKeepsUnrelatedDestinationBytesSeparate()
     {
         var token = TestContext.Current.CancellationToken;

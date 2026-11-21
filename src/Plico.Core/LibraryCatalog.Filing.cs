@@ -28,6 +28,10 @@ internal sealed partial class LibraryCatalog
          FROM document_tags dt JOIN tags t USING (tag_key) WHERE dt.document_id = d.id)
         """;
 
+    // Filing inputs have a longer excerpt than training examples, so read fewer at once.
+    private const int TrainingPageSize = 32;
+    private const int FilingInputPageSize = 8;
+
     internal IReadOnlyList<FilingRule> ReadFilingRules()
     {
         using var connection = Connect();
@@ -105,23 +109,46 @@ internal sealed partial class LibraryCatalog
         return matches;
     }
 
+    /// <summary>Releases the SQLite reader between batches so training on a PDF cannot block a catalog commit.</summary>
+    // Scans the reviewed rows once, with one indexed seek per page and one page of excerpts in memory.
     internal IEnumerable<(string Text, string[] Tags)> ReadFilingTrainingExamples(CancellationToken token)
     {
         using var connection = Connect();
         using var command = connection.CreateCommand();
         command.CommandText = $"""
-            SELECT d.title || char(10) || substr(d.body, 1, $length), {FilingTagsSql}
-            FROM documents d WHERE d.is_present = 1 AND d.reviewed = 1 AND d.has_text = 1;
+            SELECT d.id, d.title || char(10) || substr(d.body, 1, $length), {FilingTagsSql}
+            FROM documents d WHERE d.is_present = 1 AND d.reviewed = 1 AND d.has_text = 1 AND d.id <= $through
+            ORDER BY d.id DESC LIMIT $size;
             """;
         command.Parameters.AddWithValue("$length", FilingTagClassifier.MaximumTrainingCharacters);
-        using var rows = command.ExecuteReader();
-        while (rows.Read())
+        command.Parameters.AddWithValue("$size", TrainingPageSize);
+        var through = command.Parameters.AddWithValue("$through", long.MaxValue);
+        var page = new List<(string Text, string[] Tags)>(TrainingPageSize);
+        while (true)
         {
             token.ThrowIfCancellationRequested();
-            yield return (rows.GetString(0), JsonSerializer.Deserialize<string[]>(rows.GetString(1)) ?? []);
+            long lastId = 0;
+            page.Clear();
+            using (var rows = command.ExecuteReader())
+            {
+                while (rows.Read())
+                {
+                    token.ThrowIfCancellationRequested();
+                    lastId = rows.GetInt64(0);
+                    page.Add((rows.GetString(1), JsonSerializer.Deserialize<string[]>(rows.GetString(2)) ?? []));
+                }
+            }
+            foreach (var example in page)
+            {
+                token.ThrowIfCancellationRequested();
+                yield return example;
+            }
+            if (page.Count < TrainingPageSize || lastId == long.MinValue) yield break;
+            through.Value = lastId - 1;
         }
     }
 
+    /// <summary>Preserves selection order and releases the reader before yielding each page for analysis.</summary>
     internal IEnumerable<FilingInput> ReadFilingInputs(IReadOnlyList<long> ids, CancellationToken token,
         int maximumCharacters = FilingFieldExtractor.MaximumTextCharacters)
     {
@@ -134,20 +161,32 @@ internal sealed partial class LibraryCatalog
             LEFT JOIN document_ocr_languages language ON language.document_id = d.id
             WHERE d.is_present = 1 ORDER BY selection.key;
             """;
-        int count = BindSelection(command, ids);
+        var selectedIds = command.Parameters.Add("$ids", SqliteType.Text);
         command.Parameters.AddWithValue("$length", maximumCharacters);
-        using var rows = command.ExecuteReader();
-        int available = 0;
-        while (rows.Read())
+        var inputs = new List<FilingInput>(Math.Min(ids.Count, FilingInputPageSize));
+        foreach (var page in ids.Distinct().Chunk(FilingInputPageSize))
         {
             token.ThrowIfCancellationRequested();
-            available++;
-            OcrLanguage? language = !rows.IsDBNull(5) && Enum.TryParse<OcrLanguage>(rows.GetString(5), out var parsed) ? parsed : null;
-            yield return new(rows.GetInt64(0), rows.GetString(1), rows.GetString(2),
-                JsonSerializer.Deserialize<string[]>(rows.GetString(3)) ?? [],
-                rows.IsDBNull(4) ? null : DateOnly.FromDayNumber(rows.GetInt32(4)), language);
+            selectedIds.Value = JsonSerializer.Serialize(page);
+            inputs.Clear();
+            using (var rows = command.ExecuteReader())
+            {
+                while (rows.Read())
+                {
+                    token.ThrowIfCancellationRequested();
+                    OcrLanguage? language = !rows.IsDBNull(5) && Enum.TryParse<OcrLanguage>(rows.GetString(5), out var parsed) ? parsed : null;
+                    inputs.Add(new(rows.GetInt64(0), rows.GetString(1), rows.GetString(2),
+                        JsonSerializer.Deserialize<string[]>(rows.GetString(3)) ?? [],
+                        rows.IsDBNull(4) ? null : DateOnly.FromDayNumber(rows.GetInt32(4)), language));
+                }
+            }
+            RequireSelection(inputs.Count, page.Length);
+            foreach (var input in inputs)
+            {
+                token.ThrowIfCancellationRequested();
+                yield return input;
+            }
         }
-        RequireSelection(available, count);
     }
 
     internal void ApplyFilingSelections(IReadOnlyList<FilingSelection> selections, CancellationToken token)

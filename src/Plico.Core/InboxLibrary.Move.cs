@@ -181,13 +181,13 @@ public sealed partial class InboxLibrary
         try
         {
             string source = ResolvePdfPath(move.SourceRelativePath);
-            version = CheckMovedPdf(target, move.Fingerprint, cancellationToken);
-            if (ReadExistingAttributes(source) is not null &&
-                (version is null || CheckMovedPdf(source, move.Fingerprint, cancellationToken) is not null))
+            // An intact source means the exclusive rename never took effect. A different file can own the destination.
+            if (CheckMovedPdf(source, move.Fingerprint, cancellationToken) is not null)
             {
                 _catalog.ClearPendingPdfMove();
                 return (null, null);
             }
+            version = CheckMovedPdf(target, move.Fingerprint, cancellationToken);
         }
         catch (Exception error) when (IsFileError(error))
         {

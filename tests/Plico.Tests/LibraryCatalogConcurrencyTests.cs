@@ -56,6 +56,38 @@ public sealed class LibraryCatalogConcurrencyTests
     private static long Index(LibraryCatalog catalog, string title) =>
         catalog.Upsert(title + ".pdf", title, new PdfText(title, 1, true), new FileVersion(1, 1024, true), new byte[32]);
 
+    [Fact]
+    public void ReadingTrainingExamplesLetsIntakeCommitBetweenExamples()
+    {
+        using var temporary = new TemporaryLibrary();
+        var catalog = new LibraryCatalog(Path.Combine(temporary.Path, "catalog.sqlite3"));
+        long[] reviewed = Enumerable.Range(1, 65).Select(index => Index(catalog, $"Filed letter {index}")).ToArray();
+        catalog.SetReviewedDocuments(reviewed, true);
+        using var examples = catalog.ReadFilingTrainingExamples(TestContext.Current.CancellationToken).GetEnumerator();
+        Assert.True(examples.MoveNext());
+
+        long incoming = Index(catalog, "Later arrival");
+        catalog.SetReviewedDocuments([incoming], true);
+        var texts = new HashSet<string> { examples.Current.Text };
+        while (examples.MoveNext()) Assert.True(texts.Add(examples.Current.Text));
+        Assert.Equal(reviewed.Length, texts.Count);
+        Assert.DoesNotContain(texts, text => text.Contains("Later arrival", StringComparison.Ordinal));
+    }
+
+    [Fact]
+    public void ReadingFilingInputsAllowsWritesAndKeepsTheRequestedSelectionOrder()
+    {
+        using var temporary = new TemporaryLibrary();
+        var catalog = new LibraryCatalog(Path.Combine(temporary.Path, "catalog.sqlite3"));
+        long[] selected = Enumerable.Range(1, 65).Select(index => Index(catalog, $"Selected letter {index}")).Reverse().ToArray();
+        using var inputs = catalog.ReadFilingInputs([.. selected, selected[0]], TestContext.Current.CancellationToken).GetEnumerator();
+        Assert.True(inputs.MoveNext());
+        Index(catalog, "Another letter");
+        var actual = new List<long> { inputs.Current.Id };
+        while (inputs.MoveNext()) actual.Add(inputs.Current.Id);
+        Assert.Equal(selected, actual);
+    }
+
     /// <summary>Opens a second connection and keeps its shared lock until the returned transaction is disposed.</summary>
     private static ReadLock HoldReadLock(string path)
     {
