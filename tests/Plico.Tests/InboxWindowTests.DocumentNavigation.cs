@@ -1,9 +1,9 @@
 using Avalonia;
 using Avalonia.Automation.Peers;
 using Avalonia.Controls;
-using Avalonia.Headless;
 using Avalonia.Headless.XUnit;
 using Avalonia.Input;
+using Avalonia.Rendering.Composition;
 using Avalonia.Threading;
 using Avalonia.VisualTree;
 using Plico.Core;
@@ -39,12 +39,15 @@ public sealed partial class InboxWindowTests
             var next = window.FindControl<Button>("GoToMatchButton")!;
             var fit = window.FindControl<Button>("PreviewFitButton")!;
             var open = window.FindControl<Button>("OpenPdfButton")!;
+            var compositor = ElementComposition.GetElementVisual(previous)!.Compositor;
             foreach (double width in new[] { window.MinWidth, 1100, 1280 })
             {
                 window.Width = width;
                 await WaitForAsync(() => Math.Abs(window.Bounds.Width - width) < 1);
                 window.UpdateLayout();
-                AvaloniaHeadlessPlatform.ForceRenderTimerTick();
+                // Pointer hit testing reads the last rendered frame, while Bounds already describes the new layout.
+                var frame = compositor.RequestCompositionBatchCommitAsync();
+                await Dispatcher.UIThread.AwaitWithPriority(frame.Rendered.WaitAsync(TestContext.Current.CancellationToken), DispatcherPriority.Input);
                 var match = BoundsIn(next, page);
                 var zoom = BoundsIn(fit, page);
                 Assert.False(match.Intersects(zoom), $"At {width}px the next-match button {match} overlaps Fit {zoom}.");

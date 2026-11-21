@@ -38,7 +38,7 @@ Evidence: `artifacts/final-native-windows/*.png` from the v0.18.0 verification r
   - orange, for a date that is coming due
   - red, for destructive actions and errors
   - the system accent, for the keyboard focus ring
-  
+
   Dark mode has its own surface steps, and paper is dimmed by 10 per cent so a white page doesn't glare.
 - **Geometry.** 4 px grid. Controls are 30 px tall, 26 px small, and 36 px for the single primary action in a panel. Radii are 7 for controls, 10 for panels and popovers, 12 for dialogs, and 1.5 for paper, because paper has crisp corners. Borders are 1 px hairlines. Shadows belong to paper and to floating surfaces only.
 - **Layout.** Three panes for review: sidebar (216), queue (284), page (flexible) and filing card (312). Browsing and search drop the card for a wider list, with Details (Ctrl+I) bringing it back. All documents adds a grid of real page thumbnails grouped by month.
