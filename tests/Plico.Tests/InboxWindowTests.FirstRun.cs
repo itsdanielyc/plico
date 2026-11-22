@@ -40,6 +40,11 @@ public sealed partial class InboxWindowTests
             Assert.False(savedSearches.IsEffectivelyVisible);
             Assert.False(tags.IsEffectivelyVisible);
             Assert.Single(model.SavedSearches);
+            // Nothing can be searched yet, so the search field stands alone: no folder filter and no Search tips.
+            var folderFilter = Assert.IsType<Button>(window.FindControl<Button>("ChooseSearchFolderButton"));
+            var tips = Assert.IsType<Button>(window.FindControl<Button>("SearchTipsButton"));
+            Assert.False(folderFilter.IsEffectivelyVisible, "The folder filter shows before there is anything to search.");
+            Assert.False(tips.IsEffectivelyVisible, "Search tips shows before there is anything to search.");
 
             await Assert.IsAssignableFrom<CommunityToolkit.Mvvm.Input.IAsyncRelayCommand>(welcomeAdd.Command).ExecuteAsync(null);
             await WaitForPreviewAsync(model);
@@ -53,6 +58,8 @@ public sealed partial class InboxWindowTests
             Assert.True(more.IsEffectivelyVisible);
             Assert.True(savedSearches.IsEffectivelyVisible);
             Assert.True(tags.IsEffectivelyVisible);
+            Assert.True(folderFilter.IsEffectivelyVisible);
+            Assert.True(tips.IsEffectivelyVisible);
         }
         finally
         {

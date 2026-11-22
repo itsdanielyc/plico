@@ -799,13 +799,14 @@
                                         </Border>
                                     </TextBox.InnerRightContent>
                                 </TextBox>
+                                <!-- Until the library has its first document there is nothing to search, so the field stands alone. -->
                                 <Button Grid.Column="1" x:Name="ChooseSearchFolderButton" Classes="icon" Command="{Binding ChooseSearchFolderCommand}"
-                                        IsEnabled="{Binding CanWork}" AutomationProperties.Name="{translation:Tr ChooseALibraryFolderToSearch}"
+                                        IsEnabled="{Binding CanWork}" IsVisible="{Binding LibraryHasDocuments}" AutomationProperties.Name="{translation:Tr ChooseALibraryFolderToSearch}"
                                         ToolTip.Tip="{translation:Tr ChooseALibraryFolderToSearch}">
                                     <local:Icon Data="{StaticResource Icon.Folder}" Width="17" Height="17" StrokeWidth="1.7" />
                                 </Button>
                                 <!-- The search syntax, in the interface's language, behind a small help button instead of a tooltip. -->
-                                <Button Grid.Column="2" x:Name="SearchTipsButton" Classes="icon" AutomationProperties.Name="{translation:Tr SearchTips}"
+                                <Button Grid.Column="2" x:Name="SearchTipsButton" Classes="icon" IsVisible="{Binding LibraryHasDocuments}" AutomationProperties.Name="{translation:Tr SearchTips}"
                                         ToolTip.Tip="{translation:Tr SearchTips}">
                                     <local:Icon Data="{StaticResource Icon.Help}" Width="17" Height="17" StrokeWidth="1.7" />
                                     <Button.Flyout>
