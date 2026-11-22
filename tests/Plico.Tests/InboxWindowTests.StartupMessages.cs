@@ -240,6 +240,8 @@ public sealed partial class InboxWindowTests
         model.InitializeLibrary(() => temporary.Path);
         Assert.StartsWith("Couldn't load the saved import errors.", model.ToastStatus, StringComparison.Ordinal);
         var window = new MainWindow { DataContext = model, Width = 1280, Height = 800 };
+        var toast = Assert.IsType<Border>(window.FindControl<Border>("Toast"));
+        var comings = RecordComings(toast);
         window.Show();
         try
         {
@@ -254,9 +256,11 @@ public sealed partial class InboxWindowTests
             Dispatcher.UIThread.RunJobs();
 
             // That scan is not what the catch-up found, so its import says only its own news, with the check: the startup
-            // notice went with the catch-up's scan and does not come back.
-            var toast = Assert.IsType<Border>(window.FindControl<Border>("Toast"));
-            Assert.Equal(("1 document added.", false, true), (model.ToastStatus, ToastWearsTheAlert(toast), toast.IsVisible));
+            // notice went with the catch-up's scan and does not come back. Nor does it hold the toast up through that
+            // import: the toast leaves as the import begins, as it does for any work, and the import's news rises when it
+            // ends.
+            Assert.Equal(("1 document added.", false, true, "rose, left, rose"),
+                (model.ToastStatus, ToastWearsTheAlert(toast), toast.IsVisible, string.Join(", ", comings)));
         }
         finally
         {
@@ -390,6 +394,17 @@ public sealed partial class InboxWindowTests
         var expected = Avalonia.Application.Current!.FindResource(key);
         Assert.True(glyphs.Length == 1 && ReferenceEquals(glyphs[0].Data, expected),
             $"The empty state shows {glyphs.Length} glyph(s), not {key}.");
+    }
+
+    /// <summary>Every time the toast rises or leaves from now on, in order.</summary>
+    private static List<string> RecordComings(Border toast)
+    {
+        var comings = new List<string>();
+        toast.PropertyChanged += (_, change) =>
+        {
+            if (change.Property == Avalonia.Visual.IsVisibleProperty) comings.Add(toast.IsVisible ? "rose" : "left");
+        };
+        return comings;
     }
 
     private static int CountOf(string text, string part)
