@@ -445,16 +445,22 @@
             </Setter>
         </Style>
         <!--
-            Match buttons are chevrons on the viewer bar's own row, up for the previous match and down for the next, after
-            a small amber dot; amber stays on the hits. Their words stay the content: the tooltip and what a screen reader says.
+            Match buttons are a pair of chevrons on the viewer bar's own row, up for the previous match and down for the next,
+            after a small amber dot; amber stays on the hits. Both hold their places whenever there are matches (Previous
+            waits, unable to act, until the first jump), and they are quiet Fg2 glyphs like the bar's others. Their words stay
+            the content: the tooltip and what a screen reader says.
         -->
         <Style Selector="Grid.viewer-bar Button.match">
-            <Setter Property="Foreground" Value="{DynamicResource Fg}" />
+            <Setter Property="Foreground" Value="{DynamicResource Fg2}" />
             <Setter Property="ContentTemplate">
                 <DataTemplate x:DataType="x:String">
-                    <local:Icon Data="{Binding $parent[Button].(local:Ui.Icon)}" StrokeWidth="1.8" VerticalAlignment="Center" />
+                    <local:Icon Data="{Binding $parent[Button].(local:Ui.Icon)}" Width="18" Height="18" VerticalAlignment="Center" />
                 </DataTemplate>
             </Setter>
+        </Style>
+        <Style Selector="Grid.viewer-bar Button.match:disabled /template/ ContentPresenter#PART_ContentPresenter">
+            <Setter Property="Background" Value="Transparent" />
+            <Setter Property="Foreground" Value="{DynamicResource FgDisabled}" />
         </Style>
 
         <!-- Queue rows: 10 px inside, 12 px corners; the selected row sits in the sunken well with a hairline. -->
@@ -1000,7 +1006,7 @@
                                                          IsHitTestVisible="False" />
                                                 <Button x:Name="PreviousMatchButton" Classes="page-icon match" local:Ui.Icon="{StaticResource Icon.ChevronUp}"
                                                         Content="{translation:Tr PreviousMatch}" Command="{Binding PreviousMatchCommand}"
-                                                        IsVisible="{Binding PageMatchNavigationActive}" IsEnabled="{Binding CanWork}"
+                                                        IsVisible="{Binding HasPageMatchAction}" IsEnabled="{Binding CanGoToPreviousMatch}"
                                                         ToolTip.Tip="{translation:Tr PreviousMatch}" AutomationProperties.Name="{translation:Tr PreviousMatch}"
                                                         AutomationProperties.HelpText="{translation:Tr GoToThePreviousPageThatMatchesTheTextTerms}" />
                                                 <Button x:Name="GoToMatchButton" Classes="page-icon match" local:Ui.Icon="{StaticResource Icon.ChevronDown}"

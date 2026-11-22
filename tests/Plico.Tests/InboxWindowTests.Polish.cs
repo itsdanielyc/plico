@@ -106,12 +106,36 @@ public sealed partial class InboxWindowTests
             await model.AddFilesCommand.ExecuteAsync(null);
             model.Query = "ledger renewal";
             await WaitForAsync(() => model.HasPageMatchAction);
-            await model.GoToMatchCommand.ExecuteAsync(null);
             await WaitForPreviewAsync(model);
-
             var previous = Assert.IsType<Button>(window.FindControl<Button>("PreviousMatchButton"));
             var next = Assert.IsType<Button>(window.FindControl<Button>("GoToMatchButton"));
             var fit = Assert.IsType<Button>(window.FindControl<Button>("PreviewFitButton"));
+
+            // Both chevrons hold their places from the start: before the first jump Previous is there but cannot act,
+            // so a second click where the first one landed goes forward again, never back.
+            window.UpdateLayout();
+            var firstNext = BoundsIn(next, window);
+            Assert.True(previous.IsEffectivelyVisible, "Previous match is missing before the first jump.");
+            Assert.False(previous.IsEffectivelyEnabled);
+            ClickAt(window, next);
+            await WaitForAsync(() => model.PageMatchNavigationActive && !model.IsBusy);
+            await WaitForPreviewAsync(model);
+            window.UpdateLayout();
+            // Within half a pixel: a pressed button eases back from its pressed scale.
+            var afterNext = BoundsIn(next, window);
+            Assert.True(Math.Abs(afterNext.X - firstNext.X) < 0.5 && Math.Abs(afterNext.Y - firstNext.Y) < 0.5,
+                $"Next match moved from {firstNext} to {afterNext} after the first jump.");
+            Assert.True(previous.IsEffectivelyEnabled);
+            // The chevrons are quiet like the viewer bar's other glyphs, not ink carets (with the pointer elsewhere).
+            Avalonia.Headless.HeadlessWindowExtensions.MouseMove(window, new Point(2, 2));
+            Avalonia.Threading.Dispatcher.UIThread.RunJobs();
+            foreach (var button in new[] { previous, next })
+            {
+                var glyph = button.GetVisualDescendants().OfType<Icon>().Single();
+                Assert.Equal(Avalonia.Media.Color.Parse("#45454B"), Assert.IsAssignableFrom<Avalonia.Media.ISolidColorBrush>(glyph.Foreground).Color);
+                Assert.True(glyph.Bounds.Width >= 18, $"The {button.Name} glyph is {glyph.Bounds.Width} px.");
+            }
+
             // The words stay the buttons' content and tooltips, so tests, the palette and screen readers keep them.
             Assert.Equal(DesktopText.Translate("Next match"), next.Content);
             Assert.Equal(DesktopText.Translate("Next match"), ToolTip.GetTip(next));

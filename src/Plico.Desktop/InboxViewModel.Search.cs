@@ -39,7 +39,14 @@ internal sealed partial class InboxViewModel
     [ObservableProperty]
     [NotifyPropertyChangedFor(nameof(PageMatchActionLabel))]
     [NotifyPropertyChangedFor(nameof(PageMatchActionHelp))]
+    [NotifyPropertyChangedFor(nameof(CanGoToPreviousMatch))]
     private bool _pageMatchNavigationActive;
+
+    /// <summary>
+    /// Previous match acts once a jump has been made. Until then it stays in its place, unable to act, so the chevron
+    /// under the pointer never changes meaning after a click.
+    /// </summary>
+    public bool CanGoToPreviousMatch => CanWork && PageMatchNavigationActive;
 
     public bool HasPageMatchAction => !string.IsNullOrWhiteSpace(Query) && Query == _appliedQuery &&
         SelectedDocument is { HasText: true, PageCount: > 1, Match.Length: > 0 };
