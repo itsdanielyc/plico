@@ -115,20 +115,22 @@ internal sealed partial class InboxViewModel
 
     /// <summary>
     /// Takes accepted suggestions back off one document: the tags it did not have before and, when the suggested date
-    /// was accepted, the date it had before (none, since a date is only suggested for an undated document).
+    /// was accepted, the date it had before (none, since a date is only suggested for an undated document). The
+    /// suggested date alone is the date field's own edit, filed while Plico works, so its Undo is one quick catalog
+    /// write that works then too, as a typed date's does; accepted tags wait for the work, as accepting them did.
     /// </summary>
     private static UndoOffer FilingUndo(InboxLibrary library, long documentId, string title, string? body,
-        IReadOnlyList<string> addedTags, bool restoreDate, DateOnly? previousDate) =>
-        new(title, body, async token =>
+        IReadOnlyList<string> addedTags, bool restoreDate, DateOnly? previousDate)
+    {
+        long? Revert()
         {
             // Each step is idempotent, so a revert interrupted part-way can simply run again.
-            await Task.Run(() =>
-            {
-                foreach (string tag in addedTags) library.RemoveTag(documentId, tag);
-                if (restoreDate) library.SetDocumentDate(documentId, previousDate);
-            }, token);
+            foreach (string tag in addedTags) library.RemoveTag(documentId, tag);
+            if (restoreDate) library.SetDocumentDate(documentId, previousDate);
             return documentId;
-        });
+        }
+        return addedTags.Count == 0 ? UndoOffer.InPlace(title, body, Revert) : new(title, body, token => Task.Run(Revert, token));
+    }
 
     /// <summary>
     /// Takes a tag back off the documents in a selection that did not have it before. Like every other offer it is a

@@ -148,8 +148,10 @@ public sealed partial class InboxWindowTests
         }
     }
 
-    [AvaloniaFact]
-    public async Task EnterFilesTheSuggestedDateWhilePlicoWorks()
+    [AvaloniaTheory]
+    [InlineData(true)]
+    [InlineData(false)]
+    public async Task EnterFilesTheSuggestedDateWhilePlicoWorks(bool undoFromTheToast)
     {
         using var temporary = TemporaryLibraryWithASuggestedDate(out long dated);
         // Reading Trash waits for its dialog, so Plico stays busy as it does while a watched folder's import runs.
@@ -179,6 +181,14 @@ public sealed partial class InboxWindowTests
             Assert.Equal("Suggestion accepted", model.ToastTitle);
             Assert.True(model.ToastOffersUndo);
             Assert.Equal("3 Apr 2026", field.SelectedText);
+
+            // Its Undo works at once too, as a typed date's does: the toast's button, or Ctrl+Z in the field.
+            var undo = Named<Button>(window, "UndoButton");
+            bool undoIsOn = undo.IsEffectivelyVisible && undo.IsEffectivelyEnabled;
+            if (undoFromTheToast) ClickAt(window, undo);
+            else PressUndoChord(window);
+            Assert.Equal((true, (DateOnly?)null, false, true),
+                (undoIsOn, model.SelectedDocument!.DocumentDate, model.HasUndo, model.IsBusy));
         }
         finally
         {
