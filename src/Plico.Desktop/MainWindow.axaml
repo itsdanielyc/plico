@@ -710,7 +710,7 @@
                                                 <Grid Width="{Binding PreviewDisplayWidth}" Height="{Binding PreviewDisplayHeight}">
                                                     <Image x:Name="PreviewPage" Source="{Binding Preview}" Stretch="Uniform" />
                                                     <local:PdfPageHighlightLayer Source="{Binding Preview}" Highlights="{Binding PreviewHighlights}"
-                                                                                  IsHitTestVisible="False" />
+                                                                                  Fill="{DynamicResource PageHighlight}" IsHitTestVisible="False" />
                                                     <Border Classes="page-dim" />
                                                 </Grid>
                                             </ScrollViewer>
@@ -720,7 +720,7 @@
                                                           HorizontalScrollBarVisibility="Disabled" VerticalScrollBarVisibility="Auto">
                                                 <SelectableTextBlock x:Name="PageTextContent" Text="{Binding PageText}" TextWrapping="Wrap"
                                                                      Padding="28,22" FontSize="15" LineHeight="23" Focusable="True"
-                                                                     Foreground="#1D1D1F" />
+                                                                     Foreground="{DynamicResource PaperInk}" />
                                             </ScrollViewer>
                                         </Border>
                                         <Border Classes="callout" IsVisible="{Binding HasPreviewMessage}" HorizontalAlignment="Center" VerticalAlignment="Center" MaxWidth="320">

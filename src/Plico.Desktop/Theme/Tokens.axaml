@@ -59,7 +59,7 @@
             <!-- Meaning Plico already owns. These keep their values. -->
             <SolidColorBrush x:Key="HighlightSurface" Color="#FBE3A0" /> <!-- search hits -->
             <SolidColorBrush x:Key="HighlightInk" Color="#3D2C00" />
-            <SolidColorBrush x:Key="PageHighlight" Color="#6BFFBE00" /> <!-- hits drawn on the page -->
+            <SolidColorBrush x:Key="PageHighlight" Color="#6CFFC223" /> <!-- hits drawn on the page, under the dark veil in dark mode -->
             <SolidColorBrush x:Key="LiveInk" Color="#1E7F4F" /> <!-- a live watch -->
             <SolidColorBrush x:Key="WarningInk" Color="#9A5800" /> <!-- a reminder that is due -->
             <SolidColorBrush x:Key="RailTagMarker" Color="#8E8E96" /> <!-- the ring under a tag colour dot -->
@@ -694,7 +694,7 @@
             <!-- Meaning Plico already owns. These keep their values. -->
             <SolidColorBrush x:Key="HighlightSurface" Color="#5A4510" /> <!-- search hits -->
             <SolidColorBrush x:Key="HighlightInk" Color="#FFE9AE" />
-            <SolidColorBrush x:Key="PageHighlight" Color="#80FFBE00" /> <!-- hits drawn on the page -->
+            <SolidColorBrush x:Key="PageHighlight" Color="#6CFFC223" /> <!-- hits drawn on the page, under the dark veil in dark mode -->
             <SolidColorBrush x:Key="LiveInk" Color="#4CC38A" /> <!-- a live watch -->
             <SolidColorBrush x:Key="WarningInk" Color="#E2A24A" /> <!-- a reminder that is due -->
             <SolidColorBrush x:Key="RailTagMarker" Color="#75757D" /> <!-- the ring under a tag colour dot -->
@@ -1288,6 +1288,8 @@
         <GradientStop Color="#F2F2F3" Offset="0.55" />
         <GradientStop Color="#DADADC" Offset="1" />
     </LinearGradientBrush>
+    <!-- Type on paper. The page is light in both themes, so its ink is too. -->
+    <SolidColorBrush x:Key="PaperInk" Color="#1D1D1F" />
 
     <!-- Shadows belong to things that float, and to paper. -->
     <BoxShadows x:Key="ShadowPaper">0 1 2 0 #1A000000, 0 8 22 0 #17000000</BoxShadows>
