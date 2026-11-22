@@ -13,10 +13,12 @@ internal sealed record DeadlineEditInput(DocumentSummary Document, IReadOnlyList
 internal sealed class DeadlineEditor : Window
 {
     /// <summary>
-    /// The date fields show and take dates as the interface writes them ("1 Dec 2026"), 2026-12-01 too; their hint is
-    /// today, written that way.
+    /// The date fields show and take dates as the interface writes them ("1 Dec 2026"), 2026-12-01 too. An empty one says
+    /// so in words, like the card's date, so it can never pass for a set date; the dialog's description says once how to
+    /// write one, with today as the example.
     /// </summary>
-    private static string DatePlaceholder => DisplayDates.Day(DateOnly.FromDateTime(DateTime.Today));
+    private static string DatePlaceholder => DesktopText.Translate("Add a date");
+    private static string DateExample => DisplayDates.Day(DateOnly.FromDateTime(DateTime.Today));
     private readonly List<(DeadlineKind Kind, TextBox Date, TextBox Lead)> _editors = [];
     private readonly TextBlock _status = DialogLayout.Message();
 
@@ -60,8 +62,8 @@ internal sealed class DeadlineEditor : Window
         save.Click += (_, _) => Save();
         var cancel = DialogLayout.Secondary(DesktopText.Translate("Cancel"), isCancel: true);
         cancel.Click += (_, _) => Close();
-        DialogLayout.Compose(this, DesktopText.Format($"Dates for “{input.Document.Title}”"),
-            DesktopText.Translate("Plico reminds you the chosen number of days before each date."),
+        DialogLayout.Compose(this, DesktopText.Format($"Reminder for “{input.Document.Title}”"),
+            DesktopText.Format($"Plico reminds you the chosen number of days before each date. Write dates like {DateExample}."),
             new ScrollViewer { Content = fields }, _status, cancel, save);
     }
 
@@ -73,7 +75,7 @@ internal sealed class DeadlineEditor : Window
             if (string.IsNullOrWhiteSpace(date.Text) && string.IsNullOrWhiteSpace(lead.Text)) continue;
             if (!DisplayDates.TryParseDay(date.Text, out var day))
             {
-                _status.Text = DesktopText.Format($"Use a date like {DatePlaceholder}.");
+                _status.Text = DesktopText.Format($"Use a date like {DateExample}.");
                 date.Focus();
                 return;
             }

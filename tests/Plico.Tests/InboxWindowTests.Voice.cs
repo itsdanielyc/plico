@@ -124,6 +124,13 @@ public sealed partial class InboxWindowTests
             var due = editor.GetLogicalDescendants().OfType<TextBox>().Single(box => box.Name == "DeadlineDateDue");
             Assert.Equal("1 Dec 2026", due.Text);
             Assert.All(editor.GetLogicalDescendants().OfType<TextBox>(), box => Assert.DoesNotContain("YYYY", box.PlaceholderText ?? "", StringComparison.Ordinal));
+            // An empty date can never pass for a set one: its placeholder is words, not a date, and the format is said once.
+            foreach (var empty in editor.GetLogicalDescendants().OfType<TextBox>().Where(box => box.Name?.StartsWith("DeadlineDate", StringComparison.Ordinal) == true))
+                Assert.False(DisplayDates.TryParseDay(empty.PlaceholderText, out _), $"{empty.Name} shows “{empty.PlaceholderText}” while empty.");
+            var texts = editor.GetLogicalDescendants().OfType<TextBlock>().Select(text => text.Text ?? "").ToArray();
+            // The dialog uses the card's one name for a document's dates.
+            Assert.Contains("Reminder for “Lease”", texts);
+            Assert.Contains(texts, text => text.Contains($"like {DisplayDates.Day(DateOnly.FromDateTime(DateTime.Today))}", StringComparison.Ordinal));
         }
         finally
         {

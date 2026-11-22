@@ -863,8 +863,8 @@ EmptyNoDocumentsYet	No documents yet	Aucun document pour l’instant
 PhoneInboxOptions	Options	Options
 MetadataHeading	Details for “{0}”	Détails de « {0} »
 MetadataDescription	What kind of document this is, who it is from, and anything else to keep with it.	Le type de document, son expéditeur et tout ce qu’il faut garder avec lui.
-DeadlinesHeading	Dates for “{0}”	Dates de « {0} »
-DeadlinesDescription	Plico reminds you the chosen number of days before each date.	Plico vous le rappelle le nombre de jours choisi avant chaque date.
+DeadlinesHeading	Reminder for “{0}”	Rappel pour « {0} »
+DeadlinesDescription	Plico reminds you the chosen number of days before each date. Write dates like {0}.	Plico vous le rappelle le nombre de jours choisi avant chaque date. Écrivez les dates comme {0}.
 RemoveTagHeading	Remove a tag	Retirer une étiquette
 ScanBackSidesHeading	Scan the back sides	Numériser les versos
 VersionHistoryHeading	Version history	Historique des versions
