@@ -9,12 +9,13 @@
         accent: primary buttons, focus, checked boxes and switches. Values come from Theme/Tokens.axaml.
     -->
 
-    <!-- Every window uses Inter on the sheet. The main window sets its own desk background. -->
+    <!-- Every window uses Inter on the sheet and carries the app icon. The main window sets its own desk background. -->
     <Style Selector="Window">
         <Setter Property="FontFamily" Value="{DynamicResource InterFont}" />
         <Setter Property="Background" Value="{DynamicResource Panel}" />
         <Setter Property="Foreground" Value="{DynamicResource Fg}" />
         <Setter Property="FontSize" Value="14" />
+        <Setter Property="Icon" Value="/Assets/plico.ico" />
     </Style>
 
     <!-- Keyboard focus: an ink ring with a 2 px gap, never the system accent. -->

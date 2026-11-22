@@ -10,7 +10,11 @@ public sealed partial class App : Application
 {
     internal const string VerifySwitch = "--verify";
 
-    public override void Initialize() => AvaloniaXamlLoader.Load(this);
+    public override void Initialize()
+    {
+        AvaloniaXamlLoader.Load(this);
+        WindowChrome.Register();
+    }
 
     public override void OnFrameworkInitializationCompleted()
     {
