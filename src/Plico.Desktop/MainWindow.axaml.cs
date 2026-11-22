@@ -110,9 +110,14 @@ public sealed partial class MainWindow : Window
         }
     }
 
+    /// <summary>
+    /// One Enter adds the tag. The field handles the key first: with a suggestion chosen it fills in the catalog's
+    /// spelling and closes the list, otherwise it only closes it, and then the tag in the field is added.
+    /// </summary>
     private void TagBox_KeyDown(object? sender, KeyEventArgs e)
     {
         if (e.Key != Key.Enter) return;
+        TagBox.IsDropDownOpen = false;
         ViewModel?.AddTagCommand.Execute(null);
         e.Handled = true;
     }

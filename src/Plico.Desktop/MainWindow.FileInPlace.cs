@@ -19,6 +19,8 @@ public partial class MainWindow
         TitleEditBox.AddHandler(KeyDownEvent, TitleEdit_KeyDown, RoutingStrategies.Bubble, handledEventsToo: true);
         TitleEditBox.LostFocus += (_, _) => ViewModel?.CommitTitleEdit();
         DocumentDateField.AddHandler(KeyDownEvent, DocumentDate_KeyDown, RoutingStrategies.Bubble, handledEventsToo: true);
+        // The suggestion list takes Enter for itself; the tag is added after it has filled in its choice.
+        TagBox.AddHandler(KeyDownEvent, TagBox_KeyDown, RoutingStrategies.Bubble, handledEventsToo: true);
         DocumentDateField.LostFocus += (_, e) =>
         {
             // The field's own buttons lose focus too, and the calendar takes it while a day is being chosen.

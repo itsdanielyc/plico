@@ -14,11 +14,12 @@ namespace Plico.Tests;
 public sealed partial class InboxWindowTests
 {
     [AvaloniaFact]
-    public async Task TagSuggestionsReuseTheCatalogLabelAndKeepKeyboardApplyExplicit()
+    public async Task OneEnterAddsTheChosenOrTypedTagWithItsCatalogLabel()
     {
         const string suggestedTag = "Réparation";
         const string newTag = "Invoices";
         const string typedPrefix = "Home";
+        const string clickedTag = "Hom";
         using var temporary = new TemporaryLibrary();
         long selectedId;
         using (var library = InboxLibrary.Open(temporary.Path))
@@ -41,34 +42,46 @@ public sealed partial class InboxWindowTests
             documents.SetCurrentValue(ListBox.SelectedItemProperty, model.Documents.Single(document => document.Id == selectedId));
             await WaitForPreviewAsync(model);
             var field = Assert.IsType<AutoCompleteBox>(window.FindControl<Control>("TagBox"));
+            // The empty field shows its T keycap.
+            Assert.Contains(field.GetVisualDescendants().OfType<Border>(),
+                border => border.Classes.Contains("key") && border.Child is TextBlock { Text: "T" } && border.IsEffectivelyVisible);
             var input = StartTypingTag(field, "re\u0301");
             await WaitForAsync(() => field.IsDropDownOpen);
 
+            // One Enter on a chosen suggestion adds it with the catalog's spelling.
             Assert.Equal(suggestedTag, Assert.Single(Assert.IsAssignableFrom<IEnumerable<string>>(field.ItemsSource)));
             PressTagKey(input, Key.Down);
             PressTagKey(input, Key.Enter);
-            Assert.Equal(suggestedTag, model.TagInput);
-            Assert.DoesNotContain(suggestedTag, model.SelectedDocument!.Tags);
-
-            PressTagKey(input, Key.Enter);
             Assert.Contains(suggestedTag, model.SelectedDocument!.Tags);
             Assert.Empty(model.TagInput);
+            Assert.False(field.IsDropDownOpen);
 
+            // One Enter adds a new tag nothing suggests.
             StartTypingTag(field, newTag);
             await WaitForAsync(() => model.TagInput == newTag);
             Assert.False(field.IsDropDownOpen);
             PressTagKey(input, Key.Enter);
             Assert.Contains(newTag, model.SelectedDocument!.Tags);
 
+            // With suggestions open and none chosen, one Enter adds what was typed and closes them.
             StartTypingTag(field, typedPrefix);
             await WaitForAsync(() => field.IsDropDownOpen);
+            PressTagKey(input, Key.Enter);
+            Assert.Contains(typedPrefix, model.SelectedDocument!.Tags);
+            Assert.Empty(model.TagInput);
+            Assert.False(field.IsDropDownOpen);
+
+            // The smaller Add button does the same with a real click while the suggestions are open.
+            StartTypingTag(field, clickedTag);
+            await WaitForAsync(() => field.IsDropDownOpen);
             var add = Assert.IsType<Button>(window.FindControl<Button>("AddTagButton"));
+            Assert.True(add.Bounds.Width <= 28, $"The Add button is {add.Bounds.Width} px wide.");
             var center = new Point(add.Bounds.Width / 2, add.Bounds.Height / 2);
             var position = Assert.IsType<Point>(add.TranslatePoint(center, window));
             window.MouseDown(position, MouseButton.Left);
             window.MouseUp(position, MouseButton.Left);
             Assert.False(field.IsDropDownOpen);
-            Assert.Contains(typedPrefix, model.SelectedDocument!.Tags);
+            Assert.Contains(clickedTag, model.SelectedDocument!.Tags);
             await WaitForPreviewAsync(model);
         }
         finally

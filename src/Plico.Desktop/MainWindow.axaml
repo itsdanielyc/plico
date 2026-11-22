@@ -1210,12 +1210,19 @@
                                                         </ItemsControl.ItemTemplate>
                                                     </ItemsControl>
                                                     <Grid ColumnDefinitions="*,Auto" ColumnSpacing="4" IsEnabled="{Binding CanWork}">
+                                                        <!-- One Enter adds the typed tag, or the suggestion chosen with the arrow keys; T comes here. -->
                                                         <AutoCompleteBox x:Name="TagBox" Classes="tag-entry" Text="{Binding TagInput, Mode=TwoWay}"
                                                                          PlaceholderText="{translation:Tr AddATag}" AutomationProperties.Name="{translation:Tr TagForThisDocument}"
-                                                                         Populating="TagBox_Populating" KeyDown="TagBox_KeyDown" />
-                                                        <Button Grid.Column="1" x:Name="AddTagButton" Classes="icon" Command="{Binding AddTagCommand}"
-                                                                AutomationProperties.Name="{translation:Tr AddTag}" ToolTip.Tip="{translation:Tr AddTag}">
-                                                            <local:Icon Data="{StaticResource Icon.Plus}" Width="17" Height="17" StrokeWidth="1.8" />
+                                                                         Populating="TagBox_Populating">
+                                                            <AutoCompleteBox.InnerRightContent>
+                                                                <Border Classes="key field-key" IsVisible="{Binding TagInput, Converter={x:Static StringConverters.IsNullOrEmpty}}">
+                                                                    <TextBlock Text="T" />
+                                                                </Border>
+                                                            </AutoCompleteBox.InnerRightContent>
+                                                        </AutoCompleteBox>
+                                                        <Button Grid.Column="1" x:Name="AddTagButton" Classes="icon small" Command="{Binding AddTagCommand}"
+                                                                VerticalAlignment="Center" AutomationProperties.Name="{translation:Tr AddTag}" ToolTip.Tip="{translation:Tr AddTag}">
+                                                            <local:Icon Data="{StaticResource Icon.Plus}" Width="15" Height="15" StrokeWidth="1.8" />
                                                         </Button>
                                                     </Grid>
                                                 </StackPanel>

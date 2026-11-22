@@ -587,11 +587,8 @@ internal static partial class NativeVerification
 
         PressTagKey(input, Key.Down);
         PressTagKey(input, Key.Enter);
-        Require(model.TagInput == TestTag && model.SelectedDocument?.Tags.Contains(TestTag) == false,
-            "Choosing a suggestion did not fill the field without applying it.");
-        PressTagKey(input, Key.Enter);
-        Require(model.SelectedDocument?.Tags.Contains(TestTag) == true && string.IsNullOrEmpty(model.TagInput),
-            "Pressing Enter did not apply the chosen tag and clear the field.");
+        Require(model.SelectedDocument?.Tags.Contains(TestTag) == true && string.IsNullOrEmpty(model.TagInput) && !tagBox.IsDropDownOpen,
+            "One Enter on the chosen suggestion did not add it and clear the field.");
     }
 
     private static void PressTagKey(TextBox input, Key key) => input.RaiseEvent(new KeyEventArgs
