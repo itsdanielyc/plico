@@ -293,6 +293,15 @@ public sealed partial class InboxWindowTests
                 $"The date's words start at {BoundsIn(placeholder, window).Left:0.#} and the reminder's at {reminderWords.Left:0.#}.");
             Assert.True(Math.Abs(dateGlyph.Left - reminderGlyph.Left) <= 1, $"The calendar glyph is at {dateGlyph.Left:0.#} and the bell at {reminderGlyph.Left:0.#}.");
 
+            // So do the tag field's: "Add a tag" reads in the column of "Add a date" and "Remind me", behind its own glyph.
+            var tagPlaceholder = tagField.GetVisualDescendants().OfType<TextBlock>().Single(text => text.Name == "PART_Placeholder");
+            Assert.True(tagPlaceholder.IsEffectivelyVisible);
+            Assert.True(Math.Abs(BoundsIn(tagPlaceholder, window).Left - reminderWords.Left) <= 1,
+                $"The tag field's words start at {BoundsIn(tagPlaceholder, window).Left:0.#} and the reminder's at {reminderWords.Left:0.#}.");
+            var tagGlyph = BoundsIn(Assert.IsType<Icon>(window.FindControl<Icon>("TagFieldGlyph")), window);
+            Assert.True(Math.Abs(tagGlyph.Left - reminderGlyph.Left) <= 1, $"The tag field's glyph is at {tagGlyph.Left:0.#} and the bell at {reminderGlyph.Left:0.#}.");
+            Assert.Equal(dateField.FontWeight, tagField.FontWeight);
+
             // E, D and T stand in one column at the card's right.
             double KeycapRight(Control owner) =>
                 BoundsIn(owner.GetVisualDescendants().OfType<Border>().Single(border => border.Classes.Contains("key") && border.IsEffectivelyVisible), window).Right;
