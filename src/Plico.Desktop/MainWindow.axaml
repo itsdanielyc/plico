@@ -187,15 +187,16 @@
         </Style>
         <!--
             Open, the field is 32 px for one line and its words sit exactly where the heading's did: 8 px of it reaches
-            left of the card's column for the frame and its padding. It ends at the column's right edge, as the date field
-            does, so every field in the card shares one right edge.
+            left of the card's column for the frame and its padding. It ends where the date field ends (the heading's
+            column runs 4 px further, where its E keycap stands with D and T), so every field in the card shares one
+            right edge.
         -->
         <Style Selector="TextBox.title-edit">
             <Setter Property="FontSize" Value="20" />
             <Setter Property="FontWeight" Value="SemiBold" />
             <Setter Property="MinHeight" Value="32" />
             <Setter Property="Padding" Value="7,3,7,2" />
-            <Setter Property="Margin" Value="-8,-4,0,-4" />
+            <Setter Property="Margin" Value="-8,-4,4,-4" />
             <Setter Property="VerticalContentAlignment" Value="Top" />
         </Style>
 
@@ -272,7 +273,7 @@
             <Setter Property="BorderBrush" Value="{DynamicResource Fg}" />
             <Setter Property="BorderThickness" Value="1" />
         </Style>
-        <Style Selector="Calendar#DocumentDateCalendar CalendarDayButton:today">
+        <Style Selector="Calendar#DocumentDateCalendar CalendarDayButton:today /template/ ContentPresenter#PART_ContentPresenter">
             <Setter Property="Foreground" Value="{DynamicResource Fg}" />
         </Style>
         <Style Selector="Calendar#DocumentDateCalendar CalendarDayButton:selected /template/ Border#Root">
@@ -281,7 +282,7 @@
         <Style Selector="Calendar#DocumentDateCalendar CalendarDayButton:selected /template/ Border#Border">
             <Setter Property="BorderThickness" Value="0" />
         </Style>
-        <Style Selector="Calendar#DocumentDateCalendar CalendarDayButton:selected">
+        <Style Selector="Calendar#DocumentDateCalendar CalendarDayButton:selected /template/ ContentPresenter#PART_ContentPresenter">
             <Setter Property="Foreground" Value="{DynamicResource OnFg}" />
         </Style>
         <Style Selector="Calendar#DocumentDateCalendar /template/ CalendarItem /template/ Button#PART_PreviousButton, Calendar#DocumentDateCalendar /template/ CalendarItem /template/ Button#PART_NextButton">
@@ -290,6 +291,7 @@
         <Style Selector="Calendar#DocumentDateCalendar /template/ CalendarItem /template/ Button#PART_PreviousButton Path, Calendar#DocumentDateCalendar /template/ CalendarItem /template/ Button#PART_NextButton Path">
             <Setter Property="Width" Value="10" />
             <Setter Property="Height" Value="5" />
+            <Setter Property="Stretch" Value="Uniform" />
         </Style>
         <!-- A field's shortcut keycap shows while the field waits for it, and steps aside once the field has the keyboard. -->
         <Style Selector="Border.key.field-key">
@@ -1235,7 +1237,7 @@
 
                                 <!-- Filing card -->
                                 <Grid RowDefinitions="Auto,*,Auto" IsVisible="{Binding ShowFilingCard}">
-                                    <StackPanel Margin="20,16,16,10" Spacing="6">
+                                    <StackPanel Margin="20,16,12,10" Spacing="6">
                                         <!-- The heading is the title's own field: E or a click edits it here, Enter or leaving saves, Escape restores. -->
                                         <Panel>
                                             <Button x:Name="EditTitleButton" Classes="title-edit" Click="EditTitle_Click" IsEnabled="{Binding HasLibrary}"
@@ -1307,7 +1309,7 @@
                                                             </Button>
                                                         </TextBox.InnerLeftContent>
                                                         <TextBox.InnerRightContent>
-                                                            <Panel VerticalAlignment="Center" Margin="0,0,3,0">
+                                                            <Panel VerticalAlignment="Center">
                                                                 <Button x:Name="SuggestedDateButton" Classes="suggested" IsVisible="{Binding ShowSuggestedDateInField}"
                                                                         IsTabStop="False" Command="{Binding AcceptSuggestedDateCommand}"
                                                                         ToolTip.Tip="{translation:Tr SuggestedDateTip}" AutomationProperties.Name="{Binding SuggestedDateLabel}">
@@ -1386,7 +1388,7 @@
                                                                      PlaceholderText="{translation:Tr AddATag}" AutomationProperties.Name="{translation:Tr TagForThisDocument}"
                                                                      Populating="TagBox_Populating">
                                                         <AutoCompleteBox.InnerRightContent>
-                                                            <Panel VerticalAlignment="Center" Margin="0,0,3,0">
+                                                            <Panel VerticalAlignment="Center">
                                                                 <Border Classes="key field-key" IsVisible="{Binding TagInput, Converter={x:Static StringConverters.IsNullOrEmpty}}">
                                                                     <TextBlock Text="T" />
                                                                 </Border>

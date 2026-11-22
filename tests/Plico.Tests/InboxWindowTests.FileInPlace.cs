@@ -355,12 +355,17 @@ public sealed partial class InboxWindowTests
                 $"Today is filled with {todayFace.Background}.");
             Assert.Contains(today.GetVisualDescendants().OfType<Border>(), border => border.BorderThickness.Left >= 1 &&
                 border.BorderBrush is Avalonia.Media.ISolidColorBrush { Color: var ring } && ring == Avalonia.Media.Color.Parse("#0F0F10"));
+            // Its number is ink on the popover, not the white it wears on a fill.
+            var todayNumber = today.GetVisualDescendants().OfType<Avalonia.Controls.Presenters.ContentPresenter>().First();
+            Assert.Equal(Avalonia.Media.Color.Parse("#0F0F10"), Assert.IsAssignableFrom<Avalonia.Media.ISolidColorBrush>(todayNumber.Foreground).Color);
 
             // The month chevrons are quiet 16 px glyphs, and the popover has room for its whole shadow.
             foreach (var name in new[] { "PART_PreviousButton", "PART_NextButton" })
             {
                 var chevron = parts.OfType<Button>().Single(button => button.Name == name).GetVisualDescendants().OfType<Avalonia.Controls.Shapes.Path>().Single();
-                Assert.True(chevron.Bounds.Width <= 12, $"The {name} glyph is {chevron.Bounds.Width} px wide.");
+                // Drawn within its bounds: a path that does not stretch draws its geometry at full size whatever its bounds.
+                Assert.True(chevron.Bounds.Width <= 12 && chevron.Stretch == Avalonia.Media.Stretch.Uniform,
+                    $"The {name} glyph is {chevron.Bounds.Width} px wide and stretches {chevron.Stretch}.");
             }
             var popover = Assert.IsType<Border>(picker.Child);
             Assert.True(popover.Margin.Bottom >= 56 && popover.Margin.Left >= 32 && popover.Margin.Right >= 12,
