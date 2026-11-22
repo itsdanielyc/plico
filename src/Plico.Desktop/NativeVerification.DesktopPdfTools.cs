@@ -87,6 +87,7 @@ internal static partial class NativeVerification
             await UntilAsync(() => model.Preview is not null && window.ActualThemeVariant == ThemeVariant.Dark &&
                 window.Background is ISolidColorBrush { Color: { R: 11, G: 11, B: 12 } }, () => model.Status);
             await CaptureAsync(window, evidence, "desktop-dark.png");
+            await CaptureFrameAsync(window, evidence, "window-frame-dark.png");
 
             DesktopText.SetLanguage(InterfaceLanguage.French);
             var localizedLibrary = Directory.CreateTempSubdirectory("plico-verify-french-");

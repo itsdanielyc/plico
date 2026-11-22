@@ -49,6 +49,7 @@ internal static partial class NativeVerification
             Control<Button>(window, "AddTagButton").Command!.Execute(null);
             Require(model.SelectedDocument?.Tags.Contains(TestTag) == true, "The tag did not attach to the imported PDF.");
             await CaptureAsync(window, evidenceDirectory, "inbox.png");
+            await CaptureFrameAsync(window, evidenceDirectory, "window-frame-light.png");
             Control<Button>(window, "ReviewButton").Command!.Execute(null);
             Require(model.Documents.Count == 0, "The reviewed PDF remained in the inbox.");
 
@@ -1118,10 +1119,14 @@ internal static partial class NativeVerification
         }
     }
 
+    private static readonly TimeSpan DialogSettleTime = TimeSpan.FromMilliseconds(300);
+
     private static async Task CaptureAsync(Window window, string directory, string filename)
     {
         // A toast that has just appeared is still rising; let its 260 ms entrance finish so the capture shows it.
         for (int wait = 0; wait < 30 && window is MainWindow { IsToastEntering: true }; wait++) await Task.Delay(20);
+        // A dialog may still be settling (an expander's chevron turns over 260 ms at most); capture it at rest.
+        if (window is not MainWindow) await Task.Delay(DialogSettleTime);
         await Dispatcher.UIThread.InvokeAsync(() =>
         {
             using var bitmap = new RenderTargetBitmap(PixelSize.FromSize(window.Bounds.Size, 1), new Vector(96, 96));
