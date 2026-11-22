@@ -21,6 +21,7 @@ public sealed partial class SettingsWindow : Window
     private bool _actionInHand;
     private bool _busyBeforeAction;
     private bool _waitingForWork;
+    private Window? _watchedOwner;
 
     public SettingsWindow()
     {
@@ -28,14 +29,43 @@ public sealed partial class SettingsWindow : Window
         SettingsScroll.ScrollChanged += (_, _) => MarkCurrentSection();
         SettingsScroll.SizeChanged += (_, _) => FitScrollTail();
         ModelsGroup.SizeChanged += (_, _) => FitScrollTail();
-        Opened += (_, _) => MarkCurrentSection();
+        Opened += (_, _) =>
+        {
+            MarkCurrentSection();
+            WatchOwnerInput(Owner as Window);
+        };
         AddHandler(PointerPressedEvent, (_, _) => BeginAction(), RoutingStrategies.Tunnel, handledEventsToo: true);
         AddHandler(KeyDownEvent, (_, _) => BeginAction(), RoutingStrategies.Tunnel, handledEventsToo: true);
         AddHandler(PointerReleasedEvent, (_, _) => SettleAction(), RoutingStrategies.Tunnel, handledEventsToo: true);
         AddHandler(KeyUpEvent, (_, _) => SettleAction(), RoutingStrategies.Tunnel, handledEventsToo: true);
+        // A key that goes down here may come up somewhere else: Alt of Alt+Tab comes up in the window in front, and Enter
+        // on Watch a folder… comes up in the picker. Leaving Settings, or input in the main window, settles it too.
+        Deactivated += (_, _) => SettleAction();
         DataContextChanged += (_, _) => AttachModel(DataContext as InboxViewModel);
-        Closed += (_, _) => AttachModel(null);
+        Closed += (_, _) =>
+        {
+            AttachModel(null);
+            WatchOwnerInput(null);
+        };
     }
+
+    /// <summary>Input given to the main window means the person has left Settings: what was in hand here is settled.</summary>
+    private void WatchOwnerInput(Window? owner)
+    {
+        if (_watchedOwner is not null)
+        {
+            _watchedOwner.RemoveHandler(KeyDownEvent, OwnerInput);
+            _watchedOwner.RemoveHandler(KeyUpEvent, OwnerInput);
+            _watchedOwner.RemoveHandler(PointerPressedEvent, OwnerInput);
+        }
+        _watchedOwner = owner;
+        if (owner is null) return;
+        owner.AddHandler(KeyDownEvent, OwnerInput, RoutingStrategies.Tunnel, handledEventsToo: true);
+        owner.AddHandler(KeyUpEvent, OwnerInput, RoutingStrategies.Tunnel, handledEventsToo: true);
+        owner.AddHandler(PointerPressedEvent, OwnerInput, RoutingStrategies.Tunnel, handledEventsToo: true);
+    }
+
+    private void OwnerInput(object? sender, RoutedEventArgs e) => SettleActionNow();
 
     private void AttachModel(InboxViewModel? model)
     {
@@ -56,12 +86,14 @@ public sealed partial class SettingsWindow : Window
     /// Once the input in hand has been handled, an action that started work waits for it to end; anything else is done.
     /// Work that was already running (a watched import, say) is not this action's.
     /// </summary>
-    private void SettleAction() => Dispatcher.UIThread.Post(() =>
+    private void SettleAction() => Dispatcher.UIThread.Post(SettleActionNow, DispatcherPriority.Background);
+
+    private void SettleActionNow()
     {
         if (!_actionInHand) return;
         if (_model is { IsBusy: true } && !_busyBeforeAction) _waitingForWork = true;
         else if (!_waitingForWork) _actionInHand = false;
-    }, DispatcherPriority.Background);
+    }
 
     private void Model_PropertyChanged(object? sender, PropertyChangedEventArgs e)
     {

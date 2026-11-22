@@ -1,7 +1,9 @@
 using Avalonia.Automation;
 using Avalonia.Controls;
+using Avalonia.Headless;
 using Avalonia.Headless.XUnit;
 using Avalonia.Input;
+using Avalonia.Threading;
 using Avalonia.VisualTree;
 using Plico.Core;
 using Plico.Desktop;
@@ -49,6 +51,54 @@ public sealed partial class InboxWindowTests
             await WaitForPreviewAsync(model);
             Assert.Equal("Marked reviewed", model.ToastTitle);
             Assert.Equal(said[0], line.Text);
+            settings.Close();
+        }
+        finally
+        {
+            window.Close();
+        }
+    }
+
+    [AvaloniaFact]
+    public async Task AKeyThatComesUpInTheMainWindowLeavesSettingsWithNothingToSay()
+    {
+        using var temporary = new TemporaryLibrary();
+        using var settingsFolder = new TemporaryLibrary();
+        using (var library = InboxLibrary.Open(temporary.Path)) BatchFixtures.AddTwoDocuments(library, TestContext.Current.CancellationToken);
+        var dialogs = new FixtureDialogs { FolderPath = Path.Combine(temporary.Path, "PDFs") };
+        using var model = new InboxViewModel(dialogs, watchPreference: new WatchFolderPreference(settingsFolder.Path));
+        model.InitializeLibrary(() => temporary.Path);
+        var window = new MainWindow { DataContext = model, Width = 1280, Height = 800 };
+        window.Show();
+        try
+        {
+            await WaitForPreviewAsync(model);
+            ClickAt(window, Named<Button>(window, "SettingsButton"));
+            var settings = Assert.Single(window.OwnedWindows.OfType<SettingsWindow>());
+            settings.UpdateLayout();
+            var line = Assert.IsType<TextBlock>(settings.FindControl<TextBlock>("SettingsMessage"));
+            var bar = Assert.IsType<Border>(settings.FindControl<Border>("SettingsMessageBar"));
+
+            // Alt+Tab from Settings: Alt goes down in Settings, the main window comes to the front, and Alt comes up
+            // there. A review in the main window is the main window's news, not Settings'.
+            settings.KeyPress(Key.LeftAlt, RawInputModifiers.Alt, PhysicalKey.AltLeft, null);
+            Dispatcher.UIThread.RunJobs();
+            window.Activate();
+            window.KeyRelease(Key.LeftAlt, RawInputModifiers.None, PhysicalKey.AltLeft, null);
+            Dispatcher.UIThread.RunJobs();
+            PressKey(window, Key.R, PhysicalKey.R, "r");
+            await WaitForPreviewAsync(model);
+            Assert.Equal("Marked reviewed", model.ToastTitle);
+            Assert.False(bar.IsVisible, $"Settings says “{line.Text}” for a review made in the main window.");
+
+            // Settings' own action still speaks there: a refused folder, chosen with the pointer in Intake.
+            ClickAt(settings, settings.GetVisualDescendants().OfType<Button>().Single(button => Equals(button.Tag, "IntakeGroup")));
+            Dispatcher.UIThread.RunJobs();
+            settings.UpdateLayout();
+            ClickAt(settings, Assert.IsType<Button>(settings.FindControl<Button>("StartFolderWatchButton")));
+            await WaitForAsync(() => !model.IsBusy);
+            Assert.True(bar.IsVisible);
+            Assert.Contains("outside the library's managed folders", line.Text, StringComparison.Ordinal);
             settings.Close();
         }
         finally
