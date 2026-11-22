@@ -16,7 +16,22 @@ internal static partial class DisplayDates
     /// month names always match the interface's language.
     /// </summary>
     internal static CultureInfo Culture => DesktopText.IsFrench ? CultureInfo.GetCultureInfo("fr")
-        : CultureInfo.CurrentCulture.TwoLetterISOLanguageName == "en" ? CultureInfo.CurrentCulture : CultureInfo.GetCultureInfo("en-GB");
+        : CultureInfo.CurrentCulture.TwoLetterISOLanguageName == "en" ? CultureInfo.CurrentCulture : EnglishFallback.Value;
+
+    /// <summary>
+    /// British English with every month's short name in three letters. ICU writes September "Sept" in en-GB, so without
+    /// this the dates of a person whose culture is not English (Linux's C locale gives the invariant culture) would
+    /// read "3 Sept 2026" beside "3 Aug 2026", unlike the interface's other places and other platforms.
+    /// </summary>
+    private static readonly Lazy<CultureInfo> EnglishFallback = new(() =>
+    {
+        var culture = (CultureInfo)CultureInfo.GetCultureInfo("en-GB").Clone();
+        var format = culture.DateTimeFormat;
+        string[] shortNames = format.MonthNames.Select(name => name.Length > 3 ? name[..3] : name).ToArray();
+        format.AbbreviatedMonthNames = shortNames;
+        format.AbbreviatedMonthGenitiveNames = shortNames;
+        return CultureInfo.ReadOnly(culture);
+    });
 
     /// <summary>"22 Nov 2026".</summary>
     internal static string Day(DateOnly date) => date.ToString("d MMM yyyy", Culture);
@@ -82,19 +97,31 @@ internal static partial class DisplayDates
         RegexOptions.CultureInvariant)]
     private static partial Regex NumericDay();
 
-    /// <summary>The month a name stands for in the interface's language, written out or abbreviated; 0 when none does.</summary>
+    /// <summary>The shortest start of a month's name that is read as that month, when no other month's name starts so.</summary>
+    private const int ShortestMonthStart = 3;
+
+    /// <summary>
+    /// The month a name stands for in the interface's language; 0 when none does. It takes the name written out or as
+    /// the culture abbreviates it, and any start of at least three letters that only one month's name has, so
+    /// September is "Sep" or "Sept" whichever way the culture abbreviates it ("sept." and "juil" in French too), while
+    /// "Ju" or the French "jui" (juin, juillet) is read as neither. O(1): twelve months, four names each.
+    /// </summary>
     private static int MonthNumber(string name, CultureInfo culture)
     {
         var format = culture.DateTimeFormat;
         const CompareOptions loose = CompareOptions.IgnoreCase | CompareOptions.IgnoreNonSpace;
         bool Names(string candidate) => candidate.Length > 0 && culture.CompareInfo.Compare(name, candidate.TrimEnd('.'), loose) == 0;
+        bool Starts(string candidate) => candidate.Length > 0 && culture.CompareInfo.IsPrefix(candidate, name, loose);
+        int started = 0;
         for (int month = 1; month <= 12; month++)
         {
             if (Names(format.GetMonthName(month)) || Names(format.GetAbbreviatedMonthName(month)) ||
                 Names(format.MonthGenitiveNames[month - 1]) || Names(format.AbbreviatedMonthGenitiveNames[month - 1]))
                 return month;
+            if (name.Length >= ShortestMonthStart && (Starts(format.GetMonthName(month)) || Starts(format.MonthGenitiveNames[month - 1])))
+                started = started == 0 ? month : -1;
         }
-        return 0;
+        return Math.Max(started, 0);
     }
 
     private static bool TryCreateDay(int year, int month, int dayOfMonth, out DateOnly day)
