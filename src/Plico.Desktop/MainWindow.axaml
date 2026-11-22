@@ -1663,6 +1663,8 @@
                                     <!--
                                         Undo takes the keyboard like any button, so Tab reaches it. A title or date being typed when it does is
                                         dropped rather than saved (MainWindow.FileInPlace), so the click reverses the action the toast names.
+                                        The other actions and Close are reached by Tab too, but a click on them leaves the keyboard where it
+                                        is, so typing carries on (MainWindow.Toast).
                                     -->
                                     <Button x:Name="UndoButton" Classes="toast-action" Content="{translation:Tr UndoAction}" Command="{Binding UndoCommand}"
                                             IsVisible="{Binding ToastOffersUndo}" IsEnabled="{Binding CanWork}" ToolTip.Tip="{Binding UndoLabel}" />

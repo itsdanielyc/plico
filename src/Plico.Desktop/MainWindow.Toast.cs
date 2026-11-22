@@ -1,6 +1,7 @@
 using System.ComponentModel;
 using Avalonia.Animation;
 using Avalonia.Animation.Easings;
+using Avalonia.Input;
 using Avalonia.Interactivity;
 using Avalonia.Media.Transformation;
 using Avalonia.Threading;
@@ -28,6 +29,7 @@ public partial class MainWindow
             Toast.IsVisible = false;
         };
         Toast.PointerExited += (_, _) => RestartToastTimer();
+        Toast.AddHandler(GettingFocusEvent, Toast_GettingFocus);
         Toast.LostFocus += (_, _) => RestartToastTimer();
         DataContextChanged += (_, _) => AttachToast();
         Closed += (_, _) =>
@@ -116,9 +118,23 @@ public partial class MainWindow
         Toast.IsVisible = false;
     }
 
+    /// <summary>
+    /// Closes the toast. Closed from the keyboard, it hands the keyboard to the open document, where J, K and Tab carry
+    /// on; a click leaves the keyboard where it was, so a title or date being typed carries on.
+    /// </summary>
     private void CloseToast_Click(object? sender, RoutedEventArgs e)
     {
+        if (Toast.IsKeyboardFocusWithin || FocusManager?.GetFocusedElement() is null) FocusOpenDocument();
         HideToast();
-        if (!DocumentList.Focus()) SearchBox.Focus();
+    }
+
+    /// <summary>
+    /// The toast's Close and its other actions (Open backup, Open export, OCR results) work under the pointer without
+    /// taking the keyboard, so a title or date being typed is neither saved nor dropped by the click; Tab still reaches
+    /// them. Undo takes the keyboard like any button, which drops what is being typed rather than saving it first.
+    /// </summary>
+    private void Toast_GettingFocus(object? sender, FocusChangingEventArgs e)
+    {
+        if (e.NavigationMethod == NavigationMethod.Pointer && !ReferenceEquals(e.NewFocusedElement, UndoButton)) e.TryCancel();
     }
 }

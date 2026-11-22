@@ -271,6 +271,16 @@ public partial class MainWindow
         _overlayReturnFocus = null;
     }
 
+    /// <summary>
+    /// Puts the keyboard on the open document's row in the queue, where J, K and Tab carry on; on Mark reviewed when that
+    /// row is not drawn; and in search when no document is open. The queue itself never takes the keyboard, only its rows.
+    /// </summary>
+    private void FocusOpenDocument()
+    {
+        if (DocumentList.SelectedItem is { } open && DocumentList.ContainerFromItem(open) is { } row && row.Focus()) return;
+        if (!ReviewButton.Focus()) SearchBox.Focus();
+    }
+
     private void EnterOverlay()
     {
         if (!IsOverlayOpen) _overlayReturnFocus = FocusManager?.GetFocusedElement() as Control;

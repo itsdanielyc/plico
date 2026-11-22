@@ -21,10 +21,11 @@ public partial class MainWindow
         // The fields' own handlers run first; Enter and Escape still belong to the edit.
         TitleEditBox.AddHandler(KeyDownEvent, TitleEdit_KeyDown, RoutingStrategies.Bubble, handledEventsToo: true);
         // Leaving a field saves it. The keyboard leaves as a click begins, so the results reload after that click. Leaving
-        // for the toast drops the edit instead: saving it first would make it the offer that the toast's Undo then reverses.
+        // for the toast's Undo drops the edit instead: saving it first would make it the offer that Undo then reverses.
+        // The toast's other buttons leave the keyboard where it is when clicked (MainWindow.Toast).
         TitleEditBox.LostFocus += (_, e) =>
         {
-            if (MovesIntoToast(e)) ViewModel?.CancelTitleEdit();
+            if (MovesToUndo(e)) ViewModel?.CancelTitleEdit();
             else ViewModel?.CommitTitleEdit(reloadAfterInput: true);
         };
         DocumentDateField.AddHandler(KeyDownEvent, DocumentDate_KeyDown, RoutingStrategies.Bubble, handledEventsToo: true);
@@ -36,7 +37,7 @@ public partial class MainWindow
             // calendar closes with the field and what was typed is saved, as when it is closed.
             if (!ReferenceEquals(e.Source, DocumentDateField) || MovesIntoCalendar(e)) return;
             DocumentDatePicker.IsOpen = false;
-            if (MovesIntoToast(e)) ViewModel?.RestoreDocumentDateText();
+            if (MovesToUndo(e)) ViewModel?.RestoreDocumentDateText();
             else ViewModel?.CommitDocumentDate(reloadAfterInput: true);
         };
         DocumentDatePicker.PlacementTarget = DocumentDateField;
@@ -69,8 +70,9 @@ public partial class MainWindow
         e.Handled = true;
     }
 
-    /// <summary>True when the keyboard is going to one of the toast's buttons, such as Undo, by a click or by Tab.</summary>
-    private bool MovesIntoToast(FocusChangedEventArgs e) => e.NewFocusedElement is Visual next && Toast.IsVisualAncestorOf(next);
+    /// <summary>True when the keyboard is going to the toast's Undo, by a click or by Tab.</summary>
+    private bool MovesToUndo(FocusChangedEventArgs e) =>
+        e.NewFocusedElement is Visual next && (ReferenceEquals(next, UndoButton) || UndoButton.IsVisualAncestorOf(next));
 
     /// <summary>True when the keyboard is going into the date's open calendar, to a day being chosen.</summary>
     private bool MovesIntoCalendar(FocusChangedEventArgs e) =>

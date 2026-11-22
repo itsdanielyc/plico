@@ -195,6 +195,89 @@ public sealed partial class InboxWindowTests
     }
 
     [AvaloniaFact]
+    public async Task ClosingTheToastWhileATitleIsBeingTypedKeepsTheTitle()
+    {
+        using var temporary = new TemporaryLibrary();
+        using (var library = InboxLibrary.Open(temporary.Path)) BatchFixtures.AddTwoDocuments(library, TestContext.Current.CancellationToken);
+        using var model = new InboxViewModel(new FixtureDialogs());
+        model.InitializeLibrary(() => temporary.Path);
+        var window = new MainWindow { DataContext = model, Width = 1280, Height = 800 };
+        window.Show();
+        try
+        {
+            await WaitForPreviewAsync(model);
+            ClickAt(window, Assert.IsType<Button>(window.FindControl<Button>("ReviewButton")));
+            await WaitForPreviewAsync(model);
+            var next = model.SelectedDocument!;
+            var toast = Assert.IsType<Border>(window.FindControl<Border>("Toast"));
+            var editor = Assert.IsType<TextBox>(window.FindControl<TextBox>("TitleEditBox"));
+            Assert.True(toast.IsVisible);
+
+            // Halfway through typing a new title for the next document, the toast is closed.
+            PressKey(window, Key.E, PhysicalKey.E, "e");
+            TypeText(window, "Typed then");
+            ClickAt(window, Assert.IsType<Button>(window.FindControl<Button>("CloseToastButton")));
+
+            // Only Undo drops what is being typed. Close does what it says and leaves the typing where it was, with the
+            // keyboard, so the title is finished and saved as usual; the review stays done.
+            Assert.False(toast.IsVisible);
+            Assert.True(model.IsEditingTitle, "Closing the toast ended the title being typed.");
+            Assert.True(editor.IsFocused, $"After closing the toast the keyboard is on {KeyboardOwner(window)}.");
+            TypeText(window, " toast closed");
+            PressKey(window, Key.Enter, PhysicalKey.Enter);
+            await WaitForPreviewAsync(model);
+            Assert.Equal(next.Id, model.SelectedDocument!.Id);
+            Assert.Equal("Typed then toast closed", model.SelectedDocument!.Title);
+            Assert.Equal("Renamed", model.UndoLabel);
+            Assert.Equal(1, model.InboxCount);
+        }
+        finally
+        {
+            window.Close();
+        }
+    }
+
+    [AvaloniaFact]
+    public async Task ClosingTheToastWhileADateIsBeingTypedKeepsTheDate()
+    {
+        using var temporary = new TemporaryLibrary();
+        using (var library = InboxLibrary.Open(temporary.Path)) BatchFixtures.AddTwoDocuments(library, TestContext.Current.CancellationToken);
+        using var model = new InboxViewModel(new FixtureDialogs());
+        model.InitializeLibrary(() => temporary.Path);
+        var window = new MainWindow { DataContext = model, Width = 1280, Height = 800 };
+        window.Show();
+        try
+        {
+            await WaitForPreviewAsync(model);
+            ClickAt(window, Assert.IsType<Button>(window.FindControl<Button>("ReviewButton")));
+            await WaitForPreviewAsync(model);
+            var next = model.SelectedDocument!;
+            Assert.Null(next.DocumentDate);
+
+            // Halfway through typing a date for the next document, the toast is closed.
+            var field = Assert.IsType<TextBox>(window.FindControl<TextBox>("DocumentDateField"));
+            PressKey(window, Key.D, PhysicalKey.D, "d");
+            TypeText(window, "1 Jan 2025");
+            ClickAt(window, Assert.IsType<Button>(window.FindControl<Button>("CloseToastButton")));
+            Assert.False(Assert.IsType<Border>(window.FindControl<Border>("Toast")).IsVisible);
+            Assert.True(field.IsFocused, $"After closing the toast the keyboard is on {KeyboardOwner(window)}.");
+            Assert.Equal("1 Jan 2025", field.Text);
+
+            // The date is saved like any date the keyboard leaves, and the review stays done.
+            PressKey(window, Key.Tab, PhysicalKey.Tab);
+            await WaitForPreviewAsync(model);
+            Assert.Equal(next.Id, model.SelectedDocument!.Id);
+            Assert.Equal(new DateOnly(2025, 1, 1), model.SelectedDocument!.DocumentDate);
+            Assert.Equal("Date set", model.UndoLabel);
+            Assert.Equal(1, model.InboxCount);
+        }
+        finally
+        {
+            window.Close();
+        }
+    }
+
+    [AvaloniaFact]
     public async Task EditsMadeWhilePlicoWorksAreSaved()
     {
         using var temporary = new TemporaryLibrary();
