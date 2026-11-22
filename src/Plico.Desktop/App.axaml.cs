@@ -14,6 +14,7 @@ public sealed partial class App : Application
     {
         AvaloniaXamlLoader.Load(this);
         WindowChrome.Register();
+        FieldPlaceholder.Register();
     }
 
     public override void OnFrameworkInitializationCompleted()

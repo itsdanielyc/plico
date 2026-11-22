@@ -185,26 +185,34 @@
             <Setter Property="Background" Value="Transparent" />
             <Setter Property="Foreground" Value="{DynamicResource Fg}" />
         </Style>
+        <!--
+            Open, the field is 32 px for one line and its words sit exactly where the heading's did: 8 px of it reaches
+            left of the card's column for the frame and its padding. It ends at the column's right edge, as the date field
+            does, so every field in the card shares one right edge.
+        -->
         <Style Selector="TextBox.title-edit">
             <Setter Property="FontSize" Value="20" />
             <Setter Property="FontWeight" Value="SemiBold" />
-            <Setter Property="MinHeight" Value="0" />
-            <Setter Property="Padding" Value="7,3" />
+            <Setter Property="MinHeight" Value="32" />
+            <Setter Property="Padding" Value="7,3,7,2" />
             <Setter Property="Margin" Value="-8,-4,0,-4" />
             <Setter Property="VerticalContentAlignment" Value="Top" />
         </Style>
 
         <!--
-            The date field reads as a value at rest: no frame, the calendar glyph and the date in tabular figures, flush
-            with the other values. Hovered it takes the hover fill; focused, the ink border and ring every field has.
+            The date field reads as a value at rest: no frame, the calendar glyph and the date in tabular figures, its glyph
+            and its words in the same columns as the other values' glyphs and words (the field reaches 8 px left of the
+            value column for its frame). It is a 32 px control. Hovered it takes the hover fill; focused, the ink border
+            and ring every field has.
         -->
         <Style Selector="TextBox.date-field">
             <Setter Property="Background" Value="Transparent" />
             <Setter Property="BorderBrush" Value="Transparent" />
             <Setter Property="FontWeight" Value="Medium" />
             <Setter Property="MinHeight" Value="32" />
-            <Setter Property="Padding" Value="2,0,4,0" />
-            <Setter Property="Margin" Value="-7,0,0,0" />
+            <Setter Property="Height" Value="32" />
+            <Setter Property="Padding" Value="3,0,4,0" />
+            <Setter Property="Margin" Value="-8,0,0,0" />
         </Style>
         <Style Selector="TextBox.date-field:pointerover /template/ Border#PART_BorderElement">
             <Setter Property="Background" Value="{DynamicResource Hover}" />
@@ -1196,7 +1204,7 @@
 
                                 <!-- Filing card -->
                                 <Grid RowDefinitions="Auto,*,Auto" IsVisible="{Binding ShowFilingCard}">
-                                    <StackPanel Margin="20,16,12,10" Spacing="6">
+                                    <StackPanel Margin="20,16,16,10" Spacing="6">
                                         <!-- The heading is the title's own field: E or a click edits it here, Enter or leaving saves, Escape restores. -->
                                         <Panel>
                                             <Button x:Name="EditTitleButton" Classes="title-edit" Click="EditTitle_Click" IsEnabled="{Binding HasLibrary}"
@@ -1261,7 +1269,7 @@
                                                              IsEnabled="{Binding HasLibrary}" MaxLength="40" ToolTip.Tip="{translation:Tr DocumentDateFieldTip}"
                                                              AutomationProperties.Name="{translation:Tr EditDocumentDate}">
                                                         <TextBox.InnerLeftContent>
-                                                            <Button x:Name="DocumentDateCalendarButton" Classes="field-glyph" Click="OpenDocumentDateCalendar_Click"
+                                                            <Button x:Name="DocumentDateCalendarButton" Classes="field-glyph" Click="OpenDocumentDateCalendar_Click" Margin="2,0,0,0"
                                                                     IsTabStop="False" ToolTip.Tip="{translation:Tr ChooseADate}"
                                                                     AutomationProperties.Name="{translation:Tr ChooseADate}">
                                                                 <local:Icon Data="{StaticResource Icon.Calendar}" Width="16" Height="16" />
@@ -1330,23 +1338,28 @@
                                                             </DataTemplate>
                                                         </ItemsControl.ItemTemplate>
                                                     </ItemsControl>
-                                                    <!-- The title, the date and the tag field stay open while Plico works in the background. -->
-                                                    <Grid ColumnDefinitions="*,Auto" ColumnSpacing="4" IsEnabled="{Binding HasLibrary}">
-                                                        <!-- One Enter adds the typed tag, or the suggestion chosen with the arrow keys; T comes here. -->
-                                                        <AutoCompleteBox x:Name="TagBox" Classes="tag-entry" Text="{Binding TagInput, Mode=TwoWay}"
-                                                                         PlaceholderText="{translation:Tr AddATag}" AutomationProperties.Name="{translation:Tr TagForThisDocument}"
-                                                                         Populating="TagBox_Populating">
-                                                            <AutoCompleteBox.InnerRightContent>
+                                                    <!--
+                                                        One Enter adds the typed tag, or the suggestion chosen with the arrow keys; T comes here. The T
+                                                        keycap stands in the card's keycap column, under D and E; once something is typed the small Add
+                                                        button takes its place for the mouse, without taking the keyboard. The title, the date and the tag
+                                                        field stay open while Plico works in the background.
+                                                    -->
+                                                    <AutoCompleteBox x:Name="TagBox" Classes="tag-entry" Text="{Binding TagInput, Mode=TwoWay}" IsEnabled="{Binding HasLibrary}"
+                                                                     PlaceholderText="{translation:Tr AddATag}" AutomationProperties.Name="{translation:Tr TagForThisDocument}"
+                                                                     Populating="TagBox_Populating">
+                                                        <AutoCompleteBox.InnerRightContent>
+                                                            <Panel VerticalAlignment="Center" Margin="0,0,3,0">
                                                                 <Border Classes="key field-key" IsVisible="{Binding TagInput, Converter={x:Static StringConverters.IsNullOrEmpty}}">
                                                                     <TextBlock Text="T" />
                                                                 </Border>
-                                                            </AutoCompleteBox.InnerRightContent>
-                                                        </AutoCompleteBox>
-                                                        <Button Grid.Column="1" x:Name="AddTagButton" Classes="icon small" Command="{Binding AddTagCommand}"
-                                                                VerticalAlignment="Center" AutomationProperties.Name="{translation:Tr AddTag}" ToolTip.Tip="{translation:Tr AddTag}">
-                                                            <local:Icon Data="{StaticResource Icon.Plus}" Width="15" Height="15" StrokeWidth="1.8" />
-                                                        </Button>
-                                                    </Grid>
+                                                                <Button x:Name="AddTagButton" Classes="field-glyph" Command="{Binding AddTagCommand}" Focusable="False" Margin="0"
+                                                                        IsVisible="{Binding TagInput, Converter={x:Static StringConverters.IsNotNullOrEmpty}}"
+                                                                        AutomationProperties.Name="{translation:Tr AddTag}" ToolTip.Tip="{translation:Tr AddTag}">
+                                                                    <local:Icon Data="{StaticResource Icon.Plus}" Width="15" Height="15" StrokeWidth="1.8" />
+                                                                </Button>
+                                                            </Panel>
+                                                        </AutoCompleteBox.InnerRightContent>
+                                                    </AutoCompleteBox>
                                                 </StackPanel>
 
                                                 <TextBlock Grid.Row="2" Classes="field-label" Text="{translation:Tr ReminderField}" />

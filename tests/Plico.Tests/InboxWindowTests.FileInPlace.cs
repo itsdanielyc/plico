@@ -258,6 +258,64 @@ public sealed partial class InboxWindowTests
         }
     }
 
+    [AvaloniaTheory]
+    [InlineData(1280, false)]
+    [InlineData(900, true)]
+    public async Task TheCardsFieldsLineUpWithItsValuesAndShareOneKeycapColumn(double width, bool useFrench)
+    {
+        using var temporary = new TemporaryLibrary();
+        using (var library = InboxLibrary.Open(temporary.Path)) BatchFixtures.AddTwoDocuments(library, TestContext.Current.CancellationToken);
+        DesktopText.SetLanguage(useFrench ? InterfaceLanguage.French : InterfaceLanguage.English);
+        using var model = new InboxViewModel(new FixtureDialogs());
+        var window = new MainWindow { DataContext = model, Width = width, Height = 800 };
+        try
+        {
+            model.InitializeLibrary(() => temporary.Path);
+            window.Show();
+            await WaitForPreviewAsync(model);
+            window.UpdateLayout();
+            var title = Assert.IsType<Button>(window.FindControl<Button>("EditTitleButton"));
+            var dateField = Assert.IsType<TextBox>(window.FindControl<TextBox>("DocumentDateField"));
+            var tagField = Assert.IsType<AutoCompleteBox>(window.FindControl<AutoCompleteBox>("TagBox"));
+            var reminder = Assert.IsType<Button>(window.FindControl<Button>("EditDeadlinesButton"));
+
+            // The empty date says so in Fg3 at full strength, like the contract's placeholders, not in a disabled grey.
+            var placeholder = dateField.GetVisualDescendants().OfType<TextBlock>().Single(text => text.Name == "PART_Placeholder");
+            Assert.True(placeholder.IsEffectivelyVisible);
+            Assert.Equal(1, placeholder.Opacity);
+            Assert.Equal(Avalonia.Media.Color.Parse("#66666D"), Assert.IsAssignableFrom<Avalonia.Media.ISolidColorBrush>(placeholder.Foreground).Color);
+
+            // Its words and its glyph start where the other values' words and glyphs start.
+            var reminderWords = BoundsIn(reminder.GetVisualDescendants().OfType<TextBlock>().First(text => text.IsEffectivelyVisible), window);
+            var reminderGlyph = BoundsIn(reminder.GetVisualDescendants().OfType<Icon>().First(), window);
+            var dateGlyph = BoundsIn(Assert.IsType<Button>(window.FindControl<Button>("DocumentDateCalendarButton")).GetVisualDescendants().OfType<Icon>().First(), window);
+            Assert.True(Math.Abs(BoundsIn(placeholder, window).Left - reminderWords.Left) <= 1,
+                $"The date's words start at {BoundsIn(placeholder, window).Left:0.#} and the reminder's at {reminderWords.Left:0.#}.");
+            Assert.True(Math.Abs(dateGlyph.Left - reminderGlyph.Left) <= 1, $"The calendar glyph is at {dateGlyph.Left:0.#} and the bell at {reminderGlyph.Left:0.#}.");
+
+            // E, D and T stand in one column at the card's right.
+            double KeycapRight(Control owner) =>
+                BoundsIn(owner.GetVisualDescendants().OfType<Border>().Single(border => border.Classes.Contains("key") && border.IsEffectivelyVisible), window).Right;
+            double e = KeycapRight(title), d = KeycapRight(dateField), t = KeycapRight(tagField);
+            Assert.True(Math.Abs(e - d) <= 1 && Math.Abs(d - t) <= 1, $"The keycaps end at E {e:0.#}, D {d:0.#} and T {t:0.#}.");
+
+            // The date field is a 32 px control, and the title's field ends where the date's does.
+            Assert.Equal(32, dateField.Bounds.Height);
+            PressWindowKey(window, Key.E, "e");
+            window.UpdateLayout();
+            var editor = Assert.IsType<TextBox>(window.FindControl<TextBox>("TitleEditBox"));
+            Assert.Equal(32, editor.Bounds.Height);
+            Assert.True(Math.Abs(BoundsIn(editor, window).Right - BoundsIn(dateField, window).Right) <= 1,
+                $"The title's field ends at {BoundsIn(editor, window).Right:0.#} and the date's at {BoundsIn(dateField, window).Right:0.#}.");
+            PressFieldKey(editor, Key.Escape);
+        }
+        finally
+        {
+            window.Close();
+            DesktopText.SetLanguage(InterfaceLanguage.English);
+        }
+    }
+
     /// <summary>A key pressed in a focused field, as a person typing there would.</summary>
     private static void PressFieldKey(Control field, Key key) => field.RaiseEvent(new KeyEventArgs
     {
