@@ -396,7 +396,7 @@ Search	Search	Rechercher
 SearchDocuments	Search documents	Rechercher des documents
 SearchOrPreviewChanged	Search or preview changed.	La recherche ou l’aperçu a changé.
 SearchResults	Search results	Résultats de recherche
-SearchYourPaperwork	Search your paperwork	Rechercher dans vos documents
+SearchYourPaperwork	Search your paperwork	Chercher dans vos papiers
 SearchableCopyAddedToInbox	Searchable copy added to inbox.	Copie indexable ajoutée à la boîte de réception.
 SearchableCopyAlreadyInTheLibrary	Searchable copy already in the library.	La copie indexable est déjà dans la bibliothèque.
 SelectADocumentToPreviewIt	Select a document to preview it	Sélectionnez un document pour afficher son aperçu
@@ -678,7 +678,7 @@ ImportUnreadableFormat	No text recognized in {0}.	Aucun texte reconnu dans {0}.
 AcceptAll	Accept all	Tout accepter
 AcceptAllTip	Add every suggested value to this document (A)	Ajouter toutes les valeurs suggérées à ce document (A)
 ActionsSection	Actions	Actions
-AddATag	Add a tag	Ajouter une étiquette
+AddATag	Add a tag	Étiqueter
 AddedField	Added	Ajouté
 AddFilesTip	Add PDFs, photos, scans, email and Office files to the Inbox	Ajouter des PDF, photos, numérisations, e-mails et fichiers Office à la boîte de réception
 AppearanceHelp	Light, dark or the system setting, and the interface language.	Clair, sombre ou le réglage du système, et la langue de l’interface.
@@ -867,3 +867,18 @@ LanguageItalian	Italian	Italien
 LanguagePortuguese	Portuguese	Portugais
 LanguageDutch	Dutch	Néerlandais
 LanguagePolish	Polish	Polonais
+AddADate	Add a date	Ajouter une date
+RemindMe	Remind me	Me le rappeler
+AddDetails	Add details	Ajouter des détails
+PdfToolsMenu	PDF tools	Outils PDF
+YourLibrary	Your library	Votre bibliothèque
+PrivateByDefault	Private by default.	Privé par défaut.
+DropToAddToInbox	Drop to add to your Inbox	Déposez pour ajouter à votre boîte de réception
+WelcomeHeroLedePc	Receipts, letters and forms become searchable PDFs in a folder on this PC.	Reçus, lettres et formulaires deviennent des PDF indexables dans un dossier de ce PC.
+WelcomeHeroLedeComputer	Receipts, letters and forms become searchable PDFs in a folder on this computer.	Reçus, lettres et formulaires deviennent des PDF indexables dans un dossier de cet ordinateur.
+PrivacyShortPc	Text recognition, search and suggestions run on this PC.	La reconnaissance du texte, la recherche et les suggestions s’exécutent sur ce PC.
+PrivacyShortComputer	Text recognition, search and suggestions run on this computer.	La reconnaissance du texte, la recherche et les suggestions s’exécutent sur cet ordinateur.
+TextSearchable	Searchable	Indexable
+TextNotSearchableYet	Not searchable yet	Pas encore indexable
+QueueToReview	{0} to review	{0} à traiter
+WatchAFolderTitle	Watch a folder	Surveiller un dossier

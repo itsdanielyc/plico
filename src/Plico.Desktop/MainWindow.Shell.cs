@@ -16,6 +16,8 @@ public partial class MainWindow
 {
     private const double CompactWidth = 1100;
     private const double MediumWidth = 1240;
+    /// <summary>Below this width decorative art goes first: the welcome hero drops the large mark.</summary>
+    private const double ArtWidth = 1040;
     private static readonly TimeSpan ReviewMotionDuration = TimeSpan.FromMilliseconds(380);
     private static readonly TimeSpan RepeatedReviewWindow = TimeSpan.FromMilliseconds(1200);
     private DateTime _lastReview = DateTime.MinValue;
@@ -26,17 +28,24 @@ public partial class MainWindow
     private readonly Dictionary<Key, string> _armedKeys = [];
     private Control? _overlayReturnFocus;
 
-    /// <summary>Collapse order: the filing card narrows, then the queue becomes a thumbnail strip.</summary>
+    /// <summary>
+    /// Collapse order: the welcome art goes, the sidebar narrows from Onda's 252 px, the filing card narrows, then the
+    /// queue becomes a thumbnail strip. The sheet's 1 px edge comes out of the page column: at 900 px it keeps 335 px
+    /// (900 - 200 - 1 - 84 - 280) and at 1280 px 459 px (1280 - 252 - 1 - 272 - 296).
+    /// </summary>
     private void ApplyWorkspaceLayout(double width)
     {
         // Window size changes arrive while the XAML is still loading, before the named grids exist.
         if (ShellGrid is null || WorkspaceGrid is null || QueueHeader is null || PageColumn is null || double.IsNaN(width)) return;
         bool compact = width < CompactWidth;
         bool medium = width < MediumWidth;
-        ShellGrid.ColumnDefinitions[0].Width = new GridLength(compact ? 200 : medium ? 208 : 216);
+        ShellGrid.ColumnDefinitions[0].Width = new GridLength(compact ? 200 : medium ? 208 : 252);
         WorkspaceGrid.ColumnDefinitions[0].Width = new GridLength(compact ? 84 : medium ? 252 : 272);
         WorkspaceGrid.ColumnDefinitions[2].Width = new GridLength(compact ? 280 : medium ? 288 : 296);
         WorkspaceGrid.Classes.Set("compact", compact);
+        WorkspaceGrid.Classes.Set("narrow", width < ArtWidth);
+        // Places tighten to 36 px rows with the strip.
+        ShellGrid.Classes.Set("compact", compact);
         // Compact: the header spans the thumbnail strip and the page, and the page starts below it.
         Grid.SetColumnSpan(QueueHeader, compact ? 2 : 1);
         Grid.SetRow(PageColumn, compact ? 1 : 0);
@@ -234,6 +243,7 @@ public partial class MainWindow
     {
         if (!IsOverlayOpen) _overlayReturnFocus = FocusManager?.GetFocusedElement() as Control;
         _armedKeys.Clear();
+        HideToast();
         ShellGrid.IsEnabled = false;
     }
 

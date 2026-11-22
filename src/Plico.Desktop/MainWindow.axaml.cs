@@ -19,6 +19,7 @@ public sealed partial class MainWindow : Window
         ApplyWorkspaceLayout(Width);
         WirePalette();
         WireShortcutKeys();
+        WireToast();
         PreviewPage.PropertyChanged += (_, change) =>
         {
             if (change.Property == Image.SourceProperty) UpdatePreviewScrollPosition();
@@ -96,7 +97,8 @@ public sealed partial class MainWindow : Window
 
     private void RemoveTag_Click(object? sender, RoutedEventArgs e)
     {
-        if (sender is Button { DataContext: string tag }) ViewModel?.RemoveTag(tag);
+        if (sender is Button { DataContext: TagChip chip }) ViewModel?.RemoveTag(chip.Label);
+        else if (sender is Button { DataContext: string tag }) ViewModel?.RemoveTag(tag);
     }
 
     private void TagBox_Populating(object? sender, PopulatingEventArgs e)

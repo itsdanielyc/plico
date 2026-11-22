@@ -132,11 +132,28 @@ internal static partial class NativeVerification
 
     private static async Task VerifyPreviewFitAsync(MainWindow window, InboxViewModel model, string directory)
     {
+        // With Onda's 252 px sidebar the page column at 1280 x 800 is about as tall as a letter page fitted to its
+        // width, so fit width would not scroll. A 700 px tall window keeps the page taller than the desk.
+        double height = window.Height;
+        window.Height = 700;
+        try
+        {
+            await VerifyPreviewFitAtCurrentSizeAsync(window, model, directory);
+        }
+        finally
+        {
+            window.Height = height;
+        }
+    }
+
+    private static async Task VerifyPreviewFitAtCurrentSizeAsync(MainWindow window, InboxViewModel model, string directory)
+    {
         var fit = Control<Button>(window, "PreviewFitButton");
         var scroll = Control<ScrollViewer>(window, "PreviewScroll");
         var firstPage = model.Preview;
         Require(firstPage is not null && model.CanGoForward && fit.IsEnabled,
             "Fit width requires the first page of a multipage preview.");
+        await UntilAsync(() => scroll.Viewport.Height > 0 && scroll.Viewport.Height < 560, () => $"The window did not shrink. {scroll.Viewport}");
         Require(scroll.Extent.Height <= scroll.Viewport.Height, "The initial preview did not fit the whole page.");
 
         fit.Command!.Execute(null);
@@ -1103,6 +1120,8 @@ internal static partial class NativeVerification
 
     private static async Task CaptureAsync(Window window, string directory, string filename)
     {
+        // A toast that has just appeared is still rising; let its 260 ms entrance finish so the capture shows it.
+        for (int wait = 0; wait < 30 && window is MainWindow { IsToastEntering: true }; wait++) await Task.Delay(20);
         await Dispatcher.UIThread.InvokeAsync(() =>
         {
             using var bitmap = new RenderTargetBitmap(PixelSize.FromSize(window.Bounds.Size, 1), new Vector(96, 96));
