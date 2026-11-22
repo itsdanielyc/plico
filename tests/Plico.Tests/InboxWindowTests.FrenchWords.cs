@@ -54,19 +54,26 @@ public sealed partial class InboxWindowTests
     public void FrenchPunctuationHoldsOnToItsWordsWithOneNoBreakSpace()
     {
         // French puts a space before : ; ! ? and inside « », and it must never break, or a wrapped line starts with a
-        // colon or leaves a guillemet alone. Every row uses the same no-break space, and so do names quoted in code.
+        // colon or leaves a guillemet alone. Every row has that one no-break space, so a mark with no space beside it is
+        // as wrong as one with an ordinary space; names quoted in code have it too. Search syntax is not prose: a filter's
+        // colon sits tight between its name and its value (tag:impots, folder:"Classés"), as the person types it.
         var loose = new List<string>();
         foreach (var (key, _, french) in ReadCatalog())
         {
             for (int index = 0; index < french.Length; index++)
             {
-                bool before = ":;!?»".Contains(french[index]) && index > 0 && char.IsWhiteSpace(french[index - 1]);
-                bool after = french[index] == '«' && index + 1 < french.Length && char.IsWhiteSpace(french[index + 1]);
-                char space = before ? french[index - 1] : after ? french[index + 1] : '\u00A0';
-                if (space != '\u00A0') loose.Add($"{key}: U+{(int)space:X4} beside “{french[index]}” in “{french}”");
+                char mark = french[index];
+                bool before = ":;!?»".Contains(mark);
+                bool after = mark == '«';
+                if ((!before && !after) || IsSearchSyntax(french, index)) continue;
+                int side = before ? index - 1 : index + 1;
+                if (side >= 0 && side < french.Length && french[side] == '\u00A0') continue;
+                string found = side < 0 || side >= french.Length ? "nothing"
+                    : char.IsWhiteSpace(french[side]) ? $"U+{(int)french[side]:X4}" : $"“{french[side]}”";
+                loose.Add($"{key}: {found} {(before ? "before" : "after")} “{mark}” where a no-break space belongs, in “{french}”");
             }
         }
-        Assert.Empty(loose);
+        Assert.True(loose.Count == 0, string.Join(Environment.NewLine, loose));
 
         DesktopText.SetLanguage(InterfaceLanguage.French);
         try
@@ -77,6 +84,20 @@ public sealed partial class InboxWindowTests
         {
             DesktopText.SetLanguage(InterfaceLanguage.English);
         }
+    }
+
+    /// <summary>
+    /// Whether the colon at <paramref name="index"/> is search syntax rather than prose: it sits tight between a filter's
+    /// name, a lowercase ASCII word (tag, status, correspondent), and its value (tag:impots, -tag:archive,
+    /// folder:"Classés"). A capitalised or accented word before a tight colon ("Rappel:{0}") is prose and is not excused.
+    /// O(length of the word) per colon.
+    /// </summary>
+    private static bool IsSearchSyntax(string text, int index)
+    {
+        if (text[index] != ':' || index + 1 >= text.Length || char.IsWhiteSpace(text[index + 1])) return false;
+        int start = index;
+        while (start > 0 && char.IsLetter(text[start - 1])) start--;
+        return start < index && text[start..index].All(char.IsAsciiLetterLower);
     }
 
     [AvaloniaFact]
