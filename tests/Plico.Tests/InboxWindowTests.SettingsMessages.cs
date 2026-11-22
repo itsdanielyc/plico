@@ -645,6 +645,7 @@ public sealed partial class InboxWindowTests
     [InlineData("O")]
     [InlineData("PDF location")]
     [InlineData("O after a choice in Settings")]
+    [InlineData("O after Escape closed Settings")]
     public async Task AFileThatWillNotOpenFromTheMainWindowWhilePlicoWorksSaysWhyThereAtOnce(string how)
     {
         using var temporary = new TemporaryLibrary();
@@ -661,7 +662,7 @@ public sealed partial class InboxWindowTests
         {
             await WaitForPreviewAsync(model);
             var toast = Named<Border>(window, "Toast");
-            if (how == "O after a choice in Settings") settings = OpenSettingsAt(window, "GeneralGroup");
+            if (how.EndsWith("Settings", StringComparison.Ordinal)) settings = OpenSettingsAt(window, "GeneralGroup");
 
             // Work begins (Trash left open holds Plico busy, as a watched folder's import does); the status card says so.
             work = model.OpenTrashCommand.ExecuteAsync(null);
@@ -669,11 +670,21 @@ public sealed partial class InboxWindowTests
             Assert.True(model.IsBusy);
             string working = model.StatusCardTitle;
 
-            // The person chooses the dark theme in Settings, which Settings' line says, and goes back to the main window.
-            if (settings is not null)
+            // The person chooses the dark theme in Settings, which Settings' line says, and goes back to the main window;
+            // or closes Settings with Escape, which closes it as the key goes down, so the key comes up in the main window.
+            if (how == "O after a choice in Settings" && settings is { } chosenIn)
             {
-                ClickAt(settings, settings.GetVisualDescendants().OfType<RadioButton>().Single(card => AutomationProperties.GetName(card) == "Dark"));
-                Assert.Equal("Appearance saved.", Named<TextBlock>(settings, "SettingsMessage").Text);
+                ClickAt(chosenIn, chosenIn.GetVisualDescendants().OfType<RadioButton>().Single(card => AutomationProperties.GetName(card) == "Dark"));
+                Assert.Equal("Appearance saved.", Named<TextBlock>(chosenIn, "SettingsMessage").Text);
+            }
+            else if (how == "O after Escape closed Settings" && settings is { } closing)
+            {
+                closing.KeyPress(Key.Escape, RawInputModifiers.None, PhysicalKey.Escape, null);
+                Dispatcher.UIThread.RunJobs();
+                window.KeyRelease(Key.Escape, RawInputModifiers.None, PhysicalKey.Escape, null);
+                Dispatcher.UIThread.RunJobs();
+                Assert.False(closing.IsVisible, "Escape left Settings open.");
+                settings = null;
             }
 
             // The person opens the document with O from its row, or its folder from the card's location; neither opens.
