@@ -852,13 +852,13 @@ StatusOneFileMissing	1 file is missing	1 fichier est introuvable
 StatusFilesMissing	{0} files are missing	{0} fichiers sont introuvables
 StatusWatchStopped	A folder watch stopped	Une surveillance s’est arrêtée
 StatusWatchingTwo	Watching 2 folders	Surveillance de 2 dossiers
-StatusNotWatching	Not watching a folder	Aucun dossier surveillé
+StatusNotWatching	Not watching	Aucune surveillance
 StatusNoLibrary	No library open	Aucune bibliothèque ouverte
 StatusImportErrorsDetail	Couldn't add them. Select to see why.	Impossible de les ajouter. Sélectionnez pour voir pourquoi.
 StatusIndexDetail	Select to open the index report.	Sélectionnez pour ouvrir le rapport d’indexation.
 StatusWatchStoppedDetail	Select to resume it in Settings.	Sélectionnez pour la reprendre dans les réglages.
-ReadOnThisPc	read on this PC	lu sur ce PC
-ReadOnThisComputer	read on this computer	lu sur cet ordinateur
+ReadOnThisPc	read on this PC	lu sur ce PC
+ReadOnThisComputer	read on this computer	lu sur cet ordinateur
 LanguageEnglish	English	Anglais
 LanguageFrench	French	Français
 LanguageGerman	German	Allemand
@@ -890,3 +890,5 @@ ToastTagAdded	Tag added	Étiquette ajoutée
 ToastBackupSaved	Backup saved	Sauvegarde enregistrée
 ToastExported	Exported	Exporté
 ToastSearchableCopyAdded	Searchable copy added	Copie indexable ajoutée
+InboxPlace	Inbox	Réception
+AllDocumentsPlace	All documents	Documents

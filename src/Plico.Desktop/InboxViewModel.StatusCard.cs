@@ -46,7 +46,7 @@ internal sealed partial class InboxViewModel
             if (IsWatchingFolder && IsWatchingPhoneInbox) return DesktopText.Translate("Watching 2 folders");
             if (IsWatchingFolder) return DesktopText.Format($"Watching {WatchedFolderName}");
             if (IsWatchingPhoneInbox) return DesktopText.Format($"Watching {PhoneFolderName}");
-            return HasLibrary ? DesktopText.Translate("Not watching a folder") : DesktopText.Translate("No library open");
+            return HasLibrary ? DesktopText.Translate("Not watching") : DesktopText.Translate("No library open");
         }
     }
 

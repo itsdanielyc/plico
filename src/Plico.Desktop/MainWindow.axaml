@@ -421,14 +421,15 @@
                                     ToolTip.Tip="{translation:Tr Inbox}">
                                 <Grid ColumnDefinitions="Auto,*,Auto" ColumnSpacing="12">
                                     <local:Icon Data="{StaticResource Icon.Inbox}" Width="18" Height="18" StrokeWidth="1.7" VerticalAlignment="Center" />
-                                    <TextBlock Grid.Column="1" Text="{translation:Tr Inbox}" TextWrapping="Wrap" VerticalAlignment="Center" />
+                                    <TextBlock Grid.Column="1" Text="{translation:Tr InboxPlace}" TextTrimming="CharacterEllipsis" VerticalAlignment="Center" />
                                     <TextBlock Grid.Column="2" x:Name="InboxReviewCount" Classes="count" Text="{Binding InboxCount}" IsVisible="{Binding HasInboxCount}" />
                                 </Grid>
                             </Button>
-                            <Button x:Name="AllDocumentsButton" Classes="nav" Classes.current="{Binding AllSelected}" Command="{Binding ShowAllCommand}">
+                            <Button x:Name="AllDocumentsButton" Classes="nav" Classes.current="{Binding AllSelected}" Command="{Binding ShowAllCommand}"
+                                    ToolTip.Tip="{translation:Tr AllDocuments}" AutomationProperties.Name="{translation:Tr AllDocuments}">
                                 <Grid ColumnDefinitions="Auto,*" ColumnSpacing="12">
                                     <local:Icon Data="{StaticResource Icon.AllDocuments}" Width="18" Height="18" StrokeWidth="1.7" VerticalAlignment="Center" />
-                                    <TextBlock Grid.Column="1" Text="{translation:Tr AllDocuments}" TextTrimming="CharacterEllipsis" VerticalAlignment="Center" />
+                                    <TextBlock Grid.Column="1" Text="{translation:Tr AllDocumentsPlace}" TextTrimming="CharacterEllipsis" VerticalAlignment="Center" />
                                 </Grid>
                             </Button>
                             <Button x:Name="UpcomingButton" Classes="nav" Command="{Binding RemindersCommand}" IsEnabled="{Binding CanWork}"
@@ -504,23 +505,24 @@
                     <Panel x:Name="StatusCard" Margin="0,0,0,8">
                         <Border Classes="status">
                             <StackPanel Spacing="3">
+                                <!-- The state is never cut: the title takes a second line in a narrow sidebar, the detail wraps. -->
                                 <Grid ColumnDefinitions="Auto,*" ColumnSpacing="6">
                                     <Border Classes="status-halo" Classes.live="{Binding StatusCardIsLive}" Classes.warning="{Binding StatusCardIsWarning}"
-                                            Classes.failed="{Binding StatusCardIsFailed}">
+                                            Classes.failed="{Binding StatusCardIsFailed}" VerticalAlignment="Top" Margin="0,2,0,0">
                                         <Ellipse />
                                     </Border>
-                                    <TextBlock Grid.Column="1" Text="{Binding StatusCardTitle}" FontSize="15" FontWeight="SemiBold"
-                                               TextTrimming="CharacterEllipsis" VerticalAlignment="Center" />
+                                    <TextBlock Grid.Column="1" Text="{Binding StatusCardTitle}" FontSize="15" FontWeight="SemiBold" LineHeight="19"
+                                               TextWrapping="Wrap" MaxLines="2" TextTrimming="CharacterEllipsis" VerticalAlignment="Center" />
                                 </Grid>
-                                <TextBlock Text="{Binding StatusCardDetail}" FontSize="13" Foreground="{DynamicResource Fg2}"
-                                           TextTrimming="CharacterEllipsis" />
+                                <TextBlock Text="{Binding StatusCardDetail}" FontSize="13" LineHeight="18" Foreground="{DynamicResource Fg2}"
+                                           TextWrapping="Wrap" />
                                 <Border BorderBrush="{DynamicResource Line}" BorderThickness="0,1,0,0" Margin="0,8,0,0" Padding="0,10,0,0">
                                     <Panel MinHeight="18">
                                         <Grid ColumnDefinitions="Auto,*" ColumnSpacing="8" IsVisible="{Binding !IsBusy}">
                                             <local:Icon Data="{StaticResource Icon.Folder}" Width="14" Height="14" Foreground="{DynamicResource Fg2}"
-                                                        VerticalAlignment="Center" />
-                                            <TextBlock Grid.Column="1" Text="{Binding IntakeDestinationLabel}" FontSize="13" Foreground="{DynamicResource Fg2}"
-                                                       TextTrimming="CharacterEllipsis" VerticalAlignment="Center" />
+                                                        VerticalAlignment="Top" Margin="0,2,0,0" />
+                                            <TextBlock Grid.Column="1" Text="{Binding IntakeDestinationLabel}" FontSize="13" LineHeight="18" Foreground="{DynamicResource Fg2}"
+                                                       TextWrapping="Wrap" MaxLines="2" TextTrimming="CharacterEllipsis" VerticalAlignment="Center" />
                                         </Grid>
                                         <ProgressBar Classes="slim" Margin="0,0,32,0" IsVisible="{Binding IsBusy}" IsIndeterminate="{Binding !HasWorkProgress}"
                                                      Minimum="0" Maximum="100" Value="{Binding WorkPercent}" />

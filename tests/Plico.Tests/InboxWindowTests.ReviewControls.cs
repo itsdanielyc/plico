@@ -216,12 +216,19 @@ public sealed partial class InboxWindowTests
             model.InitializeLibrary(() => temporary.Path);
             window.Show();
             await WaitForPreviewAsync(model);
+            // Places keep one line in their 36 px rows: Inbox and All documents use their sidebar labels in French, whole.
+            foreach (var (name, text) in new[] { ("InboxButton", "Réception"), ("AllDocumentsButton", "Documents") })
+            {
+                var place = window.FindControl<Button>(name)!;
+                var label = place.GetVisualDescendants().OfType<TextBlock>().Single(block => block.Text == text);
+                var fullLabel = new TextBlock { Text = label.Text, FontFamily = label.FontFamily, FontSize = label.FontSize, FontWeight = label.FontWeight };
+                fullLabel.Measure(Size.Infinity);
+                Assert.True(label.Bounds.Width >= fullLabel.DesiredSize.Width - 1,
+                    $"{name} label has {label.Bounds.Width} pixels for {fullLabel.DesiredSize.Width} pixels of text.");
+                Assert.True(place.Bounds.Height <= 36.5, $"{name} grew to {place.Bounds.Height} pixels.");
+            }
             var inbox = window.FindControl<Button>("InboxButton")!;
-            var label = inbox.GetVisualDescendants().OfType<TextBlock>().Single(text => text.Text == "Boîte de réception");
-            var fullLabel = new TextBlock { Text = label.Text, FontFamily = label.FontFamily, FontSize = label.FontSize, FontWeight = label.FontWeight };
-            fullLabel.Measure(Size.Infinity);
-            Assert.True(label.Bounds.Width >= fullLabel.DesiredSize.Width - 1 || label.Bounds.Height >= 2 * fullLabel.DesiredSize.Height - 1,
-                $"Inbox label has {label.Bounds.Width} pixels for {fullLabel.DesiredSize.Width} pixels of text.");
+            Assert.Equal("Boîte de réception", ToolTip.GetTip(inbox));
             var rail = inbox.FindAncestorOfType<ScrollViewer>()!;
             var tags = rail.GetVisualDescendants().OfType<Button>().Where(button => button.Classes.Contains("rail")).Take(2).ToArray();
             Assert.Equal(2, tags.Length);

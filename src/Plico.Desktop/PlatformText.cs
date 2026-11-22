@@ -16,5 +16,5 @@ internal static class PlatformText
 
     /// <summary>"English · read on this PC": the recognition language and where recognition runs.</summary>
     internal static string RecognitionPlace(OcrLanguage language) =>
-        $"{DesktopText.Translate(language.ToString())} · {DesktopText.Translate(OnWindows ? "read on this PC" : "read on this computer")}";
+        $"{DesktopText.Translate(language.ToString())} · {DesktopText.Translate(OnWindows ? "read on this\u00a0PC" : "read on this\u00a0computer")}";
 }
