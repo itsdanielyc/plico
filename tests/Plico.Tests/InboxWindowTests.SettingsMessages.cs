@@ -455,6 +455,108 @@ public sealed partial class InboxWindowTests
         }
     }
 
+    [AvaloniaTheory]
+    [InlineData("Stop watching")]
+    [InlineData("Stop phone inbox")]
+    [InlineData("Show PDF folder")]
+    public async Task AnActionTakenInSettingsWhilePlicoWorksIsSaidInSettingsAndLeavesTheCardToTheWork(string action)
+    {
+        using var temporary = new TemporaryLibrary();
+        using var settingsFolder = new TemporaryLibrary();
+        using var watched = new TemporaryLibrary();
+        using (var library = InboxLibrary.Open(temporary.Path)) BatchFixtures.AddTwoDocuments(library, TestContext.Current.CancellationToken);
+        string scans = Path.Combine(watched.Path, "Scans");
+        Directory.CreateDirectory(scans);
+        var pending = new TaskCompletionSource<TrashDecision?>();
+        // The system's opener finds the PDF folder unavailable, as it does for a library on a drive that has gone.
+        var dialogs = new FixtureDialogs { FolderPath = scans, TrashChoice = _ => pending.Task, OpenPathFails = true };
+        using var model = new InboxViewModel(dialogs, watchPreference: new WatchFolderPreference(settingsFolder.Path));
+        model.InitializeLibrary(() => temporary.Path);
+        var window = new MainWindow { DataContext = model, Width = 1280, Height = 800 };
+        window.Show();
+        Task? work = null;
+        try
+        {
+            await WaitForPreviewAsync(model);
+            var settings = OpenSettingsAt(window, action == "Show PDF folder" ? "LibraryGroup" : "IntakeGroup");
+            var line = Named<TextBlock>(settings, "SettingsMessage");
+            var bar = Named<Border>(settings, "SettingsMessageBar");
+            var done = Assert.IsAssignableFrom<Control>(settings.FindControl<Control>("SettingsMessageDone"));
+            var problem = Assert.IsAssignableFrom<Control>(settings.FindControl<Control>("SettingsMessageProblem"));
+            var toast = Named<Border>(window, "Toast");
+            var phoneButton = Named<Button>(settings, "PhoneInboxButton");
+            var phoneMenu = Assert.IsType<MenuFlyout>(phoneButton.Flyout);
+            async Task ChooseFromThePhoneMenuAsync(string item)
+            {
+                ClickAt(settings, phoneButton);
+                await WaitForAsync(() => phoneMenu.IsOpen);
+                ClickAt(settings, Assert.Single(phoneMenu.Items.OfType<MenuItem>(), menuItem => menuItem.Name == item));
+            }
+
+            // The watch to stop is started from Settings while Plico is idle.
+            if (action == "Stop watching")
+            {
+                ClickAt(settings, Named<Button>(settings, "StartFolderWatchButton"));
+                await WaitForAsync(() => !model.IsBusy && model.IsWatchingFolder);
+            }
+            else if (action == "Stop phone inbox")
+            {
+                await ChooseFromThePhoneMenuAsync("ChoosePhoneInboxFolder");
+                await WaitForAsync(() => !model.IsBusy && model.IsWatchingPhoneInbox);
+            }
+
+            // Work begins (Trash left open holds Plico busy, as a watched folder's import does); the status card says so.
+            work = model.OpenTrashCommand.ExecuteAsync(null);
+            Dispatcher.UIThread.RunJobs();
+            Assert.True(model.IsBusy);
+            string working = model.StatusCardTitle;
+
+            // The person takes the action with the pointer in Settings while Plico works.
+            string said;
+            if (action == "Stop watching")
+            {
+                ClickAt(settings, Named<Button>(settings, "StopFolderWatchButton"));
+                said = "Folder watch stopped.";
+            }
+            else if (action == "Stop phone inbox")
+            {
+                await ChooseFromThePhoneMenuAsync("StopPhoneInbox");
+                said = "Phone inbox watch stopped.";
+            }
+            else
+            {
+                ClickAt(settings, settings.GetVisualDescendants().OfType<Button>().Single(button => ReferenceEquals(button.Command, model.OpenPdfFolderCommand)));
+                said = "This file or folder is unavailable. Refresh the library.";
+            }
+            await WaitForAsync(() => model.Status == said);
+            Dispatcher.UIThread.RunJobs();
+            settings.UpdateLayout();
+            Assert.True(bar.IsVisible && line.Text == said,
+                $"Settings' line says “{(bar.IsVisible ? line.Text : "")}”, and the status card says “{model.StatusCardTitle}”.");
+            Assert.Equal(action == "Show PDF folder" ? (false, true) : (true, false), (done.IsVisible, problem.IsVisible));
+            Assert.Equal(working, model.StatusCardTitle);
+            // The action raises no toast of its own over the page while Plico works.
+            Assert.False(toast.IsVisible, $"The main window's toast rose under Settings while Plico works, saying “{model.ToastTitle}”.");
+
+            // When the work ends, its own result rises in the main window, and Settings' line keeps what the action said.
+            pending.SetResult(null);
+            await work;
+            work = null;
+            Dispatcher.UIThread.RunJobs();
+            Assert.True(toast.IsVisible, $"No toast rose when the work ended; the toast would say “{model.ToastTitle}”.");
+            Assert.Equal("Trash is empty", model.ToastTitle);
+            Assert.Equal(said, line.Text);
+            settings.Close();
+        }
+        finally
+        {
+            pending.TrySetResult(null);
+            if (work is not null) await work;
+            await model.PrepareCloseAsync();
+            window.Close();
+        }
+    }
+
     [AvaloniaFact]
     public async Task TheRapidOcrSwitchWaitsWhilePlicoWorks()
     {

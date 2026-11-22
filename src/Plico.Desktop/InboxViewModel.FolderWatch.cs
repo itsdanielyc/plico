@@ -155,12 +155,12 @@ internal sealed partial class InboxViewModel
     [RelayCommand] private Task StartFolderWatchAsync() => ChooseWatchFolderAsync(_scannerWatch);
     [RelayCommand] private Task ResumeFolderWatchAsync() => ResumeWatchAsync(_scannerWatch, queueExistingFiles: false);
     [RelayCommand] private Task ImportWatchFolderFilesAsync() => CatchUpWatchAsync(_scannerWatch);
-    [RelayCommand] private Task StopFolderWatchAsync() => StopWatchAsync(_scannerWatch);
+    [RelayCommand] private Task StopFolderWatchAsync() => StopWatchAsync(_scannerWatch, asked: true);
 
     [RelayCommand] private Task ChoosePhoneInboxFolderAsync() => ChooseWatchFolderAsync(_phoneWatch);
     [RelayCommand] private Task ResumePhoneInboxAsync() => ResumeWatchAsync(_phoneWatch, queueExistingFiles: false);
     [RelayCommand] private Task CatchUpPhoneInboxAsync() => CatchUpWatchAsync(_phoneWatch);
-    [RelayCommand] private Task StopPhoneInboxAsync() => StopWatchAsync(_phoneWatch);
+    [RelayCommand] private Task StopPhoneInboxAsync() => StopWatchAsync(_phoneWatch, asked: true);
 
     private void SetCatchUpOnOpen(WatchSlot slot, bool enabled)
     {
@@ -334,19 +334,30 @@ internal sealed partial class InboxViewModel
         return Task.WhenAll(StopWatchAsync(_scannerWatch), StopWatchAsync(_phoneWatch));
     }
 
-    private async Task StopWatchAsync(WatchSlot slot)
+    /// <summary>
+    /// Stops the watch in <paramref name="slot"/> and says so. When the person <paramref name="asked"/> for it (Stop
+    /// watching, the phone inbox's Stop), what it says is an aside to any work in hand (see <see cref="SayAside"/>).
+    /// Otherwise (a library switch, closing, a watch that failed) it is said as any message is, so while Plico works it is
+    /// a line of the work.
+    /// </summary>
+    private async Task StopWatchAsync(WatchSlot slot, bool asked = false)
     {
         if (slot.Active is not { } watch) return;
         slot.Active = null;
         NotifyWatchChanged(slot);
+        void Say(Action say)
+        {
+            if (asked) SayAside(say);
+            else say();
+        }
         try
         {
             await watch.DisposeAsync();
-            if (slot.Active is null) Status = DesktopText.Translate(slot.StopMessage);
+            if (slot.Active is null) Say(() => Status = DesktopText.Translate(slot.StopMessage));
         }
         catch (Exception error)
         {
-            Fail(error.Message);
+            Say(() => Fail(error.Message));
         }
     }
 

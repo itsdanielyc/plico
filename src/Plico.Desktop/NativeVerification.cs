@@ -1247,7 +1247,14 @@ internal sealed partial class FixtureDialogs(params string[] documents) : IWorks
     public Task ShowFilingRulesAsync(IReadOnlyList<FilingRule> rules, Func<FilingRule, FilingRule> save, Action<long> remove) =>
         RuleChoice?.Invoke(rules, save, remove) ?? Task.CompletedTask;
     public Task ShowIntegrityReportAsync(IntegrityReport report) => IntegrityChoice?.Invoke(report) ?? Task.CompletedTask;
-    public void OpenPath(string path) => LastOpenedPath = path;
+    /// <summary>When true, opening a file or folder fails as the system's opener does for one that is unavailable.</summary>
+    internal bool OpenPathFails { get; set; }
+
+    public void OpenPath(string path)
+    {
+        if (OpenPathFails) throw new FileNotFoundException("This file or folder is unavailable. Refresh the library.");
+        LastOpenedPath = path;
+    }
 
     public Task CopyTextAsync(string text)
     {

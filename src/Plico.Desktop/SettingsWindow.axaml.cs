@@ -3,6 +3,7 @@ using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Input;
 using Avalonia.Interactivity;
+using Avalonia.LogicalTree;
 using Avalonia.Threading;
 using Avalonia.VisualTree;
 
@@ -37,10 +38,12 @@ public sealed partial class SettingsWindow : Window
             MarkCurrentSection();
             WatchOwnerInput(Owner as Window);
         };
-        AddHandler(PointerPressedEvent, (_, _) => BeginAction(), RoutingStrategies.Tunnel, handledEventsToo: true);
-        AddHandler(KeyDownEvent, (_, _) => BeginAction(), RoutingStrategies.Tunnel, handledEventsToo: true);
-        AddHandler(PointerReleasedEvent, (_, _) => SettleAction(), RoutingStrategies.Tunnel, handledEventsToo: true);
-        AddHandler(KeyUpEvent, (_, _) => SettleAction(), RoutingStrategies.Tunnel, handledEventsToo: true);
+        FollowInput(this);
+        // A menu that one of Settings' buttons opens (the phone inbox's) shows its items in a popup whose input does not
+        // pass through Settings, so a press or a key on one of them is followed from the item itself.
+        foreach (var item in this.GetLogicalDescendants().OfType<Button>().Select(button => button.Flyout).OfType<MenuFlyout>()
+                     .SelectMany(menu => menu.Items.OfType<MenuItem>()))
+            FollowInput(item);
         // A key that goes down here may come up somewhere else: Alt of Alt+Tab comes up in the window in front, and Enter
         // on Watch a folder… comes up in the picker. Leaving Settings, or input in the main window, settles it too.
         Deactivated += (_, _) => SettleAction();
@@ -52,6 +55,15 @@ public sealed partial class SettingsWindow : Window
             AttachModel(null);
             WatchOwnerInput(null);
         };
+    }
+
+    /// <summary>A press or a key that reaches <paramref name="element"/> begins an action of Settings', and its release settles it.</summary>
+    private void FollowInput(Interactive element)
+    {
+        element.AddHandler(PointerPressedEvent, (_, _) => BeginAction(), RoutingStrategies.Tunnel, handledEventsToo: true);
+        element.AddHandler(KeyDownEvent, (_, _) => BeginAction(), RoutingStrategies.Tunnel, handledEventsToo: true);
+        element.AddHandler(PointerReleasedEvent, (_, _) => SettleAction(), RoutingStrategies.Tunnel, handledEventsToo: true);
+        element.AddHandler(KeyUpEvent, (_, _) => SettleAction(), RoutingStrategies.Tunnel, handledEventsToo: true);
     }
 
     /// <summary>Input given to the main window means the person has left Settings: what was in hand here is settled.</summary>

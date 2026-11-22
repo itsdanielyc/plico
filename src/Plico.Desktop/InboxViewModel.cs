@@ -553,6 +553,10 @@ internal sealed partial class InboxViewModel : ObservableObject, IDisposable
         }
     }
 
+    /// <summary>
+    /// Opens a file or folder (the PDF folder, a document or its folder, a backup, an export) in the system's own app. Why
+    /// it could not be opened is an aside to any work in hand (see <see cref="SayAside"/>), never a line of the work.
+    /// </summary>
     private void OpenPath(Func<string> resolve)
     {
         try
@@ -561,7 +565,7 @@ internal sealed partial class InboxViewModel : ObservableObject, IDisposable
         }
         catch (Exception error)
         {
-            Fail(error.Message);
+            SayAside(() => Fail(error.Message));
         }
     }
 

@@ -59,8 +59,8 @@ internal sealed partial class InboxViewModel
     // once, even while work runs.
     private int _editsInHand;
 
-    // Above zero while a choice Settings saves on the spot (the theme, the interface language) is saved; see SaveChoice.
-    private int _choicesInHand;
+    // Above zero while another action the person takes beside the work in hand says what it has to say; see SayAside.
+    private int _asidesInHand;
 
     /// <summary>
     /// The latest message, a line of the work in hand included. It is raised on every assignment, even when the words
@@ -79,7 +79,7 @@ internal sealed partial class InboxViewModel
             _pendingQuiet = false;
             _pendingProblem = false;
             _statusIsProblem = problem;
-            if (IsBusy && _editsInHand == 0 && _choicesInHand == 0) NoteWorkLine(value, toast, quiet, problem);
+            if (IsBusy && _editsInHand == 0 && _asidesInHand == 0) NoteWorkLine(value, toast, quiet, problem);
             else ShowMessage(value, toast, quiet, foreground: IsBusy && _editsInHand > 0, problem);
             OnPropertyChanged();
         }
@@ -213,6 +213,26 @@ internal sealed partial class InboxViewModel
         edit();
         return true;
     });
+
+    /// <summary>
+    /// Runs <paramref name="say"/>, the part of an action the person takes beside the work in hand that says what it has
+    /// to say: a choice Settings saves on the spot, a watch stopped, a file or folder that would not open. While Plico
+    /// works its message is never a line of the work, so the status card keeps the work's line and the work's own result
+    /// still rises when it ends. It is not news at once either: Settings' line says it when the action was taken there,
+    /// and it raises no toast of its own over the page while the work runs, though a toast already up takes its words.
+    /// </summary>
+    private void SayAside(Action say)
+    {
+        _asidesInHand++;
+        try
+        {
+            say();
+        }
+        finally
+        {
+            _asidesInHand--;
+        }
+    }
 
     /// <summary>
     /// Adds a problem raised while Plico starts, before the window can show it, to what was said already, so the toast

@@ -89,9 +89,8 @@ internal sealed partial class InboxViewModel
     /// saved. Settings is open over the main window then, so this is Settings' news even while Plico works: it goes to
     /// the line at the foot of Settings' sheet, never to the status card as a line of the work.
     /// </summary>
-    private void SaveChoice(AppearanceOptions chosen, string saved)
+    private void SaveChoice(AppearanceOptions chosen, string saved) => SayAside(() =>
     {
-        _choicesInHand++;
         try
         {
             _saveAppearance?.Invoke(chosen);
@@ -102,11 +101,7 @@ internal sealed partial class InboxViewModel
         {
             Fail(error.Message);
         }
-        finally
-        {
-            _choicesInHand--;
-        }
-    }
+    });
 
     private void NotifyThemeChoice()
     {
