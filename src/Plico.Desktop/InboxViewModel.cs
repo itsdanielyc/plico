@@ -35,9 +35,7 @@ internal sealed partial class InboxViewModel : ObservableObject, IDisposable
     [ObservableProperty] private string _previewMessage = "";
     [ObservableProperty] private IReadOnlyList<DocumentSummary> _documents = [];
     [ObservableProperty] private IReadOnlyList<string> _tags = [];
-    [ObservableProperty]
-    [NotifyPropertyChangedFor(nameof(DocumentDateAction))]
-    private DocumentSummary? _selectedDocument;
+    [ObservableProperty] private DocumentSummary? _selectedDocument;
     [ObservableProperty]
     [NotifyPropertyChangedFor(nameof(HasPreview))]
     private Bitmap? _preview;
@@ -563,6 +561,7 @@ internal sealed partial class InboxViewModel : ObservableObject, IDisposable
         OnPropertyChanged(nameof(HasPageMatchAction));
         NotifyPageChanged();
         NotifyWorkspaceSelection();
+        SyncDocumentDateField();
     }
 
     private void NavigatePage(int direction) => ShowPreviewPage(_pageNumber + direction);

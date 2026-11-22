@@ -1,52 +1,58 @@
 using Avalonia.Controls;
+using Avalonia.Controls.Primitives;
+using Avalonia.Input;
 using Avalonia.Interactivity;
-using CommunityToolkit.Mvvm.Input;
 using Plico.Core;
 
 namespace Plico.Desktop;
 
 internal static partial class NativeVerification
 {
-    private static async Task VerifyDocumentDateAsync(MainWindow window, InboxViewModel model, FixtureDialogs dialogs, string directory)
+    private static async Task VerifyDocumentDateAsync(MainWindow window, InboxViewModel model, string directory)
     {
-        const string leapDayInput = "2024-02-29";
         var leapDay = new DateOnly(2024, 2, 29);
         var packet = model.Documents.Single(document => document.Title == "Paperwork packet");
         Control<ListBox>(window, "DocumentList").SetCurrentValue(ListBox.SelectedItemProperty, packet);
-        var edit = Control<Button>(window, "EditDocumentDateButton");
-        Require(edit.IsEffectivelyVisible && edit.IsEnabled && packet.DocumentDate is null,
-            "The undated PDF did not offer a document date edit.");
-        var command = (IAsyncRelayCommand)edit.Command!;
-        dialogs.DocumentDateChoice = current =>
-        {
-            Require(current is null, "The date editor used the intake date as the document date.");
-            return ConfirmDocumentDateAsync(window, current, leapDayInput, directory);
-        };
-        try
-        {
-            await command.ExecuteAsync(edit.CommandParameter);
-            Require(model.SelectedDocument is { } dated && dated.DocumentDate == leapDay && dated.AddedAt == packet.AddedAt, model.Status);
+        var field = Control<TextBox>(window, "DocumentDateField");
+        Require(field.IsEffectivelyVisible && field.IsEnabled && packet.DocumentDate is null && string.IsNullOrEmpty(field.Text),
+            "The undated PDF did not offer an empty date field.");
 
-            var sort = Control<ComboBox>(window, "DocumentSortBox");
-            sort.SetCurrentValue(ComboBox.SelectedItemProperty, model.SortChoices.Single(choice => choice.Order == DocumentSort.DocumentDate));
-            Control<TextBox>(window, "SearchBox").SetCurrentValue(TextBox.TextProperty, model.Query + " dated:2024-02");
-            await UntilAsync(() => model.Documents.Count == 1 && model.Documents[0].Id == packet.Id && model.Preview is not null &&
-                model.Documents[0].Match.Contains(ReceiptKeyword, StringComparison.OrdinalIgnoreCase), () => model.Status);
-            Require(model.SortOption?.Order == DocumentSort.DocumentDate && model.Status == "Document date saved.", model.Status);
-            await CaptureAsync(window, directory, "document-date.png");
+        // The calendar opens under the field as a popover drawn in the window.
+        Control<Button>(window, "DocumentDateCalendarButton").RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
+        var picker = Control<Popup>(window, "DocumentDatePicker");
+        await UntilAsync(() => picker.IsOpen && Control<Calendar>(window, "DocumentDateCalendar").IsEffectivelyVisible,
+            () => "The date field's calendar did not open.");
+        await CaptureAsync(window, directory, "document-date-picker.png");
+        Control<Calendar>(window, "DocumentDateCalendar").RaiseEvent(new KeyEventArgs { RoutedEvent = InputElement.KeyDownEvent, Key = Key.Escape });
+        Require(!picker.IsOpen && model.SelectedDocument?.DocumentDate is null, "Escape did not close the calendar without a date.");
 
-            dialogs.DocumentDateChoice = current =>
-            {
-                Require(current == leapDay, "The date editor did not reopen with the stored date.");
-                return ConfirmDocumentDateAsync(window, current, "", directory: null);
-            };
-            await command.ExecuteAsync(edit.CommandParameter);
-            Require(model.Documents.Count == 0 && model.Status == "Document date cleared.", model.Status);
-        }
-        finally
-        {
-            dialogs.DocumentDateChoice = null;
-        }
+        // A date typed as the interface writes it saves on Enter.
+        TypeDocumentDate(window, "29 Feb 2024");
+        Require(model.SelectedDocument is { } dated && dated.DocumentDate == leapDay && dated.AddedAt == packet.AddedAt &&
+            model.UndoLabel == "Date set", model.Status);
+
+        var sort = Control<ComboBox>(window, "DocumentSortBox");
+        sort.SetCurrentValue(ComboBox.SelectedItemProperty, model.SortChoices.Single(choice => choice.Order == DocumentSort.DocumentDate));
+        Control<TextBox>(window, "SearchBox").SetCurrentValue(TextBox.TextProperty, model.Query + " dated:2024-02");
+        await UntilAsync(() => model.Documents.Count == 1 && model.Documents[0].Id == packet.Id && model.Preview is not null &&
+            model.Documents[0].Match.Contains(ReceiptKeyword, StringComparison.OrdinalIgnoreCase), () => model.Status);
+        Require(model.SortOption?.Order == DocumentSort.DocumentDate && model.Status == "Document date saved." && field.Text == "29 Feb 2024",
+            $"The field did not keep the stored date. {model.Status} {field.Text}");
+        await CaptureAsync(window, directory, "document-date.png");
+
+        var clear = Control<Button>(window, "ClearDocumentDateButton");
+        Require(clear.IsEffectivelyVisible, "The dated PDF did not offer to clear its date.");
+        clear.Command!.Execute(clear.CommandParameter);
+        Require(model.Documents.Count == 0 && model.Status == "Document date cleared.", model.Status);
+    }
+
+    /// <summary>Types a date into the open document's date field and presses Enter, as a person would.</summary>
+    private static void TypeDocumentDate(MainWindow window, string text)
+    {
+        var field = Control<TextBox>(window, "DocumentDateField");
+        Require(field.IsEffectivelyVisible && field.IsEnabled, "The open PDF did not offer its date field.");
+        field.SetCurrentValue(TextBox.TextProperty, text);
+        field.RaiseEvent(new KeyEventArgs { RoutedEvent = InputElement.KeyDownEvent, Key = Key.Enter });
     }
 
     private static async Task VerifyBatchDocumentDatesAsync(Window window, InboxViewModel model, FixtureDialogs dialogs, string directory)

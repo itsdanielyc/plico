@@ -95,7 +95,7 @@ internal static partial class NativeVerification
             await VerifyManualDuplexDialogAsync(window, evidenceDirectory);
             await VerifyArchiveSerialDialogAsync(window, evidenceDirectory);
             await VerifySavedSearchAsync(window, model, dialogs, evidenceDirectory);
-            await VerifyDocumentDateAsync(window, model, dialogs, evidenceDirectory);
+            await VerifyDocumentDateAsync(window, model, evidenceDirectory);
             await VerifyBatchOcrAsync(window, model, fixture, evidenceDirectory, priorOcrSource);
             await VerifyExternalSwapAsync(window, model, dialogs, fixture, evidenceDirectory);
             await VerifyFolderSearchPickerAsync(window, model, dialogs, evidenceDirectory);
@@ -522,16 +522,7 @@ internal static partial class NativeVerification
         var original = model.SelectedDocument ?? throw new InvalidOperationException("Open the excerpt before rotating it.");
         Require(original.PageCount == 3 && model.PageLabel == "3 / 3" && model.Preview!.PixelSize.Width < model.Preview.PixelSize.Height,
             "The receipt page was unavailable for rotation.");
-        var dateAction = Control<Button>(window, "EditDocumentDateButton");
-        dialogs.DocumentDateChoice = current => ConfirmDocumentDateAsync(window, current, documentDateInput, directory: null);
-        try
-        {
-            await ((IAsyncRelayCommand)dateAction.Command!).ExecuteAsync(dateAction.CommandParameter);
-        }
-        finally
-        {
-            dialogs.DocumentDateChoice = null;
-        }
+        TypeDocumentDate(window, "29 Feb 2024");
         Require(model.SelectedDocument?.DocumentDate == documentDate && model.PageLabel == "3 / 3", model.Status);
 
         var action = Control<Button>(window, "RotatePdfPagesButton");
@@ -1140,7 +1131,6 @@ internal sealed partial class FixtureDialogs(params string[] documents) : IWorks
     internal string? LastFolderStart { get; private set; }
     internal int FolderPickerCalls { get; private set; }
     internal ArchiveSerialInput? ArchiveSerialChoice { get; set; }
-    internal Func<DateOnly?, Task<DocumentDateEdit?>>? DocumentDateChoice { get; set; }
     internal Func<DateOnly?, int, Task<DocumentDateEdit?>>? BatchDocumentDateChoice { get; set; }
     internal Func<SavedSearchDraft, string?, bool, Task<SavedSearchDecision?>>? SavedSearchChoice { get; set; }
     internal TagRenameRequest? TagRenameChoice { get; set; }
@@ -1186,8 +1176,6 @@ internal sealed partial class FixtureDialogs(params string[] documents) : IWorks
     public Task<ArchiveSerialInput?> PickArchiveSerialAsync(ArchiveSerialAction action, long? current = null) =>
         Task.FromResult(ArchiveSerialChoice);
     public Task<string?> PickArchiveSheetPathAsync(string filename) => Task.FromResult<string?>(null);
-    public Task<DocumentDateEdit?> EditDocumentDateAsync(DateOnly? currentDate) =>
-        DocumentDateChoice?.Invoke(currentDate) ?? Task.FromResult<DocumentDateEdit?>(null);
     public Task<DocumentDateEdit?> EditBatchDocumentDatesAsync(DateOnly? commonDate, int documentCount) =>
         BatchDocumentDateChoice?.Invoke(commonDate, documentCount) ?? Task.FromResult<DocumentDateEdit?>(null);
     public Task<SavedSearchDecision?> EditSavedSearchAsync(SavedSearchDraft draft, string? scopeTag, bool editing) =>

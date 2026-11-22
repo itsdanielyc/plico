@@ -1,29 +1,112 @@
+using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
+using Plico.Core;
 
 namespace Plico.Desktop;
 
+/// <summary>
+/// The document date is a field on the filing card. It shows the date as the interface writes it ("21 Nov 2026"),
+/// takes a date typed the same way, holds the dashed suggestion while it is empty, and saves on Enter, on leaving it,
+/// from its calendar or its clear button. A date that cannot be read stays in the field with one line saying what to
+/// type, and Escape puts the saved date back. Several selected documents keep their dialog.
+/// </summary>
 internal sealed partial class InboxViewModel
 {
-    public string DocumentDateAction => SelectedDocument?.DocumentDate is { } date
-        ? DesktopText.Format($"Dated {date:dd MMM yyyy}") : DesktopText.Translate("Set document date…");
+    // The document and date the field's text was last set from, so a reload of the same document keeps what is typed.
+    private (long? Id, DateOnly? Date) _dateFieldSource;
+
+    [ObservableProperty] private string _documentDateText = "";
+
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(HasDocumentDateError))]
+    private string _documentDateError = "";
+
+    public bool HasDocumentDateError => DocumentDateError.Length > 0;
+
+    /// <summary>What the empty field says, or nothing while the suggested date sits in it instead.</summary>
+    public string DocumentDatePlaceholder => HasSuggestedDate ? "" : DesktopText.Translate("Add a date");
+
+    /// <summary>The dashed suggestion sits in the field while it is empty, and steps aside once a date is typed.</summary>
+    public bool ShowSuggestedDateInField => HasSuggestedDate && string.IsNullOrWhiteSpace(DocumentDateText);
+
+    /// <summary>The D keycap sits in the field while it has neither a date nor a suggestion to show.</summary>
+    public bool ShowDateKeycap => !HasSelectedDocumentDate && !HasSuggestedDate;
+
+    /// <summary>Saves what is typed in the date field: a date, or nothing to clear it. False when it cannot be read.</summary>
+    internal bool CommitDocumentDate()
+    {
+        if (!CanWork || SelectedDocument is not { } document) return false;
+        string text = DocumentDateText.Trim();
+        DateOnly? date = null;
+        if (text.Length > 0)
+        {
+            if (!DisplayDates.TryParseDay(text, out var typed))
+            {
+                DocumentDateError = DesktopText.Format($"Use a date like {DisplayDates.Day(DateOnly.FromDateTime(DateTime.Today))}.");
+                return false;
+            }
+            date = typed;
+        }
+        SaveDocumentDate(document, date);
+        return true;
+    }
+
+    /// <summary>Puts the open document's saved date back into the field, as Escape does.</summary>
+    internal void RestoreDocumentDateText()
+    {
+        _dateFieldSource = (SelectedDocument?.Id, SelectedDocument?.DocumentDate);
+        DocumentDateText = SelectedDocumentDateLabel;
+        DocumentDateError = "";
+    }
+
+    /// <summary>Saves a day chosen in the field's calendar.</summary>
+    internal void PickDocumentDate(DateOnly date)
+    {
+        if (CanWork && SelectedDocument is { } document) SaveDocumentDate(document, date);
+    }
 
     [RelayCommand]
-    private Task EditDocumentDateAsync() => RunOperationAsync("Edit document date…", async token =>
+    private void ClearDocumentDate()
     {
-        if (SelectedDocument is not { } document) return;
-        var edit = await _dialogs.EditDocumentDateAsync(document.DocumentDate);
-        if (edit is null)
+        if (CanWork && SelectedDocument is { } document) SaveDocumentDate(document, null);
+    }
+
+    private void SaveDocumentDate(DocumentSummary document, DateOnly? date)
+    {
+        if (date == document.DocumentDate)
         {
-            Status = DesktopText.Translate("Document date editor closed.");
+            RestoreDocumentDateText();
             return;
         }
+        try
+        {
+            var library = RequireLibrary();
+            library.SetDocumentDate(document.Id, date);
+            LoadResults(document.Id, retainLoadedResults: true);
+            RestoreDocumentDateText();
+            OfferUndo(DateUndo(library, document, date),
+                date.HasValue ? DesktopText.Translate("Document date saved.") : DesktopText.Translate("Document date cleared."));
+        }
+        catch (Exception error)
+        {
+            Status = error.Message;
+        }
+    }
 
-        var library = RequireLibrary();
-        await Task.Run(() => library.SetDocumentDate(document.Id, edit.Date), token);
-        RetireUndo();
-        LoadResults(document.Id);
-        Status = edit.Date.HasValue ? DesktopText.Translate("Document date saved.") : DesktopText.Translate("Document date cleared.");
-    });
+    /// <summary>Keeps the field in step with the open document, but leaves what is typed when the same document reloads.</summary>
+    private void SyncDocumentDateField()
+    {
+        if (_dateFieldSource != (SelectedDocument?.Id, SelectedDocument?.DocumentDate)) RestoreDocumentDateText();
+    }
+
+    /// <summary>Puts back the date a document had before it was set or cleared.</summary>
+    private static UndoOffer DateUndo(InboxLibrary library, DocumentSummary document, DateOnly? date) =>
+        new(DesktopText.Translate(date.HasValue ? "Date set" : "Date cleared"), date is { } day ? DisplayDates.Day(day) : document.Title,
+            async token =>
+            {
+                await Task.Run(() => library.SetDocumentDate(document.Id, document.DocumentDate), token);
+                return document.Id;
+            });
 
     internal Task EditBatchDocumentDatesAsync()
     {

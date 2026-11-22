@@ -666,7 +666,6 @@ MigrationDetails	Migration details	Détails de la migration
 SaveMigrationJson	Save JSON…	Enregistrer le JSON…
 DropSupportedDocument	Drop a supported document or image.	Déposez un document ou une image prise en charge.
 DatedDateFormat	Dated {0:dd MMM yyyy}	Daté du {0:dd MMM yyyy}
-SetDocumentDate	Set document date…	Dater le document…
 TagAdded	Tag added.	Étiquette ajoutée.
 ImportAddedFormat	{0} added.	Ajout de {0}.
 ImportAlreadyPresentFormat	{0} already in the library.	{0} déjà dans la bibliothèque.
@@ -763,7 +762,6 @@ PaletteDocument	Document	Document
 PaletteSelection	Selection	Sélection
 PaletteReturnInbox	Return to Inbox	Remettre dans la boîte de réception
 PaletteAcceptAll	Accept all suggestions	Accepter toutes les suggestions
-PaletteSetDate	Set the document date…	Définir la date du document…
 PaletteMoveTrash	Move to Trash	Placer dans la corbeille
 PaletteOpenViewer	Open in your PDF viewer	Ouvrir dans votre lecteur PDF
 PaletteReminders	Reminders and deadlines…	Rappels et échéances…
@@ -911,3 +909,9 @@ ToastTagRemoved	Tag removed	Étiquette retirée
 ToastBatchTagAdded	Tag “{0}” added to {1}	Étiquette « {0} » ajoutée à {1}
 ToastRenamed	Renamed	Renommé
 RenameTitleInvalid	Couldn't rename. Enter a title of 1 to {0} characters.	Impossible de renommer. Saisissez un titre de 1 à {0} caractères.
+ChooseADate	Choose a date	Choisir une date
+ClearTheDate	Clear the date	Effacer la date
+ToastDateSet	Date set	Date définie
+ToastDateCleared	Date cleared	Date effacée
+DateFieldInvalid	Use a date like {0}.	Saisissez une date comme {0}.
+DocumentDateFieldTip	Type a date like 21 Nov 2026, or choose one.	Saisissez une date comme 21 nov. 2026, ou choisissez-en une.

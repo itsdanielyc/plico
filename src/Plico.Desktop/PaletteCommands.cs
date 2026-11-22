@@ -51,7 +51,7 @@ internal static class PaletteCommands
             Act(model.SelectedIsReviewed ? "Return to Inbox" : "Mark reviewed", review, "Icon.Check", "R", "done file reviewed", window.ReviewWithMotion);
             Add("Accept all suggestions", review, "Icon.Check", "A", "suggestion accept", model.AcceptSuggestionsCommand, model.HasSuggestions);
             Act("Add a tag", review, "Icon.Tag", "T", "label", window.FocusTagEntry, model.ShowFilingCard);
-            Add("Set the document date…", review, "Icon.Calendar", "D", "date dated", model.EditDocumentDateCommand);
+            Act("Set the document date", review, "Icon.Calendar", "D", "date dated", window.FocusDocumentDate);
             Act("Rename", review, "Icon.Note", "E", "title edit", window.BeginTitleEdit);
             Add("Move to Trash", review, "Icon.Trash", "X", "delete remove bin", model.TrashDocumentCommand);
             Add("Open in your PDF viewer", review, "Icon.Open", "O", "open pdf external", model.OpenPdfCommand);

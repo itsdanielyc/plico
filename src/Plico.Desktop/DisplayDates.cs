@@ -1,4 +1,5 @@
 using System.Globalization;
+using System.Text.RegularExpressions;
 using Avalonia.Data.Converters;
 using Plico.Core;
 
@@ -8,7 +9,7 @@ namespace Plico.Desktop;
 /// One way to write dates everywhere in the interface, in the person's locale: "22 Nov 2026, 12:13" in English and
 /// "22 nov. 2026, 12:13" in French, and in a queue row the day as a person says it ("Today", "Yesterday", "Mon").
 /// </summary>
-internal static class DisplayDates
+internal static partial class DisplayDates
 {
     /// <summary>
     /// French for the French interface; otherwise the person's own culture when it is English, or British English, so
@@ -37,6 +38,55 @@ internal static class DisplayDates
             > 1 and < 7 => Culture.TextInfo.ToTitleCase(day.ToString("ddd", Culture).TrimEnd('.')),
             _ => Day(day)
         };
+    }
+
+    /// <summary>
+    /// Reads a date typed into a field the way the interface writes it: "21 Nov 2026", or in French "21 nov. 2026",
+    /// with the month written out or abbreviated, in any case, with or without accents or the abbreviation's full stop.
+    /// It also takes "2026-11-21", as search writes dates, and the person's short date ("21/11/2026"). A day that does
+    /// not exist, such as 31 Feb, is refused. O(n) in the length of the text.
+    /// </summary>
+    internal static bool TryParseDay(string? text, out DateOnly day)
+    {
+        day = default;
+        string value = (text ?? "").Trim();
+        if (value.Length == 0) return false;
+        var culture = Culture;
+        var written = WrittenDay().Match(value);
+        if (written.Success)
+        {
+            int month = MonthNumber(written.Groups["month"].Value, culture);
+            return month > 0 && TryCreateDay(int.Parse(written.Groups["year"].Value, CultureInfo.InvariantCulture), month,
+                int.Parse(written.Groups["day"].Value, CultureInfo.InvariantCulture), out day);
+        }
+        return DateOnly.TryParseExact(value, "yyyy-MM-dd", CultureInfo.InvariantCulture, DateTimeStyles.None, out day)
+            || DateOnly.TryParse(value, culture, DateTimeStyles.AllowWhiteSpaces, out day);
+    }
+
+    // "21 Nov 2026", "21 nov. 2026", "1 février 2024": a day, a month's name and a four-digit year.
+    [GeneratedRegex(@"^(?<day>\d{1,2})\s+(?<month>\p{L}+)\.?,?\s+(?<year>\d{4})$", RegexOptions.CultureInvariant)]
+    private static partial Regex WrittenDay();
+
+    /// <summary>The month a name stands for in the interface's language, written out or abbreviated; 0 when none does.</summary>
+    private static int MonthNumber(string name, CultureInfo culture)
+    {
+        var format = culture.DateTimeFormat;
+        const CompareOptions loose = CompareOptions.IgnoreCase | CompareOptions.IgnoreNonSpace;
+        bool Names(string candidate) => candidate.Length > 0 && culture.CompareInfo.Compare(name, candidate.TrimEnd('.'), loose) == 0;
+        for (int month = 1; month <= 12; month++)
+        {
+            if (Names(format.GetMonthName(month)) || Names(format.GetAbbreviatedMonthName(month)) ||
+                Names(format.MonthGenitiveNames[month - 1]) || Names(format.AbbreviatedMonthGenitiveNames[month - 1]))
+                return month;
+        }
+        return 0;
+    }
+
+    private static bool TryCreateDay(int year, int month, int dayOfMonth, out DateOnly day)
+    {
+        bool exists = year is >= 1 and <= 9999 && dayOfMonth >= 1 && dayOfMonth <= DateTime.DaysInMonth(year, month);
+        day = exists ? new DateOnly(year, month, dayOfMonth) : default;
+        return exists;
     }
 
     /// <summary>"1 page", "6 pages".</summary>

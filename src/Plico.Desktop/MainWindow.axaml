@@ -169,6 +169,73 @@
             <Setter Property="VerticalContentAlignment" Value="Top" />
         </Style>
 
+        <!--
+            The date field reads as a value at rest: no frame, the calendar glyph and the date in tabular figures, flush
+            with the other values. Hovered it takes the hover fill; focused, the ink border and ring every field has.
+        -->
+        <Style Selector="TextBox.date-field">
+            <Setter Property="Background" Value="Transparent" />
+            <Setter Property="BorderBrush" Value="Transparent" />
+            <Setter Property="FontWeight" Value="Medium" />
+            <Setter Property="MinHeight" Value="32" />
+            <Setter Property="Padding" Value="2,0,4,0" />
+            <Setter Property="Margin" Value="-7,0,0,0" />
+        </Style>
+        <Style Selector="TextBox.date-field:pointerover /template/ Border#PART_BorderElement">
+            <Setter Property="Background" Value="{DynamicResource Hover}" />
+            <Setter Property="BorderBrush" Value="Transparent" />
+        </Style>
+        <Style Selector="TextBox.date-field:focus /template/ Border#PART_BorderElement">
+            <Setter Property="Background" Value="{DynamicResource Panel}" />
+        </Style>
+        <Style Selector="TextBox.date-field.invalid /template/ Border#PART_BorderElement">
+            <Setter Property="BorderBrush" Value="{DynamicResource Err}" />
+        </Style>
+        <Style Selector="TextBox.date-field:disabled /template/ Border#PART_BorderElement">
+            <Setter Property="Background" Value="Transparent" />
+            <Setter Property="BorderBrush" Value="Transparent" />
+        </Style>
+        <!-- Small glyph buttons inside a field: the calendar, and the clear button of a saved date. -->
+        <Style Selector="Button.field-glyph">
+            <Setter Property="Width" Value="26" />
+            <Setter Property="Height" Value="26" />
+            <Setter Property="MinHeight" Value="0" />
+            <Setter Property="Padding" Value="0" />
+            <Setter Property="Margin" Value="3,0" />
+            <Setter Property="CornerRadius" Value="7" />
+            <Setter Property="Background" Value="Transparent" />
+            <Setter Property="BorderThickness" Value="0" />
+            <Setter Property="Foreground" Value="{DynamicResource Fg2}" />
+            <Setter Property="HorizontalContentAlignment" Value="Center" />
+            <Setter Property="VerticalContentAlignment" Value="Center" />
+            <Setter Property="VerticalAlignment" Value="Center" />
+        </Style>
+        <Style Selector="Button.field-glyph:pointerover /template/ ContentPresenter#PART_ContentPresenter">
+            <Setter Property="Background" Value="{DynamicResource Pressed}" />
+            <Setter Property="BorderBrush" Value="Transparent" />
+            <Setter Property="Foreground" Value="{DynamicResource Fg}" />
+        </Style>
+        <Style Selector="Button.field-glyph:pressed /template/ ContentPresenter#PART_ContentPresenter">
+            <Setter Property="Background" Value="{DynamicResource Pressed}" />
+            <Setter Property="BorderBrush" Value="Transparent" />
+            <Setter Property="Foreground" Value="{DynamicResource Fg}" />
+        </Style>
+        <!-- The date field's calendar: days in 14 px ink on the popover itself, today in ink, the chosen day ringed. -->
+        <Style Selector="Calendar#DocumentDateCalendar CalendarDayButton, Calendar#DocumentDateCalendar CalendarButton">
+            <Setter Property="FontSize" Value="14" />
+            <Setter Property="Background" Value="Transparent" />
+        </Style>
+        <Style Selector="Calendar#DocumentDateCalendar CalendarDayButton /template/ Border, Calendar#DocumentDateCalendar CalendarButton /template/ Border">
+            <Setter Property="CornerRadius" Value="9" />
+        </Style>
+        <!-- A field's shortcut keycap shows while the field waits for it, and steps aside once the field has the keyboard. -->
+        <Style Selector="Border.key.field-key">
+            <Setter Property="Margin" Value="0,0,4,0" />
+        </Style>
+        <Style Selector="TextBox:focus-within Border.key.field-key, AutoCompleteBox:focus-within Border.key.field-key">
+            <Setter Property="Opacity" Value="0" />
+        </Style>
+
         <!-- Filing card fields: an 84 px label column in Fg3, values that show the value and open its editor. -->
         <Style Selector="TextBlock.field-label">
             <Setter Property="FontSize" Value="14" />
@@ -1062,25 +1129,51 @@
 
                                             <Grid ColumnDefinitions="84,*" RowDefinitions="Auto,Auto,Auto,Auto" RowSpacing="12">
                                                 <TextBlock Classes="field-label" Text="{translation:Tr MetaDateKind}" />
-                                                <StackPanel Grid.Column="1" Spacing="6">
-                                                    <Button Classes="suggested" HorizontalAlignment="Left" IsVisible="{Binding HasSuggestedDate}"
-                                                            Command="{Binding AcceptSuggestedDateCommand}" IsEnabled="{Binding CanWork}"
-                                                            ToolTip.Tip="{translation:Tr SuggestedDateTip}" AutomationProperties.Name="{Binding SuggestedDateLabel}">
-                                                        <StackPanel Orientation="Horizontal" Spacing="6">
-                                                            <local:Icon Data="{StaticResource Icon.Calendar}" Width="14" Height="14" VerticalAlignment="Center" />
-                                                            <TextBlock Text="{Binding SuggestedDateLabel}" VerticalAlignment="Center" FontFeatures="+tnum" />
-                                                        </StackPanel>
-                                                    </Button>
-                                                    <Button x:Name="EditDocumentDateButton" Classes="field" Classes.empty="{Binding !HasSelectedDocumentDate}"
-                                                            Command="{Binding EditDocumentDateCommand}" IsEnabled="{Binding CanWork}" ToolTip.Tip="{translation:Tr EditDocumentDate}"
-                                                            AutomationProperties.Name="{translation:Tr EditDocumentDate}">
-                                                        <StackPanel Orientation="Horizontal" Spacing="8">
-                                                            <local:Icon Data="{StaticResource Icon.Calendar}" Foreground="{DynamicResource Fg2}" VerticalAlignment="Center" />
-                                                            <TextBlock Text="{Binding SelectedDocumentDateLabel}" IsVisible="{Binding HasSelectedDocumentDate}"
-                                                                       VerticalAlignment="Center" FontFeatures="+tnum" />
-                                                            <TextBlock Text="{translation:Tr AddADate}" IsVisible="{Binding !HasSelectedDocumentDate}" VerticalAlignment="Center" />
-                                                        </StackPanel>
-                                                    </Button>
+                                                <!--
+                                                    The date is typed where it is shown, as the interface writes it, with its calendar at the left.
+                                                    While it is empty the dashed suggestion sits inside it (or the D keycap when there is none),
+                                                    and a saved date has a clear button. Enter or leaving saves; Escape restores.
+                                                -->
+                                                <StackPanel Grid.Column="1" Spacing="4">
+                                                    <TextBox x:Name="DocumentDateField" Classes="date-field" Classes.invalid="{Binding HasDocumentDateError}"
+                                                             Text="{Binding DocumentDateText}" PlaceholderText="{Binding DocumentDatePlaceholder}"
+                                                             IsEnabled="{Binding CanWork}" MaxLength="40" ToolTip.Tip="{translation:Tr DocumentDateFieldTip}"
+                                                             AutomationProperties.Name="{translation:Tr EditDocumentDate}">
+                                                        <TextBox.InnerLeftContent>
+                                                            <Button x:Name="DocumentDateCalendarButton" Classes="field-glyph" Click="OpenDocumentDateCalendar_Click"
+                                                                    IsTabStop="False" ToolTip.Tip="{translation:Tr ChooseADate}"
+                                                                    AutomationProperties.Name="{translation:Tr ChooseADate}">
+                                                                <local:Icon Data="{StaticResource Icon.Calendar}" Width="16" Height="16" />
+                                                            </Button>
+                                                        </TextBox.InnerLeftContent>
+                                                        <TextBox.InnerRightContent>
+                                                            <Panel VerticalAlignment="Center" Margin="0,0,3,0">
+                                                                <Button x:Name="SuggestedDateButton" Classes="suggested" IsVisible="{Binding ShowSuggestedDateInField}"
+                                                                        IsTabStop="False" Command="{Binding AcceptSuggestedDateCommand}"
+                                                                        ToolTip.Tip="{translation:Tr SuggestedDateTip}" AutomationProperties.Name="{Binding SuggestedDateLabel}">
+                                                                    <StackPanel Orientation="Horizontal" Spacing="5">
+                                                                        <local:Icon Data="{StaticResource Icon.Plus}" Width="13" Height="13" StrokeWidth="1.8" VerticalAlignment="Center" />
+                                                                        <TextBlock Text="{Binding SuggestedDateLabel}" VerticalAlignment="Center" FontFeatures="+tnum" />
+                                                                    </StackPanel>
+                                                                </Button>
+                                                                <Button x:Name="ClearDocumentDateButton" Classes="field-glyph" IsVisible="{Binding HasSelectedDocumentDate}"
+                                                                        IsTabStop="False" Command="{Binding ClearDocumentDateCommand}"
+                                                                        ToolTip.Tip="{translation:Tr ClearTheDate}" AutomationProperties.Name="{translation:Tr ClearTheDate}">
+                                                                    <local:Icon Data="{StaticResource Icon.Close}" Width="14" Height="14" StrokeWidth="1.8" />
+                                                                </Button>
+                                                                <Border Classes="key field-key" IsVisible="{Binding ShowDateKeycap}"><TextBlock Text="D" /></Border>
+                                                            </Panel>
+                                                        </TextBox.InnerRightContent>
+                                                    </TextBox>
+                                                    <TextBlock x:Name="DocumentDateError" Classes="validation" Text="{Binding DocumentDateError}"
+                                                               IsVisible="{Binding HasDocumentDateError}" AutomationProperties.LiveSetting="Polite" />
+                                                    <!-- The calendar is a popover drawn in the window, under the field. -->
+                                                    <Popup x:Name="DocumentDatePicker" Placement="BottomEdgeAlignedLeft" IsLightDismissEnabled="True"
+                                                           ShouldUseOverlayLayer="True" VerticalOffset="4">
+                                                        <Border Classes="popover" Padding="6" Margin="0,0,12,20">
+                                                            <Calendar x:Name="DocumentDateCalendar" Background="Transparent" BorderBrush="Transparent" BorderThickness="0" />
+                                                        </Border>
+                                                    </Popup>
                                                 </StackPanel>
 
                                                 <TextBlock Grid.Row="1" Classes="field-label" Text="{translation:Tr Tags}" Margin="0,6,8,0" />

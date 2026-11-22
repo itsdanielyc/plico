@@ -64,10 +64,21 @@ internal sealed partial class InboxViewModel
                 RaiseDerived(nameof(SelectedTextState));
                 RaiseDerived(nameof(SelectedTagChips));
                 RaiseDerived(nameof(HasSelectedTagChips));
+                RaiseDateFieldState();
+                break;
+            case nameof(HasSuggestedDate) or nameof(SuggestedDate) or nameof(DocumentDateText):
+                RaiseDateFieldState();
                 break;
             case nameof(TagNavigation):
                 RaiseDerived(nameof(SelectedTagChips));
                 break;
         }
+    }
+
+    private void RaiseDateFieldState()
+    {
+        RaiseDerived(nameof(ShowSuggestedDateInField));
+        RaiseDerived(nameof(ShowDateKeycap));
+        RaiseDerived(nameof(DocumentDatePlaceholder));
     }
 }
