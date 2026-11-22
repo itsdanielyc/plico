@@ -429,8 +429,10 @@ TagSelected	Tag selected	Étiqueter la sélection
 Tags	Tags	Étiquettes
 TagsMergedInto0	Tags merged into “{0}”.	Étiquettes fusionnées dans « {0} ».
 TagsOnTheSelectedPDFs	Tags on the selected PDFs	Étiquettes des PDF sélectionnés
-Text0AddedNoSearchableTextWasRecognized	{0} added. No searchable text was recognised.	{0} ajouté. Aucun texte indexable n’a été reconnu.
-Text0AddedToInbox	{0} added to the Inbox.	{0} ajouté à la boîte de réception.
+ScanAddedNoText	Scan added. No searchable text was recognised.	Numérisation ajoutée. Aucun texte indexable n’a été reconnu.
+PartialScanAddedNoText	Partial scan added. No searchable text was recognised.	Numérisation partielle ajoutée. Aucun texte indexable n’a été reconnu.
+ScanAddedToInbox	Scan added to the Inbox.	Numérisation ajoutée à la boîte de réception.
+PartialScanAddedToInbox	Partial scan added to the Inbox.	Numérisation partielle ajoutée à la boîte de réception.
 Text0Document	{0} document	{0} document
 Text0Documents	0 documents	0 document
 Text0Documents2	{0} documents	{0} documents
