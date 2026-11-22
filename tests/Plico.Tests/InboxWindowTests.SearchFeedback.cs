@@ -42,7 +42,10 @@ public sealed partial class InboxWindowTests
             Assert.Equal("", model.EmptyMessage);
             await WaitForAsync(() => model.ResultCount != "Searching…");
             Assert.Equal("0 documents", model.ResultCount);
-            Assert.Equal("No documents match.", message.Text);
+            // The empty queue says what is true in its title and offers a way forward in its one sentence.
+            Assert.Equal("No documents match", model.EmptyTitle);
+            Assert.Equal("Try other words or a different filter.", message.Text);
+            Assert.True(model.ClearSearchCommand.CanExecute(null));
 
             searchBox.SetCurrentValue(TextBox.TextProperty, "northstar status:inbox");
             await WaitForAsync(() => model.Documents.Count == 2);

@@ -15,7 +15,15 @@ internal sealed partial class InboxViewModel
     private static readonly IBrush UncolouredTagDot = new SolidColorBrush(Color.Parse("#8E8E96"));
 
     /// <summary>"3 to review" in the Inbox; elsewhere the result count ("12 documents", "Searching…").</summary>
-    public string QueueCountLabel => InboxSelected && HasInboxCount ? DesktopText.Format($"{InboxCount} to review") : ResultCount;
+    public string QueueCountLabel => KeepNumberWithNoun(InboxSelected && HasInboxCount ? DesktopText.Format($"{InboxCount} to review")
+        : ResultCount == QueryIssueCount ? DesktopText.Translate("0 documents") : ResultCount);
+
+    /// <summary>"61 documents" never breaks between the number and its noun when the count line wraps.</summary>
+    private static string KeepNumberWithNoun(string count)
+    {
+        int space = count.IndexOf(' ');
+        return space > 0 && char.IsDigit(count[space - 1]) ? string.Concat(count.AsSpan(0, space), " ", count.AsSpan(space + 1)) : count;
+    }
 
     /// <summary>"21 Nov 2026", the date printed on the open document, or empty.</summary>
     public string SelectedDocumentDateLabel => SelectedDocument?.DocumentDate is { } date ? DisplayDates.Day(date) : "";
@@ -43,8 +51,12 @@ internal sealed partial class InboxViewModel
     {
         switch (property)
         {
-            case nameof(ResultCount) or nameof(InboxCount) or nameof(Query) or nameof(Heading):
+            case nameof(ResultCount) or nameof(InboxCount) or nameof(Heading):
                 RaiseDerived(nameof(QueueCountLabel));
+                break;
+            case nameof(Query):
+                RaiseDerived(nameof(QueueCountLabel));
+                RaiseDerived(nameof(HasQuery));
                 break;
             case nameof(SelectedDocument):
                 RaiseDerived(nameof(SelectedDocumentDateLabel));

@@ -59,6 +59,7 @@
             <!-- Meaning Plico already owns. These keep their values. -->
             <SolidColorBrush x:Key="HighlightSurface" Color="#FBE3A0" /> <!-- search hits -->
             <SolidColorBrush x:Key="HighlightInk" Color="#3D2C00" />
+            <SolidColorBrush x:Key="HighlightMark" Color="#D99A00" /> <!-- a small dot that points at hits, such as on Go to match -->
             <SolidColorBrush x:Key="PageHighlight" Color="#6CFFC223" /> <!-- hits drawn on the page, under the dark veil in dark mode -->
             <SolidColorBrush x:Key="LiveInk" Color="#1E7F4F" /> <!-- a live watch -->
             <SolidColorBrush x:Key="WarningInk" Color="#9A5800" /> <!-- a reminder that is due -->
@@ -697,6 +698,7 @@
             <!-- Meaning Plico already owns. These keep their values. -->
             <SolidColorBrush x:Key="HighlightSurface" Color="#5A4510" /> <!-- search hits -->
             <SolidColorBrush x:Key="HighlightInk" Color="#FFE9AE" />
+            <SolidColorBrush x:Key="HighlightMark" Color="#F0B45A" /> <!-- a small dot that points at hits, such as on Go to match -->
             <SolidColorBrush x:Key="PageHighlight" Color="#6CFFC223" /> <!-- hits drawn on the page, under the dark veil in dark mode -->
             <SolidColorBrush x:Key="LiveInk" Color="#4CC38A" /> <!-- a live watch -->
             <SolidColorBrush x:Key="WarningInk" Color="#E2A24A" /> <!-- a reminder that is due -->

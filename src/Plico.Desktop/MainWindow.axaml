@@ -291,26 +291,39 @@
             <Setter Property="Background" Value="Transparent" />
             <Setter Property="Foreground" Value="{DynamicResource FgDisabled}" />
         </Style>
-        <!-- Go to match keeps Plico's amber, the colour of a search hit, including under the pointer. -->
+        <!--
+            Fit width or Fit page is a word on a wide canvas and a glyph on a narrow one, so the viewer bar keeps one row.
+            The label stays the button's content: it is the tooltip and what a screen reader says.
+        -->
+        <Style Selector="Button#PreviewFitButton">
+            <Setter Property="local:Ui.Icon" Value="{StaticResource Icon.FitWidth}" />
+        </Style>
+        <Style Selector="Button#PreviewFitButton.fit-page">
+            <Setter Property="local:Ui.Icon" Value="{StaticResource Icon.Fit}" />
+        </Style>
+        <Style Selector="Grid.compact Button#PreviewFitButton">
+            <Setter Property="Width" Value="32" />
+            <Setter Property="Padding" Value="0" />
+            <Setter Property="HorizontalContentAlignment" Value="Center" />
+            <Setter Property="ContentTemplate">
+                <DataTemplate x:DataType="x:String">
+                    <local:Icon Data="{Binding $parent[Button].(local:Ui.Icon)}" VerticalAlignment="Center" />
+                </DataTemplate>
+            </Setter>
+        </Style>
+        <!-- Match buttons are quiet like the rest of the bar; amber stays on the hits, here only as a small dot. -->
         <Style Selector="Grid.viewer-bar Button.match">
-            <Setter Property="Background" Value="{DynamicResource HighlightSurface}" />
-            <Setter Property="Foreground" Value="{DynamicResource HighlightInk}" />
+            <Setter Property="Foreground" Value="{DynamicResource Fg}" />
+            <Setter Property="ContentTemplate">
+                <DataTemplate x:DataType="x:String">
+                    <StackPanel Orientation="Horizontal" Spacing="7">
+                        <Ellipse Width="7" Height="7" Fill="{DynamicResource HighlightMark}" VerticalAlignment="Center" />
+                        <TextBlock Text="{Binding}" VerticalAlignment="Center" />
+                    </StackPanel>
+                </DataTemplate>
+            </Setter>
         </Style>
-        <Style Selector="Grid.viewer-bar Button.match:pointerover /template/ ContentPresenter#PART_ContentPresenter, Grid.viewer-bar Button.match:pressed /template/ ContentPresenter#PART_ContentPresenter">
-            <Setter Property="Background" Value="{DynamicResource HighlightSurface}" />
-            <Setter Property="Foreground" Value="{DynamicResource HighlightInk}" />
-        </Style>
-        <!-- The thumbnail strip has no room for the list's footer, so compact windows offer the same actions in the header. -->
-        <Style Selector="Grid.compact Panel.queue-footer">
-            <Setter Property="IsVisible" Value="False" />
-        </Style>
-        <Style Selector="StackPanel.compact-only">
-            <Setter Property="IsVisible" Value="False" />
-        </Style>
-        <Style Selector="Grid.compact StackPanel.compact-only">
-            <Setter Property="IsVisible" Value="True" />
-        </Style>
-        <Style Selector="Grid.compact Border.queue-tile">
+        <Style Selector="Grid.compact Border.queue-tile, Grid.compact TextBlock.queue-tile, Grid.compact Button.queue-tile">
             <Setter Property="IsVisible" Value="False" />
         </Style>
 
@@ -668,55 +681,71 @@
 
                     <!-- ─────────── Workspace: queue, page and filing card ─────────── -->
                     <Grid Grid.Row="1" x:Name="WorkspaceGrid" ColumnDefinitions="272,*,296" RowDefinitions="Auto,*">
-                        <!-- Queue header. In compact windows it spans the thumbnail strip and the page, so it stays readable. -->
+                        <!--
+                            Queue header: the place in 24 Bold, then the count as a sentence with the sort choice at its right
+                            (the count wraps rather than being cut), then the queue's own actions as small buttons. There is
+                            no footer: these are the only copies, at every width. In compact windows the header spans the
+                            thumbnail strip and the page, so it stays readable.
+                        -->
                         <Border x:Name="QueueHeader" Classes="queue-header" Background="{DynamicResource Panel}" BorderBrush="{DynamicResource Line}"
-                                Padding="20,18,10,8">
-                            <Grid RowDefinitions="Auto,Auto" ColumnDefinitions="*,Auto" RowSpacing="2">
-                                <TextBlock Grid.ColumnSpan="2" x:Name="InboxHeading" Classes="title" Text="{Binding Heading}" TextTrimming="CharacterEllipsis"
-                                           AutomationProperties.HeadingLevel="1" VerticalAlignment="Center" />
-                                <ComboBox Grid.Row="1" Grid.Column="1" x:Name="DocumentSortBox" Classes="ghost" ItemsSource="{Binding SortChoices}" VerticalAlignment="Top"
-                                          SelectedItem="{Binding SortOption, Mode=TwoWay}"
-                                          IsEnabled="{Binding HasLibrary}" AutomationProperties.Name="{translation:Tr SortDocuments}" ToolTip.Tip="{translation:Tr Sort}" />
-                                <WrapPanel Grid.Row="1" Orientation="Horizontal" ItemSpacing="6" LineSpacing="4" VerticalAlignment="Top">
-                                    <Border Height="32" Margin="0,0,4,0">
-                                        <TextBlock Classes="label" Text="{Binding QueueCountLabel}" VerticalAlignment="Center"
-                                                   MaxWidth="200" TextTrimming="CharacterEllipsis" ToolTip.Tip="{Binding ResultCount}" FontFeatures="+tnum" />
-                                    </Border>
-                                    <Button x:Name="SaveSearchButton" Classes="chip" VerticalAlignment="Center" Content="{translation:Tr SaveSearch2}" Command="{Binding SaveSearchCommand}"
+                                Padding="20,18,10,10">
+                            <StackPanel Spacing="2">
+                                <TextBlock x:Name="InboxHeading" Classes="title" Text="{Binding Heading}" TextTrimming="CharacterEllipsis"
+                                           AutomationProperties.HeadingLevel="1" Margin="0,0,10,0" />
+                                <local:CountLinePanel>
+                                    <TextBlock Classes="label" Text="{Binding QueueCountLabel}" TextWrapping="Wrap" LineHeight="20" VerticalAlignment="Center"
+                                               Margin="0,6" ToolTip.Tip="{Binding ResultCount}" FontFeatures="+tnum" />
+                                    <!-- The sort choice gives way before the count does: it trims its label, the count never trims. -->
+                                    <ComboBox x:Name="DocumentSortBox" Classes="ghost" ItemsSource="{Binding SortChoices}" VerticalAlignment="Top"
+                                              SelectedItem="{Binding SortOption, Mode=TwoWay}"
+                                              IsEnabled="{Binding HasLibrary}" AutomationProperties.Name="{translation:Tr SortDocuments}" ToolTip.Tip="{translation:Tr Sort}">
+                                        <ComboBox.SelectionBoxItemTemplate>
+                                            <DataTemplate x:DataType="local:InboxViewModel+SortChoice">
+                                                <TextBlock Text="{Binding Label}" TextTrimming="CharacterEllipsis" />
+                                            </DataTemplate>
+                                        </ComboBox.SelectionBoxItemTemplate>
+                                    </ComboBox>
+                                </local:CountLinePanel>
+                                <WrapPanel Orientation="Horizontal" ItemSpacing="6" LineSpacing="6" Margin="0,2,10,0">
+                                    <Button x:Name="SaveSearchButton" Classes="secondary" Content="{translation:Tr SaveSearch2}" Command="{Binding SaveSearchCommand}"
                                             IsVisible="{Binding ShowSaveSearch}" IsEnabled="{Binding CanWork}" />
-                                    <Button x:Name="EditSavedSearchButton" Classes="chip" VerticalAlignment="Center" Content="{translation:Tr EditSearch}" Command="{Binding EditActiveSavedSearchCommand}"
+                                    <Button x:Name="EditSavedSearchButton" Classes="secondary" Content="{translation:Tr EditSearch}" Command="{Binding EditActiveSavedSearchCommand}"
                                             IsVisible="{Binding HasActiveSavedSearch}" IsEnabled="{Binding CanWork}" />
-                                    <StackPanel Classes="compact-only" Orientation="Horizontal" Spacing="6">
-                                        <Button x:Name="CompactRefreshResultsButton" Classes="chip" VerticalAlignment="Center" Content="{translation:Tr RefreshResults}"
-                                                Command="{Binding RefreshWatchedResultsCommand}" IsVisible="{Binding HasDeferredWatchResults}"
-                                                IsEnabled="{Binding CanWork}" ToolTip.Tip="{translation:Tr RefreshAfterWatchedImports}" />
-                                        <Button x:Name="CompactSelectShownButton" Classes="chip" VerticalAlignment="Center" Content="{Binding SelectShownAction}"
-                                                Click="SelectShown_Click" IsVisible="{Binding HasBatchCandidates}" />
-                                        <Button x:Name="CompactLoadMoreButton" Classes="chip" VerticalAlignment="Center" Content="{translation:Tr LoadMore}"
-                                                Command="{Binding LoadMoreCommand}" IsVisible="{Binding HasMore}" />
-                                    </StackPanel>
+                                    <Button x:Name="RefreshWatchedResultsButton" Classes="secondary" Content="{translation:Tr RefreshResults}"
+                                            Command="{Binding RefreshWatchedResultsCommand}" IsVisible="{Binding HasDeferredWatchResults}"
+                                            IsEnabled="{Binding CanWork}" ToolTip.Tip="{translation:Tr RefreshAfterWatchedImports}" />
+                                    <Button x:Name="SelectShownButton" Classes="secondary" Content="{Binding SelectShownAction}" Click="SelectShown_Click"
+                                            IsVisible="{Binding HasBatchCandidates}" AutomationProperties.Name="{Binding SelectShownAction}" />
+                                    <Button Classes="secondary" Content="{translation:Tr LoadMore}" Command="{Binding LoadMoreCommand}" IsVisible="{Binding HasMore}" />
                                 </WrapPanel>
-                            </Grid>
+                            </StackPanel>
                         </Border>
 
-                        <!-- Queue -->
-                        <Grid Grid.Row="1" RowDefinitions="0,*,Auto" Background="{DynamicResource Panel}">
-                            <StackPanel Grid.Row="1" Classes="empty" IsVisible="{Binding !HasDocuments}" Margin="12">
+                        <!-- Queue. An empty queue is the family empty state: a tile, a title, one sentence and one action. -->
+                        <Grid Grid.Row="1" Background="{DynamicResource Panel}">
+                            <StackPanel Classes="empty" IsVisible="{Binding !HasDocuments}" Margin="16">
                                 <Border Classes="tile empty-tile queue-tile">
                                     <local:Icon Data="{StaticResource Icon.Search}" Width="20" Height="20" StrokeWidth="2" HorizontalAlignment="Center" VerticalAlignment="Center" />
                                 </Border>
+                                <TextBlock Classes="empty-title queue-tile" Text="{Binding EmptyTitle}" />
                                 <TextBlock x:Name="EmptyResultsMessage" Classes="empty-text" Text="{Binding EmptyMessage}" IsVisible="{Binding !HasDocuments}"
                                            AutomationProperties.LiveSetting="Polite" />
+                                <Button Classes="secondary queue-tile" HorizontalAlignment="Center" Margin="0,10,0,0" Content="{translation:Tr ClearSearch}"
+                                        Command="{Binding ClearSearchCommand}" IsVisible="{Binding HasQuery}" />
                             </StackPanel>
-                            <ListBox Grid.Row="1" x:Name="DocumentList" Classes="plain" ItemsSource="{Binding Documents}" SelectedItem="{Binding SelectedDocument, Mode=TwoWay}"
+                            <ListBox x:Name="DocumentList" Classes="plain" ItemsSource="{Binding Documents}" SelectedItem="{Binding SelectedDocument, Mode=TwoWay}"
                                      IsVisible="{Binding HasDocuments}" Padding="0,2,0,8"
                                      SelectionMode="Multiple" SelectionChanged="Documents_SelectionChanged"
                                      ScrollViewer.HorizontalScrollBarVisibility="Disabled" AutomationProperties.Name="{translation:Tr Documents}">
                                 <ListBox.ItemTemplate>
                                     <DataTemplate x:DataType="core:DocumentSummary">
                                         <Grid ColumnDefinitions="Auto,*" ColumnSpacing="12">
+                                            <!-- The thumbnail wears the open page's veil, so paper reads as the Paper colour in both themes. -->
                                             <Border Classes="paper" Width="40" Height="52" VerticalAlignment="Top">
-                                                <local:DocumentThumbnail Document="{Binding}" CornerRadius="1.5" ToolTip.Tip="{Binding Title}" />
+                                                <Panel>
+                                                    <local:DocumentThumbnail Document="{Binding}" CornerRadius="1.5" ToolTip.Tip="{Binding Title}" />
+                                                    <Border Classes="page-dim" CornerRadius="1.5" />
+                                                </Panel>
                                             </Border>
                                             <StackPanel Grid.Column="1" Classes="row-text" Spacing="2" VerticalAlignment="Center">
                                                 <TextBlock Classes="row-title-text" Text="{Binding Title}" />
@@ -730,28 +759,17 @@
                                     </DataTemplate>
                                 </ListBox.ItemTemplate>
                             </ListBox>
-                            <Panel Grid.Row="2" Classes="queue-footer">
-                                <Border BorderBrush="{DynamicResource Line}" BorderThickness="0,1,0,0" Padding="12,8" IsVisible="{Binding HasResultActions}">
-                                    <StackPanel Spacing="4">
-                                        <Button x:Name="RefreshWatchedResultsButton" Classes="secondary" Content="{translation:Tr RefreshResults}" HorizontalAlignment="Stretch"
-                                                HorizontalContentAlignment="Center" Command="{Binding RefreshWatchedResultsCommand}" IsVisible="{Binding HasDeferredWatchResults}"
-                                                IsEnabled="{Binding CanWork}" ToolTip.Tip="{translation:Tr RefreshAfterWatchedImports}" />
-                                        <Grid ColumnDefinitions="Auto,*,Auto" ColumnSpacing="6" IsVisible="{Binding HasBatchCandidates}">
-                                            <Button x:Name="SelectShownButton" Classes="ghost" Content="{Binding SelectShownAction}"
-                                                    Click="SelectShown_Click" AutomationProperties.Name="{Binding SelectShownAction}" />
-                                            <Button Grid.Column="2" Classes="ghost" Content="{translation:Tr LoadMore}" IsVisible="{Binding HasMore}" Command="{Binding LoadMoreCommand}" />
-                                        </Grid>
-                                    </StackPanel>
-                                </Border>
-                            </Panel>
                         </Grid>
 
                         <!-- Page: paper on the desk -->
                         <Border Grid.Column="1" Grid.RowSpan="2" x:Name="PageColumn" Background="{DynamicResource Desk}" ClipToBounds="True">
                             <Panel>
-                                <StackPanel Classes="empty" IsVisible="{Binding !HasSelection}">
-                                    <TextBlock Classes="empty-text" Text="{translation:Tr SelectADocumentToPreviewIt}" />
-                                </StackPanel>
+                                <!-- Only a queue with documents asks for a choice; an empty queue explains itself once, in the queue. -->
+                                <Panel IsVisible="{Binding HasDocuments}">
+                                    <StackPanel Classes="empty" IsVisible="{Binding !HasSelection}">
+                                        <TextBlock Classes="empty-text" Text="{translation:Tr SelectADocumentToPreviewIt}" />
+                                    </StackPanel>
+                                </Panel>
                                 <Grid IsVisible="{Binding HasSelection}" RowDefinitions="Auto,*">
                                     <Grid Classes="viewer-bar" RowDefinitions="Auto,Auto" Margin="12,10,12,0">
                                         <WrapPanel ItemSpacing="2" IsVisible="{Binding HasPageMatchAction}" VerticalAlignment="Center">
@@ -766,6 +784,7 @@
                                         </WrapPanel>
                                         <WrapPanel Grid.Row="1" HorizontalAlignment="Right" ItemSpacing="2" VerticalAlignment="Center">
                                             <Button x:Name="PreviewFitButton" Content="{Binding PreviewFitAction}" Command="{Binding TogglePreviewFitCommand}"
+                                                    Classes.fit-page="{Binding FitPreviewWidth}" ToolTip.Tip="{Binding PreviewFitAction}"
                                                     IsEnabled="{Binding HasPreview}" IsVisible="{Binding !IsPageTextView}" />
                                             <ToggleButton x:Name="PageThumbnailsButton" Classes="page-icon" IsChecked="{Binding ShowPageThumbnails, Mode=OneWay}"
                                                           Command="{Binding TogglePageThumbnailsCommand}" IsEnabled="{Binding HasMultiplePages}"
@@ -803,7 +822,10 @@
                                                                 AutomationProperties.Name="{Binding PageNumber, StringFormat={translation:Tr PageNumberAutomationFormat}}">
                                                             <StackPanel Spacing="3">
                                                                 <Border Classes="paper">
-                                                                    <Image Source="{Binding Image}" Width="48" Height="62" Stretch="Uniform" />
+                                                                    <Panel>
+                                                                        <Image Source="{Binding Image}" Width="48" Height="62" Stretch="Uniform" />
+                                                                        <Border Classes="page-dim" />
+                                                                    </Panel>
                                                                 </Border>
                                                                 <TextBlock Text="{Binding PageNumber}" HorizontalAlignment="Center" Classes="caption" />
                                                             </StackPanel>

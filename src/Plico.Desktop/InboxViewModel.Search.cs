@@ -233,13 +233,17 @@ internal sealed partial class InboxViewModel
         if (WithoutTextSelected)
         {
             Heading = DesktopText.Translate("Without text");
-            EmptyMessage = DesktopText.Translate("No PDFs without searchable text.");
+            SetEmptyState(DesktopText.Translate("Everything is searchable"), DesktopText.Translate("No PDFs without searchable text."));
         }
         else
         {
             Heading = ActiveSavedSearch?.Name ?? (hasQuery ? DesktopText.Translate("Search results") : filter.Tag ?? (filter.InboxOnly ? DesktopText.Translate("Inbox") : DesktopText.Translate("All documents")));
-            EmptyMessage = hasQuery || filter.Tag is not null ? DesktopText.Translate("No documents match.") :
-                filter.InboxOnly ? DesktopText.Translate("Add a file to start your inbox.") : DesktopText.Translate("This library has no documents yet.");
+            if (hasQuery || filter.Tag is not null)
+                SetEmptyState(DesktopText.Translate("No documents match"), DesktopText.Translate("Try other words or a different filter."));
+            else if (filter.InboxOnly)
+                SetEmptyState(DesktopText.Translate("Nothing here yet"), DesktopText.Translate("Add a file to start your inbox."));
+            else
+                SetEmptyState(DesktopText.Translate("No documents yet"), DesktopText.Translate("This library has no documents yet."));
         }
         OnPropertyChanged(nameof(InboxSelected));
         OnPropertyChanged(nameof(AllSelected));
@@ -258,14 +262,17 @@ internal sealed partial class InboxViewModel
 
         if (page.QueryIssue is { } issue)
         {
-            ResultCount = "Check search";
-            EmptyMessage = SearchCorrection(issue);
+            ResultCount = QueryIssueCount;
+            SetEmptyState(DesktopText.Translate("Check the search"), SearchCorrection(issue));
             return;
         }
 
         ResultCount = HasMore ? $"Showing {DocumentCount(Documents.Count)}" : DocumentCount(Documents.Count);
         if (filter.Tag is not null && !string.IsNullOrWhiteSpace(filter.Query)) ResultCount += $" in {filter.Tag}";
     }
+
+    /// <summary>The result count while a search cannot run; the empty state carries the correction.</summary>
+    private const string QueryIssueCount = "Check search";
 
     private static string SearchCorrection(SearchQueryIssue issue) => issue switch
     {

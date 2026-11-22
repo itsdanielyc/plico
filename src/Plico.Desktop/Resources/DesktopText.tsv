@@ -894,3 +894,10 @@ InboxPlace	Inbox	Réception
 AllDocumentsPlace	All documents	Documents
 DayToday	Today	Aujourd’hui
 DayYesterday	Yesterday	Hier
+ClearSearch	Clear search	Effacer la recherche
+EmptyNoMatchTitle	No documents match	Aucun document correspondant
+EmptyNoMatch	Try other words or a different filter.	Essayez d’autres mots ou un autre filtre.
+EmptyCheckSearch	Check the search	Vérifiez la recherche
+EmptyAllSearchable	Everything is searchable	Tout est indexable
+EmptyNothingYet	Nothing here yet	Rien pour l’instant
+EmptyNoDocumentsYet	No documents yet	Aucun document pour l’instant
