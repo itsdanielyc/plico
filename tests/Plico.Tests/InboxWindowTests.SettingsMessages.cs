@@ -557,6 +557,75 @@ public sealed partial class InboxWindowTests
         }
     }
 
+    [AvaloniaTheory]
+    [InlineData("O")]
+    [InlineData("PDF location")]
+    [InlineData("O after a choice in Settings")]
+    public async Task AFileThatWillNotOpenFromTheMainWindowWhilePlicoWorksSaysWhyThereAtOnce(string how)
+    {
+        using var temporary = new TemporaryLibrary();
+        using (var library = InboxLibrary.Open(temporary.Path)) BatchFixtures.AddTwoDocuments(library, TestContext.Current.CancellationToken);
+        var pending = new TaskCompletionSource<TrashDecision?>();
+        // The system's opener finds the PDF unavailable, as it does for a library on a drive that has gone.
+        using var model = new InboxViewModel(new FixtureDialogs { TrashChoice = _ => pending.Task, OpenPathFails = true });
+        model.InitializeLibrary(() => temporary.Path);
+        var window = new MainWindow { DataContext = model, Width = 1280, Height = 800 };
+        window.Show();
+        Task? work = null;
+        SettingsWindow? settings = null;
+        try
+        {
+            await WaitForPreviewAsync(model);
+            var toast = Named<Border>(window, "Toast");
+            if (how == "O after a choice in Settings") settings = OpenSettingsAt(window, "GeneralGroup");
+
+            // Work begins (Trash left open holds Plico busy, as a watched folder's import does); the status card says so.
+            work = model.OpenTrashCommand.ExecuteAsync(null);
+            Dispatcher.UIThread.RunJobs();
+            Assert.True(model.IsBusy);
+            string working = model.StatusCardTitle;
+
+            // The person chooses the dark theme in Settings, which Settings' line says, and goes back to the main window.
+            if (settings is not null)
+            {
+                ClickAt(settings, settings.GetVisualDescendants().OfType<RadioButton>().Single(card => AutomationProperties.GetName(card) == "Dark"));
+                Assert.Equal("Appearance saved.", Named<TextBlock>(settings, "SettingsMessage").Text);
+            }
+
+            // The person opens the document with O from its row, or its folder from the card's location; neither opens.
+            if (how == "PDF location") ClickAt(window, Named<Button>(window, "PdfLocationButton"));
+            else
+            {
+                ClickAt(window, QueueRow(window, model.SelectedDocument!.Id));
+                PressKey(window, Key.O, PhysicalKey.O, "o");
+            }
+            Dispatcher.UIThread.RunJobs();
+
+            // The main window says why at once, with the alert, as it says an edit; the card keeps the work's line, and
+            // Settings' line keeps its own news.
+            Assert.True(toast.IsVisible, $"Nothing rose to say why it did not open; the status card says “{model.StatusCardTitle}”.");
+            Assert.Equal(("This file or folder is unavailable", "Refresh the library.", true), (model.ToastTitle, model.ToastBody, ToastWearsTheAlert(toast)));
+            Assert.Equal(working, model.StatusCardTitle);
+            if (settings is not null) Assert.Equal("Appearance saved.", Named<TextBlock>(settings, "SettingsMessage").Text);
+
+            // When the work ends, its own result rises.
+            pending.SetResult(null);
+            await work;
+            work = null;
+            Dispatcher.UIThread.RunJobs();
+            Assert.True(toast.IsVisible, $"No toast rose when the work ended; the toast would say “{model.ToastTitle}”.");
+            Assert.Equal("Trash is empty", model.ToastTitle);
+            settings?.Close();
+        }
+        finally
+        {
+            pending.TrySetResult(null);
+            if (work is not null) await work;
+            settings?.Close();
+            window.Close();
+        }
+    }
+
     [AvaloniaFact]
     public async Task TheRapidOcrSwitchWaitsWhilePlicoWorks()
     {

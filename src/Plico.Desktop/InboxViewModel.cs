@@ -555,7 +555,9 @@ internal sealed partial class InboxViewModel : ObservableObject, IDisposable
 
     /// <summary>
     /// Opens a file or folder (the PDF folder, a document or its folder, a backup, an export) in the system's own app. Why
-    /// it could not be opened is an aside to any work in hand (see <see cref="SayAside"/>), never a line of the work.
+    /// it could not be opened is an aside to any work in hand (see <see cref="SayAside"/>), never a line of the work: while
+    /// Plico works, Settings' line says it when it was opened from Settings, and it rises over the page at once when it
+    /// was opened anywhere else.
     /// </summary>
     private void OpenPath(Func<string> resolve)
     {

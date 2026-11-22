@@ -22,6 +22,7 @@ public sealed partial class SettingsWindow : Window
     // True from a press in Settings until what it started has finished: messages raised meanwhile are Settings' own.
     private bool _actionInHand;
     private bool _busyBeforeAction;
+    // Set once the input has settled while the work the action started has yet to finish.
     private bool _waitingForWork;
     private Window? _watchedOwner;
     // How the control with the keyboard got it, so a keyboard moved for it shows the focus ring only if it did.
@@ -82,7 +83,12 @@ public sealed partial class SettingsWindow : Window
         owner.AddHandler(PointerPressedEvent, OwnerInput, RoutingStrategies.Tunnel, handledEventsToo: true);
     }
 
-    private void OwnerInput(object? sender, RoutedEventArgs e) => SettleActionNow();
+    private void OwnerInput(object? sender, RoutedEventArgs e)
+    {
+        // What an action taken in the main window says is the main window's, even while Settings waits for what it started.
+        if (_model is not null) _model.SettingsHasActionInHand = false;
+        SettleActionNow();
+    }
 
     /// <summary>
     /// A control that turns off while it has the keyboard (a recognition switch once Plico starts working) would drop
@@ -133,14 +139,23 @@ public sealed partial class SettingsWindow : Window
 
     private void AttachModel(InboxViewModel? model)
     {
-        if (_model is not null) _model.PropertyChanged -= Model_PropertyChanged;
+        if (_model is not null)
+        {
+            _model.PropertyChanged -= Model_PropertyChanged;
+            // Settings has nothing in hand once it has closed.
+            _model.SettingsHasActionInHand = false;
+        }
         _model = model;
         if (_model is not null) _model.PropertyChanged += Model_PropertyChanged;
     }
 
-    /// <summary>A press or a key in Settings: what follows from it, until it has settled, is Settings' to say.</summary>
+    /// <summary>
+    /// A press or a key in Settings: what follows from it, until it has settled, is Settings' to say, and the model hears
+    /// that what an aside says now is Settings' (<see cref="InboxViewModel.SettingsHasActionInHand"/>).
+    /// </summary>
     private void BeginAction()
     {
+        if (_model is not null) _model.SettingsHasActionInHand = true;
         if (_actionInHand) return;
         _actionInHand = true;
         _busyBeforeAction = _model?.IsBusy == true;
@@ -155,8 +170,18 @@ public sealed partial class SettingsWindow : Window
     private void SettleActionNow()
     {
         if (!_actionInHand) return;
-        if (_model is { IsBusy: true } && !_busyBeforeAction) _waitingForWork = true;
-        else if (!_waitingForWork) _actionInHand = false;
+        if (_model is { } model && IsStillUnderWay(model)) _waitingForWork = true;
+        else if (!_waitingForWork) EndAction();
+    }
+
+    /// <summary>Whether the work the action in hand started has yet to finish.</summary>
+    private bool IsStillUnderWay(InboxViewModel model) => model.IsBusy && !_busyBeforeAction;
+
+    private void EndAction()
+    {
+        _waitingForWork = false;
+        _actionInHand = false;
+        if (_model is not null) _model.SettingsHasActionInHand = false;
     }
 
     private void Model_PropertyChanged(object? sender, PropertyChangedEventArgs e)
@@ -165,16 +190,12 @@ public sealed partial class SettingsWindow : Window
         switch (e.PropertyName)
         {
             case nameof(InboxViewModel.ToastStatus):
-                // The person's own edits in the main window are its news, not Settings'.
+                // The person's own edits, and what an action taken in the main window says, are its news, not Settings'.
                 if (_actionInHand && !model.ToastIsQuiet && !model.ToastIsForeground) ShowMessage(model.ToastStatus, model.ToastIsProblem);
                 break;
-            case nameof(InboxViewModel.IsBusy) when !model.IsBusy && _waitingForWork:
+            case nameof(InboxViewModel.IsBusy) when _waitingForWork && !IsStillUnderWay(model):
                 // The work's message follows straight after it stops being busy; the action is done after that.
-                Dispatcher.UIThread.Post(() =>
-                {
-                    _waitingForWork = false;
-                    _actionInHand = false;
-                }, DispatcherPriority.Background);
+                Dispatcher.UIThread.Post(EndAction, DispatcherPriority.Background);
                 break;
         }
     }

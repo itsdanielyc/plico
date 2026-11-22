@@ -86,9 +86,9 @@ internal sealed partial class InboxViewModel
 
     /// <summary>
     /// Saves an appearance chosen in Settings on the spot and says <paramref name="saved"/>, or why it could not be
-    /// saved, as an aside to any work in hand (see <see cref="SayAside"/>): Settings' line says it and the status card
-    /// keeps the work's line. While the work runs the choice raises no toast of its own, though a toast already over the
-    /// page takes its words, as it does when Plico is idle.
+    /// saved, as an aside to any work in hand (see <see cref="SayAside"/>): the choice is made in Settings, so Settings'
+    /// line says it, and the status card keeps the work's line. While the work runs the choice raises no toast of its own,
+    /// though a toast already over the page takes its words, as it does when Plico is idle.
     /// </summary>
     private void SaveChoice(AppearanceOptions chosen, string saved) => SayAside(() =>
     {

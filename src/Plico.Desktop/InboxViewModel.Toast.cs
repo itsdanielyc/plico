@@ -23,12 +23,13 @@ internal readonly record struct ToastText(string Title, string? Body);
 /// card (<see cref="WorkStatus"/>) and its last message becomes the toast when it ends; work that ends on a line still
 /// in progress ("Set the archive number…") has nothing to say and raises no toast. An edit the person makes meanwhile
 /// is news at once (<see cref="ToastIsForeground"/>). What another action the person takes meanwhile has to say (a
-/// choice Settings saves on the spot, a watch stopped, a folder that would not open; see <see cref="SayAside"/>) is
-/// never a line of the work: Settings' line says it when the action was taken there, and it raises no toast of its own
-/// while the work runs, though a toast already over the page takes its words, as it does when Plico is idle, and an
-/// Undo it offered is left to Ctrl+Z and the palette. The action is the latest offer made, so "Exported" carries Open
-/// export and "Marked reviewed" carries Undo. Undo has one offer at a time (see <see cref="UndoOffer"/>), which Ctrl+Z
-/// and the palette reach after the toast has gone.
+/// choice Settings saves on the spot, a watch stopped, a file or folder that would not open; see <see cref="SayAside"/>)
+/// is never a line of the work. Taken outside Settings (O on a document whose PDF has gone, say), it is news at once,
+/// as an edit is. Taken in Settings, Settings' line says it and it raises no toast of its own while the work runs,
+/// though a toast already over the page takes its words, as it does when Plico is idle, and an Undo that toast offered
+/// is left to Ctrl+Z, and to the palette once the work has ended. The action is the latest offer made, so "Exported"
+/// carries Open export and "Marked reviewed" carries Undo. Undo has one offer at a time (see <see cref="UndoOffer"/>),
+/// which Ctrl+Z reaches after the toast has gone, and the palette too while Plico is not working.
 /// </summary>
 internal sealed partial class InboxViewModel
 {
@@ -65,6 +66,13 @@ internal sealed partial class InboxViewModel
     private int _asidesInHand;
 
     /// <summary>
+    /// True while Settings has an action of the person's in hand: from a press or a key in Settings until it settles, or
+    /// until the work it started ends, unless the person has given the main window input since. An aside
+    /// said meanwhile (see <see cref="SayAside"/>) is Settings' to say on its line. Settings sets it.
+    /// </summary>
+    internal bool SettingsHasActionInHand { get; set; }
+
+    /// <summary>
     /// The latest message, a line of the work in hand included. It is raised on every assignment, even when the words
     /// repeat ("Tag added." twice), because each one is a new event.
     /// </summary>
@@ -81,8 +89,10 @@ internal sealed partial class InboxViewModel
             _pendingQuiet = false;
             _pendingProblem = false;
             _statusIsProblem = problem;
-            if (IsBusy && _editsInHand == 0 && _asidesInHand == 0) NoteWorkLine(value, toast, quiet, problem);
-            else ShowMessage(value, toast, quiet, foreground: IsBusy && _editsInHand > 0, problem);
+            bool aside = _asidesInHand > 0;
+            // While Plico works, an edit is news at once, and so is an aside unless Settings says it on its line.
+            if (IsBusy && _editsInHand == 0 && !aside) NoteWorkLine(value, toast, quiet, problem);
+            else ShowMessage(value, toast, quiet, foreground: IsBusy && (_editsInHand > 0 || aside && !SettingsHasActionInHand), problem);
             OnPropertyChanged();
         }
     }
@@ -103,8 +113,9 @@ internal sealed partial class InboxViewModel
     public bool ToastIsQuiet { get; private set; }
 
     /// <summary>
-    /// A message that rises and stays while Plico works: the person's own edit, saved beside the work. The work's own
-    /// lines wait for it to end, and an aside (see <see cref="SayAside"/>) raises no toast of its own while it runs.
+    /// A message that rises and stays while Plico works: the person's own edit, saved beside the work, or an aside taken
+    /// outside Settings (see <see cref="SayAside"/>). The work's own lines wait for it to end, and an aside taken in
+    /// Settings is said on Settings' line and raises no toast of its own while it runs.
     /// </summary>
     public bool ToastIsForeground { get; private set; }
 
@@ -220,8 +231,9 @@ internal sealed partial class InboxViewModel
     /// Runs <paramref name="say"/>, the part of an action the person takes beside the work in hand that says what it has
     /// to say: a choice Settings saves on the spot, a watch stopped, a file or folder that would not open. While Plico
     /// works its message is never a line of the work, so the status card keeps the work's line and the work's own result
-    /// still rises when it ends. It is not news at once either: Settings' line says it when the action was taken there,
-    /// and it raises no toast of its own over the page while the work runs, though a toast already up takes its words.
+    /// still rises when it ends. Taken in Settings (<see cref="SettingsHasActionInHand"/>), Settings' line says it, and it
+    /// raises no toast of its own over the page while the work runs, though a toast already up takes its words. Taken
+    /// anywhere else (the main window), it is news at once, as an edit is (<see cref="ToastIsForeground"/>).
     /// </summary>
     private void SayAside(Action say)
     {
