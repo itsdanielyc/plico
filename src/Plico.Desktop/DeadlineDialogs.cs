@@ -125,7 +125,7 @@ internal sealed class RemindersDialog : Window
         calendar.Click += (_, _) => Close(new ReminderChoice(ReminderAction.Export, null));
         list.SelectionChanged += (_, _) => open.IsEnabled = dismiss.IsEnabled = list.SelectedIndex >= 0;
         Control body = reminders.Count == 0
-            ? new TextBlock { Text = DesktopText.Translate("No reminders are due."), Classes = { "description" } }
+            ? DialogLayout.EmptyState("Icon.Upcoming", DesktopText.Translate("Nothing upcoming"), DesktopText.Translate("No reminders are due."))
             : list;
         DialogLayout.Compose(this, Title, body, null, open, dismiss, calendar, close);
         void Choose(ReminderAction action)

@@ -50,4 +50,27 @@ internal static class DialogLayout
 
     /// <summary>A line of status or validation text for the footer or the body.</summary>
     internal static TextBlock Message(string style = "validation") => new() { Classes = { style }, TextWrapping = TextWrapping.Wrap };
+
+    /// <summary>
+    /// An empty state in a dashed frame: a 44 px graphite tile with a white glyph, a 16 px title and one sentence.
+    /// </summary>
+    /// <param name="icon">The resource key of a 20-unit stroke glyph, for example "Icon.Upcoming".</param>
+    internal static Control EmptyState(string icon, string title, string text)
+    {
+        var glyph = new Icon { Width = 20, Height = 20, StrokeWidth = 2, HorizontalAlignment = HorizontalAlignment.Center,
+            VerticalAlignment = VerticalAlignment.Center };
+        if (Avalonia.Application.Current?.TryFindResource(icon, out var data) == true) glyph.Data = data as Geometry;
+        var content = new StackPanel
+        {
+            Classes = { "empty" },
+            Margin = new Avalonia.Thickness(24, 32),
+            Children =
+            {
+                new Border { Classes = { "tile", "empty-tile" }, Child = glyph },
+                new TextBlock { Text = title, Classes = { "empty-title" } },
+                new TextBlock { Text = text, Classes = { "empty-text" } }
+            }
+        };
+        return new Panel { Children = { new Avalonia.Controls.Shapes.Rectangle { Classes = { "dashed-frame" } }, content } };
+    }
 }
