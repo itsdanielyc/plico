@@ -23,6 +23,11 @@ public partial class MainWindow
     private readonly DispatcherTimer _toastTimer = new() { Interval = ToastLifetime };
     private InboxViewModel? _toastModel;
 
+    // What the model said before the window was there waits for the window to open; once shown, it stays while the work
+    // that opening starts (catching up saved watches) runs, until the next message.
+    private bool _startupToastOwed;
+    private bool _toastCarriesStartupNews;
+
     private void WireToast()
     {
         _toastTimer.Tick += (_, _) =>
@@ -41,6 +46,10 @@ public partial class MainWindow
             if (e.NewFocusedElement is null) OweKeyboardToOpenDocument();
         };
         DataContextChanged += (_, _) => AttachToast();
+        Opened += (_, _) =>
+        {
+            if (_startupToastOwed) ShowStartupToast();
+        };
         Closed += (_, _) =>
         {
             _toastTimer.Stop();
@@ -55,6 +64,21 @@ public partial class MainWindow
         _toastModel = ViewModel;
         if (_toastModel is not null) _toastModel.PropertyChanged += ToastModel_PropertyChanged;
         HideToast();
+        _toastCarriesStartupNews = false;
+        if (IsVisible) ShowStartupToast();
+        else _startupToastOwed = true;
+    }
+
+    /// <summary>
+    /// Shows what the model said before the window could: a library that did not open, what Plico recovered as it
+    /// opened the library, or settings it could not read. "Library ready." alone is quiet and raises nothing.
+    /// </summary>
+    private void ShowStartupToast()
+    {
+        _startupToastOwed = false;
+        if (ViewModel is not { IsBusy: false } model || model.ToastIsQuiet) return;
+        ShowToast(model);
+        _toastCarriesStartupNews = Toast.IsVisible;
     }
 
     private void ToastModel_PropertyChanged(object? sender, PropertyChangedEventArgs e)
@@ -65,6 +89,7 @@ public partial class MainWindow
             case nameof(InboxViewModel.ToastStatus):
                 // While work runs its progress is on the status card and its message arrives when it ends; an edit the
                 // person makes meanwhile is news at once.
+                _toastCarriesStartupNews = false;
                 if (!model.IsBusy || model.ToastIsForeground) ShowToast(model);
                 break;
             case nameof(InboxViewModel.ToastOffer):
@@ -79,7 +104,7 @@ public partial class MainWindow
                     // The work may have reloaded the queue under a keyboard that had just landed on it.
                     if (_keyboardOwedToOpenDocument) OweKeyboardToOpenDocument();
                 }
-                else if (!ToastIsHeld && !model.ToastIsForeground)
+                else if (!ToastIsHeld && !model.ToastIsForeground && !_toastCarriesStartupNews)
                 {
                     HideToast();
                 }

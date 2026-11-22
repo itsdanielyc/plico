@@ -759,6 +759,9 @@
                         <Button x:Name="ImportErrorsButton" Classes="status-hit" IsVisible="{Binding HasImportFailures}" IsEnabled="{Binding CanWork}"
                                 Command="{Binding InspectImportErrorsCommand}" AutomationProperties.Name="{Binding StatusCardTitle}"
                                 AutomationProperties.HelpText="{Binding StatusCardDetail}" ToolTip.Tip="{translation:Tr ImportErrors}" />
+                        <Button x:Name="LibraryProblemButton" Classes="status-hit" IsVisible="{Binding HasLibraryProblem}"
+                                Command="{Binding ChooseLibraryCommand}" AutomationProperties.Name="{Binding StatusCardTitle}"
+                                AutomationProperties.HelpText="{Binding StatusCardDetail}" ToolTip.Tip="{translation:Tr ChooseLibraryFolder}" />
                         <Button x:Name="IndexReportButton" Classes="status-hit" IsVisible="{Binding ShowIndexReportCard}"
                                 Command="{Binding ShowIndexReportCommand}" AutomationProperties.Name="{Binding StatusCardTitle}"
                                 AutomationProperties.HelpText="{Binding StatusCardDetail}" ToolTip.Tip="{translation:Tr IndexReport}" />
@@ -1012,6 +1015,10 @@
                                                AutomationProperties.LiveSetting="Polite" />
                                     <Button Classes="secondary" HorizontalAlignment="Center" Margin="0,10,0,0" Content="{translation:Tr ClearSearch}"
                                             Command="{Binding ClearSearchCommand}" IsVisible="{Binding HasQuery}" />
+                                    <!-- A library that did not open: the reason is the sentence, and choosing a library is the way forward. -->
+                                    <Button x:Name="EmptyChooseLibraryButton" Classes="secondary" HorizontalAlignment="Center" Margin="0,10,0,0"
+                                            Content="{translation:Tr PaletteChooseLibrary}" Command="{Binding ChooseLibraryCommand}"
+                                            IsVisible="{Binding HasLibraryProblem}" IsEnabled="{Binding IsIdle}" />
                                 </StackPanel>
                             </Panel>
                         </Panel>

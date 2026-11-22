@@ -19,13 +19,21 @@ internal sealed partial class InboxViewModel
     /// <summary>A watch stopped on its own (its folder went away or could not be read), or could not resume.</summary>
     public bool HasFailedWatch => _scannerWatch.Failed || _phoneWatch.Failed;
 
+    /// <summary>Why the library Plico tried to open did not open, while no library is open; null otherwise.</summary>
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(HasLibraryProblem))]
+    private string? _libraryProblem;
+
+    /// <summary>No library is open because the one Plico tried to open did not open; the card and the queue say why.</summary>
+    public bool HasLibraryProblem => !HasLibrary && LibraryProblem is not null;
+
     /// <summary>The card's own action, Settings › Intake, applies when nothing else needs the person.</summary>
-    public bool ShowStatusCardButton => !HasImportFailures && !ShowIndexReport;
+    public bool ShowStatusCardButton => !HasImportFailures && !ShowIndexReport && !HasLibraryProblem;
     public bool ShowIndexReportCard => ShowIndexReport && !HasImportFailures;
 
     public bool StatusCardIsLive => !NeedsAttention && !HasFailedWatch && HasActiveWatches;
     public bool StatusCardIsWarning => NeedsAttention;
-    public bool StatusCardIsFailed => !NeedsAttention && HasFailedWatch;
+    public bool StatusCardIsFailed => !NeedsAttention && (HasFailedWatch || HasLibraryProblem);
 
     /// <summary>
     /// "Watching Scans", "2 files need you", or the work in progress: "Copied 3 of 12 PDFs…". While work runs the card
@@ -36,6 +44,7 @@ internal sealed partial class InboxViewModel
         get
         {
             if (IsBusy) return WorkStatus;
+            if (HasLibraryProblem) return DesktopText.Translate("Library didn't open");
             if (HasImportFailures)
                 return ImportFailures.Count == 1 ? DesktopText.Translate("1 file needs you") : DesktopText.Format($"{ImportFailures.Count} files need you");
             if (ShowIndexReport)
@@ -53,11 +62,15 @@ internal sealed partial class InboxViewModel
         }
     }
 
-    /// <summary>The recognition language and where it runs, or what selecting the card will do about a problem.</summary>
+    /// <summary>
+    /// The recognition language and where it runs, or what selecting the card will do about a problem; for a library
+    /// that did not open, why.
+    /// </summary>
     public string StatusCardDetail
     {
         get
         {
+            if (!IsBusy && HasLibraryProblem) return LibraryProblem!;
             if (!IsBusy && HasImportFailures) return DesktopText.Translate("Couldn't add them. Select to see why.");
             if (!IsBusy && ShowIndexReport) return DesktopText.Translate("Select to open the index report.");
             if (!IsBusy && HasFailedWatch) return DesktopText.Translate("Select to resume it in Settings.");
@@ -69,7 +82,7 @@ internal sealed partial class InboxViewModel
     /// True when the detail is only the recognition language and where it runs, which a narrow sidebar leaves out; a
     /// detail that asks the person to act is always shown.
     /// </summary>
-    public bool StatusCardDetailIsRoutine => IsBusy || (!HasImportFailures && !ShowIndexReport && !HasFailedWatch);
+    public bool StatusCardDetailIsRoutine => IsBusy || (!HasImportFailures && !ShowIndexReport && !HasFailedWatch && !HasLibraryProblem);
 
     private bool NeedsAttention => HasImportFailures || ShowIndexReport;
     private string PhoneFolderName => PhoneInboxFolder is { } folder ? new DirectoryInfo(folder).Name : "";
@@ -90,10 +103,11 @@ internal sealed partial class InboxViewModel
         RaiseDerived(nameof(StatusCardIsFailed));
         RaiseDerived(nameof(ShowStatusCardButton));
         RaiseDerived(nameof(ShowIndexReportCard));
+        RaiseDerived(nameof(HasLibraryProblem));
     }
 
     private static bool IsStatusCardInput(string? property) => property is nameof(Status) or nameof(IsBusy) or nameof(ImportFailures)
         or nameof(HasImportFailures) or nameof(ShowIndexReport) or nameof(UnavailableCount) or nameof(IsWatchingFolder)
         or nameof(IsWatchingPhoneInbox) or nameof(WatchedFolderName) or nameof(PhoneInboxFolder) or nameof(RecognitionLanguage)
-        or nameof(HasLibrary) or nameof(HasFailedWatch);
+        or nameof(HasLibrary) or nameof(HasFailedWatch) or nameof(LibraryProblem);
 }

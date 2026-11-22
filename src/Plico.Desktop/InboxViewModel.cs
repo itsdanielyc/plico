@@ -109,8 +109,20 @@ internal sealed partial class InboxViewModel : ObservableObject, IDisposable
         }
         catch (Exception error)
         {
+            NoteLibraryProblem(error.Message);
             Status = error.Message;
         }
+    }
+
+    /// <summary>
+    /// Keeps why a library did not open while no library is open: the status card and the empty queue say it, with the
+    /// way forward, long after the toast has gone.
+    /// </summary>
+    private void NoteLibraryProblem(string reason)
+    {
+        if (HasLibrary) return;
+        LibraryProblem = reason;
+        SetEmptyState(DesktopText.Translate("Library didn't open"), reason);
     }
 
     internal async Task PrepareCloseAsync()
@@ -159,7 +171,16 @@ internal sealed partial class InboxViewModel : ObservableObject, IDisposable
         string target = Path.GetFullPath(selected);
         if (!AlreadyOpen(target))
         {
-            var replacement = await Task.Run(() => InboxLibrary.Open(target), token);
+            InboxLibrary replacement;
+            try
+            {
+                replacement = await Task.Run(() => InboxLibrary.Open(target), token);
+            }
+            catch (Exception error) when (error is not OperationCanceledException)
+            {
+                NoteLibraryProblem(error.Message);
+                throw;
+            }
             try
             {
                 token.ThrowIfCancellationRequested();
@@ -300,6 +321,7 @@ internal sealed partial class InboxViewModel : ObservableObject, IDisposable
             _backgroundLifetime = new CancellationTokenSource();
         }
         _library = replacement;
+        LibraryProblem = null;
         replacement.ConfigureOcr(_ocrProcessing);
         UndoOffer = null;
         ForgetAllThumbnails();

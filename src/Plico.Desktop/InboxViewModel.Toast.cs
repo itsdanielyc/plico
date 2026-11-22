@@ -198,6 +198,13 @@ internal sealed partial class InboxViewModel
         return true;
     });
 
+    /// <summary>
+    /// Adds a notice raised while Plico starts, before the window can show it, to what was said already, so the toast
+    /// that rises once the window opens carries every one. A quiet "Library ready." gives way to it.
+    /// </summary>
+    private void AddStartupNotice(string notice) =>
+        Status = ToastIsQuiet || string.IsNullOrWhiteSpace(ToastStatus) ? notice : $"{ToastStatus} {notice}";
+
     /// <summary>Sets the message of record without a toast, for news the window already shows.</summary>
     private void Note(string status)
     {

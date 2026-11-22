@@ -34,7 +34,7 @@ internal sealed partial class InboxViewModel
         }
         catch (Exception error) when (error is IOException or UnauthorizedAccessException or JsonException)
         {
-            Status = error.Message;
+            AddStartupNotice(error.Message);
         }
         _saveOcrProcessing = preference.Save;
     }

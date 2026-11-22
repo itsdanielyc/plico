@@ -40,7 +40,7 @@ internal sealed partial class InboxViewModel
         }
         catch (Exception error) when (error is IOException or UnauthorizedAccessException)
         {
-            Status = error.Message;
+            AddStartupNotice(error.Message);
         }
         _rememberRecognitionLanguage = save;
     }
