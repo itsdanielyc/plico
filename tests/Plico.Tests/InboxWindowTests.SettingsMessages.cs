@@ -46,7 +46,9 @@ public sealed partial class InboxWindowTests
             var line = settings.GetVisualDescendants().OfType<TextBlock>().Single(text => text.IsEffectivelyVisible && text.Text == said[0]);
             Assert.Equal(AutomationLiveSetting.Polite, AutomationProperties.GetLiveSetting(line));
 
-            // News from elsewhere (a review in the main window) is not a Settings message and leaves the line as it was.
+            // News from elsewhere (a review in the main window, back in it with a click on the open row; the keyboard
+            // stayed in Settings until then) is not a Settings message and leaves the line as it was.
+            ClickAt(window, QueueRow(window, model.SelectedDocument!.Id));
             PressKey(window, Key.R, PhysicalKey.R, "r");
             await WaitForPreviewAsync(model);
             Assert.Equal("Marked reviewed", model.ToastTitle);
@@ -133,6 +135,54 @@ public sealed partial class InboxWindowTests
         }
         finally
         {
+            window.Close();
+        }
+    }
+
+    [AvaloniaTheory]
+    [InlineData("OrientPagesChoice")]
+    [InlineData("RapidOcrChoice")]
+    public async Task ASwitchThatWaitsForWorkKeepsTheKeyboardInSettingsAndGetsItBack(string switchName)
+    {
+        using var temporary = new TemporaryLibrary();
+        using var settingsFolder = new TemporaryLibrary();
+        using (var library = InboxLibrary.Open(temporary.Path)) BatchFixtures.AddTwoDocuments(library, TestContext.Current.CancellationToken);
+        var pending = new TaskCompletionSource<TrashDecision?>();
+        var dialogs = new FixtureDialogs { TrashChoice = _ => pending.Task };
+        using var model = new InboxViewModel(dialogs);
+        model.InitializeLibrary(() => temporary.Path);
+        model.InitializeOcrProcessing(new OcrProcessingPreference(settingsFolder.Path));
+        var window = new MainWindow { DataContext = model, Width = 1280, Height = 800 };
+        window.Show();
+        Task? work = null;
+        try
+        {
+            await WaitForPreviewAsync(model);
+            var settings = OpenSettingsAt(window, "RecognitionGroup");
+            var choice = Assert.IsType<CheckBox>(settings.FindControl<CheckBox>(switchName));
+            if (!choice.IsEffectivelyEnabled) return; // RapidOCR is not offered on this machine.
+            TabTo(settings, choice);
+
+            // Work begins (Trash left open holds Plico busy, as a watched folder's import does) and turns the switch off.
+            work = model.OpenTrashCommand.ExecuteAsync(null);
+            Dispatcher.UIThread.RunJobs();
+            Assert.False(choice.IsEffectivelyEnabled);
+            Assert.True(KeyboardIsIn(settings), $"While Plico works the keyboard is on {KeyboardOwner(settings)}, not in Settings.");
+
+            // Once the work is done the keyboard is back on the switch, which Space turns on.
+            pending.SetResult(null);
+            await work;
+            work = null;
+            Dispatcher.UIThread.RunJobs();
+            Assert.True(choice.IsFocused, $"After the work the keyboard is on {KeyboardOwner(settings)}.");
+            PressKey(settings, Key.Space, PhysicalKey.Space, " ");
+            Assert.Equal(true, choice.IsChecked);
+            settings.Close();
+        }
+        finally
+        {
+            pending.TrySetResult(null);
+            if (work is not null) await work;
             window.Close();
         }
     }

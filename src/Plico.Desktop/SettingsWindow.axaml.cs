@@ -4,6 +4,7 @@ using Avalonia.Controls;
 using Avalonia.Input;
 using Avalonia.Interactivity;
 using Avalonia.Threading;
+using Avalonia.VisualTree;
 
 namespace Plico.Desktop;
 
@@ -22,6 +23,8 @@ public sealed partial class SettingsWindow : Window
     private bool _busyBeforeAction;
     private bool _waitingForWork;
     private Window? _watchedOwner;
+    // How the control with the keyboard got it, so a keyboard moved for it shows the focus ring only if it did.
+    private NavigationMethod _focusNavigation;
 
     public SettingsWindow()
     {
@@ -41,6 +44,8 @@ public sealed partial class SettingsWindow : Window
         // A key that goes down here may come up somewhere else: Alt of Alt+Tab comes up in the window in front, and Enter
         // on Watch a folder… comes up in the picker. Leaving Settings, or input in the main window, settles it too.
         Deactivated += (_, _) => SettleAction();
+        AddHandler(GotFocusEvent, (_, e) => _focusNavigation = e.NavigationMethod, RoutingStrategies.Bubble, handledEventsToo: true);
+        AddHandler(LostFocusEvent, Control_LostFocus, RoutingStrategies.Bubble, handledEventsToo: true);
         DataContextChanged += (_, _) => AttachModel(DataContext as InboxViewModel);
         Closed += (_, _) =>
         {
@@ -66,6 +71,37 @@ public sealed partial class SettingsWindow : Window
     }
 
     private void OwnerInput(object? sender, RoutedEventArgs e) => SettleActionNow();
+
+    /// <summary>
+    /// A control that turns off while it has the keyboard (a recognition switch once Plico starts working) would drop
+    /// the keyboard out of Settings, so the next Tab started at the top. It goes to its section's row in the list
+    /// instead, and back to the control when the control turns on again, unless the person has moved it meanwhile.
+    /// </summary>
+    private void Control_LostFocus(object? sender, FocusChangedEventArgs e)
+    {
+        if (e.NewFocusedElement is not null || e.Source is not Control { IsEffectivelyEnabled: false } control || !IsActive) return;
+        var navigation = _focusNavigation;
+        if (SectionRow(control) is not { } row || !row.Focus(navigation)) return;
+        WaitToReturnKeyboard(control, row, navigation);
+    }
+
+    private void WaitToReturnKeyboard(Control control, Button row, NavigationMethod navigation)
+    {
+        void Return(object? sender, AvaloniaPropertyChangedEventArgs change)
+        {
+            if (change.Property != IsEffectivelyEnabledProperty || !control.IsEffectivelyEnabled) return;
+            control.PropertyChanged -= Return;
+            if (IsVisible && (row.IsFocused || FocusManager?.GetFocusedElement() is null)) control.Focus(navigation);
+        }
+        control.PropertyChanged += Return;
+    }
+
+    /// <summary>The row in the section list that jumps to the section holding <paramref name="control"/>.</summary>
+    private Button? SectionRow(Control control)
+    {
+        var section = control.GetVisualAncestors().OfType<StackPanel>().FirstOrDefault(panel => panel.Parent == SettingsPage);
+        return section is null ? null : SectionList.Children.OfType<Button>().FirstOrDefault(row => Equals(row.Tag, section.Name));
+    }
 
     private void AttachModel(InboxViewModel? model)
     {
