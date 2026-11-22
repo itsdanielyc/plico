@@ -571,7 +571,13 @@
                             </Button>
                         </StackPanel>
 
-                        <StackPanel IsVisible="{Binding HasSavedSearches}">
+                        <StackPanel x:Name="SavedSearchesSection">
+                            <StackPanel.IsVisible>
+                                <MultiBinding Converter="{x:Static BoolConverters.And}">
+                                    <Binding Path="HasSavedSearches" />
+                                    <Binding Path="LibraryHasDocuments" />
+                                </MultiBinding>
+                            </StackPanel.IsVisible>
                             <TextBlock Classes="section" Text="{translation:Tr SavedSearches}" />
                             <ItemsControl x:Name="SavedSearchList" ItemsSource="{Binding SavedSearches}" IsEnabled="{Binding CanWork}">
                                 <ItemsControl.ItemsPanel><ItemsPanelTemplate><StackPanel Spacing="2" /></ItemsPanelTemplate></ItemsControl.ItemsPanel>
@@ -589,7 +595,13 @@
                             </ItemsControl>
                         </StackPanel>
 
-                        <StackPanel IsVisible="{Binding HasTags}">
+                        <StackPanel x:Name="TagsSection">
+                            <StackPanel.IsVisible>
+                                <MultiBinding Converter="{x:Static BoolConverters.And}">
+                                    <Binding Path="HasTags" />
+                                    <Binding Path="LibraryHasDocuments" />
+                                </MultiBinding>
+                            </StackPanel.IsVisible>
                             <Grid ColumnDefinitions="*,Auto">
                                 <TextBlock Classes="section" Text="{translation:Tr Tags}" />
                                 <Button Grid.Column="1" x:Name="RenameActiveTagButton" Classes="subaction" Content="{translation:Tr Rename}"
@@ -760,10 +772,11 @@
                                                AutomationProperties.LiveSetting="Polite" />
                                 </Grid>
                             </Grid>
+                            <!-- Until the library has its first document the welcome hero carries Scan and Add files. -->
                             <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="8" Height="40" VerticalAlignment="Top">
-                                <Button x:Name="ScanButton" Classes="secondary large with-icon" local:Ui.Icon="{StaticResource Icon.ScanFrame}"
+                                <Button x:Name="ScanButton" Classes="secondary large with-icon" local:Ui.Icon="{StaticResource Icon.ScanFrame}" IsVisible="{Binding !ShowWelcome}"
                                         Command="{Binding ScanCommand}" Content="{translation:Tr Scan}" IsEnabled="{Binding CanWork}" ToolTip.Tip="{translation:Tr ScanTip}" />
-                                <StackPanel Orientation="Horizontal">
+                                <StackPanel Orientation="Horizontal" IsVisible="{Binding !ShowWelcome}">
                                     <Button x:Name="AddFilesButton" Classes="primary large with-icon" local:Ui.Icon="{StaticResource Icon.Plus}" CornerRadius="10,0,0,10"
                                             IsEnabled="{Binding CanWork}" Command="{Binding AddFilesCommand}" Content="{translation:Tr AddFiles}"
                                             ToolTip.Tip="{translation:Tr AddFilesTip}" />
@@ -1410,9 +1423,9 @@
                                                         <TextBlock Text="{x:Static local:PlatformText.WelcomeLede}" FontSize="16" LineHeight="24"
                                                                    Foreground="{DynamicResource TileFg2}" TextWrapping="Wrap" />
                                                         <StackPanel Orientation="Horizontal" Spacing="10" Margin="0,12,0,0">
-                                                            <Button Classes="inverse large with-icon" local:Ui.Icon="{StaticResource Icon.Plus}" Content="{translation:Tr AddFiles}"
+                                                            <Button x:Name="WelcomeAddFilesButton" Classes="inverse large with-icon" local:Ui.Icon="{StaticResource Icon.Plus}" Content="{translation:Tr AddFiles}"
                                                                     Command="{Binding AddFilesCommand}" IsEnabled="{Binding CanWork}" />
-                                                            <Button Classes="inverse-ghost large with-icon" local:Ui.Icon="{StaticResource Icon.ScanFrame}" Content="{translation:Tr ScanPaper}"
+                                                            <Button x:Name="WelcomeScanButton" Classes="inverse-ghost large with-icon" local:Ui.Icon="{StaticResource Icon.ScanFrame}" Content="{translation:Tr ScanPaper}"
                                                                     Command="{Binding ScanCommand}" IsEnabled="{Binding CanWork}" />
                                                         </StackPanel>
                                                     </StackPanel>

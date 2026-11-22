@@ -49,6 +49,12 @@ internal sealed partial class InboxViewModel
     /// <summary>The Inbox is empty: show "Inbox clear" or, for a new library, the ways to bring paperwork in.</summary>
     public bool ShowInboxZero => HasLibrary && InboxSelected && ActiveSavedSearch is null && !HasDocuments;
     public bool ShowWelcome => ShowInboxZero && !_libraryHasDocuments;
+
+    /// <summary>
+    /// Whether the library holds a document yet. Until it does, the welcome hero carries Scan and Add files, and the
+    /// sidebar keeps only its places: saved searches and tags wait for the first document.
+    /// </summary>
+    public bool LibraryHasDocuments => HasLibrary && _libraryHasDocuments;
     public bool ShowInboxClear => ShowInboxZero && _libraryHasDocuments;
     public bool ShowFilingCard => HasSelection && !HasBatchSelection;
     public bool HasDueReminders => DueReminderCount > 0;
@@ -85,6 +91,7 @@ internal sealed partial class InboxViewModel
     {
         OnPropertyChanged(nameof(ShowInboxZero));
         OnPropertyChanged(nameof(ShowWelcome));
+        OnPropertyChanged(nameof(LibraryHasDocuments));
         OnPropertyChanged(nameof(ShowInboxClear));
     }
 

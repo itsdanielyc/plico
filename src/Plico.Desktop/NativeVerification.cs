@@ -36,11 +36,16 @@ internal static partial class NativeVerification
             Require(string.IsNullOrEmpty(expectedRuntime) || runtime == expectedRuntime,
                 $"Expected runtime {expectedRuntime}. Running on {runtime}.");
             Require(window.IsVisible && Control<TextBlock>(window, "InboxHeading").Text == "Inbox", "The native inbox did not open.");
-            var import = Control<Button>(window, "AddFilesButton");
-            Require(import.IsEnabled && import.Command is IAsyncRelayCommand, "The import control was not available.");
+            // A first run shows the welcome hero's two ways in; the toolbar's Scan and Add files wait for a document.
+            var import = Control<Button>(window, "WelcomeAddFilesButton");
+            Require(model.ShowWelcome && import.IsEffectivelyVisible && import.IsEnabled && import.Command is IAsyncRelayCommand &&
+                    !Control<Button>(window, "AddFilesButton").IsEffectivelyVisible && !Control<Button>(window, "ScanButton").IsEffectivelyVisible,
+                "The first run did not offer the welcome hero's Add files alone.");
             await ((IAsyncRelayCommand)import.Command!).ExecuteAsync(null);
             Require(model.Documents.Count == 1 && model.SelectedDocument is { HasText: true },
                 $"The receipt did not import with embedded text. {model.Status}");
+            Require(Control<Button>(window, "AddFilesButton").IsEffectivelyVisible && Control<Button>(window, "ScanButton").IsEffectivelyVisible,
+                "The toolbar's Scan and Add files did not appear with the first document.");
             await UntilAsync(() => model.Preview is not null, () => model.PreviewMessage);
             await VerifySingleExportAsync(window, model, dialogs, evidenceDirectory);
             await VerifyArchivalExportAsync(window, model, dialogs, evidenceDirectory);
