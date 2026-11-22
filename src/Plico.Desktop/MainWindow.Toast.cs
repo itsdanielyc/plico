@@ -9,10 +9,11 @@ using Avalonia.Threading;
 namespace Plico.Desktop;
 
 /// <summary>
-/// The ink toast that replaced the status bar. It rises from the bottom of the page canvas when the status message
-/// changes, carries at most one action, leaves after about six seconds and stays while the pointer or the keyboard
-/// is on it, work in the background included. Progress and anything that needs attention go to the sidebar's status
-/// card instead. When the toast lets go of the keyboard (it is closed, or the button holding it goes), the keyboard
+/// The ink toast that replaced the status bar. It rises from the bottom of the page canvas with each message that is
+/// news (<see cref="InboxViewModel.ToastStatus"/>): the person's own edit at once, the work's message when the work
+/// ends. It carries at most one action, leaves after about six seconds and stays while the pointer or the keyboard is
+/// on it, work in the background included. Progress and anything that needs attention go to the sidebar's status card
+/// instead. When the toast lets go of the keyboard (it is closed, or the button holding it goes), the keyboard
 /// lands on the open document's row rather than out of the window.
 /// </summary>
 public partial class MainWindow
@@ -61,19 +62,24 @@ public partial class MainWindow
         if (sender is not InboxViewModel model) return;
         switch (e.PropertyName)
         {
-            case nameof(InboxViewModel.Status) or nameof(InboxViewModel.ToastOffer):
-                if (!model.IsBusy) ShowToast(model);
+            case nameof(InboxViewModel.ToastStatus):
+                // While work runs its progress is on the status card and its message arrives when it ends; an edit the
+                // person makes meanwhile is news at once.
+                if (!model.IsBusy || model.ToastIsForeground) ShowToast(model);
+                break;
+            case nameof(InboxViewModel.ToastOffer):
+                // An action arrives with its message; it never raises a toast that was closed or has gone.
+                if (Toast.IsVisible) RestartToastTimer();
                 break;
             case nameof(InboxViewModel.IsBusy):
-                // While work runs its progress is on the status card; the result arrives as a toast when it ends. A toast
-                // the pointer or the keyboard is on stays, as it does when its time is up.
+                // A toast the pointer or the keyboard is on stays, as it does when its time is up, and so does the
+                // person's own edit.
                 if (!model.IsBusy)
                 {
-                    ShowToast(model);
                     // The work may have reloaded the queue under a keyboard that had just landed on it.
                     if (_keyboardOwedToOpenDocument) OweKeyboardToOpenDocument();
                 }
-                else if (!ToastIsHeld)
+                else if (!ToastIsHeld && !model.ToastIsForeground)
                 {
                     HideToast();
                 }
@@ -112,7 +118,7 @@ public partial class MainWindow
 
     private void ShowToast(InboxViewModel model)
     {
-        if (string.IsNullOrWhiteSpace(model.Status)) return;
+        if (string.IsNullOrWhiteSpace(model.ToastStatus)) return;
         if (model.ToastIsQuiet)
         {
             HideToast();

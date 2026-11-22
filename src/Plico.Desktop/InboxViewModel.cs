@@ -249,7 +249,7 @@ internal sealed partial class InboxViewModel : ObservableObject, IDisposable
         {
             // A tag the document already has changes nothing: the toast says so and the current Undo offer stays.
             TagInput = "";
-            Announce(DesktopText.Format($"Already tagged “{present}”."), DesktopText.Translate("Already tagged"), $"“{present}”");
+            SaveEdit(() => Announce(DesktopText.Format($"Already tagged “{present}”."), DesktopText.Translate("Already tagged"), $"“{present}”"));
             return;
         }
         if (UpdateDocument((library, document) =>
@@ -431,7 +431,7 @@ internal sealed partial class InboxViewModel : ObservableObject, IDisposable
         _operationCancellation = cancellation;
         _operationCompletion = completion;
         IsBusy = true;
-        Status = workingStatus;
+        BeginWorkMessages(workingStatus);
         try
         {
             await operation(cancellation.Token);
@@ -449,6 +449,7 @@ internal sealed partial class InboxViewModel : ObservableObject, IDisposable
             _operationCancellation = null;
             _operationCompletion = null;
             IsBusy = false;
+            FinishWorkMessages();
             completion.SetResult();
         }
     }
@@ -485,7 +486,10 @@ internal sealed partial class InboxViewModel : ObservableObject, IDisposable
     /// Applies one change to the open document, reloads it and announces it. The change returns its Undo offer, which
     /// replaces the current one, or null when there is nothing to undo, which retires the current one.
     /// </summary>
-    private bool UpdateDocument(Func<InboxLibrary, DocumentSummary, UndoOffer?> update, string success, ToastText? toast = null)
+    private bool UpdateDocument(Func<InboxLibrary, DocumentSummary, UndoOffer?> update, string success, ToastText? toast = null) =>
+        SaveEdit(() => UpdateDocumentNow(update, success, toast));
+
+    private bool UpdateDocumentNow(Func<InboxLibrary, DocumentSummary, UndoOffer?> update, string success, ToastText? toast)
     {
         // Like the title and the date, a tag is one quick catalog write, so it is saved while Plico works in the background.
         if (!HasLibrary || SelectedDocument is not { } document) return false;
@@ -551,6 +555,7 @@ internal sealed partial class InboxViewModel : ObservableObject, IDisposable
         OnPropertyChanged(nameof(CanWork));
         OnPropertyChanged(nameof(CanGoToPreviousMatch));
         OnPropertyChanged(nameof(IsIdle));
+        OnPropertyChanged(nameof(CanUndo));
         OnPropertyChanged(nameof(CanStartFolderWatch));
         OnPropertyChanged(nameof(ShowIndexReport));
     }

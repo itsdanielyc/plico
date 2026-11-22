@@ -27,12 +27,15 @@ internal sealed partial class InboxViewModel
     public bool StatusCardIsWarning => NeedsAttention;
     public bool StatusCardIsFailed => !NeedsAttention && HasFailedWatch;
 
-    /// <summary>"Watching Scans", "2 files need you", or the work in progress: "Copied 3 of 12 PDFs…".</summary>
+    /// <summary>
+    /// "Watching Scans", "2 files need you", or the work in progress: "Copied 3 of 12 PDFs…". While work runs the card
+    /// keeps saying what the work is doing, whatever else is announced meanwhile.
+    /// </summary>
     public string StatusCardTitle
     {
         get
         {
-            if (IsBusy) return Status;
+            if (IsBusy) return WorkStatus;
             if (HasImportFailures)
                 return ImportFailures.Count == 1 ? DesktopText.Translate("1 file needs you") : DesktopText.Format($"{ImportFailures.Count} files need you");
             if (ShowIndexReport)

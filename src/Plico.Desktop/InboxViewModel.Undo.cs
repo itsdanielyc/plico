@@ -9,7 +9,18 @@ namespace Plico.Desktop;
 /// Trash") and <see cref="Body"/> says what it was about. <see cref="Revert"/> goes through the library, so the PDF
 /// folder and the catalog stay consistent, and returns the document to select afterwards.
 /// </summary>
-internal sealed record UndoOffer(string Title, string? Body, Func<CancellationToken, Task<long?>> Revert);
+internal sealed record UndoOffer(string Title, string? Body, Func<CancellationToken, Task<long?>> Revert)
+{
+    /// <summary>
+    /// The revert as one quick catalog write, for the edits made in place (a title, a date, a tag): it runs at once, even
+    /// while Plico works, as the edit did. Null for a change that moves files or touches many documents.
+    /// </summary>
+    public Func<long?>? RevertInPlace { get; init; }
+
+    /// <summary>An offer whose revert is one quick catalog write, so it can be taken back while Plico works.</summary>
+    internal static UndoOffer InPlace(string title, string? body, Func<long?> revert) =>
+        new(title, body, token => Task.Run(revert, token)) { RevertInPlace = revert };
+}
 
 /// <summary>
 /// Undo belongs to its action. Each undoable action makes one offer and replaces the one before it; any other change
@@ -19,10 +30,16 @@ internal sealed record UndoOffer(string Title, string? Body, Func<CancellationTo
 internal sealed partial class InboxViewModel
 {
     [ObservableProperty]
-    [NotifyPropertyChangedFor(nameof(HasUndo), nameof(UndoLabel))]
+    [NotifyPropertyChangedFor(nameof(HasUndo), nameof(UndoLabel), nameof(CanUndo))]
     private UndoOffer? _undoOffer;
 
     public bool HasUndo => UndoOffer is not null;
+
+    /// <summary>
+    /// Whether Undo can run now: when Plico is free, or while it works for an edit made in place, which is taken back as
+    /// quickly as it was saved.
+    /// </summary>
+    public bool CanUndo => HasLibrary && UndoOffer is { } offer && (!IsBusy || offer.RevertInPlace is not null);
 
     /// <summary>What Undo would reverse, in the words of its toast.</summary>
     public string UndoLabel => UndoOffer?.Title ?? "";
@@ -31,7 +48,12 @@ internal sealed partial class InboxViewModel
     [RelayCommand]
     private Task UndoAsync()
     {
-        if (!CanWork || UndoOffer is not { } offer) return Task.CompletedTask;
+        if (!CanUndo || UndoOffer is not { } offer) return Task.CompletedTask;
+        if (IsBusy && offer.RevertInPlace is { } revert)
+        {
+            SaveEdit(() => UndoInPlace(offer, revert));
+            return Task.CompletedTask;
+        }
         return RunOperationAsync(DesktopText.Translate("Undoing…"), async token =>
         {
             var library = RequireLibrary();
@@ -43,6 +65,26 @@ internal sealed partial class InboxViewModel
             LoadResults(restored, retainLoadedResults: true);
             Status = DesktopText.Format($"Undone: {offer.Title}.");
         });
+    }
+
+    /// <summary>Takes back an edit made in place while Plico works, as quickly as it was saved.</summary>
+    private void UndoInPlace(UndoOffer offer, Func<long?> revert)
+    {
+        try
+        {
+            var library = RequireLibrary();
+            long? restored = revert();
+            if (ReferenceEquals(UndoOffer, offer)) UndoOffer = null;
+            Tags = library.GetTags();
+            RefreshInboxCount();
+            LoadResults(restored, retainLoadedResults: true);
+            Status = DesktopText.Format($"Undone: {offer.Title}.");
+        }
+        catch (Exception error)
+        {
+            // A failed revert keeps the offer, so it can be tried again once the cause is fixed.
+            Status = error.Message;
+        }
     }
 
     /// <summary>Makes <paramref name="offer"/> the one Undo reverses and announces it: its toast names it and carries Undo.</summary>
@@ -101,13 +143,10 @@ internal sealed partial class InboxViewModel
 
     /// <summary>Takes a tag back off one document, or puts a removed one back with its catalog spelling and colour.</summary>
     private static UndoOffer TagUndo(InboxLibrary library, long documentId, string label, bool added) =>
-        new(DesktopText.Translate(added ? "Tag added" : "Tag removed"), $"“{label}”", async token =>
+        UndoOffer.InPlace(DesktopText.Translate(added ? "Tag added" : "Tag removed"), $"“{label}”", () =>
         {
-            await Task.Run(() =>
-            {
-                if (added) library.RemoveTag(documentId, label);
-                else library.AddTag(documentId, label);
-            }, token);
+            if (added) library.RemoveTag(documentId, label);
+            else library.AddTag(documentId, label);
             return documentId;
         });
 }

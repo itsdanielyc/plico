@@ -86,7 +86,10 @@ internal sealed partial class InboxViewModel
         if (HasLibrary && SelectedDocument is { } document) SaveDocumentDate(document, null);
     }
 
-    private void SaveDocumentDate(DocumentSummary document, DateOnly? date, bool reloadAfterInput = false)
+    private void SaveDocumentDate(DocumentSummary document, DateOnly? date, bool reloadAfterInput = false) =>
+        SaveEdit(() => SaveDocumentDateNow(document, date, reloadAfterInput));
+
+    private void SaveDocumentDateNow(DocumentSummary document, DateOnly? date, bool reloadAfterInput)
     {
         if (date == document.DocumentDate)
         {
@@ -118,10 +121,10 @@ internal sealed partial class InboxViewModel
 
     /// <summary>Puts back the date a document had before it was set or cleared.</summary>
     private static UndoOffer DateUndo(InboxLibrary library, DocumentSummary document, DateOnly? date) =>
-        new(DesktopText.Translate(date.HasValue ? "Date set" : "Date cleared"), date is { } day ? DisplayDates.Day(day) : document.Title,
-            async token =>
+        UndoOffer.InPlace(DesktopText.Translate(date.HasValue ? "Date set" : "Date cleared"), date is { } day ? DisplayDates.Day(day) : document.Title,
+            () =>
             {
-                await Task.Run(() => library.SetDocumentDate(document.Id, document.DocumentDate), token);
+                library.SetDocumentDate(document.Id, document.DocumentDate);
                 return document.Id;
             });
 

@@ -17,11 +17,14 @@ internal enum ToastOffer
 internal readonly record struct ToastText(string Title, string? Body);
 
 /// <summary>
-/// What the ink toast says and offers. The message of record is <see cref="Status"/> (the live region and the log);
-/// the toast shows it as a short title with no full stop and an optional body ("Marked reviewed" over the document's
-/// title), never cut. The action is the latest offer made, so "Exported" carries Open export and "Marked reviewed"
-/// carries Undo. Undo has one offer at a time (see <see cref="UndoOffer"/>), which Ctrl+Z and the palette reach after
-/// the toast has gone.
+/// What the ink toast says and offers. The message of record is <see cref="Status"/>, every line included; the toast
+/// carries <see cref="ToastStatus"/>, the latest message that is news, as a short title with no full stop and an
+/// optional body ("Marked reviewed" over the document's title), never cut. While work runs, its lines go to the status
+/// card (<see cref="WorkStatus"/>) and its last message becomes the toast when it ends; work that ends on a line still
+/// in progress ("Set the archive number…") has nothing to say and raises no toast. An edit the person makes meanwhile
+/// is news at once (<see cref="ToastIsForeground"/>). The action is the latest offer made, so "Exported" carries Open
+/// export and "Marked reviewed" carries Undo. Undo has one offer at a time (see <see cref="UndoOffer"/>), which Ctrl+Z
+/// and the palette reach after the toast has gone.
 /// </summary>
 internal sealed partial class InboxViewModel
 {
@@ -36,10 +39,23 @@ internal sealed partial class InboxViewModel
     private ToastText _toastText;
     private ToastText? _pendingToast;
     private bool _pendingQuiet;
+    private string _toastStatus = "";
+
+    // The latest line of the work in hand and what its toast would say (see RunOperationAsync). A line that ends in "…"
+    // says the work is under way; any other is the work's message, which becomes the toast when the work ends.
+    private string _workStatus = "";
+    private ToastText _workToast;
+    private bool _workQuiet;
+    private bool _workHasMessage;
+    private ToastOffer _workOffer;
+
+    // Above zero while the person's own edit (a title, a date, a tag, or its Undo) is saved; its messages are news at
+    // once, even while work runs.
+    private int _editsInHand;
 
     /// <summary>
-    /// The latest message. It is raised on every assignment, even when the words repeat ("Tag added." twice), because
-    /// each one is a new event for the toast and the live region.
+    /// The latest message, a line of the work in hand included. It is raised on every assignment, even when the words
+    /// repeat ("Tag added." twice), because each one is a new event.
     /// </summary>
     public string Status
     {
@@ -47,24 +63,36 @@ internal sealed partial class InboxViewModel
         set
         {
             _status = value;
-            _statusSerial++;
-            _toastText = _pendingToast ?? DescribeForToast(value);
+            var toast = _pendingToast ?? DescribeForToast(value);
+            bool quiet = _pendingQuiet;
             _pendingToast = null;
-            ToastIsQuiet = _pendingQuiet;
             _pendingQuiet = false;
-            RaiseDerived(nameof(ToastTitle));
-            RaiseDerived(nameof(ToastBody));
-            RaiseDerived(nameof(HasToastBody));
+            if (IsBusy && _editsInHand == 0) NoteWorkLine(value, toast, quiet);
+            else ShowMessage(value, toast, quiet, foreground: IsBusy);
             OnPropertyChanged();
-            RaiseToastOffers();
         }
     }
+
+    /// <summary>
+    /// The message the toast carries and its live region speaks: the latest message that is news, never a line of the
+    /// work in hand. It is raised for every such message, even when the words repeat.
+    /// </summary>
+    public string ToastStatus => _toastStatus;
+
+    /// <summary>What the work in hand is doing, for the status card while Plico works ("Copied 3 of 12 PDFs…").</summary>
+    public string WorkStatus => _workStatus;
 
     /// <summary>
     /// A message the window already shows by itself, such as "Library ready." when a library opens: it is the message
     /// of record and the live region, but raises no toast over the page.
     /// </summary>
     public bool ToastIsQuiet { get; private set; }
+
+    /// <summary>
+    /// A message that rises and stays while Plico works: the person's own edit, saved beside the work. Other news waits
+    /// until the work ends.
+    /// </summary>
+    public bool ToastIsForeground { get; private set; }
 
     /// <summary>The toast's title: two to five words with no full stop ("Marked reviewed", "Backup saved").</summary>
     public string ToastTitle => _toastText.Title;
@@ -88,16 +116,87 @@ internal sealed partial class InboxViewModel
     /// Whether the message reports a failure, so the toast shows an alert glyph instead of a check. Failures follow the
     /// family's two shapes ("Couldn't …", "… didn't …") or Plico's older "Could not …" and "… failed" wording.
     /// </summary>
-    public bool StatusIsProblem
+    public bool StatusIsProblem => IsProblem(Status);
+
+    /// <summary>Whether the toast's message reports a failure; see <see cref="StatusIsProblem"/>.</summary>
+    public bool ToastIsProblem => IsProblem(_toastStatus);
+
+    private static bool IsProblem(string? message)
     {
-        get
+        string status = message ?? "";
+        return status.StartsWith("Could", StringComparison.Ordinal) || status.StartsWith("Impossible", StringComparison.Ordinal)
+            || status.Contains("didn't", StringComparison.Ordinal) || status.Contains(" failed", StringComparison.Ordinal)
+            || status.Contains("échou", StringComparison.Ordinal);
+    }
+
+    /// <summary>Makes <paramref name="message"/> the toast's: the window shows it, unless it is quiet.</summary>
+    private void ShowMessage(string message, ToastText toast, bool quiet, bool foreground)
+    {
+        _statusSerial++;
+        _toastStatus = message;
+        _toastText = toast;
+        ToastIsQuiet = quiet;
+        ToastIsForeground = foreground;
+        RaiseDerived(nameof(ToastTitle));
+        RaiseDerived(nameof(ToastBody));
+        RaiseDerived(nameof(HasToastBody));
+        RaiseDerived(nameof(ToastIsProblem));
+        RaiseDerived(nameof(ToastStatus));
+        RaiseToastOffers();
+    }
+
+    /// <summary>Keeps a line of the work in hand for the status card, and as the toast to show when the work ends.</summary>
+    private void NoteWorkLine(string line, ToastText toast, bool quiet)
+    {
+        _workStatus = line;
+        _workToast = toast;
+        _workQuiet = quiet;
+        _workHasMessage = !line.EndsWith('…');
+        RaiseDerived(nameof(WorkStatus));
+    }
+
+    /// <summary>Starts a new piece of work: its working status goes to the status card and is never its message.</summary>
+    private void BeginWorkMessages(string workingStatus)
+    {
+        _workOffer = ToastOffer.None;
+        Status = workingStatus;
+        _workHasMessage = false;
+    }
+
+    /// <summary>
+    /// Ends the work in hand: its last message becomes the toast, with any action the work offered. Work that ended on
+    /// a line still in progress, or with no line of its own, has nothing to say, so the toast and its offer stay as they
+    /// were and nothing rises. Call it once the work is no longer busy.
+    /// </summary>
+    private void FinishWorkMessages()
+    {
+        var offer = _workOffer;
+        _workOffer = ToastOffer.None;
+        if (!_workHasMessage) return;
+        _workHasMessage = false;
+        ShowMessage(_workStatus, _workToast, _workQuiet, foreground: false);
+        if (offer != ToastOffer.None) UpdateToastOffer(available: true, offer);
+    }
+
+    /// <summary>Saves the person's own edit; what it says is news at once, even while Plico works.</summary>
+    private T SaveEdit<T>(Func<T> edit)
+    {
+        _editsInHand++;
+        try
         {
-            string status = Status ?? "";
-            return status.StartsWith("Could", StringComparison.Ordinal) || status.StartsWith("Impossible", StringComparison.Ordinal)
-                || status.Contains("didn't", StringComparison.Ordinal) || status.Contains(" failed", StringComparison.Ordinal)
-                || status.Contains("échou", StringComparison.Ordinal);
+            return edit();
+        }
+        finally
+        {
+            _editsInHand--;
         }
     }
+
+    private void SaveEdit(Action edit) => SaveEdit(() =>
+    {
+        edit();
+        return true;
+    });
 
     /// <summary>Sets the message of record without a toast, for news the window already shows.</summary>
     private void Note(string status)
@@ -156,6 +255,13 @@ internal sealed partial class InboxViewModel
 
     private void UpdateToastOffer(bool available, ToastOffer offer)
     {
+        if (available && IsBusy && _editsInHand == 0)
+        {
+            // An action offered by the work in hand travels with the work's message, when the work ends.
+            _workOffer = offer;
+            return;
+        }
+        if (!available && _workOffer == offer) _workOffer = ToastOffer.None;
         if (available)
         {
             _offerSerial = _statusSerial;

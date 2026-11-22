@@ -1652,14 +1652,14 @@
                             <Grid ColumnDefinitions="Auto,*,Auto,Auto" ColumnSpacing="10">
                                 <Panel Width="18" Height="18" VerticalAlignment="Top" Margin="0,3,0,0">
                                     <local:Icon Data="{StaticResource Icon.Check}" Width="18" Height="18" StrokeWidth="1.8" Foreground="{DynamicResource OnFg}"
-                                                IsVisible="{Binding !StatusIsProblem}" />
+                                                IsVisible="{Binding !ToastIsProblem}" />
                                     <local:Icon Data="{StaticResource Icon.AlertCircle}" Width="18" Height="18" StrokeWidth="1.8" Foreground="{DynamicResource ToastAlert}"
-                                                IsVisible="{Binding StatusIsProblem}" />
+                                                IsVisible="{Binding ToastIsProblem}" />
                                 </Panel>
                                 <!-- The title and body are never cut; the live region speaks the whole message of record. -->
                                 <StackPanel Grid.Column="1" Spacing="1" VerticalAlignment="Center" Margin="0,3">
                                     <TextBlock Classes="toast-title" Text="{Binding ToastTitle}"
-                                               AutomationProperties.Name="{Binding Status}" AutomationProperties.LiveSetting="Polite" />
+                                               AutomationProperties.Name="{Binding ToastStatus}" AutomationProperties.LiveSetting="Polite" />
                                     <TextBlock Classes="toast-body" Text="{Binding ToastBody}" IsVisible="{Binding HasToastBody}" />
                                 </StackPanel>
                                 <Panel Grid.Column="2" VerticalAlignment="Center">
@@ -1670,7 +1670,7 @@
                                         is, so typing carries on (MainWindow.Toast).
                                     -->
                                     <Button x:Name="UndoButton" Classes="toast-action" Content="{translation:Tr UndoAction}" Command="{Binding UndoCommand}"
-                                            IsVisible="{Binding ToastOffersUndo}" IsEnabled="{Binding CanWork}" ToolTip.Tip="{Binding UndoLabel}" />
+                                            IsVisible="{Binding ToastOffersUndo}" IsEnabled="{Binding CanUndo}" ToolTip.Tip="{Binding UndoLabel}" />
                                     <Button x:Name="OpenBackupFolderButton" Classes="toast-action" Content="{translation:Tr OpenBackup}"
                                             Command="{Binding OpenBackupFolderCommand}" IsVisible="{Binding ToastOffersBackup}" IsEnabled="{Binding CanWork}" />
                                     <Button x:Name="OpenExportFolderButton" Classes="toast-action" Content="{translation:Tr OpenExport}"

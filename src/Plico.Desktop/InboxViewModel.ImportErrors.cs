@@ -21,7 +21,6 @@ internal sealed partial class InboxViewModel
     private Task InspectImportErrorsAsync()
     {
         if (!HasImportFailures) return Task.CompletedTask;
-        string previousStatus = Status;
         return RunOperationAsync(DesktopText.Translate("Reviewing import errors…"), async token =>
         {
             var failures = ImportFailures;
@@ -40,7 +39,7 @@ internal sealed partial class InboxViewModel
                     Status = DesktopText.Translate("Import errors cleared.");
                     break;
                 default:
-                    Status = previousStatus;
+                    // Closed: nothing changed, so nothing is announced.
                     break;
             }
         });

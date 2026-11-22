@@ -42,7 +42,9 @@ internal sealed partial class InboxViewModel
     /// background as well, so a watched folder's import never swallows what was typed. When the field lost the keyboard
     /// to a click, <paramref name="reloadAfterInput"/> waits for that click before the results reload.
     /// </summary>
-    internal void CommitTitleEdit(bool reloadAfterInput = false)
+    internal void CommitTitleEdit(bool reloadAfterInput = false) => SaveEdit(() => SaveTitleEdit(reloadAfterInput));
+
+    private void SaveTitleEdit(bool reloadAfterInput)
     {
         if (!IsEditingTitle || _titleEditDocumentId is not { } documentId) return;
         string draft = TitleDraft;
@@ -103,9 +105,9 @@ internal sealed partial class InboxViewModel
 
     /// <summary>Puts back the title a document had before it was renamed.</summary>
     private static UndoOffer TitleUndo(InboxLibrary library, long documentId, string previous, string current) =>
-        new(DesktopText.Translate("Renamed"), $"“{current}”", async token =>
+        UndoOffer.InPlace(DesktopText.Translate("Renamed"), $"“{current}”", () =>
         {
-            await Task.Run(() => library.SetTitle(documentId, previous), token);
+            library.SetTitle(documentId, previous);
             return documentId;
         });
 }

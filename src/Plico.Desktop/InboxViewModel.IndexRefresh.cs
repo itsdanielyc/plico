@@ -55,15 +55,14 @@ internal sealed partial class InboxViewModel
         if (!ShowIndexReport || _library is not { } library) return;
         var notices = LatestIndexRefresh?.Warnings ?? [];
         if (FolderRestoreNotices.Count > 0) notices = [.. notices, .. FolderRestoreNotices];
-        string previous = Status;
         IndexReport? report = null;
         await RunOperationAsync(DesktopText.Translate("Reading index report…"), async token =>
         {
             var unavailable = await Task.Run(() => library.ReadUnavailablePaths(token), token);
             token.ThrowIfCancellationRequested();
             UnavailableCount = unavailable.Count;
+            // Reading the report has nothing to announce, so no toast rises.
             report = new(unavailable, notices);
-            Status = previous;
         });
 
         if (report is not null && ShowIndexReport && ReferenceEquals(_library, library))
