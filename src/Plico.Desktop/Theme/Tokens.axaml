@@ -149,11 +149,11 @@
             <StaticResource x:Key="SystemControlBackgroundListLowBrush" ResourceKey="Hover" />
             <StaticResource x:Key="SystemControlBackgroundListMediumBrush" ResourceKey="Pressed" />
             <StaticResource x:Key="SystemRegionBrush" ResourceKey="Base" />
-            <!-- Buttons without a class look like the secondary button. -->
+            <!-- Buttons without a class look like the secondary button. Disabled, they keep no fill or border, so the quiet buttons that clear their own background (rows, fields, the page bar) stay quiet while Plico is busy. -->
             <StaticResource x:Key="ButtonBackground" ResourceKey="Panel" />
             <StaticResource x:Key="ButtonBackgroundPointerOver" ResourceKey="SecondaryHover" />
             <StaticResource x:Key="ButtonBackgroundPressed" ResourceKey="Sunken" />
-            <StaticResource x:Key="ButtonBackgroundDisabled" ResourceKey="Panel" />
+            <SolidColorBrush x:Key="ButtonBackgroundDisabled" Color="Transparent" />
             <StaticResource x:Key="ButtonForeground" ResourceKey="Fg" />
             <StaticResource x:Key="ButtonForegroundPointerOver" ResourceKey="Fg" />
             <StaticResource x:Key="ButtonForegroundPressed" ResourceKey="Fg" />
@@ -161,11 +161,11 @@
             <StaticResource x:Key="ButtonBorderBrush" ResourceKey="LineStrong" />
             <StaticResource x:Key="ButtonBorderBrushPointerOver" ResourceKey="ControlBorderHover" />
             <StaticResource x:Key="ButtonBorderBrushPressed" ResourceKey="ControlBorderHover" />
-            <StaticResource x:Key="ButtonBorderBrushDisabled" ResourceKey="Line" />
+            <SolidColorBrush x:Key="ButtonBorderBrushDisabled" Color="Transparent" />
             <StaticResource x:Key="RepeatButtonBackground" ResourceKey="Panel" />
             <StaticResource x:Key="RepeatButtonBackgroundPointerOver" ResourceKey="SecondaryHover" />
             <StaticResource x:Key="RepeatButtonBackgroundPressed" ResourceKey="Sunken" />
-            <StaticResource x:Key="RepeatButtonBackgroundDisabled" ResourceKey="Panel" />
+            <SolidColorBrush x:Key="RepeatButtonBackgroundDisabled" Color="Transparent" />
             <StaticResource x:Key="RepeatButtonForeground" ResourceKey="Fg2" />
             <StaticResource x:Key="RepeatButtonForegroundPointerOver" ResourceKey="Fg" />
             <StaticResource x:Key="RepeatButtonForegroundPressed" ResourceKey="Fg" />
@@ -215,7 +215,7 @@
             <StaticResource x:Key="ToggleButtonBackground" ResourceKey="Panel" />
             <StaticResource x:Key="ToggleButtonBackgroundPointerOver" ResourceKey="SecondaryHover" />
             <StaticResource x:Key="ToggleButtonBackgroundPressed" ResourceKey="Sunken" />
-            <StaticResource x:Key="ToggleButtonBackgroundDisabled" ResourceKey="Panel" />
+            <SolidColorBrush x:Key="ToggleButtonBackgroundDisabled" Color="Transparent" />
             <StaticResource x:Key="ToggleButtonBackgroundChecked" ResourceKey="Sunken" />
             <StaticResource x:Key="ToggleButtonBackgroundCheckedPointerOver" ResourceKey="Sunken" />
             <StaticResource x:Key="ToggleButtonBackgroundCheckedPressed" ResourceKey="Sunken" />
@@ -239,7 +239,7 @@
             <StaticResource x:Key="ToggleButtonBorderBrush" ResourceKey="LineStrong" />
             <StaticResource x:Key="ToggleButtonBorderBrushPointerOver" ResourceKey="ControlBorderHover" />
             <StaticResource x:Key="ToggleButtonBorderBrushPressed" ResourceKey="ControlBorderHover" />
-            <StaticResource x:Key="ToggleButtonBorderBrushDisabled" ResourceKey="Line" />
+            <SolidColorBrush x:Key="ToggleButtonBorderBrushDisabled" Color="Transparent" />
             <StaticResource x:Key="ToggleButtonBorderBrushChecked" ResourceKey="LineStrong" />
             <StaticResource x:Key="ToggleButtonBorderBrushCheckedPointerOver" ResourceKey="ControlBorderHover" />
             <StaticResource x:Key="ToggleButtonBorderBrushCheckedPressed" ResourceKey="ControlBorderHover" />
@@ -767,11 +767,11 @@
             <StaticResource x:Key="SystemControlBackgroundListLowBrush" ResourceKey="Hover" />
             <StaticResource x:Key="SystemControlBackgroundListMediumBrush" ResourceKey="Pressed" />
             <StaticResource x:Key="SystemRegionBrush" ResourceKey="Base" />
-            <!-- Buttons without a class look like the secondary button. -->
+            <!-- Buttons without a class look like the secondary button. Disabled, they keep no fill or border, so the quiet buttons that clear their own background (rows, fields, the page bar) stay quiet while Plico is busy. -->
             <StaticResource x:Key="ButtonBackground" ResourceKey="Panel" />
             <StaticResource x:Key="ButtonBackgroundPointerOver" ResourceKey="SecondaryHover" />
             <StaticResource x:Key="ButtonBackgroundPressed" ResourceKey="Sunken" />
-            <StaticResource x:Key="ButtonBackgroundDisabled" ResourceKey="Panel" />
+            <SolidColorBrush x:Key="ButtonBackgroundDisabled" Color="Transparent" />
             <StaticResource x:Key="ButtonForeground" ResourceKey="Fg" />
             <StaticResource x:Key="ButtonForegroundPointerOver" ResourceKey="Fg" />
             <StaticResource x:Key="ButtonForegroundPressed" ResourceKey="Fg" />
@@ -779,11 +779,11 @@
             <StaticResource x:Key="ButtonBorderBrush" ResourceKey="LineStrong" />
             <StaticResource x:Key="ButtonBorderBrushPointerOver" ResourceKey="ControlBorderHover" />
             <StaticResource x:Key="ButtonBorderBrushPressed" ResourceKey="ControlBorderHover" />
-            <StaticResource x:Key="ButtonBorderBrushDisabled" ResourceKey="Line" />
+            <SolidColorBrush x:Key="ButtonBorderBrushDisabled" Color="Transparent" />
             <StaticResource x:Key="RepeatButtonBackground" ResourceKey="Panel" />
             <StaticResource x:Key="RepeatButtonBackgroundPointerOver" ResourceKey="SecondaryHover" />
             <StaticResource x:Key="RepeatButtonBackgroundPressed" ResourceKey="Sunken" />
-            <StaticResource x:Key="RepeatButtonBackgroundDisabled" ResourceKey="Panel" />
+            <SolidColorBrush x:Key="RepeatButtonBackgroundDisabled" Color="Transparent" />
             <StaticResource x:Key="RepeatButtonForeground" ResourceKey="Fg2" />
             <StaticResource x:Key="RepeatButtonForegroundPointerOver" ResourceKey="Fg" />
             <StaticResource x:Key="RepeatButtonForegroundPressed" ResourceKey="Fg" />
@@ -833,7 +833,7 @@
             <StaticResource x:Key="ToggleButtonBackground" ResourceKey="Panel" />
             <StaticResource x:Key="ToggleButtonBackgroundPointerOver" ResourceKey="SecondaryHover" />
             <StaticResource x:Key="ToggleButtonBackgroundPressed" ResourceKey="Sunken" />
-            <StaticResource x:Key="ToggleButtonBackgroundDisabled" ResourceKey="Panel" />
+            <SolidColorBrush x:Key="ToggleButtonBackgroundDisabled" Color="Transparent" />
             <StaticResource x:Key="ToggleButtonBackgroundChecked" ResourceKey="Sunken" />
             <StaticResource x:Key="ToggleButtonBackgroundCheckedPointerOver" ResourceKey="Sunken" />
             <StaticResource x:Key="ToggleButtonBackgroundCheckedPressed" ResourceKey="Sunken" />
@@ -857,7 +857,7 @@
             <StaticResource x:Key="ToggleButtonBorderBrush" ResourceKey="LineStrong" />
             <StaticResource x:Key="ToggleButtonBorderBrushPointerOver" ResourceKey="ControlBorderHover" />
             <StaticResource x:Key="ToggleButtonBorderBrushPressed" ResourceKey="ControlBorderHover" />
-            <StaticResource x:Key="ToggleButtonBorderBrushDisabled" ResourceKey="Line" />
+            <SolidColorBrush x:Key="ToggleButtonBorderBrushDisabled" Color="Transparent" />
             <StaticResource x:Key="ToggleButtonBorderBrushChecked" ResourceKey="LineStrong" />
             <StaticResource x:Key="ToggleButtonBorderBrushCheckedPointerOver" ResourceKey="ControlBorderHover" />
             <StaticResource x:Key="ToggleButtonBorderBrushCheckedPressed" ResourceKey="ControlBorderHover" />
