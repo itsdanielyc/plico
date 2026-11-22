@@ -69,6 +69,9 @@ internal static partial class NativeVerification
         review.RaiseEvent(new KeyEventArgs { RoutedEvent = InputElement.KeyDownEvent, Key = Key.R, KeySymbol = "r" });
         review.RaiseEvent(new KeyEventArgs { RoutedEvent = InputElement.KeyUpEvent, Key = Key.R, KeySymbol = "r" });
         Require(model.InboxCount == before - 1 && model.HasUndo, $"R did not mark the document reviewed with an undo. {model.Status}");
+        // The page slips into the tray in 380 ms; capture what is left once it has landed.
+        var motion = Control<Canvas>(window, "MotionLayer");
+        await UntilAsync(() => motion.Children.Count == 0 && !model.IsReadingInBackground, () => "The review motion did not finish.");
         await CaptureAsync(window, evidence, "review-undo.png");
         await model.UndoCommand.ExecuteAsync(null);
         await UntilAsync(() => model.InboxCount == before && model.SelectedDocument is { Reviewed: false } restored && restored.Id == document.Id,

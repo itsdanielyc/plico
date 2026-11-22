@@ -88,6 +88,7 @@ internal static partial class NativeVerification
                 window.Background is ISolidColorBrush { Color: { R: 11, G: 11, B: 12 } }, () => model.Status);
             await CaptureAsync(window, evidence, "desktop-dark.png");
             await CaptureFrameAsync(window, evidence, "window-frame-dark.png");
+            if (window is MainWindow dark) await CaptureInPlaceEditorsAsync(dark, model, evidence, "dark");
 
             DesktopText.SetLanguage(InterfaceLanguage.French);
             var localizedLibrary = Directory.CreateTempSubdirectory("plico-verify-french-");
@@ -106,6 +107,8 @@ internal static partial class NativeVerification
                 Require(Control<ScrollViewer>(localized, "PreviewScroll").Viewport.Height >= MinimumPreviewViewport,
                     "The French interface crowded the PDF viewport at the minimum window size.");
                 await CaptureAsync(localized, evidence, "desktop-french.png");
+                await CaptureInPlaceEditorsAsync(localized, localizedModel, evidence, "french");
+                await VerifyCompactSearchCorrectionAsync(localized, localizedModel, evidence);
             }
             finally
             {

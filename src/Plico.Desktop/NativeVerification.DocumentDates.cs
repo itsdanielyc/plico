@@ -38,6 +38,9 @@ internal static partial class NativeVerification
             model.Documents[0].Match.Contains(ReceiptKeyword, StringComparison.OrdinalIgnoreCase), () => model.Status);
         Require(model.SortOption?.Order == DocumentSort.DocumentDate && model.Status == "Date set." && field.Text == "29 Feb 2024",
             $"The field did not keep the stored date. {model.Status} {field.Text}");
+        // Capture the settled view: the count as a sentence, the page and its match chevrons, not a reload in progress.
+        await UntilAsync(() => model.ResultCount != "Searching…" && model.Preview is not null && !model.IsReadingInBackground &&
+            Control<Button>(window, "GoToMatchButton").IsEffectivelyVisible, () => model.ResultCount);
         await CaptureAsync(window, directory, "document-date.png");
 
         var clear = Control<Button>(window, "ClearDocumentDateButton");
@@ -46,13 +49,21 @@ internal static partial class NativeVerification
         Require(model.Documents.Count == 0 && model.Status == "Date cleared.", model.Status);
     }
 
-    /// <summary>Types a date into the open document's date field and presses Enter, as a person would.</summary>
+    /// <summary>
+    /// Types a date into the open document's date field and presses Enter, as a person would: D puts the keyboard in the
+    /// field with its date selected, the typed text replaces it, and Enter saves. The keyboard then goes back to the queue,
+    /// so the next capture shows the date as a value.
+    /// </summary>
     private static void TypeDocumentDate(MainWindow window, string text)
     {
         var field = Control<TextBox>(window, "DocumentDateField");
         Require(field.IsEffectivelyVisible && field.IsEnabled, "The open PDF did not offer its date field.");
-        field.SetCurrentValue(TextBox.TextProperty, text);
+        window.FocusDocumentDate();
+        Require(field.IsFocused, "D did not put the keyboard in the date field.");
+        field.RaiseEvent(new TextInputEventArgs { RoutedEvent = InputElement.TextInputEvent, Text = text });
+        Require(field.Text == text, $"The typed date did not replace the field's text: {field.Text}.");
         field.RaiseEvent(new KeyEventArgs { RoutedEvent = InputElement.KeyDownEvent, Key = Key.Enter });
+        Control<ListBox>(window, "DocumentList").Focus();
     }
 
     private static async Task VerifyBatchDocumentDatesAsync(Window window, InboxViewModel model, FixtureDialogs dialogs, string directory)

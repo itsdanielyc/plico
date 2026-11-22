@@ -19,6 +19,10 @@ internal static partial class NativeVerification
         list.RaiseEvent(new KeyEventArgs { RoutedEvent = InputElement.KeyUpEvent, Key = Key.X, KeySymbol = "x" });
         await UntilAsync(() => !model.IsBusy && model.SelectedDocument?.Id == next.Id, () => model.Status);
         Require(model.Documents.All(result => result.Id != document.Id), "Trash left the current PDF in the review results.");
+        Require(model.ToastTitle == "Moved to Trash" && model.ToastBody == document.Title && model.ToastOffersUndo,
+            $"The Trash toast did not name the action with Undo. {model.ToastTitle} {model.ToastBody}");
+        await UntilAsync(() => model.Preview is not null && !model.IsReadingInBackground, () => model.Status);
+        await CaptureAsync(window, evidenceDirectory, "trash-undo.png");
 
         dialogs.TrashChoice = async documents =>
         {

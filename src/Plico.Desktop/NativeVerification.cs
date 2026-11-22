@@ -1113,11 +1113,23 @@ internal static partial class NativeVerification
         for (int wait = 0; wait < 30 && window is MainWindow { IsToastEntering: true }; wait++) await Task.Delay(20);
         // A dialog may still be settling (an expander's chevron turns over 260 ms at most); capture it at rest.
         if (window is not MainWindow) await Task.Delay(DialogSettleTime);
+        await CaptureVisualAsync(window, directory, filename);
+    }
+
+    /// <summary>
+    /// Renders a window or a popup's surface to a PNG and records it in the progress file. A capture taken with the
+    /// pointer over the surface is noted in pointer.txt, because hover states, such as a scroll bar drawn under the
+    /// pointer, show in it.
+    /// </summary>
+    private static async Task CaptureVisualAsync(Visual surface, string directory, string filename)
+    {
         await Dispatcher.UIThread.InvokeAsync(() =>
         {
-            using var bitmap = new RenderTargetBitmap(PixelSize.FromSize(window.Bounds.Size, 1), new Vector(96, 96));
-            bitmap.Render(window);
+            using var bitmap = new RenderTargetBitmap(PixelSize.FromSize(surface.Bounds.Size, 1), new Vector(96, 96));
+            bitmap.Render(surface);
             bitmap.Save(Path.Combine(directory, filename), PngBitmapEncoderOptions.Default);
+            if (surface is InputElement { IsPointerOver: true })
+                File.AppendAllText(Path.Combine(directory, "pointer.txt"), filename + Environment.NewLine);
             File.AppendAllText(Path.Combine(directory, CaptureProgressFilename), filename + Environment.NewLine);
         }, DispatcherPriority.Background);
     }
