@@ -316,6 +316,72 @@ public sealed partial class InboxWindowTests
         }
     }
 
+    [AvaloniaTheory]
+    [InlineData(false)]
+    [InlineData(true)]
+    public async Task TheCalendarSpeaksTheInterfacesLanguageStartsOnMondayAndRingsToday(bool useFrench)
+    {
+        using var temporary = new TemporaryLibrary();
+        using (var library = InboxLibrary.Open(temporary.Path)) BatchFixtures.AddTwoDocuments(library, TestContext.Current.CancellationToken);
+        DesktopText.SetLanguage(useFrench ? InterfaceLanguage.French : InterfaceLanguage.English);
+        var systemCulture = System.Globalization.CultureInfo.CurrentCulture;
+        using var model = new InboxViewModel(new FixtureDialogs());
+        var window = new MainWindow { DataContext = model, Width = 1280, Height = 800 };
+        try
+        {
+            model.InitializeLibrary(() => temporary.Path);
+            window.Show();
+            await WaitForPreviewAsync(model);
+            var field = Assert.IsType<TextBox>(window.FindControl<TextBox>("DocumentDateField"));
+            ClickAt(window, Assert.IsType<Button>(window.FindControl<Button>("DocumentDateCalendarButton")));
+            var picker = Assert.IsType<Popup>(window.FindControl<Popup>("DocumentDatePicker"));
+            Assert.True(picker.IsOpen);
+            window.UpdateLayout();
+            var calendar = Assert.IsType<Calendar>(window.FindControl<Calendar>("DocumentDateCalendar"));
+            var culture = DisplayDates.Culture;
+            var parts = calendar.GetVisualDescendants().OfType<Control>().ToArray();
+
+            // The month and the days are named in the interface's language, and the week starts on Monday.
+            var header = parts.OfType<Button>().Single(button => button.Name == "PART_HeaderButton");
+            Assert.Contains(DateTime.Today.ToString("MMMM", culture), Assert.IsType<string>(header.Content), StringComparison.OrdinalIgnoreCase);
+            var monthView = parts.OfType<Grid>().Single(grid => grid.Name == "PART_MonthView");
+            var firstTitle = monthView.Children.OfType<TextBlock>().OrderBy(title => title.Bounds.X).First();
+            Assert.Equal(culture.DateTimeFormat.ShortestDayNames[(int)DayOfWeek.Monday], firstTitle.Text);
+
+            // Today wears a ring; the ink fill is kept for a chosen date, and none is chosen yet.
+            var today = parts.OfType<CalendarDayButton>().Single(day => day.Classes.Contains(":today"));
+            var todayFace = today.GetVisualDescendants().OfType<Border>().First(border => border.Name == "Root");
+            Assert.True(todayFace.Background is null || todayFace.Background is Avalonia.Media.ISolidColorBrush { Color.A: 0 },
+                $"Today is filled with {todayFace.Background}.");
+            Assert.Contains(today.GetVisualDescendants().OfType<Border>(), border => border.BorderThickness.Left >= 1 &&
+                border.BorderBrush is Avalonia.Media.ISolidColorBrush { Color: var ring } && ring == Avalonia.Media.Color.Parse("#0F0F10"));
+
+            // The month chevrons are quiet 16 px glyphs, and the popover has room for its whole shadow.
+            foreach (var name in new[] { "PART_PreviousButton", "PART_NextButton" })
+            {
+                var chevron = parts.OfType<Button>().Single(button => button.Name == name).GetVisualDescendants().OfType<Avalonia.Controls.Shapes.Path>().Single();
+                Assert.True(chevron.Bounds.Width <= 12, $"The {name} glyph is {chevron.Bounds.Width} px wide.");
+            }
+            var popover = Assert.IsType<Border>(picker.Child);
+            Assert.True(popover.Margin.Bottom >= 56 && popover.Margin.Left >= 32 && popover.Margin.Right >= 12,
+                $"The popover leaves {popover.Margin} for a shadow that reaches 56 px below it, 32 px to its left and needs 12 at its right.");
+            // It hangs just under the field, flush with its right edge, whole inside the window with its shadow.
+            var box = BoundsIn(popover, window);
+            Assert.InRange(box.Top - BoundsIn(field, window).Bottom, 2, 8);
+            Assert.True(Math.Abs(box.Right - BoundsIn(field, window).Right) <= 1, $"The calendar ends at {box.Right:0.#} and the field at {BoundsIn(field, window).Right:0.#}.");
+            Assert.True(box.Left - popover.Margin.Left >= 0 && box.Right <= window.Bounds.Width && box.Bottom + popover.Margin.Bottom <= window.Bounds.Height,
+                $"The calendar {box} does not fit the window with its shadow.");
+
+            picker.IsOpen = false;
+            Assert.Equal(systemCulture, System.Globalization.CultureInfo.CurrentCulture);
+        }
+        finally
+        {
+            window.Close();
+            DesktopText.SetLanguage(InterfaceLanguage.English);
+        }
+    }
+
     /// <summary>A key pressed in a focused field, as a person typing there would.</summary>
     private static void PressFieldKey(Control field, Key key) => field.RaiseEvent(new KeyEventArgs
     {

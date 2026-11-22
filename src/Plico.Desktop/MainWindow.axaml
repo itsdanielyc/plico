@@ -253,13 +253,43 @@
             <Setter Property="BorderBrush" Value="Transparent" />
             <Setter Property="Foreground" Value="{DynamicResource Fg}" />
         </Style>
-        <!-- The date field's calendar: days in 14 px ink on the popover itself, today in ink, the chosen day ringed. -->
+        <!--
+            The date field's calendar: days in 14 px ink on the popover itself. The chosen day is the family's selected
+            state, an ink fill; today, when it is not the chosen day, is only ringed in ink, so an undated document never
+            looks dated. The month chevrons are quiet 16 px glyphs in Fg2, like the other glyphs on the card.
+        -->
         <Style Selector="Calendar#DocumentDateCalendar CalendarDayButton, Calendar#DocumentDateCalendar CalendarButton">
             <Setter Property="FontSize" Value="14" />
             <Setter Property="Background" Value="Transparent" />
         </Style>
         <Style Selector="Calendar#DocumentDateCalendar CalendarDayButton /template/ Border, Calendar#DocumentDateCalendar CalendarButton /template/ Border">
             <Setter Property="CornerRadius" Value="9" />
+        </Style>
+        <Style Selector="Calendar#DocumentDateCalendar CalendarDayButton:today /template/ Border#Root">
+            <Setter Property="Background" Value="Transparent" />
+        </Style>
+        <Style Selector="Calendar#DocumentDateCalendar CalendarDayButton:today /template/ Border#Border">
+            <Setter Property="BorderBrush" Value="{DynamicResource Fg}" />
+            <Setter Property="BorderThickness" Value="1" />
+        </Style>
+        <Style Selector="Calendar#DocumentDateCalendar CalendarDayButton:today">
+            <Setter Property="Foreground" Value="{DynamicResource Fg}" />
+        </Style>
+        <Style Selector="Calendar#DocumentDateCalendar CalendarDayButton:selected /template/ Border#Root">
+            <Setter Property="Background" Value="{DynamicResource Fg}" />
+        </Style>
+        <Style Selector="Calendar#DocumentDateCalendar CalendarDayButton:selected /template/ Border#Border">
+            <Setter Property="BorderThickness" Value="0" />
+        </Style>
+        <Style Selector="Calendar#DocumentDateCalendar CalendarDayButton:selected">
+            <Setter Property="Foreground" Value="{DynamicResource OnFg}" />
+        </Style>
+        <Style Selector="Calendar#DocumentDateCalendar /template/ CalendarItem /template/ Button#PART_PreviousButton, Calendar#DocumentDateCalendar /template/ CalendarItem /template/ Button#PART_NextButton">
+            <Setter Property="Foreground" Value="{DynamicResource Fg2}" />
+        </Style>
+        <Style Selector="Calendar#DocumentDateCalendar /template/ CalendarItem /template/ Button#PART_PreviousButton Path, Calendar#DocumentDateCalendar /template/ CalendarItem /template/ Button#PART_NextButton Path">
+            <Setter Property="Width" Value="10" />
+            <Setter Property="Height" Value="5" />
         </Style>
         <!-- A field's shortcut keycap shows while the field waits for it, and steps aside once the field has the keyboard. -->
         <Style Selector="Border.key.field-key">
@@ -1296,11 +1326,18 @@
                                                     </TextBox>
                                                     <TextBlock x:Name="DocumentDateError" Classes="validation" Text="{Binding DocumentDateError}"
                                                                IsVisible="{Binding HasDocumentDateError}" AutomationProperties.LiveSetting="Polite" />
-                                                    <!-- The calendar is a popover drawn in the window, under the field. -->
-                                                    <Popup x:Name="DocumentDatePicker" Placement="BottomEdgeAlignedLeft" IsLightDismissEnabled="True"
+                                                    <!--
+                                                        The calendar is a popover drawn in the window, 4 px under the field and flush with its right
+                                                        edge, which the card keeps near the window's. A popup clips to its own bounds, so the popover
+                                                        keeps a transparent margin for its shadow to fall in: 56 px below, where the shadow reaches
+                                                        furthest, 32 to the left, and 12 to the right and 4 above for its hairline and near shadow. The
+                                                        popup places the popover itself, margin aside, against the field. Its week starts on Monday.
+                                                    -->
+                                                    <Popup x:Name="DocumentDatePicker" Placement="BottomEdgeAlignedRight" IsLightDismissEnabled="True"
                                                            ShouldUseOverlayLayer="True" VerticalOffset="4">
-                                                        <Border Classes="popover" Padding="6" Margin="0,0,12,20">
-                                                            <Calendar x:Name="DocumentDateCalendar" Background="Transparent" BorderBrush="Transparent" BorderThickness="0" />
+                                                        <Border Classes="popover" Padding="6" Margin="32,4,12,56">
+                                                            <Calendar x:Name="DocumentDateCalendar" Background="Transparent" BorderBrush="Transparent" BorderThickness="0"
+                                                                      FirstDayOfWeek="Monday" />
                                                         </Border>
                                                     </Popup>
                                                 </StackPanel>

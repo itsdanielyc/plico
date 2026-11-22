@@ -1,3 +1,4 @@
+using CultureInfo = System.Globalization.CultureInfo;
 using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Input;
@@ -30,6 +31,7 @@ public partial class MainWindow
             if (ReferenceEquals(e.Source, DocumentDateField) && !DocumentDatePicker.IsOpen) ViewModel?.CommitDocumentDate(reloadAfterInput: true);
         };
         DocumentDatePicker.PlacementTarget = DocumentDateField;
+        DocumentDatePicker.Closed += (_, _) => RestoreCultureAfterCalendar();
         DocumentDateCalendar.PropertyChanged += (_, change) =>
         {
             if (change.Property == Calendar.SelectedDateProperty) DocumentDateChosen();
@@ -120,17 +122,44 @@ public partial class MainWindow
     {
         if (ViewModel is not { HasLibrary: true, SelectedDocument: { } document } model) return;
         var shown = document.DocumentDate ?? model.SuggestedDate ?? DateOnly.FromDateTime(DateTime.Today);
+        UseCultureForCalendar();
         _showingDocumentDate = true;
         try
         {
             DocumentDateCalendar.SelectedDate = document.DocumentDate?.ToDateTime(TimeOnly.MinValue);
+            // Moving the calendar away and back, and setting its first day again, makes it name the month and the days
+            // again in the culture it now reads.
+            DocumentDateCalendar.DisplayDate = shown.AddMonths(1).ToDateTime(TimeOnly.MinValue);
             DocumentDateCalendar.DisplayDate = shown.ToDateTime(TimeOnly.MinValue);
+            DocumentDateCalendar.FirstDayOfWeek = DayOfWeek.Sunday;
+            DocumentDateCalendar.FirstDayOfWeek = DayOfWeek.Monday;
         }
         finally
         {
             _showingDocumentDate = false;
         }
         DocumentDatePicker.IsOpen = true;
+    }
+
+    // The culture the window had before the calendar opened, while the calendar is open.
+    private CultureInfo? _cultureBeforeCalendar;
+
+    /// <summary>
+    /// Avalonia's calendar names its months and days in the thread's culture. While it is open that culture is the
+    /// interface's own (French in the French interface, whatever the system speaks), and it goes back when the calendar
+    /// closes. The week starts on Monday in both languages, as the interface writes dates day first ("22 Nov 2026").
+    /// </summary>
+    private void UseCultureForCalendar()
+    {
+        _cultureBeforeCalendar ??= CultureInfo.CurrentCulture;
+        CultureInfo.CurrentCulture = DisplayDates.Culture;
+    }
+
+    private void RestoreCultureAfterCalendar()
+    {
+        if (_cultureBeforeCalendar is not { } before) return;
+        CultureInfo.CurrentCulture = before;
+        _cultureBeforeCalendar = null;
     }
 
     /// <summary>A day chosen in the open calendar saves at once, and the keyboard goes back to the field.</summary>
