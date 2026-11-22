@@ -92,6 +92,50 @@ public sealed partial class InboxWindowTests
     }
 
     [AvaloniaFact]
+    public async Task AWatchThatCannotBeRememberedLeadsWithTheProblemInSettingsAndTheToast()
+    {
+        using var temporary = new TemporaryLibrary();
+        using var settingsFolder = new TemporaryLibrary();
+        using var watched = new TemporaryLibrary();
+        using (var library = InboxLibrary.Open(temporary.Path)) BatchFixtures.AddTwoDocuments(library, TestContext.Current.CancellationToken);
+        string scans = Path.Combine(watched.Path, "Scans");
+        Directory.CreateDirectory(scans);
+        var dialogs = new FixtureDialogs { FolderPath = scans };
+        using var model = new InboxViewModel(dialogs, watchPreference: new WatchFolderPreference(settingsFolder.Path));
+        model.InitializeLibrary(() => temporary.Path);
+        var window = new MainWindow { DataContext = model, Width = 1280, Height = 800 };
+        window.Show();
+        try
+        {
+            await WaitForPreviewAsync(model);
+            // The settings folder refuses the watch folder's setting: a folder stands where its file goes.
+            Directory.CreateDirectory(Path.Combine(settingsFolder.Path,
+                $"watch-folder-{ApplicationSettings.LibraryKey(Path.GetFullPath(temporary.Path))}.txt"));
+            var settings = OpenSettingsAt(window, "IntakeGroup");
+            ClickAt(settings, Assert.IsType<Button>(settings.FindControl<Button>("StartFolderWatchButton")));
+            await WaitForAsync(() => !model.IsBusy);
+            settings.UpdateLayout();
+
+            // The watch runs, but it will not be there next time: the toast's title names that, with the alert, and
+            // Settings' line says the same beside the alert, never the success check.
+            Assert.True(model.IsWatchingFolder);
+            var toast = Assert.IsType<Border>(window.FindControl<Border>("Toast"));
+            var done = Assert.IsAssignableFrom<Control>(settings.FindControl<Control>("SettingsMessageDone"));
+            var problem = Assert.IsAssignableFrom<Control>(settings.FindControl<Control>("SettingsMessageProblem"));
+            Assert.Equal(("Couldn't remember the scanner output folder", true, true),
+                (model.ToastTitle, ToastWearsTheAlert(toast), problem.IsVisible && !done.IsVisible));
+            Assert.EndsWith("Watching for new or updated files in Scans.", model.ToastStatus, StringComparison.Ordinal);
+            Assert.StartsWith("Couldn't remember the scanner output folder.", Assert.IsType<TextBlock>(settings.FindControl<TextBlock>("SettingsMessage")).Text, StringComparison.Ordinal);
+            settings.Close();
+        }
+        finally
+        {
+            await model.PrepareCloseAsync();
+            window.Close();
+        }
+    }
+
+    [AvaloniaFact]
     public async Task AKeyThatComesUpInTheMainWindowLeavesSettingsWithNothingToSay()
     {
         using var temporary = new TemporaryLibrary();

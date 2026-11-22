@@ -210,17 +210,19 @@ internal sealed partial class InboxViewModel
         slot.RememberedFolder = watch.Folder;
         slot.Failed = false;
         NotifyWatchChanged(slot);
-        Status = DesktopText.Format($"Watching for new or updated files in {new DirectoryInfo(watch.Folder).Name}.");
-        if (queued > 0) Status += " " + DesktopText.Format($"{DocumentCount(queued)} queued for the folder watch.");
-        _ = ObserveWatchAsync(slot, watch);
+        string watching = DesktopText.Format($"Watching for new or updated files in {new DirectoryInfo(watch.Folder).Name}.");
+        if (queued > 0) watching += " " + DesktopText.Format($"{DocumentCount(queued)} queued for the folder watch.");
         try
         {
             _watchPreference?.Save(library.RootPath, watch.Folder, slot.Source);
+            Status = watching;
         }
         catch (Exception error) when (error is IOException or UnauthorizedAccessException)
         {
-            Status += $" {error.Message}";
+            // The watch runs, but it will not be there next time: that leads, so the toast's title names it.
+            Fail($"{DesktopText.Format($"Couldn't remember the {DesktopText.Translate(slot.Description)}. {error.Message}")} {watching}");
         }
+        _ = ObserveWatchAsync(slot, watch);
         return queued;
     }
 

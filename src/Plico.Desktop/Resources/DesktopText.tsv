@@ -607,6 +607,7 @@ NamedExistingFolder	phone inbox folder	dossier de la boîte du téléphone
 PhoneInboxStopped	Phone inbox watch stopped.	Surveillance de la boîte du téléphone arrêtée.
 ResumeSavedWatches	Resuming saved watches…	Reprise des surveillances enregistrées…
 CannotResumeNamedWatch	Couldn't resume the {0} watch. {1}	Impossible de reprendre la surveillance du {0}. {1}
+CannotRememberNamedWatchFolder	Couldn't remember the {0}. {1}	Impossible de mémoriser le {0}. {1}
 NamedCalendarReminder	{0} reminder	Rappel · {0}
 NamedCurrency	{0} currency	Devise · {0}
 LeadTimeError	Enter a lead time from 0 to {0}.	Saisissez un délai de 0 à {0} jours.

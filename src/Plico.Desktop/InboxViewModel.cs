@@ -447,8 +447,14 @@ internal sealed partial class InboxViewModel : ObservableObject, IDisposable
         if (alreadyPresent > 0) outcomes.Add(DesktopText.Format($"{DocumentCount(alreadyPresent)} already in the library."));
         if (unreadable > 0) outcomes.Add(DesktopText.Format($"No text recognised in {DocumentCount(unreadable)}."));
         if (failures.Count > 0) outcomes.Add($"{failures.Count} failed. {failures[0].Filename} — {failures[0].Reason}");
-        if (saveWarning is not null) outcomes.Add(saveWarning);
-        Status = string.Join(" ", outcomes);
+        if (saveWarning is null)
+        {
+            Status = string.Join(" ", outcomes);
+            return;
+        }
+        // The import errors were not saved for next time: that leads, so the toast's title names it, with the alert.
+        outcomes.Insert(0, saveWarning);
+        Fail(string.Join(" ", outcomes));
     }
 
     private async Task RunOperationAsync(
