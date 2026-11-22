@@ -468,7 +468,8 @@ internal sealed partial class InboxViewModel : ObservableObject, IDisposable
     /// </summary>
     private bool UpdateDocument(Func<InboxLibrary, DocumentSummary, UndoOffer?> update, string success, ToastText? toast = null)
     {
-        if (!CanWork || SelectedDocument is not { } document) return false;
+        // Like the title and the date, a tag is one quick catalog write, so it is saved while Plico works in the background.
+        if (!HasLibrary || SelectedDocument is not { } document) return false;
         try
         {
             var library = RequireLibrary();

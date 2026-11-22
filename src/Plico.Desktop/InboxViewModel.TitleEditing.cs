@@ -1,3 +1,4 @@
+using Avalonia.Threading;
 using CommunityToolkit.Mvvm.ComponentModel;
 using Plico.Core;
 
@@ -15,10 +16,13 @@ internal sealed partial class InboxViewModel
     [ObservableProperty] private bool _isEditingTitle;
     [ObservableProperty] private string _titleDraft = "";
 
-    /// <summary>Opens the heading for editing with the open document's title, or returns false when nothing can be renamed.</summary>
+    /// <summary>
+    /// Opens the heading for editing with the open document's title, or returns false when nothing can be renamed. It
+    /// opens while Plico works in the background too: a rename is one quick catalog write, like a tag or a date.
+    /// </summary>
     internal bool BeginTitleEdit()
     {
-        if (!CanWork || !ShowFilingCard || SelectedDocument is not { } document) return false;
+        if (!HasLibrary || !ShowFilingCard || SelectedDocument is not { } document) return false;
         _titleEditDocumentId = document.Id;
         TitleDraft = document.Title;
         IsEditingTitle = true;
@@ -34,14 +38,16 @@ internal sealed partial class InboxViewModel
 
     /// <summary>
     /// Saves the draft as the title of the document whose heading was opened, and closes the editor. An unchanged title
-    /// saves nothing; an empty or overlong one is rolled back, and the toast says why.
+    /// saves nothing; an empty or overlong one is rolled back, and the toast says why. It saves while Plico works in the
+    /// background as well, so a watched folder's import never swallows what was typed. When the field lost the keyboard
+    /// to a click, <paramref name="reloadAfterInput"/> waits for that click before the results reload.
     /// </summary>
-    internal void CommitTitleEdit()
+    internal void CommitTitleEdit(bool reloadAfterInput = false)
     {
         if (!IsEditingTitle || _titleEditDocumentId is not { } documentId) return;
         string draft = TitleDraft;
         CancelTitleEdit();
-        if (_library is not { } library || !CanWork) return;
+        if (_library is not { } library) return;
         var document = SelectedDocument?.Id == documentId ? SelectedDocument : Documents.FirstOrDefault(item => item.Id == documentId);
         if (document is null) return;
         string title;
@@ -58,13 +64,32 @@ internal sealed partial class InboxViewModel
         try
         {
             library.SetTitle(documentId, title);
-            LoadResults(SelectedDocument?.Id ?? documentId, retainLoadedResults: true);
+            ReloadAfterEdit(documentId, reloadAfterInput);
             OfferUndo(TitleUndo(library, documentId, document.Title, title), DesktopText.Translate("Title saved."));
         }
         catch (Exception error)
         {
             Status = error.Message;
         }
+    }
+
+    /// <summary>
+    /// Reloads the results after an edit saved in place, keeping the open document. An edit saved because its field lost
+    /// the keyboard to a click reloads once that click has been handled: the keyboard moves as the button goes down,
+    /// and replacing the queue's rows then would take the row the click landed on away from under it.
+    /// </summary>
+    private void ReloadAfterEdit(long documentId, bool afterInput)
+    {
+        if (!afterInput)
+        {
+            LoadResults(SelectedDocument?.Id ?? documentId, retainLoadedResults: true);
+            return;
+        }
+        var library = _library;
+        Dispatcher.UIThread.Post(() =>
+        {
+            if (ReferenceEquals(library, _library)) LoadResults(SelectedDocument?.Id ?? documentId, retainLoadedResults: true);
+        }, DispatcherPriority.Background);
     }
 
     /// <summary>

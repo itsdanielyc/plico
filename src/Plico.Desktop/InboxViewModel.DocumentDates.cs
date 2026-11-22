@@ -29,13 +29,20 @@ internal sealed partial class InboxViewModel
     /// <summary>The dashed suggestion sits in the field while it is empty, and steps aside once a date is typed.</summary>
     public bool ShowSuggestedDateInField => HasSuggestedDate && string.IsNullOrWhiteSpace(DocumentDateText);
 
+    /// <summary>True while the field holds the open document's saved date, with nothing new typed over it.</summary>
+    internal bool DocumentDateTextIsSaved => !HasDocumentDateError && DocumentDateText.Trim() == SelectedDocumentDateLabel;
+
     /// <summary>The D keycap sits in the field while it has neither a date nor a suggestion to show.</summary>
     public bool ShowDateKeycap => !HasSelectedDocumentDate && !HasSuggestedDate;
 
-    /// <summary>Saves what is typed in the date field: a date, or nothing to clear it. False when it cannot be read.</summary>
-    internal bool CommitDocumentDate()
+    /// <summary>
+    /// Saves what is typed in the date field: a date, or nothing to clear it. False when it cannot be read. It saves while
+    /// Plico works in the background too. When the field lost the keyboard to a click, <paramref name="reloadAfterInput"/>
+    /// waits for that click before the results reload.
+    /// </summary>
+    internal bool CommitDocumentDate(bool reloadAfterInput = false)
     {
-        if (!CanWork || SelectedDocument is not { } document) return false;
+        if (!HasLibrary || SelectedDocument is not { } document) return false;
         string text = DocumentDateText.Trim();
         DateOnly? date = null;
         if (text.Length > 0)
@@ -47,7 +54,7 @@ internal sealed partial class InboxViewModel
             }
             date = typed;
         }
-        SaveDocumentDate(document, date);
+        SaveDocumentDate(document, date, reloadAfterInput);
         return true;
     }
 
@@ -62,16 +69,16 @@ internal sealed partial class InboxViewModel
     /// <summary>Saves a day chosen in the field's calendar.</summary>
     internal void PickDocumentDate(DateOnly date)
     {
-        if (CanWork && SelectedDocument is { } document) SaveDocumentDate(document, date);
+        if (HasLibrary && SelectedDocument is { } document) SaveDocumentDate(document, date);
     }
 
     [RelayCommand]
     private void ClearDocumentDate()
     {
-        if (CanWork && SelectedDocument is { } document) SaveDocumentDate(document, null);
+        if (HasLibrary && SelectedDocument is { } document) SaveDocumentDate(document, null);
     }
 
-    private void SaveDocumentDate(DocumentSummary document, DateOnly? date)
+    private void SaveDocumentDate(DocumentSummary document, DateOnly? date, bool reloadAfterInput = false)
     {
         if (date == document.DocumentDate)
         {
@@ -82,8 +89,10 @@ internal sealed partial class InboxViewModel
         {
             var library = RequireLibrary();
             library.SetDocumentDate(document.Id, date);
-            LoadResults(document.Id, retainLoadedResults: true);
-            RestoreDocumentDateText();
+            ReloadAfterEdit(document.Id, reloadAfterInput);
+            // A reload that waits for a click leaves the typed date in place; the reload writes it the interface's way.
+            if (reloadAfterInput) DocumentDateError = "";
+            else RestoreDocumentDateText();
             OfferUndo(DateUndo(library, document, date),
                 date.HasValue ? DesktopText.Translate("Document date saved.") : DesktopText.Translate("Document date cleared."));
         }

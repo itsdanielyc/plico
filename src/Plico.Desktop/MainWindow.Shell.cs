@@ -103,9 +103,10 @@ public partial class MainWindow
                 break;
             case "r" when (e.KeyModifiers & KeyModifiers.Shift) == 0: Review(); break;
             case "a": Run(model.AcceptSuggestionsCommand); break;
-            case "t" when model is { CanWork: true, ShowFilingCard: true }: TagBox.Focus(); break;
-            case "d" when model is { CanWork: true, ShowFilingCard: true }: FocusDocumentDate(); break;
-            case "e" when model is { CanWork: true, ShowFilingCard: true }: BeginTitleEdit(); break;
+            // The in-place fields stay open while Plico works in the background, as their edits are quick catalog writes.
+            case "t" when model is { HasLibrary: true, ShowFilingCard: true }: TagBox.Focus(); break;
+            case "d" when model is { HasLibrary: true, ShowFilingCard: true }: FocusDocumentDate(); break;
+            case "e" when model is { HasLibrary: true, ShowFilingCard: true }: BeginTitleEdit(); break;
             case "x": Run(model.TrashDocumentCommand); break;
             case "o": Run(model.OpenPdfCommand); break;
             case "[": Run(model.PreviousPageCommand); break;

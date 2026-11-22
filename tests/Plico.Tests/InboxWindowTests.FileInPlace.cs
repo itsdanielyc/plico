@@ -61,13 +61,14 @@ public sealed partial class InboxWindowTests
             Assert.Equal(("Renamed", "“Lease renewal letter”"), (model.ToastTitle, model.ToastBody));
             Assert.Equal("Renamed", model.UndoLabel);
 
-            // Leaving the field saves as well, and focus stays where it went.
+            // Leaving the field saves as well, and focus stays where it went. The results reload once the input that
+            // moved the keyboard has been handled.
             start.RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
             editor.SetCurrentValue(TextBox.TextProperty, "Lease renewal");
             var review = Assert.IsType<Button>(window.FindControl<Button>("ReviewButton"));
             Assert.True(review.Focus());
-            Assert.Equal("Lease renewal", model.SelectedDocument!.Title);
             Dispatcher.UIThread.RunJobs();
+            Assert.Equal("Lease renewal", model.SelectedDocument!.Title);
             Assert.False(editor.IsVisible);
             Assert.True(review.IsFocused);
 
@@ -150,6 +151,7 @@ public sealed partial class InboxWindowTests
             Assert.True(field.Focus());
             field.SetCurrentValue(TextBox.TextProperty, "");
             Assert.True(Assert.IsType<Button>(window.FindControl<Button>("ReviewButton")).Focus());
+            Dispatcher.UIThread.RunJobs();
             Assert.Null(model.SelectedDocument!.DocumentDate);
             Assert.Equal(("Date cleared", "April lease"), (model.ToastTitle, model.ToastBody));
             await model.UndoCommand.ExecuteAsync(null);

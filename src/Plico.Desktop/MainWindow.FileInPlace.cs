@@ -1,6 +1,8 @@
+using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Input;
 using Avalonia.Interactivity;
+using Avalonia.VisualTree;
 
 namespace Plico.Desktop;
 
@@ -17,14 +19,15 @@ public partial class MainWindow
     {
         // The fields' own handlers run first; Enter and Escape still belong to the edit.
         TitleEditBox.AddHandler(KeyDownEvent, TitleEdit_KeyDown, RoutingStrategies.Bubble, handledEventsToo: true);
-        TitleEditBox.LostFocus += (_, _) => ViewModel?.CommitTitleEdit();
+        // Leaving a field saves it. The keyboard leaves as a click begins, so the results reload after that click.
+        TitleEditBox.LostFocus += (_, _) => ViewModel?.CommitTitleEdit(reloadAfterInput: true);
         DocumentDateField.AddHandler(KeyDownEvent, DocumentDate_KeyDown, RoutingStrategies.Bubble, handledEventsToo: true);
         // The suggestion list takes Enter for itself; the tag is added after it has filled in its choice.
         TagBox.AddHandler(KeyDownEvent, TagBox_KeyDown, RoutingStrategies.Bubble, handledEventsToo: true);
         DocumentDateField.LostFocus += (_, e) =>
         {
             // The field's own buttons lose focus too, and the calendar takes it while a day is being chosen.
-            if (ReferenceEquals(e.Source, DocumentDateField) && !DocumentDatePicker.IsOpen) ViewModel?.CommitDocumentDate();
+            if (ReferenceEquals(e.Source, DocumentDateField) && !DocumentDatePicker.IsOpen) ViewModel?.CommitDocumentDate(reloadAfterInput: true);
         };
         DocumentDatePicker.PlacementTarget = DocumentDateField;
         DocumentDateCalendar.PropertyChanged += (_, change) =>
@@ -38,7 +41,30 @@ public partial class MainWindow
             DocumentDateField.Focus();
             e.Handled = true;
         };
+        // Seen on the way down, before the focused field's own undo can take the chord.
+        AddHandler(KeyDownEvent, SettledFieldUndo_KeyDown, RoutingStrategies.Tunnel);
     }
+
+    /// <summary>
+    /// Ctrl+Z (⌘Z) in a field holding nothing new is Plico's Undo, not the field's. Enter saves a date or adds a tag and
+    /// leaves the keyboard in the field, so the toast's Undo is what the chord reaches next; the field's own undo would
+    /// bring back half of what was typed instead, unsaved. While something new is typed, the chord edits the text.
+    /// </summary>
+    private void SettledFieldUndo_KeyDown(object? sender, KeyEventArgs e)
+    {
+        bool command = e.KeyModifiers is KeyModifiers.Control or KeyModifiers.Meta;
+        if (e.Key != Key.Z || !command || IsOverlayOpen || ViewModel is not { } model || !InSettledField(model)) return;
+        Run(model.UndoCommand);
+        e.Handled = true;
+    }
+
+    private bool InSettledField(InboxViewModel model) => FocusManager?.GetFocusedElement() switch
+    {
+        TextBox field when ReferenceEquals(field, DocumentDateField) => model.DocumentDateTextIsSaved,
+        Visual visual when ReferenceEquals(visual, TagBox) || ReferenceEquals(visual.FindAncestorOfType<AutoCompleteBox>(), TagBox) =>
+            string.IsNullOrWhiteSpace(TagBox.Text),
+        _ => false
+    };
 
     /// <summary>Turns the heading into a field with the whole title selected, ready to be typed over.</summary>
     internal void BeginTitleEdit()
@@ -52,7 +78,7 @@ public partial class MainWindow
     /// <summary>Puts the keyboard in the date field with its date selected, ready to be typed over.</summary>
     internal void FocusDocumentDate()
     {
-        if (ViewModel is not { CanWork: true, ShowFilingCard: true }) return;
+        if (ViewModel is not { HasLibrary: true, ShowFilingCard: true }) return;
         DocumentDateField.Focus();
         DocumentDateField.SelectAll();
     }
@@ -90,7 +116,7 @@ public partial class MainWindow
     /// <summary>Opens the calendar at the saved date, or at the suggested date or today when there is none.</summary>
     private void OpenDocumentDateCalendar_Click(object? sender, RoutedEventArgs e)
     {
-        if (ViewModel is not { CanWork: true, SelectedDocument: { } document } model) return;
+        if (ViewModel is not { HasLibrary: true, SelectedDocument: { } document } model) return;
         var shown = document.DocumentDate ?? model.SuggestedDate ?? DateOnly.FromDateTime(DateTime.Today);
         _showingDocumentDate = true;
         try

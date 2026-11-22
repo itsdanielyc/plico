@@ -180,7 +180,7 @@
             <Setter Property="Background" Value="{DynamicResource Pressed}" />
             <Setter Property="Foreground" Value="{DynamicResource Fg}" />
         </Style>
-        <!-- While Plico works the title cannot be edited, but it stays ink: it is the document's name, not a control. -->
+        <!-- Without a library the title cannot be edited, but it stays ink: it is the document's name, not a control. -->
         <Style Selector="Button.title-edit:disabled /template/ ContentPresenter#PART_ContentPresenter">
             <Setter Property="Background" Value="Transparent" />
             <Setter Property="Foreground" Value="{DynamicResource Fg}" />
@@ -1180,7 +1180,7 @@
                                     <StackPanel Margin="20,16,12,10" Spacing="6">
                                         <!-- The heading is the title's own field: E or a click edits it here, Enter or leaving saves, Escape restores. -->
                                         <Panel>
-                                            <Button x:Name="EditTitleButton" Classes="title-edit" Click="EditTitle_Click" IsEnabled="{Binding CanWork}"
+                                            <Button x:Name="EditTitleButton" Classes="title-edit" Click="EditTitle_Click" IsEnabled="{Binding HasLibrary}"
                                                     IsVisible="{Binding !IsEditingTitle}" ToolTip.Tip="{translation:Tr ShortcutRename}"
                                                     AutomationProperties.Name="{translation:Tr ShortcutRename}">
                                                 <Grid ColumnDefinitions="*,Auto" ColumnSpacing="8">
@@ -1239,7 +1239,7 @@
                                                 <StackPanel Grid.Column="1" Spacing="4">
                                                     <TextBox x:Name="DocumentDateField" Classes="date-field" Classes.invalid="{Binding HasDocumentDateError}"
                                                              Text="{Binding DocumentDateText}" PlaceholderText="{Binding DocumentDatePlaceholder}"
-                                                             IsEnabled="{Binding CanWork}" MaxLength="40" ToolTip.Tip="{translation:Tr DocumentDateFieldTip}"
+                                                             IsEnabled="{Binding HasLibrary}" MaxLength="40" ToolTip.Tip="{translation:Tr DocumentDateFieldTip}"
                                                              AutomationProperties.Name="{translation:Tr EditDocumentDate}">
                                                         <TextBox.InnerLeftContent>
                                                             <Button x:Name="DocumentDateCalendarButton" Classes="field-glyph" Click="OpenDocumentDateCalendar_Click"
@@ -1311,7 +1311,8 @@
                                                             </DataTemplate>
                                                         </ItemsControl.ItemTemplate>
                                                     </ItemsControl>
-                                                    <Grid ColumnDefinitions="*,Auto" ColumnSpacing="4" IsEnabled="{Binding CanWork}">
+                                                    <!-- The title, the date and the tag field stay open while Plico works in the background. -->
+                                                    <Grid ColumnDefinitions="*,Auto" ColumnSpacing="4" IsEnabled="{Binding HasLibrary}">
                                                         <!-- One Enter adds the typed tag, or the suggestion chosen with the arrow keys; T comes here. -->
                                                         <AutoCompleteBox x:Name="TagBox" Classes="tag-entry" Text="{Binding TagInput, Mode=TwoWay}"
                                                                          PlaceholderText="{translation:Tr AddATag}" AutomationProperties.Name="{translation:Tr TagForThisDocument}"
@@ -1564,7 +1565,11 @@
                                     <TextBlock Classes="toast-body" Text="{Binding ToastBody}" IsVisible="{Binding HasToastBody}" />
                                 </StackPanel>
                                 <Panel Grid.Column="2" VerticalAlignment="Center">
-                                    <Button x:Name="UndoButton" Classes="toast-action" Content="{translation:Tr UndoAction}" Command="{Binding UndoCommand}"
+                                    <!--
+                                        A click on Undo leaves the keyboard where it is. Taking it would save a field being typed in first, and that
+                                        edit would become the offer the click then reverses; Ctrl+Z is Undo from the keyboard.
+                                    -->
+                                    <Button x:Name="UndoButton" Classes="toast-action" Content="{translation:Tr UndoAction}" Command="{Binding UndoCommand}" Focusable="False"
                                             IsVisible="{Binding ToastOffersUndo}" IsEnabled="{Binding CanWork}" ToolTip.Tip="{Binding UndoLabel}" />
                                     <Button x:Name="OpenBackupFolderButton" Classes="toast-action" Content="{translation:Tr OpenBackup}"
                                             Command="{Binding OpenBackupFolderCommand}" IsVisible="{Binding ToastOffersBackup}" IsEnabled="{Binding CanWork}" />
