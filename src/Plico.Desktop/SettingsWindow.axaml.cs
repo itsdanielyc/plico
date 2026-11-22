@@ -87,8 +87,10 @@ public sealed partial class SettingsWindow : Window
 
     /// <summary>
     /// Gives the keyboard back to <paramref name="control"/> when it turns on again: from its section's row, or from
-    /// nowhere while Settings is in front. The keyboard is the whole application's, so once the person has gone back to
-    /// the main window, a keyboard that is nowhere there (its queue reloaded as the work ended) is the main window's to
+    /// nowhere unless another of Plico's windows is in front. A keyboard that is nowhere because the person went to
+    /// another application (the desktop clears it then) comes back to the control, which has it when Settings is in
+    /// front again. The keyboard is the whole application's, so once the person has gone back to the main window or a
+    /// dialog, a keyboard that is nowhere there (the main window's queue reloaded as the work ended) is that window's to
     /// land; taking it would send what is typed there to Settings' switch.
     /// </summary>
     private void WaitToReturnKeyboard(Control control, Button row, NavigationMethod navigation)
@@ -97,10 +99,18 @@ public sealed partial class SettingsWindow : Window
         {
             if (change.Property != IsEffectivelyEnabledProperty || !control.IsEffectivelyEnabled) return;
             control.PropertyChanged -= Return;
-            if (IsVisible && (row.IsFocused || IsActive && FocusManager?.GetFocusedElement() is null)) control.Focus(navigation);
+            if (IsVisible && (row.IsFocused || !AnotherWindowIsInFront && FocusManager?.GetFocusedElement() is null)) control.Focus(navigation);
         }
         control.PropertyChanged += Return;
     }
+
+    /// <summary>
+    /// True while another of Plico's windows is the one in front: the main window, or a dialog over it or over Settings.
+    /// False while Settings is in front, and while the person is in another application.
+    /// </summary>
+    private bool AnotherWindowIsInFront => !IsActive && IsOrOwnsActiveWindow(Owner as Window ?? this);
+
+    private static bool IsOrOwnsActiveWindow(Window window) => window.IsActive || window.OwnedWindows.Any(IsOrOwnsActiveWindow);
 
     /// <summary>The row in the section list that jumps to the section holding <paramref name="control"/>.</summary>
     private Button? SectionRow(Control control)

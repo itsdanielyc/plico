@@ -297,21 +297,92 @@ public sealed partial class InboxWindowTests
         }
     }
 
+    [AvaloniaTheory]
+    [InlineData(false)]
+    [InlineData(true)]
+    public async Task ASwitchThatWaitsForWorkGetsTheKeyboardBackWhenThePersonComesBackFromAnotherApplication(bool restoring)
+    {
+        using var temporary = new TemporaryLibrary();
+        using var settingsFolder = new TemporaryLibrary();
+        using (var library = InboxLibrary.Open(temporary.Path)) BatchFixtures.AddTwoDocuments(library, TestContext.Current.CancellationToken);
+        var pending = new TaskCompletionSource<TrashDecision?>();
+        var dialogs = new FixtureDialogs { TrashChoice = _ => pending.Task };
+        using var model = new InboxViewModel(dialogs);
+        model.InitializeLibrary(() => temporary.Path);
+        model.InitializeOcrProcessing(new OcrProcessingPreference(settingsFolder.Path));
+        var window = new MainWindow { DataContext = model, Width = 1280, Height = 800 };
+        window.Show();
+        Task? work = null;
+        try
+        {
+            // X puts the open document in Trash, so the work can end by restoring it and reloading the queue.
+            await WaitForPreviewAsync(model);
+            long trashed = model.SelectedDocument!.Id;
+            PressKey(window, Key.X, PhysicalKey.X, "x");
+            await WaitForAsync(() => !model.IsBusy);
+            await WaitForPreviewAsync(model);
+
+            var settings = OpenSettingsAt(window, "RecognitionGroup");
+            var choice = Assert.IsType<CheckBox>(settings.FindControl<CheckBox>("OrientPagesChoice"));
+            TabTo(settings, choice);
+            bool orienting = model.AutoOrientPages;
+
+            // Work begins (Trash left open holds Plico busy, as a watched folder's import does) and turns the switch off.
+            work = model.OpenTrashCommand.ExecuteAsync(null);
+            Dispatcher.UIThread.RunJobs();
+            Assert.False(choice.IsEffectivelyEnabled);
+
+            // The person goes to another application: no window of Plico's is in front, and the desktop takes the
+            // keyboard from Settings.
+            RaiseFromThePlatform(settings, "Deactivated");
+            RaiseFromThePlatform(settings, "LostFocus");
+            RaiseFromThePlatform(window, "Deactivated");
+            Assert.False(settings.IsActive || window.IsActive, "A window of Plico's is still in front after the person left it.");
+
+            // The work ends while the person is away, and they come back to Settings, still in front of the main window.
+            pending.SetResult(restoring ? new TrashDecision(trashed, Purge: false) : null);
+            await work;
+            work = null;
+            Dispatcher.UIThread.RunJobs();
+            await WaitForPreviewAsync(model);
+            RaiseFromThePlatform(settings, "Activated");
+            Assert.True(choice.IsFocused, $"Back in Settings after the work, the keyboard is on {KeyboardOwner(settings)}, not on the switch.");
+            PressKey(settings, Key.Space, PhysicalKey.Space, " ");
+            Assert.Equal(!orienting, model.AutoOrientPages);
+            settings.Close();
+        }
+        finally
+        {
+            pending.TrySetResult(null);
+            if (work is not null) await work;
+            window.Close();
+        }
+    }
+
     /// <summary>
     /// The window stops being the one in front, as a desktop says when the person clicks another window. Headless keeps
-    /// every shown window active, so the window hears it from its platform here, as it would on a desktop. The platform's
-    /// callback is Avalonia's private API, so it is reached by reflection.
+    /// every shown window active, so the window hears it from its platform here, as it would on a desktop.
     /// </summary>
     private static void LeaveAsOnADesktop(Window window)
     {
+        RaiseFromThePlatform(window, "Deactivated");
+        Assert.False(window.IsActive, $"{window.GetType().Name} is still active after its platform said it was not.");
+    }
+
+    /// <summary>
+    /// Raises one of the window's platform callbacks (Activated, Deactivated, LostFocus) as a desktop does when the
+    /// person moves between windows and applications; headless never raises them by itself. The callbacks are
+    /// Avalonia's private API, so they are reached by reflection.
+    /// </summary>
+    private static void RaiseFromThePlatform(Window window, string callback)
+    {
         var platform = window.PlatformImpl;
         Assert.NotNull(platform);
-        var callback = typeof(Window).Assembly.GetType("Avalonia.Platform.IWindowBaseImpl")?.GetProperty("Deactivated");
-        Assert.NotNull(callback);
-        var deactivated = Assert.IsType<Action>(callback.GetValue(platform));
-        deactivated();
+        var property = new[] { "Avalonia.Platform.IWindowBaseImpl", "Avalonia.Platform.ITopLevelImpl" }
+            .Select(name => typeof(Window).Assembly.GetType(name)?.GetProperty(callback)).FirstOrDefault(found => found is not null);
+        Assert.NotNull(property);
+        Assert.IsType<Action>(property.GetValue(platform))();
         Dispatcher.UIThread.RunJobs();
-        Assert.False(window.IsActive, $"{window.GetType().Name} is still active after its platform said it was not.");
     }
 
     [AvaloniaTheory]
