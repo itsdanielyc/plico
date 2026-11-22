@@ -21,6 +21,10 @@ internal sealed partial class InboxViewModel
         internal string CatchUpLabel => Active is null ? DesktopText.Translate("Resume and catch up") : DesktopText.Translate("Import existing files");
     }
 
+    // Folders are compared as the platform compares paths.
+    private static readonly StringComparer WatchPathComparer =
+        OperatingSystem.IsWindows() ? StringComparer.OrdinalIgnoreCase : StringComparer.Ordinal;
+
     private readonly WatchSlot _scannerWatch = new("scanner output folder", "Folder watch stopped.", WatchSource.Scanner);
     private readonly WatchSlot _phoneWatch = new("phone inbox folder", "Phone inbox watch stopped.", WatchSource.Phone);
     private readonly WatchFolderPreference? _watchPreference;
@@ -67,8 +71,7 @@ internal sealed partial class InboxViewModel
     // of those files (_catchUpFilesAwaitingImport) yet to import: importing them is part of the catch-up, so each watched
     // import's message joins the notice in turn until they have all come in or gone.
     private StartupNews? _startupNewsAwaitingImport;
-    private readonly HashSet<string> _catchUpFilesAwaitingImport =
-        new(OperatingSystem.IsWindows() ? StringComparer.OrdinalIgnoreCase : StringComparer.Ordinal);
+    private readonly HashSet<string> _catchUpFilesAwaitingImport = new(WatchPathComparer);
 
     /// <summary>
     /// Whether the toast carries what Plico said while it started, joined by the catch-up that opening starts, while the
@@ -169,10 +172,7 @@ internal sealed partial class InboxViewModel
         {
             if (!CanWork || _library is not { } library || _watchPreference is not { } preference ||
                 slot.RememberedFolder is not { } folder) return;
-            if (enabled && preference.Load(library.RootPath, slot.Source) != folder)
-            {
-                preference.Save(library.RootPath, folder, slot.Source);
-            }
+            if (enabled) RememberWatchFolder(preference, library.RootPath, folder, slot.Source);
             preference.SaveCatchUpOnOpen(library.RootPath, enabled, slot.Source);
             slot.CatchUpOnOpen = enabled;
         }
@@ -259,7 +259,7 @@ internal sealed partial class InboxViewModel
         if (queued.Count > 0) watching += " " + DesktopText.Format($"{DocumentCount(queued.Count)} queued for the folder watch.");
         try
         {
-            _watchPreference?.Save(library.RootPath, watch.Folder, slot.Source);
+            if (_watchPreference is { } preference) RememberWatchFolder(preference, library.RootPath, watch.Folder, slot.Source);
             Status = watching;
         }
         catch (Exception error) when (error is IOException or UnauthorizedAccessException)
@@ -269,6 +269,17 @@ internal sealed partial class InboxViewModel
         }
         _ = ObserveWatchAsync(slot, watch);
         return queued;
+    }
+
+    /// <summary>
+    /// Saves <paramref name="folder"/> as the slot's watch for next time, unless the setting holds it already (compared as
+    /// the platform compares paths): resuming a watch Plico remembers then writes nothing, so it cannot fail to remember
+    /// it.
+    /// </summary>
+    private static void RememberWatchFolder(WatchFolderPreference preference, string libraryRoot, string folder, WatchSource source)
+    {
+        if (!WatchPathComparer.Equals(preference.Load(libraryRoot, source), Path.GetFullPath(folder)))
+            preference.Save(libraryRoot, folder, source);
     }
 
     /// <summary>Starts the saved watches that catch up on open, and returns the files they queued for import.</summary>
