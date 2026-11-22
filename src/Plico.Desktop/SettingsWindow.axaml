@@ -40,10 +40,13 @@
         <Style Selector="RadioButton.theme-card:checked TextBlock">
             <Setter Property="FontWeight" Value="SemiBold" />
         </Style>
+        <!-- Each preview is a small window: the desk with its sidebar, and the sheet with a corner and a hairline. -->
         <Style Selector="Border.preview">
             <Setter Property="Height" Value="70" />
             <Setter Property="CornerRadius" Value="9" />
             <Setter Property="ClipToBounds" Value="True" />
+            <Setter Property="BorderBrush" Value="{DynamicResource Line}" />
+            <Setter Property="BorderThickness" Value="1" />
             <Setter Property="Margin" Value="0,0,0,10" />
         </Style>
         <Style Selector="Border.preview-bar">
@@ -110,7 +113,7 @@
                     </Button>
                     <Button Classes="nav" Click="Jump_Click" Tag="ModelsGroup" AutomationProperties.Name="{translation:Tr LocalModelsWindow}">
                         <StackPanel Orientation="Horizontal" Spacing="12">
-                            <local:Icon Data="{StaticResource Icon.Chat}" Width="18" Height="18" VerticalAlignment="Center" />
+                            <local:Icon Data="{StaticResource Icon.Cpu}" Width="18" Height="18" VerticalAlignment="Center" />
                             <TextBlock Text="{translation:Tr LocalModelsWindow}" VerticalAlignment="Center" />
                         </StackPanel>
                     </Button>
@@ -133,21 +136,33 @@
                                 <StackPanel>
                                     <Border Classes="preview">
                                         <Grid ColumnDefinitions="*,*">
-                                            <Grid ColumnDefinitions="14,*" Background="#FFFFFF">
-                                                <Border Background="#F3F3F4" />
-                                                <StackPanel Grid.Column="1" Margin="8,10,4,0" Spacing="5">
-                                                    <Border Classes="preview-bar" Width="26" Background="#0F0F10" />
-                                                    <Border Classes="preview-bar" Width="44" Background="#CDCDD2" />
-                                                    <Border Classes="preview-bar" Width="34" Background="#CDCDD2" />
+                                            <Grid Grid.Column="0" ColumnDefinitions="22,*" Background="#F3F3F4">
+                                                <StackPanel Margin="6,9,4,0" Spacing="5">
+                                                    <Border Classes="preview-bar" Width="10" Height="4" Background="#0F0F10" />
+                                                    <Border Classes="preview-bar" Width="8" Height="4" Background="#CDCDD2" />
+                                                    <Border Classes="preview-bar" Width="9" Height="4" Background="#CDCDD2" />
                                                 </StackPanel>
+                                                <Border Grid.Column="1" Margin="0,7,0,0" CornerRadius="6,0,0,0" Background="#FFFFFF" BorderBrush="#E2E2E5" BorderThickness="1,1,0,0">
+                                                    <StackPanel Margin="9,9,4,0" Spacing="5">
+                                                        <Border Classes="preview-bar" Width="30" Background="#0F0F10" />
+                                                        <Border Classes="preview-bar" Width="52" Background="#CDCDD2" />
+                                                        <Border Classes="preview-bar" Width="40" Background="#CDCDD2" />
+                                                    </StackPanel>
+                                                </Border>
                                             </Grid>
-                                            <Grid Grid.Column="1" ColumnDefinitions="14,*" Background="#161618">
-                                                <Border Background="#0B0B0C" />
-                                                <StackPanel Grid.Column="1" Margin="8,10,4,0" Spacing="5">
-                                                    <Border Classes="preview-bar" Width="26" Background="#F4F4F5" />
-                                                    <Border Classes="preview-bar" Width="44" Background="#3B3B41" />
-                                                    <Border Classes="preview-bar" Width="34" Background="#3B3B41" />
+                                            <Grid Grid.Column="1" ColumnDefinitions="22,*" Background="#0B0B0C">
+                                                <StackPanel Margin="6,9,4,0" Spacing="5">
+                                                    <Border Classes="preview-bar" Width="10" Height="4" Background="#F4F4F5" />
+                                                    <Border Classes="preview-bar" Width="8" Height="4" Background="#3B3B41" />
+                                                    <Border Classes="preview-bar" Width="9" Height="4" Background="#3B3B41" />
                                                 </StackPanel>
+                                                <Border Grid.Column="1" Margin="0,7,0,0" CornerRadius="6,0,0,0" Background="#161618" BorderBrush="#2A2A2E" BorderThickness="1,1,0,0">
+                                                    <StackPanel Margin="9,9,4,0" Spacing="5">
+                                                        <Border Classes="preview-bar" Width="30" Background="#F4F4F5" />
+                                                        <Border Classes="preview-bar" Width="52" Background="#3B3B41" />
+                                                        <Border Classes="preview-bar" Width="40" Background="#3B3B41" />
+                                                    </StackPanel>
+                                                </Border>
                                             </Grid>
                                         </Grid>
                                     </Border>
@@ -162,13 +177,19 @@
                                          AutomationProperties.Name="{translation:Tr Light}">
                                 <StackPanel>
                                     <Border Classes="preview">
-                                        <Grid ColumnDefinitions="28,*" Background="#FFFFFF">
-                                            <Border Background="#F3F3F4" />
-                                            <StackPanel Grid.Column="1" Margin="12,10,8,0" Spacing="5">
-                                                <Border Classes="preview-bar" Width="54" Background="#0F0F10" />
-                                                <Border Classes="preview-bar" Width="96" Background="#CDCDD2" />
-                                                <Border Classes="preview-bar" Width="76" Background="#CDCDD2" />
+                                        <Grid ColumnDefinitions="22,*" Background="#F3F3F4">
+                                            <StackPanel Margin="6,9,4,0" Spacing="5">
+                                                <Border Classes="preview-bar" Width="10" Height="4" Background="#0F0F10" />
+                                                <Border Classes="preview-bar" Width="8" Height="4" Background="#CDCDD2" />
+                                                <Border Classes="preview-bar" Width="9" Height="4" Background="#CDCDD2" />
                                             </StackPanel>
+                                            <Border Grid.Column="1" Margin="0,7,0,0" CornerRadius="6,0,0,0" Background="#FFFFFF" BorderBrush="#E2E2E5" BorderThickness="1,1,0,0">
+                                                <StackPanel Margin="9,9,4,0" Spacing="5">
+                                                    <Border Classes="preview-bar" Width="30" Background="#0F0F10" />
+                                                    <Border Classes="preview-bar" Width="52" Background="#CDCDD2" />
+                                                    <Border Classes="preview-bar" Width="40" Background="#CDCDD2" />
+                                                </StackPanel>
+                                            </Border>
                                         </Grid>
                                     </Border>
                                     <StackPanel Orientation="Horizontal" Spacing="8">
@@ -181,13 +202,19 @@
                                          AutomationProperties.Name="{translation:Tr Dark}">
                                 <StackPanel>
                                     <Border Classes="preview">
-                                        <Grid ColumnDefinitions="28,*" Background="#161618">
-                                            <Border Background="#0B0B0C" />
-                                            <StackPanel Grid.Column="1" Margin="12,10,8,0" Spacing="5">
-                                                <Border Classes="preview-bar" Width="54" Background="#F4F4F5" />
-                                                <Border Classes="preview-bar" Width="96" Background="#3B3B41" />
-                                                <Border Classes="preview-bar" Width="76" Background="#3B3B41" />
+                                        <Grid ColumnDefinitions="22,*" Background="#0B0B0C">
+                                            <StackPanel Margin="6,9,4,0" Spacing="5">
+                                                <Border Classes="preview-bar" Width="10" Height="4" Background="#F4F4F5" />
+                                                <Border Classes="preview-bar" Width="8" Height="4" Background="#3B3B41" />
+                                                <Border Classes="preview-bar" Width="9" Height="4" Background="#3B3B41" />
                                             </StackPanel>
+                                            <Border Grid.Column="1" Margin="0,7,0,0" CornerRadius="6,0,0,0" Background="#161618" BorderBrush="#2A2A2E" BorderThickness="1,1,0,0">
+                                                <StackPanel Margin="9,9,4,0" Spacing="5">
+                                                    <Border Classes="preview-bar" Width="30" Background="#F4F4F5" />
+                                                    <Border Classes="preview-bar" Width="52" Background="#3B3B41" />
+                                                    <Border Classes="preview-bar" Width="40" Background="#3B3B41" />
+                                                </StackPanel>
+                                            </Border>
                                         </Grid>
                                     </Border>
                                     <StackPanel Orientation="Horizontal" Spacing="8">
@@ -200,12 +227,18 @@
                         <Border Classes="group">
                             <StackPanel>
                                 <Grid Classes="row" ColumnDefinitions="Auto,*,Auto">
-                                    <Border Classes="row-tile"><local:Icon Data="{StaticResource Icon.Text}" /></Border>
+                                    <Border Classes="row-tile"><local:Icon Data="{StaticResource Icon.Languages}" /></Border>
                                     <StackPanel Grid.Column="1" VerticalAlignment="Center">
                                         <TextBlock Classes="row-title" Text="{translation:Tr InterfaceLanguage}" />
                                         <TextBlock Classes="row-help" Text="{translation:Tr LanguageChangesTakeEffectWhenYouReopenPlico}" />
                                     </StackPanel>
-                                    <Button Grid.Column="2" Classes="secondary" Content="{translation:Tr Appearance2}" Command="{Binding ShowAppearanceCommand}" />
+                                    <!-- Each language is written in its own words, as the system's language list does. -->
+                                    <ComboBox Grid.Column="2" x:Name="InterfaceLanguageBox" MinWidth="190" SelectedIndex="{Binding InterfaceLanguageIndex, Mode=TwoWay}"
+                                              AutomationProperties.Name="{translation:Tr InterfaceLanguage}">
+                                        <ComboBoxItem Content="{translation:Tr FollowSystem}" />
+                                        <ComboBoxItem Content="English" />
+                                        <ComboBoxItem Content="Français" />
+                                    </ComboBox>
                                 </Grid>
                                 <Separator />
                                 <Grid Classes="row" ColumnDefinitions="Auto,*,Auto">
@@ -316,18 +349,20 @@
                                         <TextBlock Classes="row-title" Text="{translation:Tr CatchUpTitle}" />
                                         <TextBlock Classes="row-help" Text="{translation:Tr CatchUpHelp}" />
                                     </StackPanel>
-                                    <StackPanel Grid.Column="2" Spacing="6" ToolTip.Tip="{Binding RememberedWatchFolder}">
-                                        <Button x:Name="ResumeFolderWatchButton" Classes="secondary" HorizontalAlignment="Stretch" HorizontalContentAlignment="Center"
-                                                Content="{translation:Tr ResumeFolderWatch}" Command="{Binding ResumeFolderWatchCommand}"
-                                                IsVisible="{Binding CanOfferResumeFolderWatch}" IsEnabled="{Binding CanWork}" />
-                                        <Button x:Name="ImportWatchFolderFilesButton" Classes="secondary" HorizontalAlignment="Stretch" HorizontalContentAlignment="Center"
+                                    <StackPanel Grid.Column="2" Orientation="Horizontal" Spacing="4" ToolTip.Tip="{Binding RememberedWatchFolder}">
+                                        <!-- One action leads; resuming without the catch-up is the quiet alternative beside it. -->
+                                        <Button x:Name="ResumeFolderWatchButton" Classes="ghost" MinHeight="38"
+                                                Content="{translation:Tr ResumeWatchOnly}" Command="{Binding ResumeFolderWatchCommand}"
+                                                IsVisible="{Binding CanOfferResumeFolderWatch}" IsEnabled="{Binding CanWork}"
+                                                AutomationProperties.Name="{translation:Tr ResumeFolderWatch}" />
+                                        <Button x:Name="ImportWatchFolderFilesButton" Classes="secondary"
                                                 Content="{Binding ImportWatchFilesLabel}" Command="{Binding ImportWatchFolderFilesCommand}"
                                                 IsVisible="{Binding CanOfferImportWatchFiles}" IsEnabled="{Binding CanWork}" />
                                     </StackPanel>
                                 </Grid>
                                 <Separator IsVisible="{Binding CanOfferCatchUpOnOpen}" />
                                 <Grid Classes="row" ColumnDefinitions="Auto,*,Auto" IsVisible="{Binding CanOfferCatchUpOnOpen}">
-                                    <Border Classes="row-tile"><local:Icon Data="{StaticResource Icon.Refresh}" /></Border>
+                                    <Border Classes="row-tile"><local:Icon Data="{StaticResource Icon.Upcoming}" /></Border>
                                     <StackPanel Grid.Column="1" VerticalAlignment="Center">
                                         <TextBlock Classes="row-title" Text="{translation:Tr CatchUpOnOpen}" />
                                         <TextBlock Classes="row-help" Text="{translation:Tr ResumeTheSavedWatchAndCheckScansWhenThisLibraryOpens}" />
@@ -351,8 +386,8 @@
                                     <Button Grid.Column="2" x:Name="PhoneInboxButton" Classes="secondary" IsEnabled="{Binding HasLibrary}"
                                             ToolTip.Tip="{Binding PhoneInboxFolder}" AutomationProperties.Name="{Binding PhoneInboxLabel}">
                                         <StackPanel Orientation="Horizontal" Spacing="8">
-                                            <TextBlock Text="{Binding PhoneInboxLabel}" VerticalAlignment="Center" />
-                                            <local:Icon Data="{StaticResource Icon.ChevronDown}" Width="14" Height="14" VerticalAlignment="Center" />
+                                            <TextBlock Text="{translation:Tr PhoneInboxOptions}" VerticalAlignment="Center" />
+                                            <local:Icon Data="{StaticResource Icon.ChevronDown}" Width="16" Height="16" VerticalAlignment="Center" />
                                         </StackPanel>
                                         <Button.Flyout>
                                             <MenuFlyout Placement="BottomEdgeAlignedRight">
@@ -507,7 +542,7 @@
                         <Border Classes="group">
                             <StackPanel>
                                 <Grid Classes="row" ColumnDefinitions="Auto,*,Auto">
-                                    <Border Classes="row-tile"><local:Icon Data="{StaticResource Icon.Chat}" /></Border>
+                                    <Border Classes="row-tile"><local:Icon Data="{StaticResource Icon.Cpu}" /></Border>
                                     <StackPanel Grid.Column="1" VerticalAlignment="Center">
                                         <TextBlock Classes="row-title" Text="{translation:Tr ModelServerTitle}" />
                                         <TextBlock Classes="row-help" Text="{translation:Tr LocalModelsHelp}" />
@@ -517,7 +552,7 @@
                                 </Grid>
                                 <Separator />
                                 <Grid Classes="row" ColumnDefinitions="Auto,*,Auto">
-                                    <Border Classes="row-tile"><local:Icon Data="{StaticResource Icon.Refresh}" /></Border>
+                                    <Border Classes="row-tile"><local:Icon Data="{StaticResource Icon.Trash}" /></Border>
                                     <StackPanel Grid.Column="1" VerticalAlignment="Center">
                                         <TextBlock Classes="row-title" Text="{translation:Tr ClearSemanticIndex}" />
                                         <TextBlock Classes="row-help" Text="{translation:Tr SemanticIndexHelp}" />

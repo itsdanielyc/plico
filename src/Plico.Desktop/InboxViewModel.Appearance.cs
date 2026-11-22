@@ -33,6 +33,34 @@ internal sealed partial class InboxViewModel
         set { if (value) ChooseTheme(AppearanceTheme.Dark); }
     }
 
+    /// <summary>
+    /// Settings' interface language: 0 follows the system, 1 is English, 2 is French. Choosing one saves it at once; the
+    /// words change when Plico next opens.
+    /// </summary>
+    public int InterfaceLanguageIndex
+    {
+        get => (int)_appearance.Language;
+        set
+        {
+            if (value < 0 || !Enum.IsDefined((InterfaceLanguage)value) || (InterfaceLanguage)value == _appearance.Language) return;
+            var chosen = _appearance with { Language = (InterfaceLanguage)value };
+            try
+            {
+                _saveAppearance?.Invoke(chosen);
+                _appearance = chosen;
+                Status = DesktopText.Translate("Appearance saved. Reopen Plico to switch the interface language.");
+            }
+            catch (Exception error) when (error is IOException or UnauthorizedAccessException or ArgumentException)
+            {
+                Status = error.Message;
+            }
+            finally
+            {
+                OnPropertyChanged(nameof(InterfaceLanguageIndex));
+            }
+        }
+    }
+
     [RelayCommand]
     private Task ShowAppearanceAsync() => RunOperationAsync(DesktopText.Translate("Choose an appearance…"), async token =>
     {
@@ -74,5 +102,6 @@ internal sealed partial class InboxViewModel
         OnPropertyChanged(nameof(UsesSystemTheme));
         OnPropertyChanged(nameof(UsesLightTheme));
         OnPropertyChanged(nameof(UsesDarkTheme));
+        OnPropertyChanged(nameof(InterfaceLanguageIndex));
     }
 }
