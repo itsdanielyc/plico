@@ -20,6 +20,7 @@ public sealed partial class MainWindow : Window
         WirePalette();
         WireShortcutKeys();
         WireToast();
+        WireFieldEditing();
         PreviewPage.PropertyChanged += (_, change) =>
         {
             if (change.Property == Image.SourceProperty) UpdatePreviewScrollPosition();

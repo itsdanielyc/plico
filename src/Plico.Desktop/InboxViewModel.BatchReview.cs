@@ -30,7 +30,9 @@ internal sealed partial class InboxViewModel
         OnPropertyChanged(nameof(BatchCountLabel));
         OnPropertyChanged(nameof(SelectShownAction));
         OnPropertyChanged(nameof(BatchReviewAction));
-        OnPropertyChanged(nameof(ShowFilingCard));
+        // While results are replaced the list is empty for a moment. Hiding the card then would drop the keyboard focus
+        // of whatever field or button in it has it; the selection that follows raises the card's state anyway.
+        if (!_replacingResults) OnPropertyChanged(nameof(ShowFilingCard));
         if (HasDeferredWatchResults && !HasBatchSelection && !HasExpandedResults)
         {
             Dispatcher.UIThread.Post(() =>

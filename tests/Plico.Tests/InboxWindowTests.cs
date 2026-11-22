@@ -294,30 +294,6 @@ public sealed partial class InboxWindowTests
     }
 
     [AvaloniaFact]
-    public void TitleEditorRejectsAnEmptyTitleAndStaysOpen()
-    {
-        var dialog = new DocumentTitleDialog("Existing title");
-        dialog.Show();
-        try
-        {
-            var titleBox = Assert.IsType<TextBox>(dialog.FindControl<TextBox>("TitleBox"));
-            var save = Assert.IsType<Button>(dialog.FindControl<Button>("SaveTitleButton"));
-            var validation = Assert.IsType<TextBlock>(dialog.FindControl<TextBlock>("ValidationMessage"));
-            Assert.Equal("Existing title", titleBox.Text);
-            titleBox.Text = "";
-            save.RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
-
-            Assert.True(dialog.IsVisible);
-            Assert.True(validation.IsVisible);
-            Assert.Contains("Enter a title", validation.Text);
-        }
-        finally
-        {
-            dialog.Close();
-        }
-    }
-
-    [AvaloniaFact]
     public async Task DocumentPathOpensTheContainingFolderForANestedPdf()
     {
         using var temporary = new TemporaryLibrary();

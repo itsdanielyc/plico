@@ -103,7 +103,7 @@ public partial class MainWindow
             case "a": Run(model.AcceptSuggestionsCommand); break;
             case "t" when model is { CanWork: true, ShowFilingCard: true }: TagBox.Focus(); break;
             case "d": Run(model.EditDocumentDateCommand); break;
-            case "e": Run(model.EditDocumentTitleCommand); break;
+            case "e" when model is { CanWork: true, ShowFilingCard: true }: BeginTitleEdit(); break;
             case "x": Run(model.TrashDocumentCommand); break;
             case "o": Run(model.OpenPdfCommand); break;
             case "[": Run(model.PreviousPageCommand); break;

@@ -17,7 +17,6 @@ internal partial interface IWorkspaceDialogs
     Task<ManualDuplexDecision> ChooseDuplexActionAsync(ManualDuplexPrompt prompt, CancellationToken cancellationToken);
     Task<ArchiveSerialInput?> PickArchiveSerialAsync(ArchiveSerialAction action, long? current = null);
     Task<string?> PickArchiveSheetPathAsync(string filename);
-    Task<string?> EditTitleAsync(string currentTitle);
     Task<DocumentDateEdit?> EditDocumentDateAsync(DateOnly? currentDate);
     Task<DocumentDateEdit?> EditBatchDocumentDatesAsync(DateOnly? commonDate, int documentCount);
     Task<SavedSearchDecision?> EditSavedSearchAsync(SavedSearchDraft draft, string? scopeTag, bool editing);
@@ -151,9 +150,6 @@ internal sealed partial class WorkspaceDialogs(Window owner) : IWorkspaceDialogs
         });
         return file?.TryGetLocalPath();
     }
-
-    public Task<string?> EditTitleAsync(string currentTitle) =>
-        new DocumentTitleDialog(currentTitle).ShowDialog<string?>(owner);
 
     public Task<DocumentDateEdit?> EditDocumentDateAsync(DateOnly? currentDate) =>
         new DocumentDateDialog(currentDate).ShowDialog<DocumentDateEdit?>(owner);

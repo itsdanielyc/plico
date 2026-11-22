@@ -133,6 +133,42 @@
             <Setter Property="Foreground" Value="{DynamicResource FgDisabled}" />
         </Style>
 
+        <!--
+            The card's heading is its title's field. At rest it is the 20 px heading with the E keycap and a quiet hover;
+            open, it is a text field in the same type at the same place, so the words do not move.
+        -->
+        <Style Selector="Button.title-edit">
+            <Setter Property="Background" Value="Transparent" />
+            <Setter Property="BorderThickness" Value="0" />
+            <Setter Property="HorizontalAlignment" Value="Stretch" />
+            <Setter Property="HorizontalContentAlignment" Value="Stretch" />
+            <Setter Property="Padding" Value="8,4" />
+            <Setter Property="Margin" Value="-8,-4,0,-4" />
+            <Setter Property="CornerRadius" Value="8" />
+            <Setter Property="Foreground" Value="{DynamicResource Fg}" />
+        </Style>
+        <Style Selector="Button.title-edit:pointerover /template/ ContentPresenter#PART_ContentPresenter">
+            <Setter Property="Background" Value="{DynamicResource Hover}" />
+            <Setter Property="Foreground" Value="{DynamicResource Fg}" />
+        </Style>
+        <Style Selector="Button.title-edit:pressed /template/ ContentPresenter#PART_ContentPresenter">
+            <Setter Property="Background" Value="{DynamicResource Pressed}" />
+            <Setter Property="Foreground" Value="{DynamicResource Fg}" />
+        </Style>
+        <!-- While Plico works the title cannot be edited, but it stays ink: it is the document's name, not a control. -->
+        <Style Selector="Button.title-edit:disabled /template/ ContentPresenter#PART_ContentPresenter">
+            <Setter Property="Background" Value="Transparent" />
+            <Setter Property="Foreground" Value="{DynamicResource Fg}" />
+        </Style>
+        <Style Selector="TextBox.title-edit">
+            <Setter Property="FontSize" Value="20" />
+            <Setter Property="FontWeight" Value="SemiBold" />
+            <Setter Property="MinHeight" Value="0" />
+            <Setter Property="Padding" Value="7,3" />
+            <Setter Property="Margin" Value="-8,-4,0,-4" />
+            <Setter Property="VerticalContentAlignment" Value="Top" />
+        </Style>
+
         <!-- Filing card fields: an 84 px label column in Fg3, values that show the value and open its editor. -->
         <Style Selector="TextBlock.field-label">
             <Setter Property="FontSize" Value="14" />
@@ -973,15 +1009,21 @@
                                 <!-- Filing card -->
                                 <Grid RowDefinitions="Auto,*,Auto" IsVisible="{Binding ShowFilingCard}">
                                     <StackPanel Margin="20,16,12,10" Spacing="6">
-                                        <Grid ColumnDefinitions="*,Auto" ColumnSpacing="4">
-                                            <TextBlock Classes="heading" Text="{Binding SelectedDocument.Title}" TextWrapping="Wrap" MaxLines="3"
-                                                       TextTrimming="CharacterEllipsis" VerticalAlignment="Center" />
-                                            <Button Grid.Column="1" x:Name="EditTitleButton" Classes="icon small" Command="{Binding EditDocumentTitleCommand}"
-                                                    IsEnabled="{Binding CanWork}" VerticalAlignment="Top" ToolTip.Tip="{translation:Tr EditTitle}"
-                                                    AutomationProperties.Name="{translation:Tr EditTitle}">
-                                                <local:Icon Data="{StaticResource Icon.Note}" Width="16" Height="16" />
+                                        <!-- The heading is the title's own field: E or a click edits it here, Enter or leaving saves, Escape restores. -->
+                                        <Panel>
+                                            <Button x:Name="EditTitleButton" Classes="title-edit" Click="EditTitle_Click" IsEnabled="{Binding CanWork}"
+                                                    IsVisible="{Binding !IsEditingTitle}" ToolTip.Tip="{translation:Tr ShortcutRename}"
+                                                    AutomationProperties.Name="{translation:Tr ShortcutRename}">
+                                                <Grid ColumnDefinitions="*,Auto" ColumnSpacing="8">
+                                                    <TextBlock Classes="heading" Text="{Binding SelectedDocument.Title}" TextWrapping="Wrap" MaxLines="3"
+                                                               TextTrimming="CharacterEllipsis" VerticalAlignment="Center" />
+                                                    <Border Grid.Column="1" Classes="key" VerticalAlignment="Top" Margin="0,3,0,0"><TextBlock Text="E" /></Border>
+                                                </Grid>
                                             </Button>
-                                        </Grid>
+                                            <TextBox x:Name="TitleEditBox" Classes="title-edit" Text="{Binding TitleDraft}" IsVisible="{Binding IsEditingTitle}"
+                                                     TextWrapping="Wrap" AcceptsReturn="False" MaxLength="{x:Static core:InboxLibrary.MaximumTitleLength}"
+                                                     AutomationProperties.Name="{translation:Tr DocumentTitle}" />
+                                        </Panel>
                                         <Button x:Name="PdfLocationButton" Classes="path" Command="{Binding OpenDocumentFolderCommand}" Margin="0,0,8,0"
                                                 ToolTip.Tip="{translation:Tr OpenContainingFolder}" AutomationProperties.Name="{translation:Tr OpenPDFSContainingFolder}">
                                             <Grid ColumnDefinitions="Auto,*" ColumnSpacing="6">

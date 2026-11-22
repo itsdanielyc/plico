@@ -898,24 +898,17 @@ internal static partial class NativeVerification
     private static async Task VerifyTitleEditorAsync(MainWindow window, InboxViewModel model, string directory)
     {
         var selected = model.SelectedDocument ?? throw new InvalidOperationException("Select a document before testing title edits.");
-        var dialog = new DocumentTitleDialog(selected.Title);
-        var result = dialog.ShowDialog<string?>(window);
-        try
-        {
-            Require(Control<TextBox>(dialog, "TitleBox").Text == selected.Title,
-                "The title editor did not show the selected document's title.");
-            await CaptureAsync(dialog, directory, "edit-title.png");
-        }
-        finally
-        {
-            dialog.Close();
-            await result;
-        }
-
         var edit = Control<Button>(window, "EditTitleButton");
-        Require(edit.IsEnabled && edit.Command is IAsyncRelayCommand, "The title edit control was unavailable.");
-        await ((IAsyncRelayCommand)edit.Command!).ExecuteAsync(null);
-        Require(model.SelectedDocument?.Title == EditedDocumentTitle, "The updated title did not appear in the results.");
+        Require(edit.IsEffectivelyVisible && edit.IsEnabled, "The title could not be edited in place.");
+        edit.RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
+        var editor = Control<TextBox>(window, "TitleEditBox");
+        Require(editor.IsEffectivelyVisible && editor.Text == selected.Title && editor.SelectedText == selected.Title,
+            "The heading did not open as a field with the document's title selected.");
+        await CaptureAsync(window, directory, "edit-title.png");
+        editor.SetCurrentValue(TextBox.TextProperty, EditedDocumentTitle);
+        editor.RaiseEvent(new KeyEventArgs { RoutedEvent = InputElement.KeyDownEvent, Key = Key.Enter });
+        Require(!editor.IsVisible && model.SelectedDocument?.Title == EditedDocumentTitle && model.UndoLabel == "Renamed",
+            $"The updated title did not appear in the results with its Undo. {model.Status}");
         var search = Control<TextBox>(window, "SearchBox");
         search.SetCurrentValue(TextBox.TextProperty, "fixture-not-found");
         await UntilAsync(() => model.Documents.Count == 0, () => model.Status);
@@ -1146,7 +1139,6 @@ internal sealed partial class FixtureDialogs(params string[] documents) : IWorks
     internal Action<string>? MigrationReportWriter { get; private set; }
     internal string? LastFolderStart { get; private set; }
     internal int FolderPickerCalls { get; private set; }
-    internal string? EditedTitle { get; init; }
     internal ArchiveSerialInput? ArchiveSerialChoice { get; set; }
     internal Func<DateOnly?, Task<DocumentDateEdit?>>? DocumentDateChoice { get; set; }
     internal Func<DateOnly?, int, Task<DocumentDateEdit?>>? BatchDocumentDateChoice { get; set; }
@@ -1194,7 +1186,6 @@ internal sealed partial class FixtureDialogs(params string[] documents) : IWorks
     public Task<ArchiveSerialInput?> PickArchiveSerialAsync(ArchiveSerialAction action, long? current = null) =>
         Task.FromResult(ArchiveSerialChoice);
     public Task<string?> PickArchiveSheetPathAsync(string filename) => Task.FromResult<string?>(null);
-    public Task<string?> EditTitleAsync(string currentTitle) => Task.FromResult(EditedTitle);
     public Task<DocumentDateEdit?> EditDocumentDateAsync(DateOnly? currentDate) =>
         DocumentDateChoice?.Invoke(currentDate) ?? Task.FromResult<DocumentDateEdit?>(null);
     public Task<DocumentDateEdit?> EditBatchDocumentDatesAsync(DateOnly? commonDate, int documentCount) =>

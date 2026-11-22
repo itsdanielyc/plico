@@ -141,8 +141,6 @@ EditPDFPages	Edit PDF pages	Modifier les pages du PDF
 EditPages	Edit pages…	Modifier les pages…
 EditSearch	Edit search…	Modifier la recherche…
 EditTheDocumentDateOfTheSelectedPDFs	Edit the document date of the selected PDFs	Modifier la date des PDF sélectionnés
-EditTheDocumentTitle	Edit the document title…	Modifier le titre du document…
-EditTitle	Edit title	Modifier le titre
 EnterATagForTheSelection	Enter a tag for the selection.	Saisissez une étiquette pour la sélection.
 EnterPageNumbersOrRangesForExample135	Enter page numbers or ranges. For example, 1, 3–5.	Saisissez des numéros ou des plages de pages. Par exemple, 1, 3–5.
 EnterPageNumbersOrRangesSuchAs135	Enter page numbers or ranges, such as 1, 3–5.	Saisissez des numéros ou des plages de pages, par exemple 1, 3–5.
@@ -370,7 +368,6 @@ SaveRule	Save rule	Enregistrer la règle
 SaveSearch	Save search	Enregistrer la recherche
 SaveSearch2	Save search…	Enregistrer la recherche…
 SaveTheCapturedPagesToTheInbox	Save the captured pages to the inbox?	Enregistrer les pages numérisées dans la boîte de réception ?
-SaveTitle	Save title	Enregistrer le titre
 Saved0	Saved “{0}”.	« {0} » enregistré.
 Saved0FromTheSplitPDF	Saved {0} from the split PDF.	{0} enregistrés à partir du PDF scindé.
 SavedABackupOf0To1	Saved a backup of {0} to {1}.	Sauvegarde de {0} enregistrée dans {1}.
@@ -457,7 +454,6 @@ ThisLibraryHasNoDocumentsYet	This library has no documents yet.	Cette bibliothè
 ThisPageHasNoSearchableText	This page has no searchable text.	Cette page ne contient aucun texte indexable.
 Thumbnails	Thumbnails	Miniatures
 TitleAZ	Title A–Z	Titre de A à Z
-TitleEditorClosed	Title editor closed.	Modification du titre annulée.
 TitleSaved	Title saved.	Titre enregistré.
 TopLeft	Top left	En haut à gauche
 TopRight	Top right	En haut à droite
@@ -913,3 +909,5 @@ ResumeWatchOnly	Resume watch	Reprendre
 ToastMovedToTrash	Moved to Trash	Mis à la corbeille
 ToastTagRemoved	Tag removed	Étiquette retirée
 ToastBatchTagAdded	Tag “{0}” added to {1}	Étiquette « {0} » ajoutée à {1}
+ToastRenamed	Renamed	Renommé
+RenameTitleInvalid	Couldn't rename. Enter a title of 1 to {0} characters.	Impossible de renommer. Saisissez un titre de 1 à {0} caractères.

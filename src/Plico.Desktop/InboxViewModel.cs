@@ -242,23 +242,6 @@ internal sealed partial class InboxViewModel : ObservableObject, IDisposable
     }
 
     [RelayCommand]
-    private Task EditDocumentTitleAsync() => RunOperationAsync(DesktopText.Translate("Edit the document title…"), async token =>
-    {
-        if (SelectedDocument is not { } document) return;
-        var title = await _dialogs.EditTitleAsync(document.Title);
-        if (title is null)
-        {
-            Status = DesktopText.Translate("Title editor closed.");
-            return;
-        }
-        var library = RequireLibrary();
-        await Task.Run(() => library.SetTitle(document.Id, title), token);
-        RetireUndo();
-        LoadResults(document.Id);
-        Status = DesktopText.Translate("Title saved.");
-    });
-
-    [RelayCommand]
     private void AddTag()
     {
         if (string.IsNullOrWhiteSpace(TagInput)) return;
@@ -554,6 +537,7 @@ internal sealed partial class InboxViewModel : ObservableObject, IDisposable
     private void UpdateSelection(DocumentSummary? oldValue, DocumentSummary? newValue, bool reloadPreview = false)
     {
         bool changedDocument = oldValue?.Id != newValue?.Id;
+        if (changedDocument) CloseTitleEditFor(newValue);
         if (IsPageTextView && (changedDocument || newValue is not { HasText: true }))
         {
             IsPageTextView = false;

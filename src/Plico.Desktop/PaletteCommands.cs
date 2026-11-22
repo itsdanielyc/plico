@@ -52,7 +52,7 @@ internal static class PaletteCommands
             Add("Accept all suggestions", review, "Icon.Check", "A", "suggestion accept", model.AcceptSuggestionsCommand, model.HasSuggestions);
             Act("Add a tag", review, "Icon.Tag", "T", "label", window.FocusTagEntry, model.ShowFilingCard);
             Add("Set the document date…", review, "Icon.Calendar", "D", "date dated", model.EditDocumentDateCommand);
-            Add("Rename…", review, "Icon.Note", "E", "title edit", model.EditDocumentTitleCommand);
+            Act("Rename", review, "Icon.Note", "E", "title edit", window.BeginTitleEdit);
             Add("Move to Trash", review, "Icon.Trash", "X", "delete remove bin", model.TrashDocumentCommand);
             Add("Open in your PDF viewer", review, "Icon.Open", "O", "open pdf external", model.OpenPdfCommand);
             Add("Reminders and deadlines…", review, "Icon.Bell", "", "deadline due renewal expiry", model.EditDeadlinesCommand);
