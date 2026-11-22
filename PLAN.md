@@ -151,7 +151,15 @@ Direction, mockups and research: [docs/design/redesign](docs/design/redesign/DIR
 | R5 Upcoming list | A library query for reminders and deadlines by date replaces the reminders dialog behind Upcoming | L1, L3, L4 | Not started. Upcoming opens the existing due-reminders dialog. |
 | R6 Search tokens and browse grid | Filter tokens with a suggestions dropdown, a month-grouped thumbnail grid (G) and quick look (Space) | L4, L6 | Not started |
 | R7 Capture surfaces | Activity panel with per-file intake progress, one scan sheet with a live page stream and inline interruption, and a single Edit pages surface | L1, L3, L4, L6 | Not started. Needs the intake progress and scanner page stream contracts in the direction document. |
-| R8 Platform edges | macOS menu bar mirroring the palette, Windows title-bar integration, and system reduced motion on macOS and Linux | L6, L7 | Not started |
+| R8 Platform edges | macOS menu bar mirroring the palette, Windows title-bar integration, and system reduced motion on macOS and Linux | L6, L7 | Windows 11 captions are tinted to the desk under M1 below. The macOS menu bar and reduced motion on macOS and Linux are not started. |
 | R9 Review follow-ups | At minimum height the sidebar has room for two tag rows, Settings actions announce their target, and the French Inbox label fits. Library switching drains background reads off the interface thread. | L4, L6 | Implemented in [PR #1](https://github.com/itsdanielyc/plico/pull/1). The regression tests and native evidence are in [VERIFICATION.md](VERIFICATION.md). View-model and window size limits remain an architecture follow-up. |
 
 Plico v0.19.0 shipped the R1–R4 desktop redesign, the completed R9 fixes and the post-v0.18.0 maintenance changes. The welcome screen offers all four migration sources, and saving a migration report protects the open library. All twelve public packages passed their download and launch checks. [Prerelease](https://github.com/itsdanielyc/plico/releases/tag/v0.19.0) · [Published checks](https://github.com/itsdanielyc/plico/actions/runs/44931983856)
+
+## miille family
+
+Plico joins the miille family, after Onda: [docs/design/miille.md](docs/design/miille.md). Target renders: [docs/design/miille](docs/design/miille). Decision record: [ADR 021](docs/adr/021-miille-family-foundation.md).
+
+| Slice | Done when | Levels | Status |
+|---|---|---|---|
+| M1 Foundation | Family tokens in light and dark, the Onda control language, ink focus, a tinted Windows caption and the app icon, one dialog look with ink primaries in dark mode, the command palette and shortcuts sheet, and dimmed dark paper | L0, L4, L6 | Implemented on `design/miille-family`. Local Windows evidence is in the [ledger](VERIFICATION.md). Hosted runs are not yet done. |
