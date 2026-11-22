@@ -79,8 +79,8 @@ public partial class MainWindow
     internal void FocusDocumentDate()
     {
         if (ViewModel is not { HasLibrary: true, ShowFilingCard: true }) return;
-        DocumentDateField.Focus();
-        DocumentDateField.SelectAll();
+        // A field without the keyboard shows its date as a value, never as selected text.
+        if (DocumentDateField.Focus()) DocumentDateField.SelectAll();
     }
 
     private void EditTitle_Click(object? sender, RoutedEventArgs e) => BeginTitleEdit();
@@ -109,8 +109,10 @@ public partial class MainWindow
             default: return;
         }
         e.Handled = true;
-        // The keyboard stays in the field with the date selected, so a second try is one more typed date.
-        DocumentDateField.SelectAll();
+        // The keyboard stays in the field with the date selected, so a second try is one more typed date. A date entered
+        // without the keyboard there (by an automation client) is left as a value.
+        if (DocumentDateField.IsFocused) DocumentDateField.SelectAll();
+        else DocumentDateField.ClearSelection();
     }
 
     /// <summary>Opens the calendar at the saved date, or at the suggested date or today when there is none.</summary>

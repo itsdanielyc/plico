@@ -199,6 +199,49 @@ public sealed partial class InboxWindowTests
         }
     }
 
+    [AvaloniaFact]
+    public async Task ASavedDateReadsAsAValueOnceTheKeyboardLeaves()
+    {
+        using var temporary = new TemporaryLibrary();
+        using (var library = InboxLibrary.Open(temporary.Path)) BatchFixtures.AddTwoDocuments(library, TestContext.Current.CancellationToken);
+        using var model = new InboxViewModel(new FixtureDialogs());
+        model.InitializeLibrary(() => temporary.Path);
+        var window = new MainWindow { DataContext = model, Width = 1280, Height = 800 };
+        window.Show();
+        try
+        {
+            await WaitForPreviewAsync(model);
+            var dateField = Assert.IsType<TextBox>(window.FindControl<TextBox>("DocumentDateField"));
+            PressKey(window, Key.D, PhysicalKey.D, "d");
+            TypeText(window, "29 Feb 2024");
+            PressKey(window, Key.Enter, PhysicalKey.Enter);
+            // The keyboard stays with the date selected, ready for another try.
+            Assert.Equal("29 Feb 2024", dateField.SelectedText);
+
+            // Once the keyboard leaves, the date is a value again: no selection is left drawn behind it.
+            PressKey(window, Key.Tab, PhysicalKey.Tab);
+            Assert.False(dateField.IsFocused);
+            Assert.Equal("29 Feb 2024", dateField.Text);
+            Assert.Equal(dateField.SelectionStart, dateField.SelectionEnd);
+
+            // A date entered without the keyboard in the field, as an automation client or the native journey does,
+            // saves without leaving a selection behind it either.
+            dateField.SetCurrentValue(TextBox.TextProperty, "1 Mar 2024");
+            PressFieldKey(dateField, Key.Enter);
+            Assert.Equal(new DateOnly(2024, 3, 1), model.SelectedDocument!.DocumentDate);
+            Assert.False(dateField.IsFocused);
+            Assert.Equal(dateField.SelectionStart, dateField.SelectionEnd);
+            // And a field without the keyboard never paints a selection, whatever selected its text.
+            dateField.SelectAll();
+            Assert.Equal(Avalonia.Media.Colors.Transparent,
+                Assert.IsAssignableFrom<Avalonia.Media.ISolidColorBrush>(dateField.GetVisualDescendants().OfType<Avalonia.Controls.Presenters.TextPresenter>().Single().SelectionBrush).Color);
+        }
+        finally
+        {
+            window.Close();
+        }
+    }
+
     /// <summary>The queue's row for a document.</summary>
     private static ListBoxItem QueueRow(Window window, long documentId)
     {

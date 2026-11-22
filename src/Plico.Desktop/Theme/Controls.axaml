@@ -832,6 +832,10 @@
         <Setter Property="Padding" Value="12,0,0,0" />
         <Setter Property="VerticalContentAlignment" Value="Center" />
     </Style>
+    <!-- Text is shown as selected only in the field that has the keyboard; elsewhere a value reads as a value. -->
+    <Style Selector="TextBox:not(:focus-within)">
+        <Setter Property="SelectionBrush" Value="Transparent" />
+    </Style>
     <Style Selector="TextBox:focus /template/ Border#PART_BorderElement">
         <Setter Property="BorderBrush" Value="{DynamicResource Fg}" />
         <Setter Property="BoxShadow" Value="{DynamicResource ShadowFieldFocus}" />
