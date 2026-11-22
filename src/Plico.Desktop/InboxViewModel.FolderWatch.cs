@@ -21,6 +21,12 @@ internal sealed partial class InboxViewModel
         internal string CatchUpLabel => Active is null ? DesktopText.Translate("Resume and catch up") : DesktopText.Translate("Import existing files");
     }
 
+    /// <summary>
+    /// What starting a watch said (<see cref="Message"/>, a failure when <see cref="Problem"/>), and the files already in
+    /// its folder it queued for import.
+    /// </summary>
+    private sealed record WatchStart(string Message, bool Problem, IReadOnlyList<string> Queued);
+
     // Folders are compared as the platform compares paths.
     private static readonly StringComparer WatchPathComparer =
         OperatingSystem.IsWindows() ? StringComparer.OrdinalIgnoreCase : StringComparer.Ordinal;
@@ -225,10 +231,10 @@ internal sealed partial class InboxViewModel
     }
 
     /// <summary>
-    /// Starts watching <paramref name="folder"/> and remembers it for next time, and returns the files already there it
-    /// queued for import (none unless <paramref name="queueExistingFiles"/>).
+    /// Starts watching <paramref name="folder"/>, remembers it for next time and says so, and returns what it said with the
+    /// files already there it queued for import (none unless <paramref name="queueExistingFiles"/>).
     /// </summary>
-    private async Task<IReadOnlyList<string>> StartWatchAsync(WatchSlot slot, string folder, CancellationToken cancellationToken, bool queueExistingFiles = false)
+    private async Task<WatchStart> StartWatchAsync(WatchSlot slot, string folder, CancellationToken cancellationToken, bool queueExistingFiles = false)
     {
         var library = RequireLibrary();
         var otherWatch = ReferenceEquals(slot, _scannerWatch) ? _phoneWatch.Active : _scannerWatch.Active;
@@ -257,18 +263,22 @@ internal sealed partial class InboxViewModel
         NotifyWatchChanged(slot);
         string watching = DesktopText.Format($"Watching for new or updated files in {new DirectoryInfo(watch.Folder).Name}.");
         if (queued.Count > 0) watching += " " + DesktopText.Format($"{DocumentCount(queued.Count)} queued for the folder watch.");
+        WatchStart start;
         try
         {
             if (_watchPreference is { } preference) RememberWatchFolder(preference, library.RootPath, watch.Folder, slot.Source);
-            Status = watching;
+            start = new WatchStart(watching, Problem: false, queued);
         }
         catch (Exception error) when (error is IOException or UnauthorizedAccessException)
         {
             // The watch runs, but it will not be there next time: that leads, so the toast's title names it.
-            Fail($"{DesktopText.Format($"Couldn't remember the {DesktopText.Translate(slot.Description)}. {error.Message}")} {watching}");
+            start = new WatchStart(
+                $"{DesktopText.Format($"Couldn't remember the {DesktopText.Translate(slot.Description)}. {error.Message}")} {watching}",
+                Problem: true, queued);
         }
+        Say(start.Message, start.Problem);
         _ = ObserveWatchAsync(slot, watch);
-        return queued;
+        return start;
     }
 
     /// <summary>
@@ -282,27 +292,46 @@ internal sealed partial class InboxViewModel
             preference.Save(libraryRoot, folder, source);
     }
 
-    /// <summary>Starts the saved watches that catch up on open, and returns the files they queued for import.</summary>
-    private async Task<IReadOnlyList<string>> CatchUpSavedWatchesAsync(CancellationToken cancellationToken)
+    /// <summary>Sets the message of record, as a failure with the alert when <paramref name="problem"/>.</summary>
+    private void Say(string message, bool problem)
     {
-        var (scannerNotice, scannerQueued) = await TryStartSavedWatchAsync(_scannerWatch, cancellationToken);
-        var (phoneNotice, phoneQueued) = await TryStartSavedWatchAsync(_phoneWatch, cancellationToken);
-        if (JoinWatchNotices(scannerNotice, phoneNotice) is { } notice) Status = notice;
-        return [.. scannerQueued, .. phoneQueued];
+        if (problem) Fail(message);
+        else Status = message;
     }
 
-    private async Task<(string? Notice, IReadOnlyList<string> Queued)> TryStartSavedWatchAsync(WatchSlot slot, CancellationToken cancellationToken)
+    /// <summary>
+    /// Starts the saved watches that catch up on open, says in one message what each had to say, and returns the files
+    /// they queued for import. A watch that could not resume or be remembered is a problem and leads, so the toast's title
+    /// names it; then each watch that resumed, the scanner's before the phone's.
+    /// </summary>
+    private async Task<IReadOnlyList<string>> CatchUpSavedWatchesAsync(CancellationToken cancellationToken)
     {
-        if (!slot.CatchUpOnOpen || !slot.CanResume || slot.RememberedFolder is not { } folder) return (null, []);
+        var scanner = await TryStartSavedWatchAsync(_scannerWatch, cancellationToken);
+        var phone = await TryStartSavedWatchAsync(_phoneWatch, cancellationToken);
+        WatchStart[] starts = [.. new[] { scanner, phone }.OfType<WatchStart>()];
+        if (starts.Length > 0)
+        {
+            // A stable sort, so each group keeps the scanner before the phone.
+            var said = starts.OrderByDescending(start => start.Problem).ToArray();
+            Say(string.Join(" ", said.Select(start => start.Message)), said.Any(start => start.Problem));
+        }
+        return [.. starts.SelectMany(start => start.Queued)];
+    }
+
+    /// <summary>Starts a saved watch that catches up on open; null when it does not.</summary>
+    private async Task<WatchStart?> TryStartSavedWatchAsync(WatchSlot slot, CancellationToken cancellationToken)
+    {
+        if (!slot.CatchUpOnOpen || !slot.CanResume || slot.RememberedFolder is not { } folder) return null;
         try
         {
-            return (null, await StartWatchAsync(slot, folder, cancellationToken, queueExistingFiles: true));
+            return await StartWatchAsync(slot, folder, cancellationToken, queueExistingFiles: true);
         }
         catch (Exception error) when (error is IOException or UnauthorizedAccessException or ArgumentException)
         {
             slot.Failed = true;
             OnPropertyChanged(nameof(HasFailedWatch));
-            return (DesktopText.Format($"Couldn't resume the {DesktopText.Translate(slot.Description)} watch. {error.Message}"), []);
+            return new WatchStart(DesktopText.Format($"Couldn't resume the {DesktopText.Translate(slot.Description)} watch. {error.Message}"),
+                Problem: true, []);
         }
     }
 

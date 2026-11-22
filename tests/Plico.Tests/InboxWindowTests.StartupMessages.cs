@@ -272,6 +272,67 @@ public sealed partial class InboxWindowTests
     [AvaloniaTheory]
     [InlineData(false)]
     [InlineData(true)]
+    public async Task TheCatchUpOnOpenSaysEachSavedWatchItResumed(bool phoneFolderGone)
+    {
+        using var temporary = new TemporaryLibrary();
+        using var settings = new TemporaryLibrary();
+        using var watched = new TemporaryLibrary();
+        using (var library = InboxLibrary.Open(temporary.Path)) BatchFixtures.AddTwoDocuments(library, TestContext.Current.CancellationToken);
+        string settingsDirectory = Path.Combine(settings.Path, "Settings");
+        var store = DamageSavedImportErrors(settingsDirectory, temporary.Path);
+        // The scanner and the phone inbox both catch up whenever the library opens, and each has a file waiting, unless
+        // the phone's folder has gone.
+        var watchPreference = new WatchFolderPreference(settingsDirectory);
+        string root = Path.GetFullPath(temporary.Path);
+        string scanFolder = Path.Combine(watched.Path, "Scans");
+        string phoneFolder = Path.Combine(watched.Path, "Phone");
+        Directory.CreateDirectory(scanFolder);
+        watchPreference.Save(root, scanFolder);
+        watchPreference.SaveCatchUpOnOpen(root, true);
+        watchPreference.Save(root, phoneFolder, WatchSource.Phone);
+        watchPreference.SaveCatchUpOnOpen(root, true, WatchSource.Phone);
+        File.Copy(Path.Combine(AppContext.BaseDirectory, "fixtures", "Match Ledger.pdf"), Path.Combine(scanFolder, "Saved scan.pdf"));
+        if (!phoneFolderGone)
+        {
+            Directory.CreateDirectory(phoneFolder);
+            File.Copy(Path.Combine(AppContext.BaseDirectory, "fixtures", "Mixed Pages.pdf"), Path.Combine(phoneFolder, "Phone transfer.pdf"));
+        }
+
+        using var model = new InboxViewModel(new FixtureDialogs(), watchPreference: watchPreference, importFailureStore: store);
+        model.InitializeLibrary(() => temporary.Path);
+        string notice = model.ToastStatus;
+        var window = new MainWindow { DataContext = model, Width = 1280, Height = 800 };
+        // Every message that is news from the moment the window opens.
+        var said = new List<string>();
+        model.PropertyChanged += (_, change) =>
+        {
+            if (change.PropertyName == nameof(InboxViewModel.ToastStatus)) said.Add(model.ToastStatus);
+        };
+        window.Show();
+        try
+        {
+            await WaitForAsync(() => model.InboxCount == (phoneFolderGone ? 3 : 4) && !model.IsBusy);
+            await WaitForPreviewAsync(model);
+            Dispatcher.UIThread.RunJobs();
+
+            // The catch-up's message says each watch it resumed, the scanner's first, after the startup notice; a watch
+            // that could not resume is a problem, so it leads the catch-up's part, and the notice still leads the toast.
+            string scanner = "Watching for new or updated files in Scans. 1 document queued for the folder watch.";
+            string catchUp = phoneFolderGone
+                ? $"Couldn't resume the phone inbox folder watch. The folder is unavailable. {phoneFolder} {scanner}"
+                : $"{scanner} Watching for new or updated files in Phone. 1 document queued for the folder watch.";
+            Assert.Equal($"{notice} {catchUp}", said.FirstOrDefault());
+        }
+        finally
+        {
+            await model.PrepareCloseAsync();
+            window.Close();
+        }
+    }
+
+    [AvaloniaTheory]
+    [InlineData(false)]
+    [InlineData(true)]
     public async Task AProblemWhilePlicoStartsWearsTheAlertAndLeadsWithTheProblem(bool locked)
     {
         using var temporary = new TemporaryLibrary();
@@ -394,6 +455,15 @@ public sealed partial class InboxWindowTests
         var expected = Avalonia.Application.Current!.FindResource(key);
         Assert.True(glyphs.Length == 1 && ReferenceEquals(glyphs[0].Data, expected),
             $"The empty state shows {glyphs.Length} glyph(s), not {key}.");
+    }
+
+    /// <summary>Saves an import error for the library and damages the file, so opening the library cannot read it.</summary>
+    private static ImportFailureStore DamageSavedImportErrors(string settingsDirectory, string libraryPath)
+    {
+        var store = new ImportFailureStore(settingsDirectory);
+        store.Save(libraryPath, [new ImportFailure(Path.Combine(libraryPath, "Damaged.pdf"), "Unreadable")]);
+        foreach (string file in Directory.GetFiles(settingsDirectory, "import-errors-*.json")) File.WriteAllText(file, "{ not json");
+        return store;
     }
 
     /// <summary>Every time the toast rises or leaves from now on, in order.</summary>
