@@ -73,9 +73,10 @@ internal sealed partial class InboxViewModel
     /// </summary>
     private sealed record StartupNews(string Notice, bool Problem, string Shown);
 
-    // Set when the catch-up that opening starts joined the startup notice and queued files, while the watches have any
-    // of those files (_catchUpFilesAwaitingImport) yet to import: importing them is part of the catch-up, so each watched
-    // import's message joins the notice in turn until they have all come in or gone.
+    // Set while the catch-up that opening starts runs, so its message can join the startup notice, and then while the
+    // watches have any of the files it queued (_catchUpFilesAwaitingImport) yet to import: importing them is part of the
+    // catch-up, so each watched import's message joins the notice in turn until they have all come in or gone. The
+    // person closing the toast ends it (DismissStartupNews).
     private StartupNews? _startupNewsAwaitingImport;
     private readonly HashSet<string> _catchUpFilesAwaitingImport = new(WatchPathComparer);
 
@@ -91,19 +92,25 @@ internal sealed partial class InboxViewModel
     /// <summary>
     /// Catches up the saved watches as the window opens. What opening the library had to say rose as the window opened
     /// and is still the toast; the catch-up's own message joins it, after it, rather than replacing it within a second,
-    /// and so does each watched import's message until the files it queued have all come in or gone.
+    /// and so does each watched import's message until the files it queued have all come in or gone. Once the person has
+    /// closed the toast, they say only their own news.
     /// </summary>
     internal Task CatchUpWhenWindowOpensAsync()
     {
         if (!CanWork || !(CatchUpOnOpen || PhoneCatchUpOnOpen)) return Task.CompletedTask;
-        string? startupNews = ToastIsQuiet || string.IsNullOrWhiteSpace(ToastStatus) ? null : ToastStatus;
-        bool startupProblem = ToastIsProblem;
+        StartupNews? startupNews = ToastIsQuiet || string.IsNullOrWhiteSpace(ToastStatus)
+            ? null
+            : new StartupNews(ToastStatus, ToastIsProblem, ToastStatus);
         return RunOperationAsync(DesktopText.Translate("Resuming saved watches…"), async token =>
         {
+            _startupNewsAwaitingImport = startupNews;
             var queued = await CatchUpSavedWatchesAsync(token);
-            if (startupNews is null || !JoinStartupNews(new StartupNews(startupNews, startupProblem, startupNews))) return;
-            if (queued.Count == 0) return;
-            _startupNewsAwaitingImport = new StartupNews(startupNews, startupProblem, _workStatus);
+            if (_startupNewsAwaitingImport is not { } news || !JoinStartupNews(news) || queued.Count == 0)
+            {
+                ForgetStartupNews();
+                return;
+            }
+            _startupNewsAwaitingImport = news with { Shown = _workStatus };
             _catchUpFilesAwaitingImport.UnionWith(queued);
         });
     }
@@ -142,6 +149,13 @@ internal sealed partial class InboxViewModel
         _startupNewsAwaitingImport = null;
         _catchUpFilesAwaitingImport.Clear();
     }
+
+    /// <summary>
+    /// Called when the person closes the toast: what Plico said while it started has been read, so the catch-up that
+    /// opening starts, and the imports of what it queued, say only their own news. The toast leaving when its time is up
+    /// is not the person closing it.
+    /// </summary>
+    internal void DismissStartupNews() => ForgetStartupNews();
 
     private bool WatchesHaveYetToDeliver(string path) =>
         _scannerWatch.Active?.HasYetToDeliver(path) == true || _phoneWatch.Active?.HasYetToDeliver(path) == true;

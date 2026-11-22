@@ -240,11 +240,14 @@ public partial class MainWindow
 
     /// <summary>
     /// Closes the toast. Closed from the keyboard, it hands the keyboard to the open document, where J, K and Tab carry
-    /// on; a click leaves the keyboard where it was, so a title or date being typed carries on.
+    /// on; a click leaves the keyboard where it was, so a title or date being typed carries on. What Plico said while it
+    /// started has then been read, so it does not rise again with the imports of what the catch-up on open queued.
     /// </summary>
     private void CloseToast_Click(object? sender, RoutedEventArgs e)
     {
         if (Toast.IsKeyboardFocusWithin || FocusManager?.GetFocusedElement() is null) FocusOpenDocument();
+        ViewModel?.DismissStartupNews();
+        _toastCarriesStartupNews = false;
         HideToast();
     }
 

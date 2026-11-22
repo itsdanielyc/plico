@@ -272,6 +272,84 @@ public sealed partial class InboxWindowTests
     [AvaloniaTheory]
     [InlineData(false)]
     [InlineData(true)]
+    public async Task ClosingTheStartupToastLeavesTheCatchUpsImportOnlyItsOwnNews(bool duringTheCatchUp)
+    {
+        using var temporary = new TemporaryLibrary();
+        using var settings = new TemporaryLibrary();
+        using var watched = new TemporaryLibrary();
+        using (var library = InboxLibrary.Open(temporary.Path)) BatchFixtures.AddTwoDocuments(library, TestContext.Current.CancellationToken);
+        string settingsDirectory = Path.Combine(settings.Path, "Settings");
+        var store = DamageSavedImportErrors(settingsDirectory, temporary.Path);
+        var watchPreference = new WatchFolderPreference(settingsDirectory);
+        string watchFolder = Path.Combine(watched.Path, "Scans");
+        Directory.CreateDirectory(watchFolder);
+        watchPreference.Save(Path.GetFullPath(temporary.Path), watchFolder);
+        watchPreference.SaveCatchUpOnOpen(Path.GetFullPath(temporary.Path), true);
+        File.Copy(Path.Combine(AppContext.BaseDirectory, "fixtures", "Match Ledger.pdf"), Path.Combine(watchFolder, "Saved scan.pdf"));
+
+        using var model = new InboxViewModel(new FixtureDialogs(), watchPreference: watchPreference, importFailureStore: store);
+        model.InitializeLibrary(() => temporary.Path);
+        string notice = model.ToastStatus;
+        var window = new MainWindow { DataContext = model, Width = 1280, Height = 800 };
+        var toast = Named<Border>(window, "Toast");
+        // Every message that is news from the person's click on Close on, and what the click left behind.
+        var said = new List<string>();
+        (bool Clicked, bool Busy, bool Visible) closed = default;
+        void CloseTheToast()
+        {
+            model.PropertyChanged += (_, change) =>
+            {
+                if (change.PropertyName == nameof(InboxViewModel.ToastStatus)) said.Add(model.ToastStatus);
+            };
+            ClickAt(window, Named<Button>(window, "CloseToastButton"));
+            closed = (true, model.IsBusy, toast.IsVisible);
+        }
+        if (duringTheCatchUp)
+        {
+            // The person closes the notice while the catch-up is still looking at the folder (on a slow drive, say). The
+            // click lands as the catch-up says it is checking the files there, before it looks, so it is never too late.
+            void CloseWhileChecking(object? sender, System.ComponentModel.PropertyChangedEventArgs change)
+            {
+                if (change.PropertyName != nameof(InboxViewModel.WorkStatus) || model.WorkStatus != "Checking existing files…") return;
+                model.PropertyChanged -= CloseWhileChecking;
+                CloseTheToast();
+            }
+            model.PropertyChanged += CloseWhileChecking;
+        }
+        window.Show();
+        try
+        {
+            string watching = "Watching for new or updated files in Scans. 1 document queued for the folder watch.";
+            if (!duringTheCatchUp)
+            {
+                // The catch-up joins the notice and queues the waiting scan. The person reads the toast and closes it
+                // before the watch imports the scan.
+                await WaitForAsync(() => model.IsWatchingFolder && !model.IsBusy);
+                Assert.Equal(($"{notice} {watching}", true, 2), (model.ToastStatus, toast.IsVisible, model.InboxCount));
+                CloseTheToast();
+            }
+            await WaitForAsync(() => model.InboxCount == 3 && !model.IsBusy);
+            // The click closed the toast, during the catch-up or after it as each case says.
+            Assert.Equal((true, duringTheCatchUp, false), closed);
+            await WaitForPreviewAsync(model);
+            Dispatcher.UIThread.RunJobs();
+
+            // The notice was read and closed, so it does not come back with what the catch-up or its import say: each says
+            // only its own news, and the import's rises with the check.
+            string[] expected = duringTheCatchUp ? [watching, "1 document added."] : ["1 document added."];
+            Assert.Equal((string.Join(" | ", expected), false, true),
+                (string.Join(" | ", said), ToastWearsTheAlert(toast), toast.IsVisible));
+        }
+        finally
+        {
+            await model.PrepareCloseAsync();
+            window.Close();
+        }
+    }
+
+    [AvaloniaTheory]
+    [InlineData(false)]
+    [InlineData(true)]
     public async Task TheCatchUpOnOpenSaysEachSavedWatchItResumed(bool phoneFolderGone)
     {
         using var temporary = new TemporaryLibrary();
