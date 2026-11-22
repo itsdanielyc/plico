@@ -5,6 +5,7 @@ using Avalonia.Controls;
 using Avalonia.Controls.ApplicationLifetimes;
 using Avalonia.Input;
 using Avalonia.Interactivity;
+using Avalonia.Layout;
 using Avalonia.Media.Imaging;
 using Avalonia.Threading;
 using Avalonia.VisualTree;
@@ -1113,8 +1114,26 @@ internal static partial class NativeVerification
         for (int wait = 0; wait < 30 && window is MainWindow { IsToastEntering: true }; wait++) await Task.Delay(20);
         // A dialog may still be settling (an expander's chevron turns over 260 ms at most); capture it at rest.
         if (window is not MainWindow) await Task.Delay(DialogSettleTime);
+        await UntilAsync(() => IsLaidOutAtItsFrame(window), () =>
+            $"Before {filename} the window was laid out at {LayoutRoot(window)?.Bounds.Size} in a frame of {window.ClientSize} " +
+            $"({window.Width} x {window.Height} asked).");
         await CaptureVisualAsync(window, directory, filename);
     }
+
+    /// <summary>
+    /// True once the platform has given the window the size last asked of it, or the size the screen allows, and the
+    /// layout fills that frame. X11 resizes a window after the request returns, and the layout follows the request at
+    /// once, so a capture taken in between crops the new layout to the old frame. When the platform reports the new
+    /// size, Avalonia sets Width and Height to it, so a window a small screen clamps settles too.
+    /// </summary>
+    private static bool IsLaidOutAtItsFrame(Window window) =>
+        window.IsArrangeValid && LayoutRoot(window) is { } root && Matches(root.Bounds.Width, window.ClientSize.Width) &&
+        Matches(root.Bounds.Height, window.ClientSize.Height) && (double.IsNaN(window.Width) || Matches(window.Width, window.ClientSize.Width)) &&
+        (double.IsNaN(window.Height) || Matches(window.Height, window.ClientSize.Height));
+
+    private static Layoutable? LayoutRoot(Window window) => window.GetVisualChildren().FirstOrDefault() as Layoutable;
+
+    private static bool Matches(double laidOut, double frame) => Math.Abs(laidOut - frame) < 1;
 
     /// <summary>
     /// Renders a window or a popup's surface to a PNG and records it in the progress file. A capture taken with the
