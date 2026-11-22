@@ -105,7 +105,7 @@ internal sealed partial class InboxViewModel
 
     /// <summary>Puts back the title a document had before it was renamed.</summary>
     private static UndoOffer TitleUndo(InboxLibrary library, long documentId, string previous, string current) =>
-        UndoOffer.InPlace(DesktopText.Translate("Renamed"), $"“{current}”", () =>
+        UndoOffer.InPlace(DesktopText.Translate("Renamed"), DesktopText.Quote(current), () =>
         {
             library.SetTitle(documentId, previous);
             return documentId;

@@ -25,5 +25,19 @@ internal static class PlatformText
 
     /// <summary>"English · read on this PC": the recognition language and where recognition runs.</summary>
     internal static string RecognitionPlace(OcrLanguage language) =>
-        $"{DesktopText.Translate(language.ToString())} · {DesktopText.Translate(OnWindows ? "read on this\u00a0PC" : "read on this\u00a0computer")}";
+        $"{LanguageName(language)} · {DesktopText.Translate(OnWindows ? "read on this\u00a0PC" : "read on this\u00a0computer")}";
+
+    /// <summary>A recognition language's name in the interface's language: "German", "Allemand".</summary>
+    internal static string LanguageName(OcrLanguage language) => DesktopText.Translate(language.ToString());
+}
+
+/// <summary>Names a recognition language in the interface's language, in Settings' list as on the status card.</summary>
+internal sealed class LanguageNameConverter : Avalonia.Data.Converters.IValueConverter
+{
+    public static readonly LanguageNameConverter Instance = new();
+
+    public object? Convert(object? value, Type targetType, object? parameter, CultureInfo culture) =>
+        value is OcrLanguage language ? PlatformText.LanguageName(language) : value?.ToString();
+
+    public object? ConvertBack(object? value, Type targetType, object? parameter, CultureInfo culture) => throw new NotSupportedException();
 }

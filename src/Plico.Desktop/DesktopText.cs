@@ -36,6 +36,12 @@ internal static class DesktopText
     internal static string Translate(string english) =>
         _useFrench ? Strings.Value.ByEnglish.GetValueOrDefault(english)?.French ?? english : english;
 
+    /// <summary>
+    /// A name the person gave (a tag, a title) in the interface's quotation marks: “Tax” in English, « Impôts » in French,
+    /// with narrow no-break spaces inside the guillemets so they never part from the name.
+    /// </summary>
+    internal static string Quote(string name) => _useFrench ? $"«\u202F{name}\u202F»" : $"“{name}”";
+
     internal static string Format(FormattableString message) =>
         string.Format(_useFrench ? CultureInfo.GetCultureInfo(FrenchCultureName) : CultureInfo.CurrentCulture,
             Translate(message.Format), message.GetArguments());

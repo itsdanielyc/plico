@@ -107,6 +107,6 @@ internal sealed partial class InboxViewModel
     {
         RetireUndo();
         LoadResults(preferredId: changed.Id, reloadPreview: true, retainLoadedResults: true);
-        Announce(DesktopText.Format($"Saved the current PDF for “{changed.Title}”."), DesktopText.Translate("PDF updated"), $"“{changed.Title}”");
+        Announce(DesktopText.Format($"Saved the current PDF for “{changed.Title}”."), DesktopText.Translate("PDF updated"), DesktopText.Quote(changed.Title));
     }
 }

@@ -62,6 +62,7 @@ ChooseFolder	Choose folder…	Choisir un dossier…
 ChooseIntakeFolder	Choose intake folder	Choisir un dossier de réception
 ChooseLibrary	Choose library	Choisir la bibliothèque
 ChooseLibraryFolder	Choose library folder	Choisir le dossier de la bibliothèque
+ImportExistingFiles	Import existing files	Importer les fichiers existants
 LibraryDidNotOpen	Library didn't open	La bibliothèque ne s’est pas ouverte
 ChoosePDFCompression	Choose PDF compression…	Choisir un mode de compression…
 ChooseTheBinderOrder	Choose the binder order…	Choisir l’ordre des documents du dossier familial…
@@ -838,8 +839,8 @@ PrivateByDefault	Private by default.	Privé par défaut.
 DropToAddToInbox	Drop to add to your Inbox	Déposez pour ajouter à votre boîte de réception
 WelcomeHeroLedePc	Receipts, letters and forms become searchable PDFs in a folder on this PC.	Reçus, lettres et formulaires deviennent des PDF indexables dans un dossier de ce PC.
 WelcomeHeroLedeComputer	Receipts, letters and forms become searchable PDFs in a folder on this computer.	Reçus, lettres et formulaires deviennent des PDF indexables dans un dossier de cet ordinateur.
-PrivacyShortPc	Text recognition, search and suggestions run on this PC.	La reconnaissance du texte, la recherche et les suggestions s’exécutent sur ce PC.
-PrivacyShortComputer	Text recognition, search and suggestions run on this computer.	La reconnaissance du texte, la recherche et les suggestions s’exécutent sur cet ordinateur.
+PrivacyShortPc	Text recognition, search and suggestions run on this PC.	Lecture, recherche et suggestions s’exécutent sur ce PC.
+PrivacyShortComputer	Text recognition, search and suggestions run on this computer.	Lecture, recherche et suggestions s’exécutent sur cet ordinateur.
 TextSearchable	Searchable	Indexable
 TextNotSearchableYet	Not searchable yet	Pas encore indexable
 QueueToReview	{0} to review	{0} à traiter

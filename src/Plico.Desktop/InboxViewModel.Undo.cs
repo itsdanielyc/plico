@@ -135,7 +135,7 @@ internal sealed partial class InboxViewModel
     /// short title over what it was about ("Tag added" over "“Tax” · 3 documents"), so the count never parts from its noun.
     /// </summary>
     private static UndoOffer BatchTagUndo(InboxLibrary library, IReadOnlyList<long> documentIds, string label, int selectedCount) =>
-        new(DesktopText.Translate("Tag added"), $"“{label}” · {DocumentCount(selectedCount)}", async token =>
+        new(DesktopText.Translate("Tag added"), $"{DesktopText.Quote(label)} · {DocumentCount(selectedCount)}", async token =>
         {
             await Task.Run(() => library.RemoveTagFromDocuments(documentIds, label, token), token);
             return null;
@@ -143,7 +143,7 @@ internal sealed partial class InboxViewModel
 
     /// <summary>Takes a tag back off one document, or puts a removed one back with its catalog spelling and colour.</summary>
     private static UndoOffer TagUndo(InboxLibrary library, long documentId, string label, bool added) =>
-        UndoOffer.InPlace(DesktopText.Translate(added ? "Tag added" : "Tag removed"), $"“{label}”", () =>
+        UndoOffer.InPlace(DesktopText.Translate(added ? "Tag added" : "Tag removed"), DesktopText.Quote(label), () =>
         {
             if (added) library.RemoveTag(documentId, label);
             else library.AddTag(documentId, label);

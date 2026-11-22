@@ -270,7 +270,7 @@ internal sealed partial class InboxViewModel : ObservableObject, IDisposable
         {
             // A tag the document already has changes nothing: the toast says so and the current Undo offer stays.
             TagInput = "";
-            SaveEdit(() => Announce(DesktopText.Format($"Already tagged “{present}”."), DesktopText.Translate("Already tagged"), $"“{present}”"));
+            SaveEdit(() => Announce(DesktopText.Format($"Already tagged “{present}”."), DesktopText.Translate("Already tagged"), DesktopText.Quote(present)));
             return;
         }
         if (UpdateDocument((library, document) =>

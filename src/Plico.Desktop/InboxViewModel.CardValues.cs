@@ -18,12 +18,14 @@ internal sealed partial class InboxViewModel
     public string QueueCountLabel => KeepNumberWithNoun(InboxSelected && HasInboxCount ? DesktopText.Format($"{InboxCount} to review")
         : ResultCount);
 
-    /// <summary>"61 documents" never breaks between the number and its noun when the count line wraps.</summary>
-    private static string KeepNumberWithNoun(string count)
-    {
-        int space = count.IndexOf(' ');
-        return space > 0 && char.IsDigit(count[space - 1]) ? string.Concat(count.AsSpan(0, space), " ", count.AsSpan(space + 1)) : count;
-    }
+    /// <summary>
+    /// "61 documents" never breaks between the number and its noun when the count line wraps, wherever the number
+    /// stands: "Showing 60 documents" wraps as "Showing" over "60 documents". O(n) in the length of the count.
+    /// </summary>
+    private static string KeepNumberWithNoun(string count) => SpaceAfterNumber.Replace(count, "\u00A0");
+
+    private static readonly System.Text.RegularExpressions.Regex SpaceAfterNumber =
+        new(@"(?<=\d) ", System.Text.RegularExpressions.RegexOptions.CultureInvariant);
 
     /// <summary>"21 Nov 2026", the date printed on the open document, or empty.</summary>
     public string SelectedDocumentDateLabel => SelectedDocument?.DocumentDate is { } date ? DisplayDates.Day(date) : "";
