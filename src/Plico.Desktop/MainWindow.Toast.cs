@@ -51,6 +51,12 @@ public partial class MainWindow
             else _keyboardLeftWithToast = true;
         };
         Activated += (_, _) => ReturnKeyboardFromAnotherWindow();
+        // The queue's row with the keyboard goes when the queue reloads (an edit saved as another row is clicked) or the
+        // document leaves it (R from the row); the keyboard then goes to the open document's new row the same way.
+        DocumentList.LostFocus += (_, e) =>
+        {
+            if (e.NewFocusedElement is null && IsInFront) OweKeyboardToOpenDocument();
+        };
         DataContextChanged += (_, _) => AttachToast();
         Opened += (_, _) =>
         {

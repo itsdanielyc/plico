@@ -186,6 +186,44 @@ public sealed partial class InboxWindowTests
         }
     }
 
+    [AvaloniaFact]
+    public async Task TheKeyboardStaysInTheQueueWhenItsRowLeavesOrTheQueueReloads()
+    {
+        using var temporary = new TemporaryLibrary();
+        using (var library = InboxLibrary.Open(temporary.Path)) BatchFixtures.AddTwoDocuments(library, TestContext.Current.CancellationToken);
+        using var model = new InboxViewModel(new FixtureDialogs());
+        model.InitializeLibrary(() => temporary.Path);
+        var window = new MainWindow { DataContext = model, Width = 1280, Height = 800 };
+        window.Show();
+        try
+        {
+            await WaitForPreviewAsync(model);
+            var first = model.SelectedDocument!;
+            var second = model.Documents.Single(document => document.Id != first.Id);
+
+            // A title being typed is saved when another row is clicked; the queue reloads, and the keyboard is on the
+            // clicked document's row rather than nowhere.
+            PressKey(window, Key.E, PhysicalKey.E, "e");
+            TypeText(window, "Typed then left");
+            ClickAt(window, QueueRow(window, second.Id));
+            await WaitForPreviewAsync(model);
+            Dispatcher.UIThread.RunJobs();
+            Assert.Equal(second.Id, model.SelectedDocument!.Id);
+            Assert.True(KeyboardIsOnRow(window, second.Id), $"After the queue reloaded the keyboard is on {KeyboardOwner(window)}.");
+
+            // R from that row reviews it; the row leaves the Inbox and the keyboard goes to the next document's row.
+            PressKey(window, Key.R, PhysicalKey.R, "r");
+            await WaitForPreviewAsync(model);
+            Dispatcher.UIThread.RunJobs();
+            Assert.Equal(first.Id, model.SelectedDocument!.Id);
+            Assert.True(KeyboardIsOnRow(window, first.Id), $"After R from a row the keyboard is on {KeyboardOwner(window)}.");
+        }
+        finally
+        {
+            window.Close();
+        }
+    }
+
     /// <summary>True when the control with the keyboard belongs to <paramref name="window"/>.</summary>
     private static bool KeyboardIsIn(Window window) =>
         window.FocusManager?.GetFocusedElement() is Visual focused && ReferenceEquals(TopLevel.GetTopLevel(focused), window);
