@@ -68,12 +68,24 @@ internal sealed partial class InboxViewModel
         if (tag is not null) ApplySuggestions([tag.Label], includeDate: false);
     }
 
+    /// <summary>
+    /// Files the date the page suggests. It belongs to the date field, so like a typed date it is one quick catalog
+    /// write that is saved while Plico works in the background.
+    /// </summary>
     [RelayCommand]
-    private void AcceptSuggestedDate() => ApplySuggestions([], HasSuggestedDate);
+    private void AcceptSuggestedDate()
+    {
+        if (HasLibrary && HasSuggestedDate) SaveEdit(() => ApplySuggestionsNow([], includeDate: true));
+    }
 
     private void ApplySuggestions(IReadOnlyList<string> tags, bool includeDate)
     {
-        if (!CanWork || SelectedDocument is not { } document || (tags.Count == 0 && !includeDate)) return;
+        if (CanWork) ApplySuggestionsNow(tags, includeDate);
+    }
+
+    private void ApplySuggestionsNow(IReadOnlyList<string> tags, bool includeDate)
+    {
+        if (SelectedDocument is not { } document || (tags.Count == 0 && !includeDate)) return;
         try
         {
             var library = RequireLibrary();

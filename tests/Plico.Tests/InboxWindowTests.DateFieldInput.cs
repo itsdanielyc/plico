@@ -149,6 +149,46 @@ public sealed partial class InboxWindowTests
     }
 
     [AvaloniaFact]
+    public async Task EnterFilesTheSuggestedDateWhilePlicoWorks()
+    {
+        using var temporary = TemporaryLibraryWithASuggestedDate(out long dated);
+        // Reading Trash waits for its dialog, so Plico stays busy as it does while a watched folder's import runs.
+        var pending = new TaskCompletionSource<TrashDecision?>();
+        using var model = new InboxViewModel(new FixtureDialogs { TrashChoice = _ => pending.Task });
+        model.InitializeLibrary(() => temporary.Path);
+        var window = new MainWindow { DataContext = model, Width = 1280, Height = 800 };
+        window.Show();
+        Task? work = null;
+        try
+        {
+            await WaitForPreviewAsync(model);
+            ClickAt(window, QueueRow(window, dated));
+            await WaitForPreviewAsync(model);
+            await WaitForAsync(() => model.HasSuggestedDate);
+            var field = Named<TextBox>(window, "DocumentDateField");
+            PressKey(window, Key.D, PhysicalKey.D, "d");
+            Assert.True(field.IsFocused);
+
+            // Plico starts working; Enter in the empty field still files the date the page suggests, as a typed date
+            // would be, and offers its Undo at once.
+            work = model.OpenTrashCommand.ExecuteAsync(null);
+            Dispatcher.UIThread.RunJobs();
+            Assert.True(model.IsBusy);
+            PressKey(window, Key.Enter, PhysicalKey.Enter);
+            Assert.Equal(new DateOnly(2026, 4, 3), model.SelectedDocument!.DocumentDate);
+            Assert.Equal("Suggestion accepted", model.ToastTitle);
+            Assert.True(model.ToastOffersUndo);
+            Assert.Equal("3 Apr 2026", field.SelectedText);
+        }
+        finally
+        {
+            pending.TrySetResult(null);
+            if (work is not null) await work;
+            window.Close();
+        }
+    }
+
+    [AvaloniaFact]
     public async Task TheCalendarLeavesTheKeyboardInTheDateFieldAndEscapeClosesIt()
     {
         using var temporary = new TemporaryLibrary();
