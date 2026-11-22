@@ -1,0 +1,110 @@
+using Avalonia.Automation;
+using Avalonia.Controls;
+using Avalonia.Headless.XUnit;
+using Avalonia.Input;
+using Avalonia.VisualTree;
+using Plico.Core;
+using Plico.Desktop;
+using Xunit;
+
+namespace Plico.Tests;
+
+/// <summary>
+/// Settings with the pointer a person uses. Settings sits over the main window and its toast, so what its own actions
+/// have to say appears in Settings, and a switch that cannot be changed while Plico works is turned off until it can.
+/// </summary>
+public sealed partial class InboxWindowTests
+{
+    [AvaloniaFact]
+    public async Task ASettingsActionThatIsRefusedSaysWhyInSettings()
+    {
+        using var temporary = new TemporaryLibrary();
+        using var settingsFolder = new TemporaryLibrary();
+        using (var library = InboxLibrary.Open(temporary.Path)) BatchFixtures.AddTwoDocuments(library, TestContext.Current.CancellationToken);
+        var dialogs = new FixtureDialogs();
+        using var model = new InboxViewModel(dialogs, watchPreference: new WatchFolderPreference(settingsFolder.Path));
+        model.InitializeLibrary(() => temporary.Path);
+        var window = new MainWindow { DataContext = model, Width = 1280, Height = 800 };
+        window.Show();
+        try
+        {
+            await WaitForPreviewAsync(model);
+            var settings = OpenSettingsAt(window, "IntakeGroup");
+            Assert.DoesNotContain(VisibleTexts(settings), text => text.Contains("managed folders", StringComparison.Ordinal));
+
+            // Watch a folder… with a folder inside the library: Plico refuses it, and Settings says why.
+            dialogs.FolderPath = Path.Combine(temporary.Path, "PDFs");
+            ClickAt(settings, Assert.IsType<Button>(settings.FindControl<Button>("StartFolderWatchButton")));
+            await WaitForAsync(() => !model.IsBusy);
+            Assert.False(model.IsWatchingFolder);
+            settings.UpdateLayout();
+            var said = VisibleTexts(settings).Where(text => text.Contains("outside the library's managed folders", StringComparison.Ordinal)).ToArray();
+            Assert.True(said.Length == 1,
+                $"Settings shows nothing of “{model.ToastStatus}”; it went only to the main window's toast, under Settings.");
+            var line = settings.GetVisualDescendants().OfType<TextBlock>().Single(text => text.IsEffectivelyVisible && text.Text == said[0]);
+            Assert.Equal(AutomationLiveSetting.Polite, AutomationProperties.GetLiveSetting(line));
+
+            // News from elsewhere (a review in the main window) is not a Settings message and leaves the line as it was.
+            PressKey(window, Key.R, PhysicalKey.R, "r");
+            await WaitForPreviewAsync(model);
+            Assert.Equal("Marked reviewed", model.ToastTitle);
+            Assert.Equal(said[0], line.Text);
+            settings.Close();
+        }
+        finally
+        {
+            window.Close();
+        }
+    }
+
+    [AvaloniaFact]
+    public async Task TheRapidOcrSwitchWaitsWhilePlicoWorks()
+    {
+        using var temporary = new TemporaryLibrary();
+        using var settingsFolder = new TemporaryLibrary();
+        using (var library = InboxLibrary.Open(temporary.Path)) BatchFixtures.AddTwoDocuments(library, TestContext.Current.CancellationToken);
+        var pending = new TaskCompletionSource<TrashDecision?>();
+        var dialogs = new FixtureDialogs { TrashChoice = _ => pending.Task };
+        using var model = new InboxViewModel(dialogs);
+        model.InitializeLibrary(() => temporary.Path);
+        var preference = new OcrProcessingPreference(settingsFolder.Path);
+        model.InitializeOcrProcessing(preference);
+        var window = new MainWindow { DataContext = model, Width = 1280, Height = 800 };
+        window.Show();
+        Task? work = null;
+        try
+        {
+            await WaitForPreviewAsync(model);
+            var settings = OpenSettingsAt(window, "RecognitionGroup");
+            var rapid = Assert.IsType<CheckBox>(settings.FindControl<CheckBox>("RapidOcrChoice"));
+            Assert.Equal(false, rapid.IsChecked);
+
+            // Trash left open holds Plico busy, as a watched folder's import does.
+            work = model.OpenTrashCommand.ExecuteAsync(null);
+            Assert.True(model.IsBusy);
+            settings.UpdateLayout();
+            ClickAt(settings, rapid);
+            Assert.True(rapid.IsChecked == model.UseRapidOcr,
+                $"While Plico works the switch shows {rapid.IsChecked} but Plico uses {(model.UseRapidOcr ? "RapidOCR" : "Tesseract")}.");
+            Assert.False(rapid.IsEffectivelyEnabled, "The RapidOCR switch takes a click while Plico works.");
+
+            pending.SetResult(null);
+            await work;
+            work = null;
+            Assert.Equal(false, rapid.IsChecked);
+            if (!model.CanUseRapidOcr) return;
+            // Once the work is done, one click turns it on and saves it.
+            ClickAt(settings, rapid);
+            Assert.True(model.UseRapidOcr);
+            Assert.Equal(true, rapid.IsChecked);
+            Assert.True(preference.Load().Engine == OcrEngineKind.RapidOcr);
+            settings.Close();
+        }
+        finally
+        {
+            pending.TrySetResult(null);
+            if (work is not null) await work;
+            window.Close();
+        }
+    }
+}

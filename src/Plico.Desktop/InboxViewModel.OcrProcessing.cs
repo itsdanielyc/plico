@@ -10,6 +10,9 @@ internal sealed partial class InboxViewModel
 
     public bool CanUseRapidOcr => OcrProcessingOptions.RapidOcrAvailable;
 
+    /// <summary>The engine is chosen while Plico is free, as the language and orientation are: work under way keeps its engine.</summary>
+    public bool CanChangeRapidOcr => CanUseRapidOcr && !IsBusy;
+
     public bool UseRapidOcr
     {
         get => _ocrProcessing.Engine == OcrEngineKind.RapidOcr;
@@ -41,7 +44,14 @@ internal sealed partial class InboxViewModel
 
     private void ChangeOcrProcessing(OcrProcessingOptions options)
     {
-        if (options == _ocrProcessing || IsBusy) return;
+        if (options == _ocrProcessing) return;
+        if (IsBusy)
+        {
+            // Refused while work runs: a switch that was flipped anyway goes back to what Plico uses.
+            OnPropertyChanged(nameof(UseRapidOcr));
+            OnPropertyChanged(nameof(AutoOrientPages));
+            return;
+        }
         _library?.ConfigureOcr(options);
         _ocrProcessing = options;
         OnPropertyChanged(nameof(UseRapidOcr));

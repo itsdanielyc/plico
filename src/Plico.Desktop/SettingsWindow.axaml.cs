@@ -1,3 +1,4 @@
+using System.ComponentModel;
 using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Input;
@@ -6,11 +7,20 @@ using Avalonia.Threading;
 
 namespace Plico.Desktop;
 
-/// <summary>Library, intake, recognition and filing preferences, bound to the same view model as the main window.</summary>
+/// <summary>
+/// Library, intake, recognition and filing preferences, bound to the same view model as the main window. What its own
+/// actions have to say appears at the foot of its sheet, since the main window's toast is under it.
+/// </summary>
 public sealed partial class SettingsWindow : Window
 {
     /// <summary>A section is current once its heading is within this distance of where the first heading rests.</summary>
     private const double CurrentSectionSlack = 8;
+
+    private InboxViewModel? _model;
+    // True from a press in Settings until what it started has finished: messages raised meanwhile are Settings' own.
+    private bool _actionInHand;
+    private bool _busyBeforeAction;
+    private bool _waitingForWork;
 
     public SettingsWindow()
     {
@@ -19,6 +29,68 @@ public sealed partial class SettingsWindow : Window
         SettingsScroll.SizeChanged += (_, _) => FitScrollTail();
         ModelsGroup.SizeChanged += (_, _) => FitScrollTail();
         Opened += (_, _) => MarkCurrentSection();
+        AddHandler(PointerPressedEvent, (_, _) => BeginAction(), RoutingStrategies.Tunnel, handledEventsToo: true);
+        AddHandler(KeyDownEvent, (_, _) => BeginAction(), RoutingStrategies.Tunnel, handledEventsToo: true);
+        AddHandler(PointerReleasedEvent, (_, _) => SettleAction(), RoutingStrategies.Tunnel, handledEventsToo: true);
+        AddHandler(KeyUpEvent, (_, _) => SettleAction(), RoutingStrategies.Tunnel, handledEventsToo: true);
+        DataContextChanged += (_, _) => AttachModel(DataContext as InboxViewModel);
+        Closed += (_, _) => AttachModel(null);
+    }
+
+    private void AttachModel(InboxViewModel? model)
+    {
+        if (_model is not null) _model.PropertyChanged -= Model_PropertyChanged;
+        _model = model;
+        if (_model is not null) _model.PropertyChanged += Model_PropertyChanged;
+    }
+
+    /// <summary>A press or a key in Settings: what follows from it, until it has settled, is Settings' to say.</summary>
+    private void BeginAction()
+    {
+        if (_actionInHand) return;
+        _actionInHand = true;
+        _busyBeforeAction = _model?.IsBusy == true;
+    }
+
+    /// <summary>
+    /// Once the input in hand has been handled, an action that started work waits for it to end; anything else is done.
+    /// Work that was already running (a watched import, say) is not this action's.
+    /// </summary>
+    private void SettleAction() => Dispatcher.UIThread.Post(() =>
+    {
+        if (!_actionInHand) return;
+        if (_model is { IsBusy: true } && !_busyBeforeAction) _waitingForWork = true;
+        else if (!_waitingForWork) _actionInHand = false;
+    }, DispatcherPriority.Background);
+
+    private void Model_PropertyChanged(object? sender, PropertyChangedEventArgs e)
+    {
+        if (sender is not InboxViewModel model) return;
+        switch (e.PropertyName)
+        {
+            case nameof(InboxViewModel.ToastStatus):
+                // The person's own edits in the main window are its news, not Settings'.
+                if (_actionInHand && !model.ToastIsQuiet && !model.ToastIsForeground) ShowMessage(model.ToastStatus, model.ToastIsProblem);
+                break;
+            case nameof(InboxViewModel.IsBusy) when !model.IsBusy && _waitingForWork:
+                // The work's message follows straight after it stops being busy; the action is done after that.
+                Dispatcher.UIThread.Post(() =>
+                {
+                    _waitingForWork = false;
+                    _actionInHand = false;
+                }, DispatcherPriority.Background);
+                break;
+        }
+    }
+
+    /// <summary>Shows a message at the foot of the sheet, with a check, or an alert for a failure, until the next one.</summary>
+    private void ShowMessage(string message, bool problem)
+    {
+        if (string.IsNullOrWhiteSpace(message)) return;
+        SettingsMessage.Text = message;
+        SettingsMessageDone.IsVisible = !problem;
+        SettingsMessageProblem.IsVisible = problem;
+        SettingsMessageBar.IsVisible = true;
     }
 
     /// <summary>The section names a caller can open: GeneralGroup, RecognitionGroup, IntakeGroup and the rest.</summary>

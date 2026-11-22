@@ -124,6 +124,7 @@
         <!-- The sheet. -->
         <Border Grid.Column="1" Margin="0,6,0,0" CornerRadius="12,0,0,0" BorderThickness="1,1,0,0" BorderBrush="{DynamicResource Line}"
                 Background="{DynamicResource Panel}" ClipToBounds="True">
+          <Grid RowDefinitions="*,Auto">
             <ScrollViewer x:Name="SettingsScroll" HorizontalScrollBarVisibility="Disabled">
                 <StackPanel x:Name="SettingsPage" Margin="44,34,44,0" Spacing="34" MaxWidth="832" HorizontalAlignment="Left">
                     <!-- General -->
@@ -280,7 +281,7 @@
                                         <TextBlock Classes="row-title" Text="{translation:Tr UseRapidOcr}" />
                                         <TextBlock Classes="row-help" Text="{translation:Tr RapidOcrHelp}" />
                                     </StackPanel>
-                                    <CheckBox Grid.Column="2" x:Name="RapidOcrChoice" Classes="switch" IsChecked="{Binding UseRapidOcr, Mode=TwoWay}" IsEnabled="{Binding CanUseRapidOcr}"
+                                    <CheckBox Grid.Column="2" x:Name="RapidOcrChoice" Classes="switch" IsChecked="{Binding UseRapidOcr, Mode=TwoWay}" IsEnabled="{Binding CanChangeRapidOcr}"
                                               AutomationProperties.Name="{translation:Tr UseRapidOcr}" />
                                 </Grid>
                                 <Separator />
@@ -568,6 +569,24 @@
                     <Border x:Name="ScrollTail" Height="56" />
                 </StackPanel>
             </ScrollViewer>
+
+            <!--
+                What Settings' own actions have to say ("Choose a folder outside the library…", "Watching Scans") sits at
+                the foot of the sheet, since the main window's toast is under Settings. It stays until the next one.
+            -->
+            <Border Grid.Row="1" x:Name="SettingsMessageBar" IsVisible="False" BorderBrush="{DynamicResource Line}" BorderThickness="0,1,0,0"
+                    Background="{DynamicResource Panel}" Padding="44,12,44,14">
+                <Grid ColumnDefinitions="Auto,*" ColumnSpacing="10" MaxWidth="744" HorizontalAlignment="Left">
+                    <Panel Width="16" Height="16" VerticalAlignment="Top" Margin="0,2,0,0">
+                        <local:Icon x:Name="SettingsMessageDone" Data="{StaticResource Icon.Check}" Width="16" Height="16" Foreground="{DynamicResource Fg2}" />
+                        <local:Icon x:Name="SettingsMessageProblem" Data="{StaticResource Icon.AlertCircle}" Width="16" Height="16"
+                                    Foreground="{DynamicResource Err}" IsVisible="False" />
+                    </Panel>
+                    <TextBlock Grid.Column="1" x:Name="SettingsMessage" FontSize="14" LineHeight="20" TextWrapping="Wrap"
+                               Foreground="{DynamicResource Fg}" AutomationProperties.LiveSetting="Polite" />
+                </Grid>
+            </Border>
+          </Grid>
         </Border>
     </Grid>
 </Window>

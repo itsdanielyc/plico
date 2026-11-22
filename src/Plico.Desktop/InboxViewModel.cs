@@ -464,7 +464,7 @@ internal sealed partial class InboxViewModel : ObservableObject, IDisposable
         }
         catch (Exception error)
         {
-            Status = error.Message;
+            Status = Plainly(error);
         }
         finally
         {
@@ -550,6 +550,10 @@ internal sealed partial class InboxViewModel : ObservableObject, IDisposable
         }
     }
 
+    /// <summary>An error's message as a person reads it, without the "(Parameter 'folder')" .NET adds to an argument's.</summary>
+    private static string Plainly(Exception error) => error is ArgumentException { ParamName: { } name } argument
+        ? argument.Message.Replace($" (Parameter '{name}')", "", StringComparison.Ordinal) : error.Message;
+
     private InboxLibrary RequireLibrary() =>
         _library ?? throw new InvalidOperationException("Choose a library folder first.");
 
@@ -578,6 +582,7 @@ internal sealed partial class InboxViewModel : ObservableObject, IDisposable
         OnPropertyChanged(nameof(CanGoToPreviousMatch));
         OnPropertyChanged(nameof(IsIdle));
         OnPropertyChanged(nameof(CanUndo));
+        OnPropertyChanged(nameof(CanChangeRapidOcr));
         OnPropertyChanged(nameof(CanStartFolderWatch));
         OnPropertyChanged(nameof(ShowIndexReport));
     }
