@@ -63,7 +63,10 @@ internal static partial class NativeVerification
         field.RaiseEvent(new TextInputEventArgs { RoutedEvent = InputElement.TextInputEvent, Text = text });
         Require(field.Text == text, $"The typed date did not replace the field's text: {field.Text}.");
         field.RaiseEvent(new KeyEventArgs { RoutedEvent = InputElement.KeyDownEvent, Key = Key.Enter });
-        Control<ListBox>(window, "DocumentList").Focus();
+        // The keyboard goes back to the open document's row, as a click on it would put it.
+        var list = Control<ListBox>(window, "DocumentList");
+        Require(list.SelectedItem is { } open && list.ContainerFromItem(open)?.Focus() == true && !field.IsFocused,
+            "The keyboard did not leave the date field for the queue.");
     }
 
     private static async Task VerifyBatchDocumentDatesAsync(Window window, InboxViewModel model, FixtureDialogs dialogs, string directory)

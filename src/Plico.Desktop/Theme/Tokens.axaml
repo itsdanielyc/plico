@@ -41,7 +41,7 @@
             <SolidColorBrush x:Key="SecondaryHover" Color="#F6F6F6" /> <!-- Panel tinted 4 % towards Fg -->
             <SolidColorBrush x:Key="ControlBorderHover" Color="#949498" /> <!-- LineStrong mixed 30 % towards Fg -->
             <BoxShadows x:Key="ShadowPop">0 16 40 0 #290F0F10, 0 2 8 0 #140F0F10, 0 0 0 1 #140F0F10</BoxShadows>
-            <BoxShadows x:Key="ShadowFieldFocus">0 0 0 1 #0F0F10</BoxShadows> <!-- the 1 px ring round a focused field -->
+            <BoxShadows x:Key="ShadowFieldFocus">inset 0 0 0 1 #0F0F10</BoxShadows> <!-- the 1 px ring inside a focused field's border: 2 px of ink, never clipped -->
             <!-- A link is underlined in LineStrong, 3 px below the text. -->
             <TextDecorationCollection x:Key="LinkUnderline">
                 <TextDecoration Location="Underline" Stroke="{StaticResource LineStrong}" StrokeThickness="1" StrokeThicknessUnit="Pixel"
@@ -685,7 +685,7 @@
             <SolidColorBrush x:Key="SecondaryHover" Color="#1F1F21" /> <!-- Panel tinted 4 % towards Fg -->
             <SolidColorBrush x:Key="ControlBorderHover" Color="#737377" /> <!-- LineStrong mixed 30 % towards Fg -->
             <BoxShadows x:Key="ShadowPop">0 18 44 0 #80000000, 0 0 0 1 #3B3B41</BoxShadows>
-            <BoxShadows x:Key="ShadowFieldFocus">0 0 0 1 #F4F4F5</BoxShadows> <!-- the 1 px ring round a focused field -->
+            <BoxShadows x:Key="ShadowFieldFocus">inset 0 0 0 1 #F4F4F5</BoxShadows> <!-- the 1 px ring inside a focused field's border: 2 px of ink, never clipped -->
             <!-- A link is underlined in LineStrong, 3 px below the text. -->
             <TextDecorationCollection x:Key="LinkUnderline">
                 <TextDecoration Location="Underline" Stroke="{StaticResource LineStrong}" StrokeThickness="1" StrokeThicknessUnit="Pixel"
