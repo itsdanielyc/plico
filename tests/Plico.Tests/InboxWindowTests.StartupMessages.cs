@@ -188,6 +188,36 @@ public sealed partial class InboxWindowTests
         }
     }
 
+    [AvaloniaTheory]
+    [InlineData(false)]
+    [InlineData(true)]
+    public void ALibraryThatDidNotOpenIsNamedWholeOnTheCardAtTheMinimumWindow(bool french)
+    {
+        if (french) DesktopText.SetLanguage(InterfaceLanguage.French);
+        using var temporary = new TemporaryLibrary();
+        using var model = new InboxViewModel(new FixtureDialogs());
+        var window = new MainWindow { Width = 900, Height = 590 };
+        using (InboxLibrary.Open(temporary.Path)) model.InitializeLibrary(() => temporary.Path);
+        window.DataContext = model;
+        window.Show();
+        try
+        {
+            Dispatcher.UIThread.RunJobs();
+            window.UpdateLayout();
+            var card = Assert.IsType<Panel>(window.FindControl<Panel>("StatusCard"));
+            var title = card.GetVisualDescendants().OfType<TextBlock>().Single(text => text.Text == model.StatusCardTitle);
+            Assert.Equal(DesktopText.Translate("Library didn't open"), title.Text);
+            var lines = title.TextLayout.TextLines;
+            Assert.True(lines.All(line => !line.HasCollapsed),
+                $"The card's title “{title.Text}” is cut in {title.Bounds.Width:F0} px after {lines.Count} lines.");
+        }
+        finally
+        {
+            window.Close();
+            DesktopText.SetLanguage(InterfaceLanguage.English);
+        }
+    }
+
     /// <summary>The toast shows its alert glyph and not the check: the message says something went wrong.</summary>
     private static void AssertToastWearsTheAlert(Border toast)
     {
