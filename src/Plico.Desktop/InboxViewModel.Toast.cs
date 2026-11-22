@@ -22,10 +22,12 @@ internal readonly record struct ToastText(string Title, string? Body);
 /// optional body ("Marked reviewed" over the document's title), never cut. While work runs, its lines go to the status
 /// card (<see cref="WorkStatus"/>) and its last message becomes the toast when it ends; work that ends on a line still
 /// in progress ("Set the archive number…") has nothing to say and raises no toast. An edit the person makes meanwhile
-/// is news at once (<see cref="ToastIsForeground"/>). A choice Settings saves on the spot meanwhile (the theme, the
-/// interface language) is Settings' news, for the line at the foot of its sheet: never a line of the work, and no toast
-/// over the page while the work runs. The action is the latest offer made, so "Exported" carries Open export and
-/// "Marked reviewed" carries Undo. Undo has one offer at a time (see <see cref="UndoOffer"/>), which Ctrl+Z
+/// is news at once (<see cref="ToastIsForeground"/>). What another action the person takes meanwhile has to say (a
+/// choice Settings saves on the spot, a watch stopped, a folder that would not open; see <see cref="SayAside"/>) is
+/// never a line of the work: Settings' line says it when the action was taken there, and it raises no toast of its own
+/// while the work runs, though a toast already over the page takes its words, as it does when Plico is idle, and an
+/// Undo it offered is left to Ctrl+Z and the palette. The action is the latest offer made, so "Exported" carries Open
+/// export and "Marked reviewed" carries Undo. Undo has one offer at a time (see <see cref="UndoOffer"/>), which Ctrl+Z
 /// and the palette reach after the toast has gone.
 /// </summary>
 internal sealed partial class InboxViewModel
@@ -101,8 +103,8 @@ internal sealed partial class InboxViewModel
     public bool ToastIsQuiet { get; private set; }
 
     /// <summary>
-    /// A message that rises and stays while Plico works: the person's own edit, saved beside the work. Other news waits
-    /// until the work ends.
+    /// A message that rises and stays while Plico works: the person's own edit, saved beside the work. The work's own
+    /// lines wait for it to end, and an aside (see <see cref="SayAside"/>) raises no toast of its own while it runs.
     /// </summary>
     public bool ToastIsForeground { get; private set; }
 
