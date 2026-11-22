@@ -11,6 +11,26 @@ internal sealed partial class InboxViewModel
     {
         _appearance = options;
         _saveAppearance = save;
+        NotifyThemeChoice();
+    }
+
+    /// <summary>Settings' three theme cards. Choosing one saves it at once and repaints every window.</summary>
+    public bool UsesSystemTheme
+    {
+        get => _appearance.Theme == AppearanceTheme.System;
+        set { if (value) ChooseTheme(AppearanceTheme.System); }
+    }
+
+    public bool UsesLightTheme
+    {
+        get => _appearance.Theme == AppearanceTheme.Light;
+        set { if (value) ChooseTheme(AppearanceTheme.Light); }
+    }
+
+    public bool UsesDarkTheme
+    {
+        get => _appearance.Theme == AppearanceTheme.Dark;
+        set { if (value) ChooseTheme(AppearanceTheme.Dark); }
     }
 
     [RelayCommand]
@@ -26,5 +46,33 @@ internal sealed partial class InboxViewModel
         _saveAppearance?.Invoke(chosen);
         Status = chosen.Language == _appearance.Language ? DesktopText.Translate("Appearance saved.") : DesktopText.Translate("Appearance saved. Reopen Plico to switch the interface language.");
         _appearance = chosen;
+        NotifyThemeChoice();
     });
+
+    private void ChooseTheme(AppearanceTheme theme)
+    {
+        if (_appearance.Theme == theme) return;
+        var chosen = _appearance with { Theme = theme };
+        try
+        {
+            _saveAppearance?.Invoke(chosen);
+            _appearance = chosen;
+            Status = DesktopText.Translate("Appearance saved.");
+        }
+        catch (Exception error) when (error is IOException or UnauthorizedAccessException or ArgumentException)
+        {
+            Status = error.Message;
+        }
+        finally
+        {
+            NotifyThemeChoice();
+        }
+    }
+
+    private void NotifyThemeChoice()
+    {
+        OnPropertyChanged(nameof(UsesSystemTheme));
+        OnPropertyChanged(nameof(UsesLightTheme));
+        OnPropertyChanged(nameof(UsesDarkTheme));
+    }
 }

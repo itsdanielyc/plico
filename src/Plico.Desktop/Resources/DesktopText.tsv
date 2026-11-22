@@ -812,3 +812,33 @@ PageNumberAutomationFormat	Page {0}	Page {0}
 RemoveTagAutomationFormat	Remove tag {0}	Retirer l’étiquette {0}
 SuggestedTagAutomationFormat	Add suggested tag {0}	Ajouter l’étiquette suggérée {0}
 IntakeFolderTitle	Intake folder	Dossier de réception
+SettingsGeneralLede	How Plico looks and the keys it answers to.	L’apparence de Plico et les touches auxquelles il répond.
+KeyboardShortcutsHelp	Every key Plico answers to, on one sheet.	Toutes les touches de Plico, sur une seule fiche.
+SettingsRecognitionLede	How Plico reads the words on scans and photos.	Comment Plico lit les mots des numérisations et des photos.
+RapidOcrHelp	A second offline engine for Latin scripts. Tesseract stays the default.	Un second moteur hors ligne pour l’alphabet latin. Tesseract reste le moteur par défaut.
+AutoOrientHelp	Plico turns a sideways page upright before reading it.	Plico redresse une page couchée avant de la lire.
+SettingsIntakeLede	Where new paperwork comes from and where Plico files it.	D’où viennent les nouveaux documents et où Plico les range.
+SettingsLibraryLede	The folder of PDFs Plico keeps, and copies of it.	Le dossier de PDF tenu par Plico, et ses copies.
+BackupsTitle	Backups	Sauvegardes
+MaintenanceHelp	Find files changed outside Plico and bring the index up to date.	Retrouver les fichiers modifiés hors de Plico et mettre l’index à jour.
+ExportsHelp	Library details as JSON, or the results on screen as CSV.	Les informations de la bibliothèque en JSON, ou les résultats affichés en CSV.
+ExportJsonShort	JSON…	JSON…
+ExportCsvShort	CSV…	CSV…
+SettingsFilingLede	What Plico suggests while you review.	Ce que Plico suggère pendant la vérification.
+MetadataTitle	Senders, types and fields	Expéditeurs, types et champs
+MetadataHelp	The lists Plico offers when you add details, and tag colours.	Les listes proposées quand vous ajoutez des détails, et les couleurs des étiquettes.
+RemindersHelp	Dates on your paperwork that are due soon.	Les dates de vos documents qui arrivent à échéance.
+ArchiveSerialHelp	Numbered labels and separator sheets for paper you keep.	Des étiquettes numérotées et des feuilles de séparation pour le papier que vous gardez.
+SettingsModelsLede	Optional. Plico works fully without them.	Facultatif. Plico fonctionne entièrement sans eux.
+ModelServerTitle	Model server	Serveur de modèles
+SemanticIndexHelp	Plico builds it again the next time you search by meaning.	Plico le reconstruit à la prochaine recherche par le sens.
+MatchWindows	Match Windows	Comme Windows
+MatchSystem	Match the system	Comme le système
+IntakeDestinationFormat	New files go to {0}	Les nouveaux fichiers vont dans {0}
+WatchingFolderFormat	Watching {0}	Surveillance de {0}
+IntegrityHelp	Look for missing, changed or unindexed PDFs.	Rechercher les PDF manquants, modifiés ou non indexés.
+CheckAction	Check…	Vérifier…
+LabelSheetsTitle	Archive labels	Étiquettes d’archive
+SaveEllipsis	Save…	Enregistrer…
+SeparatorSheetTitle	Separator sheet	Feuille de séparation
+SeparatorSheetHelp	A PATCH-T page that splits a stack of scans into documents.	Une page PATCH-T qui sépare une pile de numérisations en documents.
