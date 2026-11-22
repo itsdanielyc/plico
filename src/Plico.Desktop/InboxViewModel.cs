@@ -244,13 +244,31 @@ internal sealed partial class InboxViewModel : ObservableObject, IDisposable
     {
         if (string.IsNullOrWhiteSpace(TagInput)) return;
         string label = TagInput.Trim();
+        if (HasLibrary && SelectedDocument?.Tags.FirstOrDefault(tag => SameTag(tag, label)) is { } present)
+        {
+            // A tag the document already has changes nothing: the toast says so and the current Undo offer stays.
+            TagInput = "";
+            Announce(DesktopText.Format($"Already tagged “{present}”."), DesktopText.Translate("Already tagged"), $"“{present}”");
+            return;
+        }
         if (UpdateDocument((library, document) =>
         {
-            // A tag the document already has changes nothing, so there is nothing to take back off.
-            bool present = document.Tags.Any(tag => InboxLibrary.GetTagKey(tag) == InboxLibrary.GetTagKey(label));
             library.AddTag(document.Id, TagInput);
-            return present ? null : TagUndo(library, document.Id, label, added: true);
-        }, DesktopText.Translate("Tag added."), new ToastText(DesktopText.Translate("Tag added"), $"“{label}”"))) TagInput = "";
+            return TagUndo(library, document.Id, label, added: true);
+        }, DesktopText.Translate("Tag added."))) TagInput = "";
+    }
+
+    /// <summary>Whether two labels name the same tag, as the catalog compares them; a label it cannot take names none.</summary>
+    private static bool SameTag(string first, string second)
+    {
+        try
+        {
+            return InboxLibrary.GetTagKey(first) == InboxLibrary.GetTagKey(second);
+        }
+        catch (ArgumentException)
+        {
+            return false;
+        }
     }
 
     [RelayCommand] private void PreviousPage() => NavigatePage(-1);

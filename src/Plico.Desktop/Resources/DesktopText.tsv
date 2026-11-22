@@ -925,3 +925,5 @@ PhoneInboxWatchingNow	Phone inbox · watching	Boîte du téléphone · surveill�
 DayAtTime	{0} at {1}	{0} à {1}
 DateHintClearable	Use a date like {0}. Leave it empty to clear the date.	Saisissez une date comme {0}. Laissez le champ vide pour effacer la date.
 DocumentDateForCount	Document date for {0} documents	Date du document pour {0} documents
+AlreadyTagged	Already tagged	Déjà étiqueté
+AlreadyTaggedFormat	Already tagged “{0}”.	Déjà étiqueté « {0} ».

@@ -72,6 +72,8 @@ internal sealed partial class InboxViewModel
         {
             case { Action: ReminderAction.Dismiss, Reminder: { } dismissed }:
                 library.DismissReminder(dismissed.DocumentId, dismissed.Deadline.Kind);
+                // A reminder is part of a document, so Undo can no longer reach past this change, as after saving one.
+                RetireUndo();
                 RefreshDueReminderCount();
                 Status = DesktopText.Translate("Reminder dismissed.");
                 break;

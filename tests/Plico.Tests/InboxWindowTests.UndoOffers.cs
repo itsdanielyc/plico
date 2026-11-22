@@ -116,6 +116,82 @@ public sealed partial class InboxWindowTests
         }
     }
 
+    [AvaloniaFact]
+    public async Task ATagTheDocumentAlreadyHasChangesNothingAndKeepsTheOffer()
+    {
+        using var temporary = new TemporaryLibrary();
+        using (var library = InboxLibrary.Open(temporary.Path))
+        {
+            BatchFixtures.AddTwoDocuments(library, TestContext.Current.CancellationToken);
+            foreach (var document in library.Find(new DocumentFilter("", null, false, 0, DocumentSort.Automatic)).Items)
+                library.AddTag(document.Id, "Tax");
+        }
+        using var model = new InboxViewModel(new FixtureDialogs());
+        model.InitializeLibrary(() => temporary.Path);
+        var window = new MainWindow { DataContext = model, Width = 1280, Height = 800 };
+        window.Show();
+        try
+        {
+            await WaitForPreviewAsync(model);
+            var reviewed = model.SelectedDocument!;
+            model.ToggleReviewCommand.Execute(null);
+            await WaitForPreviewAsync(model);
+
+            // The next document already has the tag: nothing changes, the toast says so, and the review's offer stays.
+            model.TagInput = "tax";
+            model.AddTagCommand.Execute(null);
+            Assert.Equal(("Already tagged", "“Tax”"), (model.ToastTitle, model.ToastBody));
+            Assert.Equal("Marked reviewed", model.UndoLabel);
+            await PressUndoKeyAsync(window, model);
+            model.ShowAllCommand.Execute(null);
+            Assert.False(model.Documents.Single(document => document.Id == reviewed.Id).Reviewed);
+            await WaitForPreviewAsync(model);
+        }
+        finally
+        {
+            window.Close();
+        }
+    }
+
+    [AvaloniaFact]
+    public async Task DismissingAReminderRetiresTheOffer()
+    {
+        using var temporary = new TemporaryLibrary();
+        using (var library = InboxLibrary.Open(temporary.Path))
+        {
+            BatchFixtures.AddTwoDocuments(library, TestContext.Current.CancellationToken);
+            foreach (var document in library.Find(new DocumentFilter("", null, false, 0, DocumentSort.Automatic)).Items)
+                library.SaveDeadlines(document.Id, [new(DeadlineKind.Due, DateOnly.FromDateTime(DateTime.Today), 0)], TestContext.Current.CancellationToken);
+        }
+        var dialogs = new FixtureDialogs();
+        dialogs.RemindersChoice = reminders => Task.FromResult<ReminderChoice?>(new(ReminderAction.Dismiss, reminders[^1]));
+        using var model = new InboxViewModel(dialogs);
+        model.InitializeLibrary(() => temporary.Path);
+        var window = new MainWindow { DataContext = model, Width = 1280, Height = 800 };
+        window.Show();
+        try
+        {
+            await WaitForPreviewAsync(model);
+            var reviewed = model.SelectedDocument!;
+            model.ToggleReviewCommand.Execute(null);
+            await WaitForPreviewAsync(model);
+            Assert.True(model.HasUndo);
+
+            // Dismissing a reminder in Upcoming changes a document, so Undo can no longer reach past it to the review.
+            await model.RemindersCommand.ExecuteAsync(null);
+            Assert.Equal("Reminder dismissed.", model.Status);
+            Assert.False(model.HasUndo);
+            await PressUndoKeyAsync(window, model);
+            model.ShowAllCommand.Execute(null);
+            Assert.True(model.Documents.Single(document => document.Id == reviewed.Id).Reviewed);
+            await WaitForPreviewAsync(model);
+        }
+        finally
+        {
+            window.Close();
+        }
+    }
+
     /// <summary>Ctrl+Z (⌘Z on macOS) on the window, then waits for whatever it started to finish.</summary>
     private static async Task PressUndoKeyAsync(MainWindow window, InboxViewModel model)
     {
