@@ -1138,6 +1138,19 @@
         <Setter Property="Background" Value="{DynamicResource Hover}" />
     </Style>
 
+    <!-- A quiet scroller draws its bar only under the pointer, so a list's edge never reads as a second hairline. -->
+    <Style Selector="ScrollViewer.quiet /template/ ScrollBar">
+        <Setter Property="Opacity" Value="0" />
+        <Setter Property="Transitions">
+            <Transitions>
+                <DoubleTransition Property="Opacity" Duration="0:0:0.12" />
+            </Transitions>
+        </Setter>
+    </Style>
+    <Style Selector="ScrollViewer.quiet:pointerover /template/ ScrollBar">
+        <Setter Property="Opacity" Value="1" />
+    </Style>
+
     <Style Selector="Separator.hairline">
         <Setter Property="Background" Value="{DynamicResource Line}" />
         <Setter Property="Height" Value="1" />

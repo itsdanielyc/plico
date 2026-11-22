@@ -138,7 +138,7 @@
             <Setter Property="FontSize" Value="14" />
             <Setter Property="Foreground" Value="{DynamicResource Fg3}" />
             <Setter Property="VerticalAlignment" Value="Top" />
-            <Setter Property="Margin" Value="0,6,8,0" />
+            <Setter Property="Margin" Value="0,8,8,0" />
             <Setter Property="TextTrimming" Value="CharacterEllipsis" />
         </Style>
         <Style Selector="Button.field">
@@ -196,6 +196,10 @@
             <Setter Property="FilterMode" Value="None" />
             <Setter Property="MaxLength" Value="48" />
             <Setter Property="MaxDropDownHeight" Value="196" />
+        </Style>
+        <Style Selector="AutoCompleteBox#TagBox">
+            <Setter Property="BorderBrush" Value="Transparent" />
+            <Setter Property="Background" Value="Transparent" />
         </Style>
         <Style Selector="AutoCompleteBox.tag-entry /template/ Popup#PART_Popup">
             <Setter Property="ShouldUseOverlayLayer" Value="True" />
@@ -363,7 +367,7 @@
             <Setter Property="CornerRadius" Value="0" />
             <Setter Property="HorizontalAlignment" Value="Stretch" />
             <Setter Property="HorizontalContentAlignment" Value="Stretch" />
-            <Setter Property="MinHeight" Value="60" />
+            <Setter Property="MinHeight" Value="64" />
             <Setter Property="Padding" Value="20,10" />
             <Setter Property="FontWeight" Value="Normal" />
             <Setter Property="Foreground" Value="{DynamicResource Fg}" />
@@ -380,7 +384,7 @@
             <Setter Property="Background" Value="Transparent" />
         </Style>
         <Style Selector="Grid.welcome-row">
-            <Setter Property="MinHeight" Value="40" />
+            <Setter Property="MinHeight" Value="44" />
             <Setter Property="Margin" Value="20,10" />
             <Setter Property="ColumnSpacing" Value="16" />
         </Style>
@@ -425,8 +429,12 @@
                     </Button.Flyout>
                 </Button>
 
-                <!-- The scroller leaves 12 px at the left for the current place's ink bar at the window's edge. -->
-                <ScrollViewer Grid.Row="1" HorizontalScrollBarVisibility="Disabled" Padding="12,0">
+                <!--
+                    The scroller leaves 12 px at the left for the current place's ink bar at the window's edge. Its bar shows
+                    only under the pointer, and the places fade into the desk above the status card instead of being cut.
+                -->
+                <Border Grid.Row="1" Height="20" VerticalAlignment="Bottom" Background="{DynamicResource SidebarFade}" IsHitTestVisible="False" ZIndex="1" />
+                <ScrollViewer Grid.Row="1" Classes="quiet" HorizontalScrollBarVisibility="Disabled" Padding="12,0">
                     <StackPanel Margin="0,0,0,12">
                         <StackPanel Spacing="2">
                             <Button x:Name="InboxButton" Classes="nav" Classes.current="{Binding InboxSelected}"
@@ -594,7 +602,8 @@
                                         <local:Icon Data="{StaticResource Icon.Search}" Width="17" Height="17" StrokeWidth="1.7" Margin="12,0,6,0" Foreground="{DynamicResource Fg3}" />
                                     </TextBox.InnerLeftContent>
                                     <TextBox.InnerRightContent>
-                                        <Border Classes="key" Margin="0,0,9,0" IsHitTestVisible="False">
+                                        <Border Classes="key" Margin="0,0,9,0" IsHitTestVisible="False"
+                                                IsVisible="{Binding $parent[TextBox].Text, Converter={x:Static StringConverters.IsNullOrEmpty}}">
                                             <TextBlock Text="/" />
                                         </Border>
                                     </TextBox.InnerRightContent>
@@ -608,13 +617,14 @@
                             <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="8">
                                 <Button x:Name="ScanButton" Classes="secondary large with-icon" local:Ui.Icon="{StaticResource Icon.ScanFrame}"
                                         Command="{Binding ScanCommand}" Content="{translation:Tr Scan}" IsEnabled="{Binding CanWork}" ToolTip.Tip="{translation:Tr ScanTip}" />
-                                <StackPanel Orientation="Horizontal" Spacing="1">
+                                <StackPanel Orientation="Horizontal">
                                     <Button x:Name="AddFilesButton" Classes="primary large with-icon" local:Ui.Icon="{StaticResource Icon.Plus}" CornerRadius="10,0,0,10"
                                             IsEnabled="{Binding CanWork}" Command="{Binding AddFilesCommand}" Content="{translation:Tr AddFiles}"
                                             ToolTip.Tip="{translation:Tr AddFilesTip}" />
-                                    <Button x:Name="AddFromMenuButton" Classes="primary large" CornerRadius="0,10,10,0" Padding="10,0" IsEnabled="{Binding CanWork}"
+                                    <Border Width="1" Margin="0,9" Background="{DynamicResource PrimaryDivider}" IsHitTestVisible="False" />
+                                    <Button x:Name="AddFromMenuButton" Classes="primary large" CornerRadius="0,10,10,0" Padding="9,0" IsEnabled="{Binding CanWork}"
                                             AutomationProperties.Name="{translation:Tr MoreWaysToAdd}" ToolTip.Tip="{translation:Tr MoreWaysToAdd}">
-                                        <local:Icon Data="{StaticResource Icon.ChevronDown}" Width="16" Height="16" StrokeWidth="1.8" />
+                                        <local:Icon Data="{StaticResource Icon.ChevronDown}" Width="20" Height="20" StrokeWidth="1.7" />
                                         <Button.Flyout>
                                             <MenuFlyout Placement="BottomEdgeAlignedRight">
                                                 <MenuItem Header="{translation:Tr AddFiles}" Command="{Binding AddFilesCommand}" InputGesture="{x:Static local:PaletteCommands.AddFilesGesture}" />
@@ -1031,13 +1041,13 @@
                                                     </Button>
                                                 </StackPanel>
 
-                                                <TextBlock Grid.Row="1" Classes="field-label" Text="{translation:Tr Tags}" Margin="0,4,8,0" />
+                                                <TextBlock Grid.Row="1" Classes="field-label" Text="{translation:Tr Tags}" Margin="0,6,8,0" />
                                                 <StackPanel Grid.Row="1" Grid.Column="1" Spacing="8">
                                                     <ItemsControl ItemsSource="{Binding SelectedTagChips}" IsVisible="{Binding HasSelectedTagChips}">
                                                         <ItemsControl.ItemsPanel><ItemsPanelTemplate><WrapPanel ItemSpacing="6" LineSpacing="6" /></ItemsPanelTemplate></ItemsControl.ItemsPanel>
                                                         <ItemsControl.ItemTemplate>
                                                             <DataTemplate x:DataType="local:TagChip">
-                                                                <Button Classes="chip" Click="RemoveTag_Click" MaxWidth="168" Padding="10,0,8,0"
+                                                                <Button Classes="chip" Click="RemoveTag_Click" Padding="10,0,8,0"
                                                                         AutomationProperties.Name="{Binding Label, StringFormat={translation:Tr RemoveTagAutomationFormat}}" ToolTip.Tip="{Binding Label}">
                                                                     <Grid ColumnDefinitions="Auto,*,Auto" ColumnSpacing="6">
                                                                         <Ellipse Width="7" Height="7" Fill="{Binding Dot}" VerticalAlignment="Center" />

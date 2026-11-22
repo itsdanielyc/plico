@@ -184,15 +184,22 @@ public partial class MainWindow
             new PixelSize(Math.Max(1, (int)Math.Ceiling(size.Width * scaling)), Math.Max(1, (int)Math.Ceiling(size.Height * scaling))),
             new Vector(96 * scaling, 96 * scaling));
         snapshot.Render(PreviewPaper);
+        // The ghost is the page itself: the visible part of the rendered page, without the paper around a fitted page.
+        var page = VisiblePage(size);
+        var pixels = new PixelRect((int)Math.Floor(page.X * scaling), (int)Math.Floor(page.Y * scaling),
+            Math.Max(1, (int)Math.Floor(page.Width * scaling)), Math.Max(1, (int)Math.Floor(page.Height * scaling)));
+        pixels = pixels.Intersect(new PixelRect(snapshot.PixelSize));
         var ghost = new Border
         {
-            Width = size.Width,
-            Height = size.Height,
+            Width = page.Width,
+            Height = page.Height,
             Classes = { "paper" },
-            Child = new Image { Source = snapshot, Stretch = Stretch.Fill },
+            Child = new Image { Source = new CroppedBitmap(snapshot, pixels), Stretch = Stretch.Fill },
             RenderTransformOrigin = RelativePoint.Center,
             RenderTransform = TransformOperations.Parse("translate(0px, 0px) scale(1)")
         };
+        origin += page.Position;
+        size = page.Size;
         Canvas.SetLeft(ghost, origin.X);
         Canvas.SetTop(ghost, origin.Y);
         MotionLayer.Children.Add(ghost);
@@ -215,6 +222,15 @@ public partial class MainWindow
             MotionLayer.Children.Remove(ghost);
             snapshot.Dispose();
         }, ReviewMotionDuration + TimeSpan.FromMilliseconds(80));
+    }
+
+    /// <summary>Where the rendered page shows inside the paper, so a fitted page leaves out the paper around it.</summary>
+    private Rect VisiblePage(Size paper)
+    {
+        var whole = new Rect(paper);
+        if (PreviewPage.TranslatePoint(default, PreviewPaper) is not { } at) return whole;
+        var visible = new Rect(at, PreviewPage.Bounds.Size).Intersect(whole);
+        return visible.Width >= 8 && visible.Height >= 8 ? visible : whole;
     }
 
     // ───────── Overlays: palette, shortcuts, settings ─────────

@@ -52,6 +52,11 @@
             <SolidColorBrush x:Key="Desk" Color="#ECECEE" /> <!-- the page canvas, darker than Panel in both themes -->
             <SolidColorBrush x:Key="Paper" Color="#FFFFFF" /> <!-- the page itself, dimmed in the dark -->
             <SolidColorBrush x:Key="PrimaryKeySurface" Color="#26FFFFFF" /> <!-- a keycap inside a primary button -->
+            <SolidColorBrush x:Key="PrimaryDivider" Color="#4A4A4E" /> <!-- the seam inside an ink split button -->
+            <LinearGradientBrush x:Key="SidebarFade" StartPoint="0%,0%" EndPoint="0%,100%"> <!-- places fading into the desk -->
+                <GradientStop Offset="0" Color="#00F3F3F4" />
+                <GradientStop Offset="1" Color="#F3F3F4" />
+            </LinearGradientBrush>
             <SolidColorBrush x:Key="TextSelection" Color="#2E0F0F10" /> <!-- selected text: ink at 18 % -->
             <!-- The rendered page is an opaque bitmap, so dark mode lays 10 % black over it: white paper shows
                  as #E6E6E6, the dark Paper value, and the type stays black. -->
@@ -691,6 +696,11 @@
             <SolidColorBrush x:Key="Desk" Color="#0F0F11" /> <!-- the page canvas, darker than Panel in both themes -->
             <SolidColorBrush x:Key="Paper" Color="#E6E6E6" /> <!-- the page itself, dimmed in the dark -->
             <SolidColorBrush x:Key="PrimaryKeySurface" Color="#1A000000" /> <!-- a keycap inside a primary button -->
+            <SolidColorBrush x:Key="PrimaryDivider" Color="#C9C9CE" /> <!-- the seam inside an ink split button -->
+            <LinearGradientBrush x:Key="SidebarFade" StartPoint="0%,0%" EndPoint="0%,100%"> <!-- places fading into the desk -->
+                <GradientStop Offset="0" Color="#000B0B0C" />
+                <GradientStop Offset="1" Color="#0B0B0C" />
+            </LinearGradientBrush>
             <SolidColorBrush x:Key="TextSelection" Color="#2EF4F4F5" /> <!-- selected text: ink at 18 % -->
             <!-- The rendered page is an opaque bitmap, so dark mode lays 10 % black over it: white paper shows
                  as #E6E6E6, the dark Paper value, and the type stays black. -->
