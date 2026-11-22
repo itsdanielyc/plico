@@ -780,8 +780,8 @@
                         The line floats over the sheet, so the toolbar is drawn above the workspace and nothing below it moves.
                     -->
                     <Border x:Name="Toolbar" BorderBrush="{DynamicResource Line}" BorderThickness="0,0,0,1" MinHeight="64" ZIndex="1">
-                        <Grid x:Name="ToolbarLayout" ColumnDefinitions="*,Auto">
-                            <Grid x:Name="SearchRow" RowDefinitions="Auto,Auto">
+                        <Grid x:Name="ToolbarLayout" ColumnDefinitions="*,Auto" RowDefinitions="Auto,Auto">
+                            <Grid x:Name="SearchRow">
                                 <Grid.ColumnDefinitions>
                                     <ColumnDefinition Width="100*" MaxWidth="560" />
                                     <ColumnDefinition Width="Auto" />
@@ -843,25 +843,26 @@
                                         </Flyout>
                                     </Button.Flyout>
                                 </Button>
-                                <!--
-                                    The correction hangs under the field without taking room: a zero-height canvas lets it float over the
-                                    sheet, its glyph under the search glyph and its words where the typed query starts. It is as wide as
-                                    the search row, so a long correction keeps to one line where there is room, and clicks pass through it.
-                                -->
-                                <Canvas Grid.Row="1" Grid.ColumnSpan="4" x:Name="SearchQueryHintLayer" Height="0" IsHitTestVisible="False"
-                                        IsVisible="{Binding HasSearchQueryHint}">
-                                    <Border Classes="search-hint" Canvas.Top="3" MaxWidth="{Binding #SearchQueryHintLayer.Bounds.Width}">
-                                        <Border Classes="search-hint-tint">
-                                            <Grid ColumnDefinitions="Auto,*" ColumnSpacing="12">
-                                                <local:Icon Data="{StaticResource Icon.AlertCircle}" Width="14" Height="14" StrokeWidth="1.8" Foreground="{DynamicResource Err}"
-                                                            VerticalAlignment="Top" Margin="0,2,0,0" />
-                                                <TextBlock Grid.Column="1" x:Name="SearchQueryHint" Classes="validation" Text="{Binding SearchQueryHint}" LineHeight="18"
-                                                           AutomationProperties.LiveSetting="Polite" />
-                                            </Grid>
-                                        </Border>
-                                    </Border>
-                                </Canvas>
                             </Grid>
+                            <!--
+                                The correction hangs under the field without taking room: a zero-height canvas lets it float over the
+                                sheet, its glyph under the search glyph and its words where the typed query starts. It may be as wide as
+                                the toolbar, so a long correction keeps to one or two lines even in a narrow window, and clicks pass
+                                through it.
+                            -->
+                            <Canvas Grid.Row="1" Grid.ColumnSpan="2" x:Name="SearchQueryHintLayer" Height="0" IsHitTestVisible="False"
+                                    IsVisible="{Binding HasSearchQueryHint}">
+                                <Border Classes="search-hint" Canvas.Top="3" MaxWidth="{Binding #SearchQueryHintLayer.Bounds.Width}">
+                                    <Border Classes="search-hint-tint">
+                                        <Grid ColumnDefinitions="Auto,*" ColumnSpacing="12">
+                                            <local:Icon Data="{StaticResource Icon.AlertCircle}" Width="14" Height="14" StrokeWidth="1.8" Foreground="{DynamicResource Err}"
+                                                    VerticalAlignment="Top" Margin="0,2,0,0" />
+                                            <TextBlock Grid.Column="1" x:Name="SearchQueryHint" Classes="validation" Text="{Binding SearchQueryHint}" LineHeight="18"
+                                                    AutomationProperties.LiveSetting="Polite" />
+                                        </Grid>
+                                    </Border>
+                                </Border>
+                            </Canvas>
                             <!-- Until the library has its first document the welcome hero carries Scan and Add files. -->
                             <StackPanel Grid.Column="1" x:Name="ToolbarActions" Orientation="Horizontal" Height="40" VerticalAlignment="Top">
                                 <Button x:Name="ScanButton" Classes="secondary large with-icon" local:Ui.Icon="{StaticResource Icon.ScanFrame}" IsVisible="{Binding !ShowWelcome}"
