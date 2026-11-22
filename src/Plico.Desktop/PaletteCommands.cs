@@ -201,7 +201,10 @@ internal static class PaletteCommands
     private static IReadOnlyList<string> Split(string keys) => keys.Length == 0 ? [] : keys.Split(' ');
 }
 
-/// <summary>The "?" sheet: every keyboard shortcut in two columns.</summary>
+/// <summary>
+/// The "?" sheet: every keyboard shortcut in two columns, drawn as the family's 26 px keycaps. Keycaps inside controls
+/// (on Mark reviewed, Trash and the card's fields) are the 22 px in-control variant, so they fit a 32 or 40 px control.
+/// </summary>
 internal static class ShortcutSheet
 {
     internal static void Fill(Grid grid)
@@ -240,7 +243,7 @@ internal static class ShortcutSheet
             {
                 if (way > 0) caps.Children.Add(new TextBlock { Text = DesktopText.Translate("or"), Classes = { "meta" }, VerticalAlignment = VerticalAlignment.Center, Margin = new(4, 0) });
                 foreach (string key in ways[way].Split(' ', StringSplitOptions.RemoveEmptyEntries))
-                    caps.Children.Add(new Border { Classes = { "key" }, Child = new TextBlock { Text = key } });
+                    caps.Children.Add(new Border { Classes = { "key", "large" }, Child = new TextBlock { Text = key } });
             }
             row.Children.Add(caps);
             panel.Children.Add(row);

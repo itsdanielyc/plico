@@ -70,6 +70,9 @@ public sealed partial class InboxWindowTests
         Assert.Equal(labels.Distinct().Count(), labels.Length);
         // Search keeps both its keys on its one row.
         Assert.Contains("Search", labels);
+        // Keycaps standing alone are the family's 26 px keycaps; the 22 px ones are for keycaps inside controls.
+        Assert.All(grid.GetLogicalDescendants().OfType<Border>().Where(border => border.Classes.Contains("key")),
+            key => Assert.Contains("large", key.Classes));
     }
 
     [AvaloniaFact]
