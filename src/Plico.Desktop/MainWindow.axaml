@@ -1311,12 +1311,12 @@
                                                     While it is empty the dashed suggestion sits inside it (or the D keycap when there is none),
                                                     and a saved date has a clear button. Enter or leaving saves; Escape restores. The glyph, the
                                                     suggestion and the clear button never take the keyboard, so it stays in the field for the
-                                                    next date.
+                                                    next date; Enter files the suggestion, and the field's help says so.
                                                 -->
                                                 <StackPanel Grid.Column="1" Spacing="4">
                                                     <TextBox x:Name="DocumentDateField" Classes="date-field" Classes.invalid="{Binding HasDocumentDateError}"
                                                              Text="{Binding DocumentDateText}" PlaceholderText="{Binding DocumentDatePlaceholder}"
-                                                             IsEnabled="{Binding HasLibrary}" MaxLength="40" ToolTip.Tip="{translation:Tr DocumentDateFieldTip}"
+                                                             IsEnabled="{Binding HasLibrary}" MaxLength="40" ToolTip.Tip="{Binding DocumentDateFieldHelp}"
                                                              AutomationProperties.Name="{translation:Tr EditDocumentDate}">
                                                         <TextBox.InnerLeftContent>
                                                             <Button x:Name="DocumentDateCalendarButton" Classes="field-glyph" Click="OpenDocumentDateCalendar_Click" Margin="2,0,0,0"

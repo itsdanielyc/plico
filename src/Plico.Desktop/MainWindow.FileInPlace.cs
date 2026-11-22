@@ -128,7 +128,9 @@ public partial class MainWindow
             case Key.Escape: model.RestoreDocumentDateText(); break;
             case Key.Enter:
                 DocumentDatePicker.IsOpen = false;
-                model.CommitDocumentDate();
+                // The suggested date sitting in the empty field is filed by Enter, as by a click; anything typed is saved.
+                if (model.ShowSuggestedDateInField) Run(model.AcceptSuggestedDateCommand);
+                else model.CommitDocumentDate();
                 break;
             default: return;
         }

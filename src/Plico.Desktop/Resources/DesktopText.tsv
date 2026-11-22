@@ -878,6 +878,8 @@ ToastDateSet	Date set	Date définie
 ToastDateCleared	Date cleared	Date effacée
 DateFieldInvalid	Use a date like {0}.	Saisissez une date comme {0}.
 DocumentDateFieldTip	Type a date like 21 Nov 2026, or choose one.	Saisissez une date comme 21 nov. 2026, ou choisissez-en une.
+SuggestedDateFieldHelpEnter	Suggested from the page: {0}. Press Enter to file it, or type a date.	Suggérée par la page : {0}. Appuyez sur Entrée pour la classer, ou saisissez une date.
+SuggestedDateFieldHelpReturn	Suggested from the page: {0}. Press Return to file it, or type a date.	Suggérée par la page : {0}. Appuyez sur Retour pour la classer, ou saisissez une date.
 SearchTips	Search tips	Astuces de recherche
 SearchTipsLede	Type words from the paper, or narrow the search with these.	Tapez des mots du papier, ou affinez la recherche avec ceux-ci.
 SearchTipEither	Either word	L’un ou l’autre mot

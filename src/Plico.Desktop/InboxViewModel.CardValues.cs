@@ -78,6 +78,7 @@ internal sealed partial class InboxViewModel
     private void RaiseDateFieldState()
     {
         RaiseDerived(nameof(ShowSuggestedDateInField));
+        RaiseDerived(nameof(DocumentDateFieldHelp));
         RaiseDerived(nameof(ShowDateKeycap));
         RaiseDerived(nameof(DocumentDatePlaceholder));
     }

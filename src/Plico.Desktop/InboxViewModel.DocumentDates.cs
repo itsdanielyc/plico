@@ -29,6 +29,14 @@ internal sealed partial class InboxViewModel
     /// <summary>The dashed suggestion sits in the field while it is empty, and steps aside once a date is typed.</summary>
     public bool ShowSuggestedDateInField => HasSuggestedDate && string.IsNullOrWhiteSpace(DocumentDateText);
 
+    /// <summary>
+    /// The field's help, its tooltip and what a screen reader says with it: how to type a date, or, while the suggested
+    /// date sits in the empty field, that date and the key that files it.
+    /// </summary>
+    public string DocumentDateFieldHelp => ShowSuggestedDateInField
+        ? PlatformText.SuggestedDateHelp(SuggestedDateLabel)
+        : DesktopText.ByKey("DocumentDateFieldTip");
+
     /// <summary>True while the field holds the open document's saved date, with nothing new typed over it.</summary>
     internal bool DocumentDateTextIsSaved => !HasDocumentDateError && DocumentDateText.Trim() == SelectedDocumentDateLabel;
 

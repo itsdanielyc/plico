@@ -1,3 +1,4 @@
+using System.Globalization;
 using Plico.Core;
 
 namespace Plico.Desktop;
@@ -14,6 +15,13 @@ internal static class PlatformText
     public static string WelcomeLede => DesktopText.ByKey(OnWindows ? "WelcomeHeroLedePc" : "WelcomeHeroLedeComputer");
     public static string PrivacyLine => DesktopText.ByKey(OnWindows ? "PrivacyShortPc" : "PrivacyShortComputer");
     public static string LocalModelsHelp => DesktopText.ByKey(OnWindows ? "LocalModelsHelpPc" : "LocalModelsHelpComputer");
+
+    /// <summary>
+    /// The empty date field's help while it holds the suggested date: the date, and the key that files it, named as the
+    /// keyboard names it ("Enter", "Return" on a Mac).
+    /// </summary>
+    internal static string SuggestedDateHelp(string date) => string.Format(CultureInfo.InvariantCulture,
+        DesktopText.ByKey(OperatingSystem.IsMacOS() ? "SuggestedDateFieldHelpReturn" : "SuggestedDateFieldHelpEnter"), date);
 
     /// <summary>"English · read on this PC": the recognition language and where recognition runs.</summary>
     internal static string RecognitionPlace(OcrLanguage language) =>

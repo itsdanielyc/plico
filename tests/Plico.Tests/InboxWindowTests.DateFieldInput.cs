@@ -1,4 +1,5 @@
 using Avalonia;
+using Avalonia.Automation.Peers;
 using Avalonia.Controls;
 using Avalonia.Controls.Primitives;
 using Avalonia.Headless.XUnit;
@@ -93,6 +94,53 @@ public sealed partial class InboxWindowTests
             Assert.Equal(new DateOnly(2026, 4, 5), model.SelectedDocument!.DocumentDate);
             Assert.False(model.SelectedDocument!.Reviewed);
             Assert.Equal(2, model.InboxCount);
+        }
+        finally
+        {
+            window.Close();
+        }
+    }
+
+    [AvaloniaFact]
+    public async Task AnEmptyDateFieldSaysItHoldsASuggestionAndEnterFilesIt()
+    {
+        using var temporary = TemporaryLibraryWithASuggestedDate(out long dated);
+        using var model = new InboxViewModel(new FixtureDialogs());
+        model.InitializeLibrary(() => temporary.Path);
+        var window = new MainWindow { DataContext = model, Width = 1280, Height = 800 };
+        window.Show();
+        try
+        {
+            await WaitForPreviewAsync(model);
+            ClickAt(window, QueueRow(window, dated));
+            await WaitForPreviewAsync(model);
+            await WaitForAsync(() => model.HasSuggestedDate);
+            var field = Named<TextBox>(window, "DocumentDateField");
+            var peer = ControlAutomationPeer.CreatePeerForElement(field);
+
+            // D puts the keyboard in the empty field, and what a screen reader hears there names the suggestion and the key.
+            PressKey(window, Key.D, PhysicalKey.D, "d");
+            Assert.True(field.IsFocused);
+            Assert.True(string.IsNullOrEmpty(field.Text));
+            string key = OperatingSystem.IsMacOS() ? "Return" : "Enter";
+            Assert.Equal($"Suggested from the page: 3 Apr 2026. Press {key} to file it, or type a date.", peer.GetHelpText());
+
+            // Enter files the date that sits in the field, and the keyboard stays with it selected.
+            PressKey(window, Key.Enter, PhysicalKey.Enter);
+            Assert.Equal(new DateOnly(2026, 4, 3), model.SelectedDocument!.DocumentDate);
+            Assert.Equal("Suggestion accepted", model.UndoLabel);
+            Assert.Equal("3 Apr 2026", field.SelectedText);
+            Assert.Equal("Type a date like 21 Nov 2026, or choose one.", peer.GetHelpText());
+
+            // Ctrl+Z takes it back; leaving the empty field afterwards never files the suggestion by itself.
+            PressUndoChord(window);
+            await WaitForAsync(() => !model.IsBusy);
+            Assert.Null(model.SelectedDocument!.DocumentDate);
+            await WaitForAsync(() => model.HasSuggestedDate);
+            PressKey(window, Key.Tab, PhysicalKey.Tab);
+            Assert.False(field.IsFocused);
+            Assert.Null(model.SelectedDocument!.DocumentDate);
+            Assert.False(model.HasUndo);
         }
         finally
         {
