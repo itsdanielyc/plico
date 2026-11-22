@@ -63,6 +63,14 @@
             <SolidColorBrush x:Key="LiveInk" Color="#1E7F4F" /> <!-- a live watch -->
             <SolidColorBrush x:Key="WarningInk" Color="#9A5800" /> <!-- a reminder that is due -->
             <SolidColorBrush x:Key="RailTagMarker" Color="#8E8E96" /> <!-- the ring under a tag colour dot -->
+            <!-- The status card's live dot sits in a 3 px halo of its own colour at 20 %. -->
+            <SolidColorBrush x:Key="OkHalo" Color="#3316794A" />
+            <SolidColorBrush x:Key="WarnHalo" Color="#338A5300" />
+            <SolidColorBrush x:Key="ErrHalo" Color="#33B42318" />
+            <!-- The ink toast: its action is OnFg at 14 %, and a failure's glyph is Err mixed halfway towards OnFg. -->
+            <SolidColorBrush x:Key="ToastActionSurface" Color="#24FFFFFF" />
+            <SolidColorBrush x:Key="ToastActionHover" Color="#3DFFFFFF" />
+            <SolidColorBrush x:Key="ToastAlert" Color="#DA918C" />
 
             <!-- Earlier names, pointed at the family so existing windows follow it. New code uses the family names. -->
             <StaticResource x:Key="WorkspaceSurface" ResourceKey="Panel" />
@@ -690,6 +698,14 @@
             <SolidColorBrush x:Key="LiveInk" Color="#4CC38A" /> <!-- a live watch -->
             <SolidColorBrush x:Key="WarningInk" Color="#E2A24A" /> <!-- a reminder that is due -->
             <SolidColorBrush x:Key="RailTagMarker" Color="#75757D" /> <!-- the ring under a tag colour dot -->
+            <!-- The status card's live dot sits in a 3 px halo of its own colour at 20 %. -->
+            <SolidColorBrush x:Key="OkHalo" Color="#334CC98B" />
+            <SolidColorBrush x:Key="WarnHalo" Color="#33F0B45A" />
+            <SolidColorBrush x:Key="ErrHalo" Color="#33FF7B6E" />
+            <!-- The ink toast: its action is OnFg at 14 %, and a failure's glyph is Err mixed halfway towards OnFg. -->
+            <SolidColorBrush x:Key="ToastActionSurface" Color="#240F0F10" />
+            <SolidColorBrush x:Key="ToastActionHover" Color="#3D0F0F10" />
+            <SolidColorBrush x:Key="ToastAlert" Color="#87453F" />
 
             <!-- Earlier names, pointed at the family so existing windows follow it. New code uses the family names. -->
             <StaticResource x:Key="WorkspaceSurface" ResourceKey="Panel" />
@@ -1295,6 +1311,8 @@
     <!-- Type. Inter is bundled through Avalonia.Fonts.Inter (static Regular, Medium, SemiBold and Bold faces). -->
     <FontFamily x:Key="InterFont">fonts:Inter#Inter, $Default</FontFamily>
     <FontFamily x:Key="MonoFont">Cascadia Mono, SF Mono, Menlo, DejaVu Sans Mono, Consolas, monospace</FontFamily>
+    <!-- The person's own words (what their paper says), set as reading text. Newsreader is not bundled, so a book serif. -->
+    <FontFamily x:Key="VoiceFont">Georgia, Cambria, Noto Serif, DejaVu Serif, $Default</FontFamily>
 
     <!-- Fluent keys that are not colours. -->
     <FontFamily x:Key="ContentControlThemeFontFamily">fonts:Inter#Inter, $Default</FontFamily>

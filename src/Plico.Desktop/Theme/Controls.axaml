@@ -244,20 +244,348 @@
         <Setter Property="CornerRadius" Value="8" />
     </Style>
 
-    <!-- Sidebar places: one row per place, the current one filled. -->
+    <!--
+        Places, as Onda's nav rows: 40 px, 15 Medium in Fg2 with an 18 px icon that follows the text colour. The
+        current place is a white pill with a hairline and a 1 px shadow, in SemiBold ink, with a 3 x 18 px ink bar
+        flush with the window's edge, 12 px to the left of the row (so the row's scroller must leave that room).
+    -->
     <Style Selector="Button.nav">
         <Setter Property="HorizontalAlignment" Value="Stretch" />
         <Setter Property="HorizontalContentAlignment" Value="Stretch" />
-        <Setter Property="MinHeight" Value="32" />
-        <Setter Property="Padding" Value="8,0" />
-        <Setter Property="FontSize" Value="14" />
+        <Setter Property="MinHeight" Value="40" />
+        <Setter Property="Padding" Value="12,0" />
+        <Setter Property="FontSize" Value="15" />
+        <Setter Property="FontWeight" Value="Medium" />
+        <Setter Property="Foreground" Value="{DynamicResource Fg2}" />
+        <!-- Fluent clips buttons to their bounds; the ink bar sits outside the row. -->
+        <Setter Property="ClipToBounds" Value="False" />
+        <Setter Property="Template">
+            <ControlTemplate>
+                <Panel>
+                    <Border Name="PART_Pill" CornerRadius="{TemplateBinding CornerRadius}" BorderThickness="1" BorderBrush="Transparent" />
+                    <ContentPresenter Name="PART_ContentPresenter" Background="{TemplateBinding Background}" CornerRadius="{TemplateBinding CornerRadius}"
+                                      Padding="{TemplateBinding Padding}" Content="{TemplateBinding Content}" ContentTemplate="{TemplateBinding ContentTemplate}"
+                                      HorizontalContentAlignment="{TemplateBinding HorizontalContentAlignment}"
+                                      VerticalContentAlignment="{TemplateBinding VerticalContentAlignment}"
+                                      Foreground="{TemplateBinding Foreground}" RecognizesAccessKey="True" />
+                    <Border Name="PART_Bar" Width="3" Height="18" Margin="-12,0,0,0" HorizontalAlignment="Left" VerticalAlignment="Center"
+                            CornerRadius="0,3,3,0" Background="{DynamicResource Fg}" IsVisible="False" IsHitTestVisible="False" />
+                </Panel>
+            </ControlTemplate>
+        </Setter>
     </Style>
-    <Style Selector="Button.nav.current /template/ ContentPresenter#PART_ContentPresenter, Button.nav.current:pointerover /template/ ContentPresenter#PART_ContentPresenter">
+    <Style Selector="Button.nav.current">
+        <Setter Property="FontWeight" Value="SemiBold" />
+        <Setter Property="Foreground" Value="{DynamicResource Fg}" />
+    </Style>
+    <Style Selector="Button.nav.current /template/ Border#PART_Pill">
+        <Setter Property="Background" Value="{DynamicResource Selected}" />
+        <Setter Property="BorderBrush" Value="{DynamicResource Line}" />
+        <Setter Property="BoxShadow" Value="{DynamicResource ShadowSelected}" />
+    </Style>
+    <Style Selector="Button.nav.current /template/ Border#PART_Bar">
+        <Setter Property="IsVisible" Value="True" />
+    </Style>
+    <Style Selector="Button.nav.current:pointerover /template/ ContentPresenter#PART_ContentPresenter, Button.nav.current:pressed /template/ ContentPresenter#PART_ContentPresenter">
+        <Setter Property="Background" Value="Transparent" />
+    </Style>
+    <!-- Counts at the right of a row: plain tabular numbers, never a badge. -->
+    <Style Selector="TextBlock.count">
+        <Setter Property="FontSize" Value="13" />
+        <Setter Property="FontWeight" Value="Medium" />
+        <Setter Property="Foreground" Value="{DynamicResource Fg3}" />
+        <Setter Property="VerticalAlignment" Value="Center" />
+        <Setter Property="FontFeatures" Value="+tnum" />
+    </Style>
+    <!-- Section labels in a list of places: sentence case, 18 px above and 6 px below. -->
+    <Style Selector="TextBlock.section">
+        <Setter Property="FontSize" Value="13" />
+        <Setter Property="FontWeight" Value="SemiBold" />
+        <Setter Property="Foreground" Value="{DynamicResource Fg3}" />
+        <Setter Property="Margin" Value="12,18,12,6" />
+        <Setter Property="VerticalAlignment" Value="Center" />
+    </Style>
+
+    <!-- The graphite tile: brand moments only. A 1 px white inner top line at 14 %. -->
+    <Style Selector="Border.tile">
+        <Setter Property="Background" Value="{DynamicResource Tile}" />
+        <Setter Property="BoxShadow" Value="inset 0 1 0 0 #24FFFFFF" />
+        <Setter Property="CornerRadius" Value="8" />
+        <Setter Property="Width" Value="30" />
+        <Setter Property="Height" Value="30" />
+        <Setter Property="TextElement.Foreground" Value="{DynamicResource TileFg}" />
+    </Style>
+    <Style Selector="Border.tile.callout-tile">
+        <Setter Property="Width" Value="34" />
+        <Setter Property="Height" Value="34" />
+        <Setter Property="CornerRadius" Value="{DynamicResource RadiusControl}" />
+    </Style>
+    <Style Selector="Border.tile.empty-tile">
+        <Setter Property="Width" Value="44" />
+        <Setter Property="Height" Value="44" />
+        <Setter Property="CornerRadius" Value="{DynamicResource RadiusPopover}" />
+    </Style>
+    <Style Selector="Border.tile.hero-tile">
+        <Setter Property="Width" Value="88" />
+        <Setter Property="Height" Value="88" />
+        <Setter Property="CornerRadius" Value="{DynamicResource RadiusHero}" />
+    </Style>
+    <Style Selector="Border.tile local|Icon">
+        <Setter Property="Foreground" Value="{DynamicResource TileFg}" />
+    </Style>
+
+    <!--
+        Empty states: a graphite tile with a white glyph, a 16 SemiBold title, one 14 px sentence in Fg2 and at most
+        one action, centred. Where a container is needed it is a 1 px dashed LineStrong rectangle with 16 px corners.
+    -->
+    <Style Selector="StackPanel.empty">
+        <Setter Property="Spacing" Value="6" />
+        <Setter Property="HorizontalAlignment" Value="Center" />
+        <Setter Property="VerticalAlignment" Value="Center" />
+        <Setter Property="MaxWidth" Value="360" />
+    </Style>
+    <Style Selector="StackPanel.empty > Border.tile">
+        <Setter Property="HorizontalAlignment" Value="Center" />
+        <Setter Property="Margin" Value="0,0,0,10" />
+    </Style>
+    <Style Selector="TextBlock.empty-title">
+        <Setter Property="FontSize" Value="16" />
+        <Setter Property="FontWeight" Value="SemiBold" />
+        <Setter Property="TextAlignment" Value="Center" />
+        <Setter Property="TextWrapping" Value="Wrap" />
+        <Setter Property="HorizontalAlignment" Value="Center" />
+    </Style>
+    <Style Selector="TextBlock.empty-text">
+        <Setter Property="FontSize" Value="14" />
+        <Setter Property="Foreground" Value="{DynamicResource Fg2}" />
+        <Setter Property="TextAlignment" Value="Center" />
+        <Setter Property="TextWrapping" Value="Wrap" />
+        <Setter Property="LineHeight" Value="20" />
+        <Setter Property="HorizontalAlignment" Value="Center" />
+    </Style>
+    <Style Selector="Rectangle.dashed-frame">
+        <Setter Property="Stroke" Value="{DynamicResource LineStrong}" />
+        <Setter Property="StrokeThickness" Value="1" />
+        <Setter Property="StrokeDashArray" Value="4,3" />
+        <Setter Property="RadiusX" Value="16" />
+        <Setter Property="RadiusY" Value="16" />
+        <Setter Property="IsHitTestVisible" Value="False" />
+    </Style>
+
+    <!--
+        The status card at the foot of the sidebar: the app's live state. Panel, 14 px corners, a hairline, 14 px
+        inside: a 9 px dot in a 3 px halo and a 15 SemiBold title, a 13 px detail line, and under a hairline the
+        place new files go or, while work runs, a slim ink progress bar.
+    -->
+    <Style Selector="Border.status">
+        <Setter Property="Background" Value="{DynamicResource Panel}" />
+        <Setter Property="BorderBrush" Value="{DynamicResource Line}" />
+        <Setter Property="BorderThickness" Value="1" />
+        <Setter Property="CornerRadius" Value="{DynamicResource RadiusToast}" />
+        <Setter Property="Padding" Value="14" />
+    </Style>
+    <Style Selector="Border.status-halo">
+        <Setter Property="Width" Value="15" />
+        <Setter Property="Height" Value="15" />
+        <Setter Property="CornerRadius" Value="7.5" />
+        <Setter Property="Background" Value="Transparent" />
+        <Setter Property="VerticalAlignment" Value="Center" />
+    </Style>
+    <Style Selector="Border.status-halo > Ellipse">
+        <Setter Property="Width" Value="9" />
+        <Setter Property="Height" Value="9" />
+        <Setter Property="Fill" Value="{DynamicResource Fg3}" />
+    </Style>
+    <Style Selector="Border.status-halo.live">
+        <Setter Property="Background" Value="{DynamicResource OkHalo}" />
+    </Style>
+    <Style Selector="Border.status-halo.live > Ellipse">
+        <Setter Property="Fill" Value="{DynamicResource Ok}" />
+    </Style>
+    <Style Selector="Border.status-halo.warning">
+        <Setter Property="Background" Value="{DynamicResource WarnHalo}" />
+    </Style>
+    <Style Selector="Border.status-halo.warning > Ellipse">
+        <Setter Property="Fill" Value="{DynamicResource Warn}" />
+    </Style>
+    <Style Selector="Border.status-halo.failed">
+        <Setter Property="Background" Value="{DynamicResource ErrHalo}" />
+    </Style>
+    <Style Selector="Border.status-halo.failed > Ellipse">
+        <Setter Property="Fill" Value="{DynamicResource Err}" />
+    </Style>
+    <!-- The card is one button: a transparent layer over it takes the pointer and the keyboard. -->
+    <Style Selector="Button.status-hit">
+        <Setter Property="Background" Value="Transparent" />
+        <Setter Property="BorderThickness" Value="0" />
+        <Setter Property="CornerRadius" Value="{DynamicResource RadiusToast}" />
+        <Setter Property="HorizontalAlignment" Value="Stretch" />
+        <Setter Property="VerticalAlignment" Value="Stretch" />
+        <Setter Property="Padding" Value="0" />
+        <Setter Property="MinHeight" Value="0" />
+    </Style>
+    <Style Selector="Button.status-hit:pointerover /template/ ContentPresenter#PART_ContentPresenter">
+        <Setter Property="Background" Value="{DynamicResource Hover}" />
+        <Setter Property="BorderBrush" Value="Transparent" />
+    </Style>
+    <Style Selector="Button.status-hit:pressed /template/ ContentPresenter#PART_ContentPresenter">
+        <Setter Property="Background" Value="{DynamicResource Pressed}" />
+        <Setter Property="BorderBrush" Value="Transparent" />
+    </Style>
+    <Style Selector="Button.status-hit:disabled /template/ ContentPresenter#PART_ContentPresenter">
+        <Setter Property="Background" Value="Transparent" />
+        <Setter Property="BorderBrush" Value="Transparent" />
+    </Style>
+    <Style Selector="ProgressBar.slim">
+        <Setter Property="MinHeight" Value="4" />
+        <Setter Property="Height" Value="4" />
+        <Setter Property="MinWidth" Value="0" />
+        <Setter Property="CornerRadius" Value="2" />
+        <Setter Property="Foreground" Value="{DynamicResource Fg}" />
+        <Setter Property="Background" Value="{DynamicResource Line}" />
+        <Setter Property="VerticalAlignment" Value="Center" />
+    </Style>
+
+    <!-- Row groups, as Onda's settings: 16 px corners and a hairline, rows of at least 64 px with a 36 px icon tile. -->
+    <Style Selector="Border.group">
+        <Setter Property="Background" Value="{DynamicResource Panel}" />
+        <Setter Property="BorderBrush" Value="{DynamicResource Line}" />
+        <Setter Property="BorderThickness" Value="1" />
+        <Setter Property="CornerRadius" Value="{DynamicResource RadiusCard}" />
+        <Setter Property="ClipToBounds" Value="True" />
+    </Style>
+    <Style Selector="Border.group > StackPanel > Separator">
+        <Setter Property="Background" Value="{DynamicResource Line}" />
+        <Setter Property="Height" Value="1" />
+        <Setter Property="Margin" Value="0" />
+    </Style>
+    <Style Selector="Grid.row">
+        <Setter Property="MinHeight" Value="64" />
+        <Setter Property="Margin" Value="20,12" />
+        <Setter Property="ColumnSpacing" Value="16" />
+    </Style>
+    <Style Selector="Grid.row > Button, Grid.row > ComboBox, Grid.row > CheckBox, Grid.row > ToggleSwitch, Grid.row > StackPanel">
+        <Setter Property="VerticalAlignment" Value="Center" />
+    </Style>
+    <Style Selector="Border.row-tile">
+        <Setter Property="Width" Value="36" />
+        <Setter Property="Height" Value="36" />
+        <Setter Property="CornerRadius" Value="{DynamicResource RadiusControl}" />
         <Setter Property="Background" Value="{DynamicResource Sunken}" />
+        <Setter Property="VerticalAlignment" Value="Center" />
+        <Setter Property="TextElement.Foreground" Value="{DynamicResource Fg2}" />
+    </Style>
+    <Style Selector="Border.row-tile > local|Icon">
+        <Setter Property="Width" Value="18" />
+        <Setter Property="Height" Value="18" />
+        <Setter Property="HorizontalAlignment" Value="Center" />
+        <Setter Property="VerticalAlignment" Value="Center" />
+    </Style>
+    <Style Selector="TextBlock.row-title">
+        <Setter Property="FontSize" Value="16" />
+        <Setter Property="FontWeight" Value="SemiBold" />
+        <Setter Property="TextWrapping" Value="Wrap" />
+    </Style>
+    <Style Selector="TextBlock.row-help">
+        <Setter Property="FontSize" Value="14" />
+        <Setter Property="Foreground" Value="{DynamicResource Fg2}" />
+        <Setter Property="TextWrapping" Value="Wrap" />
+        <Setter Property="LineHeight" Value="20" />
+        <Setter Property="Margin" Value="0,2,0,0" />
+    </Style>
+    <Style Selector="TextBlock.lede">
+        <Setter Property="FontSize" Value="14" />
+        <Setter Property="Foreground" Value="{DynamicResource Fg2}" />
+        <Setter Property="TextWrapping" Value="Wrap" />
+        <Setter Property="Margin" Value="0,4,0,14" />
+    </Style>
+
+    <!-- A check box drawn as Onda's 42 x 24 switch: Sunken with a LineStrong edge and an Fg2 knob; ink when on. -->
+    <Style Selector="CheckBox.switch">
+        <Setter Property="CornerRadius" Value="12" />
+        <Setter Property="MinHeight" Value="0" />
+        <Setter Property="Padding" Value="0" />
+        <Setter Property="Template">
+            <ControlTemplate>
+                <Border Name="Track" Width="42" Height="24" CornerRadius="12" BorderThickness="1"
+                        Background="{DynamicResource Sunken}" BorderBrush="{DynamicResource LineStrong}">
+                    <Ellipse Name="Knob" Width="16" Height="16" Margin="3,0" HorizontalAlignment="Left" VerticalAlignment="Center"
+                             Fill="{DynamicResource Fg2}">
+                        <Ellipse.Transitions>
+                            <Transitions>
+                                <TransformOperationsTransition Property="RenderTransform" Duration="0:0:0.18">
+                                    <TransformOperationsTransition.Easing>
+                                        <SplineEasing X1="0.2" Y1="0.8" X2="0.2" Y2="1" />
+                                    </TransformOperationsTransition.Easing>
+                                </TransformOperationsTransition>
+                            </Transitions>
+                        </Ellipse.Transitions>
+                    </Ellipse>
+                </Border>
+            </ControlTemplate>
+        </Setter>
+    </Style>
+    <Style Selector="CheckBox.switch /template/ Ellipse#Knob">
+        <Setter Property="RenderTransform" Value="translateX(0px)" />
+    </Style>
+    <Style Selector="CheckBox.switch:checked /template/ Border#Track">
+        <Setter Property="Background" Value="{DynamicResource Fg}" />
+        <Setter Property="BorderBrush" Value="{DynamicResource Fg}" />
+    </Style>
+    <Style Selector="CheckBox.switch:checked /template/ Ellipse#Knob">
+        <Setter Property="Fill" Value="{DynamicResource OnFg}" />
+        <Setter Property="RenderTransform" Value="translateX(18px)" />
+    </Style>
+    <Style Selector="CheckBox.switch:pointerover /template/ Border#Track">
+        <Setter Property="BorderBrush" Value="{DynamicResource ControlBorderHover}" />
+    </Style>
+    <Style Selector="CheckBox.switch:checked:pointerover /template/ Border#Track">
+        <Setter Property="Background" Value="{DynamicResource PrimaryHover}" />
+        <Setter Property="BorderBrush" Value="{DynamicResource PrimaryHover}" />
+    </Style>
+    <Style Selector="CheckBox.switch:disabled /template/ Border#Track">
+        <Setter Property="Background" Value="{DynamicResource Sunken}" />
+        <Setter Property="BorderBrush" Value="{DynamicResource Line}" />
+    </Style>
+    <Style Selector="CheckBox.switch:disabled /template/ Ellipse#Knob">
+        <Setter Property="Fill" Value="{DynamicResource FgDisabled}" />
+    </Style>
+
+    <!-- On the graphite tile: an inverse button (white, ink text) and an inverse ghost (a 6 % white fill, 24 % edge). -->
+    <Style Selector="Button.inverse">
+        <Setter Property="Background" Value="#FFFFFF" />
+        <Setter Property="Foreground" Value="#0F0F10" />
+        <Setter Property="BorderThickness" Value="0" />
         <Setter Property="FontWeight" Value="SemiBold" />
     </Style>
-    <Style Selector="Button.nav local|Icon">
-        <Setter Property="Foreground" Value="{DynamicResource Fg2}" />
+    <Style Selector="Button.inverse:pointerover /template/ ContentPresenter#PART_ContentPresenter">
+        <Setter Property="Background" Value="#E8E8E9" />
+        <Setter Property="Foreground" Value="#0F0F10" />
+    </Style>
+    <Style Selector="Button.inverse:pressed /template/ ContentPresenter#PART_ContentPresenter">
+        <Setter Property="Background" Value="#D9D9DA" />
+        <Setter Property="Foreground" Value="#0F0F10" />
+    </Style>
+    <Style Selector="Button.inverse-ghost">
+        <Setter Property="Background" Value="#0FFFFFFF" />
+        <Setter Property="Foreground" Value="#FFFFFF" />
+        <Setter Property="BorderBrush" Value="#3DFFFFFF" />
+        <Setter Property="BorderThickness" Value="1" />
+    </Style>
+    <Style Selector="Button.inverse-ghost:pointerover /template/ ContentPresenter#PART_ContentPresenter">
+        <Setter Property="Background" Value="#1FFFFFFF" />
+        <Setter Property="BorderBrush" Value="#5CFFFFFF" />
+        <Setter Property="Foreground" Value="#FFFFFF" />
+    </Style>
+    <Style Selector="Button.inverse-ghost:pressed /template/ ContentPresenter#PART_ContentPresenter">
+        <Setter Property="Background" Value="#2EFFFFFF" />
+        <Setter Property="BorderBrush" Value="#5CFFFFFF" />
+        <Setter Property="Foreground" Value="#FFFFFF" />
+    </Style>
+    <Style Selector="Button.inverse:disabled /template/ ContentPresenter#PART_ContentPresenter, Button.inverse-ghost:disabled /template/ ContentPresenter#PART_ContentPresenter">
+        <Setter Property="Background" Value="#1AFFFFFF" />
+        <Setter Property="BorderBrush" Value="Transparent" />
+        <Setter Property="Foreground" Value="#8CFFFFFF" />
     </Style>
 
     <!-- A full-width row in a settings list or an activity list. -->
@@ -405,13 +733,67 @@
         <Setter Property="Background" Value="{DynamicResource PageDim}" />
         <Setter Property="IsHitTestVisible" Value="False" />
     </Style>
-    <Style Selector="Border.message">
+    <!--
+        The ink toast: Fg with OnFg text, 14 px corners, the pop shadow, at most 380 wide. An 18 px glyph, a 14
+        SemiBold title, an optional 13 px line at 84 %, one 28 px action at OnFg 14 % and a 28 px close button.
+    -->
+    <Style Selector="Border.toast">
         <Setter Property="Background" Value="{DynamicResource Fg}" />
         <Setter Property="CornerRadius" Value="{DynamicResource RadiusToast}" />
         <Setter Property="Padding" Value="14,10,8,10" />
         <Setter Property="BoxShadow" Value="{DynamicResource ShadowPop}" />
+        <Setter Property="MaxWidth" Value="380" />
+        <Setter Property="TextElement.Foreground" Value="{DynamicResource OnFg}" />
     </Style>
-    <Style Selector="Border.message TextBlock">
+    <Style Selector="Border.toast TextBlock.toast-title">
+        <Setter Property="FontSize" Value="14" />
+        <Setter Property="FontWeight" Value="SemiBold" />
+        <Setter Property="TextWrapping" Value="Wrap" />
+        <Setter Property="MaxLines" Value="2" />
+        <Setter Property="TextTrimming" Value="CharacterEllipsis" />
+    </Style>
+    <Style Selector="Border.toast TextBlock.toast-body">
+        <Setter Property="FontSize" Value="13" />
+        <Setter Property="Opacity" Value="0.84" />
+        <Setter Property="TextWrapping" Value="Wrap" />
+        <Setter Property="MaxLines" Value="2" />
+        <Setter Property="TextTrimming" Value="CharacterEllipsis" />
+    </Style>
+    <Style Selector="Border.toast Button.toast-action">
+        <Setter Property="MinHeight" Value="28" />
+        <Setter Property="Height" Value="28" />
+        <Setter Property="Padding" Value="10,0" />
+        <Setter Property="CornerRadius" Value="8" />
+        <Setter Property="FontSize" Value="13" />
+        <Setter Property="FontWeight" Value="SemiBold" />
+        <Setter Property="Background" Value="{DynamicResource ToastActionSurface}" />
+        <Setter Property="Foreground" Value="{DynamicResource OnFg}" />
+        <Setter Property="BorderThickness" Value="0" />
+        <Setter Property="VerticalAlignment" Value="Center" />
+    </Style>
+    <Style Selector="Border.toast Button.toast-action:pointerover /template/ ContentPresenter#PART_ContentPresenter, Border.toast Button.toast-action:pressed /template/ ContentPresenter#PART_ContentPresenter">
+        <Setter Property="Background" Value="{DynamicResource ToastActionHover}" />
+        <Setter Property="Foreground" Value="{DynamicResource OnFg}" />
+    </Style>
+    <Style Selector="Border.toast Button.toast-action:disabled /template/ ContentPresenter#PART_ContentPresenter">
+        <Setter Property="Background" Value="{DynamicResource ToastActionSurface}" />
+        <Setter Property="Foreground" Value="{DynamicResource OnFg}" />
+        <Setter Property="Opacity" Value="0.6" />
+    </Style>
+    <Style Selector="Border.toast Button.toast-close">
+        <Setter Property="Width" Value="28" />
+        <Setter Property="Height" Value="28" />
+        <Setter Property="MinHeight" Value="0" />
+        <Setter Property="Padding" Value="0" />
+        <Setter Property="CornerRadius" Value="8" />
+        <Setter Property="Background" Value="Transparent" />
+        <Setter Property="Foreground" Value="{DynamicResource OnFg}" />
+        <Setter Property="BorderThickness" Value="0" />
+        <Setter Property="HorizontalContentAlignment" Value="Center" />
+        <Setter Property="VerticalAlignment" Value="Center" />
+    </Style>
+    <Style Selector="Border.toast Button.toast-close:pointerover /template/ ContentPresenter#PART_ContentPresenter, Border.toast Button.toast-close:pressed /template/ ContentPresenter#PART_ContentPresenter">
+        <Setter Property="Background" Value="{DynamicResource ToastActionSurface}" />
         <Setter Property="Foreground" Value="{DynamicResource OnFg}" />
     </Style>
     <Style Selector="Border.callout">
