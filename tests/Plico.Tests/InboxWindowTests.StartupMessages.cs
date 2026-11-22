@@ -152,6 +152,58 @@ public sealed partial class InboxWindowTests
         }
     }
 
+    [AvaloniaFact]
+    public async Task AStartupNoticeOutlastsTheImportOfWhatTheCatchUpQueued()
+    {
+        using var temporary = new TemporaryLibrary();
+        using var settings = new TemporaryLibrary();
+        using var watched = new TemporaryLibrary();
+        using (var library = InboxLibrary.Open(temporary.Path)) BatchFixtures.AddTwoDocuments(library, TestContext.Current.CancellationToken);
+        string settingsDirectory = Path.Combine(settings.Path, "Settings");
+        var store = new ImportFailureStore(settingsDirectory);
+        store.Save(temporary.Path, [new ImportFailure(Path.Combine(temporary.Path, "Damaged.pdf"), "Unreadable")]);
+        foreach (string file in Directory.GetFiles(settingsDirectory, "import-errors-*.json")) File.WriteAllText(file, "{ not json");
+        var watchPreference = new WatchFolderPreference(settingsDirectory);
+        string watchFolder = Path.Combine(watched.Path, "Scans");
+        Directory.CreateDirectory(watchFolder);
+        watchPreference.Save(Path.GetFullPath(temporary.Path), watchFolder);
+        watchPreference.SaveCatchUpOnOpen(Path.GetFullPath(temporary.Path), true);
+        // A scan landed in the watched folder while Plico was closed, which is what catching up on open is for.
+        File.Copy(Path.Combine(AppContext.BaseDirectory, "fixtures", "Match Ledger.pdf"), Path.Combine(watchFolder, "Saved scan.pdf"));
+
+        using var model = new InboxViewModel(new FixtureDialogs(), watchPreference: watchPreference, importFailureStore: store);
+        model.InitializeLibrary(() => temporary.Path);
+        string notice = model.ToastStatus;
+        Assert.StartsWith("Couldn't load the saved import errors.", notice, StringComparison.Ordinal);
+        var window = new MainWindow { DataContext = model, Width = 1280, Height = 800 };
+        var toast = Assert.IsType<Border>(window.FindControl<Border>("Toast"));
+        // Every time the toast rises or leaves, from the moment the window opens.
+        var comings = new List<string>();
+        toast.PropertyChanged += (_, change) =>
+        {
+            if (change.Property == Avalonia.Visual.IsVisibleProperty) comings.Add(toast.IsVisible ? "rose" : "left");
+        };
+        window.Show();
+        try
+        {
+            // The catch-up queues the scan and the watch imports it as its own work, a moment later.
+            await WaitForAsync(() => model.InboxCount == 3 && !model.IsBusy);
+            await WaitForPreviewAsync(model);
+            Dispatcher.UIThread.RunJobs();
+
+            // One toast, from the window opening to the import's end: the startup notice is still there to read, with
+            // the alert, and the import's result follows it, as the catch-up's own message did.
+            Assert.Equal(($"{notice} 1 document added.", true, "rose"),
+                (model.ToastStatus, ToastWearsTheAlert(toast), string.Join(", ", comings)));
+            Assert.Equal("Couldn't load the saved import errors", model.ToastTitle);
+        }
+        finally
+        {
+            await model.PrepareCloseAsync();
+            window.Close();
+        }
+    }
+
     [AvaloniaTheory]
     [InlineData(false)]
     [InlineData(true)]
@@ -287,11 +339,14 @@ public sealed partial class InboxWindowTests
     }
 
     /// <summary>The toast shows its alert glyph and not the check: the message says something went wrong.</summary>
-    private static void AssertToastWearsTheAlert(Border toast)
+    private static void AssertToastWearsTheAlert(Border toast) =>
+        Assert.True(ToastWearsTheAlert(toast), "The toast reports a failure beside the success check.");
+
+    /// <summary>Whether the toast shows its alert glyph and not the check.</summary>
+    private static bool ToastWearsTheAlert(Border toast)
     {
         var glyphs = toast.GetVisualDescendants().OfType<Icon>().Take(2).ToArray();
-        Assert.True(glyphs.Length == 2 && !glyphs[0].IsVisible && glyphs[1].IsVisible,
-            "The toast reports a failure beside the success check.");
+        return glyphs.Length == 2 && !glyphs[0].IsVisible && glyphs[1].IsVisible;
     }
 
     /// <summary>The words of every visible text inside <paramref name="root"/>, in layout order.</summary>

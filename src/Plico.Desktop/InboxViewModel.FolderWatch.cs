@@ -58,8 +58,26 @@ internal sealed partial class InboxViewModel
     internal bool HasActiveWatches => IsWatchingFolder || IsWatchingPhoneInbox;
 
     /// <summary>
+    /// What Plico said while it started (<see cref="Notice"/>, a failure when <see cref="Problem"/>), and the toast's
+    /// message once the catch-up that opening starts has joined it (<see cref="Shown"/>).
+    /// </summary>
+    private sealed record StartupNews(string Notice, bool Problem, string Shown);
+
+    // Set when the catch-up that opening starts joined the startup notice and queued files, until the watch imports
+    // them: that import is part of the catch-up, so its message joins the notice in turn.
+    private StartupNews? _startupNewsAwaitingImport;
+
+    /// <summary>
+    /// Whether the toast carries what Plico said while it started, joined by the catch-up that opening starts, while the
+    /// files that catch-up queued are still to be imported. The toast stays while that import runs, as it does through
+    /// the catch-up, and the import's message joins the notice when it ends, so one toast says it all.
+    /// </summary>
+    public bool ToastCarriesStartupNews => _startupNewsAwaitingImport is { } news && news.Shown == ToastStatus;
+
+    /// <summary>
     /// Catches up the saved watches as the window opens. What opening the library had to say rose as the window opened
-    /// and is still the toast; the catch-up's own message joins it, after it, rather than replacing it within a second.
+    /// and is still the toast; the catch-up's own message joins it, after it, rather than replacing it within a second,
+    /// and so does the message of the import of the files it queued.
     /// </summary>
     internal Task CatchUpWhenWindowOpensAsync()
     {
@@ -68,14 +86,25 @@ internal sealed partial class InboxViewModel
         bool startupProblem = ToastIsProblem;
         return RunOperationAsync(DesktopText.Translate("Resuming saved watches…"), async token =>
         {
-            await CatchUpSavedWatchesAsync(token);
-            // Unless the person has made news of their own meanwhile (an edit), the startup notice leads, or the
-            // catch-up's message when only that one is a problem.
-            if (startupNews is null || !_workHasMessage || ToastStatus != startupNews) return;
-            bool catchUpLeads = _workProblem && !startupProblem;
-            _pendingProblem = startupProblem || _workProblem;
-            Status = catchUpLeads ? $"{_workStatus} {startupNews}" : $"{startupNews} {_workStatus}";
+            int queued = await CatchUpSavedWatchesAsync(token);
+            if (startupNews is null || !JoinStartupNews(new StartupNews(startupNews, startupProblem, startupNews))) return;
+            if (queued > 0) _startupNewsAwaitingImport = new StartupNews(startupNews, startupProblem, _workStatus);
         });
+    }
+
+    /// <summary>
+    /// Joins the startup notice to the message of the work in hand: the notice first, or the work's message when only that
+    /// one is a problem. It does nothing when the person has made news of their own (an edit) since the toast said
+    /// <see cref="StartupNews.Shown"/>, or when the work has no message. Returns whether it joined them. Call it from the
+    /// work, once its own message is set.
+    /// </summary>
+    private bool JoinStartupNews(StartupNews news)
+    {
+        if (!_workHasMessage || ToastStatus != news.Shown) return false;
+        bool workLeads = _workProblem && !news.Problem;
+        _pendingProblem = news.Problem || _workProblem;
+        Status = workLeads ? $"{_workStatus} {news.Notice}" : $"{news.Notice} {_workStatus}";
+        return true;
     }
 
     [RelayCommand] private Task StartFolderWatchAsync() => ChooseWatchFolderAsync(_scannerWatch);
@@ -150,7 +179,11 @@ internal sealed partial class InboxViewModel
         });
     }
 
-    private async Task StartWatchAsync(WatchSlot slot, string folder, CancellationToken cancellationToken, bool queueExistingFiles = false)
+    /// <summary>
+    /// Starts watching <paramref name="folder"/> and remembers it for next time, and returns how many files already there
+    /// it queued for import (none unless <paramref name="queueExistingFiles"/>).
+    /// </summary>
+    private async Task<int> StartWatchAsync(WatchSlot slot, string folder, CancellationToken cancellationToken, bool queueExistingFiles = false)
     {
         var library = RequireLibrary();
         var otherWatch = ReferenceEquals(slot, _scannerWatch) ? _phoneWatch.Active : _scannerWatch.Active;
@@ -188,28 +221,30 @@ internal sealed partial class InboxViewModel
         {
             Status += $" {error.Message}";
         }
+        return queued;
     }
 
-    private async Task CatchUpSavedWatchesAsync(CancellationToken cancellationToken)
+    /// <summary>Starts the saved watches that catch up on open, and returns how many files they queued for import.</summary>
+    private async Task<int> CatchUpSavedWatchesAsync(CancellationToken cancellationToken)
     {
-        var scannerNotice = await TryStartSavedWatchAsync(_scannerWatch, cancellationToken);
-        var phoneNotice = await TryStartSavedWatchAsync(_phoneWatch, cancellationToken);
+        var (scannerNotice, scannerQueued) = await TryStartSavedWatchAsync(_scannerWatch, cancellationToken);
+        var (phoneNotice, phoneQueued) = await TryStartSavedWatchAsync(_phoneWatch, cancellationToken);
         if (JoinWatchNotices(scannerNotice, phoneNotice) is { } notice) Status = notice;
+        return scannerQueued + phoneQueued;
     }
 
-    private async Task<string?> TryStartSavedWatchAsync(WatchSlot slot, CancellationToken cancellationToken)
+    private async Task<(string? Notice, int Queued)> TryStartSavedWatchAsync(WatchSlot slot, CancellationToken cancellationToken)
     {
-        if (!slot.CatchUpOnOpen || !slot.CanResume || slot.RememberedFolder is not { } folder) return null;
+        if (!slot.CatchUpOnOpen || !slot.CanResume || slot.RememberedFolder is not { } folder) return (null, 0);
         try
         {
-            await StartWatchAsync(slot, folder, cancellationToken, queueExistingFiles: true);
-            return null;
+            return (null, await StartWatchAsync(slot, folder, cancellationToken, queueExistingFiles: true));
         }
         catch (Exception error) when (error is IOException or UnauthorizedAccessException or ArgumentException)
         {
             slot.Failed = true;
             OnPropertyChanged(nameof(HasFailedWatch));
-            return DesktopText.Format($"Couldn't resume the {DesktopText.Translate(slot.Description)} watch. {error.Message}");
+            return (DesktopText.Format($"Couldn't resume the {DesktopText.Translate(slot.Description)} watch. {error.Message}"), 0);
         }
     }
 
@@ -271,8 +306,20 @@ internal sealed partial class InboxViewModel
                 await active.Task.WaitAsync(cancellationToken);
             }
             cancellationToken.ThrowIfCancellationRequested();
-            await RunOperationAsync(DesktopText.Translate("Importing from the watched folder…"),
-                token => ImportFilesAsync(files, token, ImportOrigin.FolderWatch, revealAdded: false), cancellationToken);
+            await RunOperationAsync(DesktopText.Translate("Importing from the watched folder…"), async token =>
+            {
+                // The first import after the catch-up that opening starts brings in what it queued, and joins its notice.
+                var startupNews = _startupNewsAwaitingImport;
+                try
+                {
+                    await ImportFilesAsync(files, token, ImportOrigin.FolderWatch, revealAdded: false);
+                    if (startupNews is not null) JoinStartupNews(startupNews);
+                }
+                finally
+                {
+                    _startupNewsAwaitingImport = null;
+                }
+            }, cancellationToken);
         });
 
     private async Task ObserveWatchAsync(WatchSlot slot, FolderWatch watch)
