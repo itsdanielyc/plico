@@ -720,12 +720,8 @@
                                             </Border>
                                             <StackPanel Grid.Column="1" Classes="row-text" Spacing="2" VerticalAlignment="Center">
                                                 <TextBlock Classes="row-title-text" Text="{Binding Title}" />
-                                                <WrapPanel Orientation="Horizontal">
-                                                    <TextBlock Text="{Binding DocumentDate, StringFormat={translation:Tr DatedDateFormat}}" Classes="caption"
-                                                               IsVisible="{Binding HasDocumentDate}" />
-                                                    <TextBlock Text=" · " Classes="caption" IsVisible="{Binding HasDocumentDate}" />
-                                                    <TextBlock Text="{Binding AddedAt.LocalDateTime, StringFormat={translation:Tr DocumentAddedDateFormat}}" Classes="caption" />
-                                                </WrapPanel>
+                                                <TextBlock Classes="caption" Text="{Binding, Converter={x:Static local:QueueMetaConverter.Instance}}"
+                                                           TextTrimming="CharacterEllipsis" FontFeatures="+tnum" />
                                                 <local:SearchExcerpt Document="{Binding}" FontFamily="{DynamicResource VoiceFont}" FontSize="14" LineHeight="20"
                                                                      Foreground="{DynamicResource Fg2}" TextWrapping="Wrap" MaxLines="2" TextTrimming="CharacterEllipsis"
                                                                      Margin="0,3,0,0" />

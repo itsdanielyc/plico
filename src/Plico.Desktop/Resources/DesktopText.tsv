@@ -618,14 +618,14 @@ PhoneWatchStopped	Phone inbox stopped.	Boîte du téléphone arrêtée.
 PhoneCapturePaused	Phone inbox paused.	Boîte du téléphone en pause.
 MetaSuggestedContact	{0} · Suggested	{0} · Suggéré
 LocalProposedTitle	Title · {0}	Titre · {0}
-LocalProposedDate	Document date · {0:d}	Date du document · {0:d}
+LocalProposedDate	Document date · {0}	Date du document · {0}
 LocalProposedTags	Tags · {0}	Étiquettes · {0}
 LocalProposedContacts	Correspondents · {0}	Correspondants · {0}
 LocalProposedType	Document type · {0}	Type de document · {0}
-LocalDueEvidence	Possible due date · {0:d}	Date limite possible · {0:d}
+LocalDueEvidence	Possible due date · {0}	Date limite possible · {0}
 LocalAmountEvidence	Amount · {0} {1}	Montant · {0} {1}
 LocalIbanEvidence	IBAN · {0}	IBAN · {0}
-ReminderSuggestedDate	Use suggested due date {0:d}	Utiliser la date limite proposée {0:d}
+ReminderSuggestedDate	Use suggested due date {0}	Utiliser la date limite proposée {0}
 NamedExistingFolder	phone inbox folder	dossier de la boîte du téléphone
 PhoneInboxStopped	Phone inbox watch stopped.	Surveillance de la boîte du téléphone arrêtée.
 PhoneInboxActive	Phone inbox active…	Boîte du téléphone active…
@@ -892,3 +892,5 @@ ToastExported	Exported	Exporté
 ToastSearchableCopyAdded	Searchable copy added	Copie indexable ajoutée
 InboxPlace	Inbox	Réception
 AllDocumentsPlace	All documents	Documents
+DayToday	Today	Aujourd’hui
+DayYesterday	Yesterday	Hier

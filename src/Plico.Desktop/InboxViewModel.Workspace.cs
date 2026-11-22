@@ -60,10 +60,8 @@ internal sealed partial class InboxViewModel
         _ => DesktopText.Format($"Everything is filed. {DueReminderCount} reminders are due.")
     };
 
-    public string SelectedAddedLabel => SelectedDocument is { } document
-        ? document.AddedAt.LocalDateTime.ToString("d MMM yyyy, HH:mm", CultureInfo.CurrentCulture) : "";
-    public string SelectedPagesLabel => SelectedDocument is { PageCount: var count }
-        ? (count == 1 ? DesktopText.Translate("1 page") : DesktopText.Format($"{count} pages")) : "";
+    public string SelectedAddedLabel => SelectedDocument is { } document ? DisplayDates.DayAndTime(document.AddedAt) : "";
+    public string SelectedPagesLabel => SelectedDocument is { PageCount: var count } ? DisplayDates.Pages(count) : "";
     public string SelectedReviewState => SelectedDocument?.Reviewed == true
         ? DesktopText.Translate("Reviewed") : DesktopText.Translate("In the Inbox");
     public bool SelectedIsReviewed => SelectedDocument?.Reviewed == true;

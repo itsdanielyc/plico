@@ -44,7 +44,7 @@ internal sealed class DeadlineEditor : Window
         if (input.SuggestedDueDates.Count > 0 && !dates.ContainsKey(DeadlineKind.Due))
         {
             var suggested = input.SuggestedDueDates[0];
-            var button = DialogLayout.Secondary(DesktopText.Format($"Use suggested due date {suggested:d}"));
+            var button = DialogLayout.Secondary(DesktopText.Format($"Use suggested due date {DisplayDates.Day(suggested)}"));
             button.Click += (_, _) => _editors.First(item => item.Kind == DeadlineKind.Due).Date.Text =
                 suggested.ToString(DateFormat, CultureInfo.InvariantCulture);
             fields.Children.Add(button);
@@ -110,7 +110,7 @@ internal sealed class RemindersDialog : Window
         {
             Classes = { "plain", "framed" },
             ItemsSource = reminders.Select(reminder => new MetadataOption<DueReminder>(
-                $"{reminder.Deadline.Date:d} · {DeadlineEditor.Label(reminder.Deadline.Kind)} · {reminder.Title}", reminder)).ToArray(),
+                $"{DisplayDates.Day(reminder.Deadline.Date)} · {DeadlineEditor.Label(reminder.Deadline.Kind)} · {reminder.Title}", reminder)).ToArray(),
             SelectedIndex = reminders.Count > 0 ? 0 : -1
         };
         var close = DialogLayout.Secondary(DesktopText.Translate("Close"), isCancel: true);

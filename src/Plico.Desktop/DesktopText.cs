@@ -24,6 +24,9 @@ internal static class DesktopText
         _ => false
     };
 
+    /// <summary>Whether the interface speaks French, so dates and numbers follow it.</summary>
+    internal static bool IsFrench => _useFrench;
+
     internal static string ByKey(string key) => ByKey(key, _useFrench ? InterfaceLanguage.French : InterfaceLanguage.English);
 
     internal static string ByKey(string key, InterfaceLanguage language) =>

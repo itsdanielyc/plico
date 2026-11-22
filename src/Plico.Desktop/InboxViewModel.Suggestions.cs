@@ -33,7 +33,7 @@ internal sealed partial class InboxViewModel
 
     /// <summary>The document date read from the page, offered only while the document has no date.</summary>
     public bool HasSuggestedDate => SuggestedDate is not null && SelectedDocument is { DocumentDate: null };
-    public string SuggestedDateLabel => SuggestedDate is { } date ? date.ToString("d MMM yyyy", CultureInfo.CurrentCulture) : "";
+    public string SuggestedDateLabel => SuggestedDate is { } date ? DisplayDates.Day(date) : "";
     public bool HasSuggestions => SuggestionCount > 0;
     public int SuggestionCount => SuggestedTags.Count + (HasSuggestedDate ? 1 : 0);
     public string SuggestionSummary => SuggestionCount == 1

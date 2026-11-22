@@ -18,8 +18,7 @@ internal sealed partial class InboxViewModel
     public string QueueCountLabel => InboxSelected && HasInboxCount ? DesktopText.Format($"{InboxCount} to review") : ResultCount;
 
     /// <summary>"21 Nov 2026", the date printed on the open document, or empty.</summary>
-    public string SelectedDocumentDateLabel => SelectedDocument?.DocumentDate is { } date
-        ? date.ToString("d MMM yyyy", CultureInfo.CurrentCulture) : "";
+    public string SelectedDocumentDateLabel => SelectedDocument?.DocumentDate is { } date ? DisplayDates.Day(date) : "";
     public bool HasSelectedDocumentDate => SelectedDocument?.DocumentDate is not null;
 
     /// <summary>"Searchable", or "Not searchable yet" for a PDF without a text layer.</summary>

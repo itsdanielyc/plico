@@ -104,7 +104,7 @@ internal sealed class LocalFilingDialog : Window
         var edit = proposal.Edit;
         var fields = new StackPanel { Spacing = 10 };
         var title = Suggested(edit.Title is not null ? DesktopText.Format($"Title · {edit.Title}") : null);
-        var date = Suggested(edit.DocumentDate is { } day ? DesktopText.Format($"Document date · {day:d}") : null);
+        var date = Suggested(edit.DocumentDate is { } day ? DesktopText.Format($"Document date · {DisplayDates.Day(day)}") : null);
         var tags = Suggested(edit.Tags.Count > 0 ? DesktopText.Format($"Tags · {string.Join(", ", edit.Tags)}") : null);
         string[] selectedContacts = definitions.Correspondents.Where(contact => edit.CorrespondentIds.Contains(contact.Id))
             .Select(contact => contact.Name).ToArray();
@@ -114,7 +114,7 @@ internal sealed class LocalFilingDialog : Window
         foreach (var box in new[] { title, date, tags, contacts, type }) if (box is not null) fields.Children.Add(box);
         if (fields.Children.Count == 0) fields.Children.Add(new TextBlock { Text = DesktopText.Translate("The model returned no filing suggestions.") });
         if (proposal.Evidence.DueDates.Count > 0)
-            fields.Children.Add(new TextBlock { Text = DesktopText.Format($"Possible due date · {proposal.Evidence.DueDates[0]:d}") });
+            fields.Children.Add(new TextBlock { Text = DesktopText.Format($"Possible due date · {DisplayDates.Day(proposal.Evidence.DueDates[0])}") });
         if (proposal.Evidence.Amount is { } amount)
             fields.Children.Add(new TextBlock { Text = DesktopText.Format($"Amount · {amount.Value} {amount.Currency}") });
         if (proposal.Evidence.Iban is { } iban)
