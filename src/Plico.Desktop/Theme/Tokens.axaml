@@ -53,8 +53,9 @@
             <SolidColorBrush x:Key="Paper" Color="#FFFFFF" /> <!-- the page itself, dimmed in the dark -->
             <SolidColorBrush x:Key="PrimaryKeySurface" Color="#26FFFFFF" /> <!-- a keycap inside a primary button -->
             <SolidColorBrush x:Key="TextSelection" Color="#2E0F0F10" /> <!-- selected text: ink at 18 % -->
-            <!-- The rendered page is opaque, so dark mode dims it over the desk to about #E6E6E6, as Paper is. -->
-            <x:Double x:Key="PageOpacity">1</x:Double>
+            <!-- The rendered page is an opaque bitmap, so dark mode lays 10 % black over it: white paper shows
+                 as #E6E6E6, the dark Paper value, and the type stays black. -->
+            <SolidColorBrush x:Key="PageDim" Color="#00000000" />
             <!-- Meaning Plico already owns. These keep their values. -->
             <SolidColorBrush x:Key="HighlightSurface" Color="#FBE3A0" /> <!-- search hits -->
             <SolidColorBrush x:Key="HighlightInk" Color="#3D2C00" />
@@ -679,8 +680,9 @@
             <SolidColorBrush x:Key="Paper" Color="#E6E6E6" /> <!-- the page itself, dimmed in the dark -->
             <SolidColorBrush x:Key="PrimaryKeySurface" Color="#1A000000" /> <!-- a keycap inside a primary button -->
             <SolidColorBrush x:Key="TextSelection" Color="#2EF4F4F5" /> <!-- selected text: ink at 18 % -->
-            <!-- The rendered page is opaque, so dark mode dims it over the desk to about #E6E6E6, as Paper is. -->
-            <x:Double x:Key="PageOpacity">0.895</x:Double>
+            <!-- The rendered page is an opaque bitmap, so dark mode lays 10 % black over it: white paper shows
+                 as #E6E6E6, the dark Paper value, and the type stays black. -->
+            <SolidColorBrush x:Key="PageDim" Color="#1A000000" />
             <!-- Meaning Plico already owns. These keep their values. -->
             <SolidColorBrush x:Key="HighlightSurface" Color="#5A4510" /> <!-- search hits -->
             <SolidColorBrush x:Key="HighlightInk" Color="#FFE9AE" />

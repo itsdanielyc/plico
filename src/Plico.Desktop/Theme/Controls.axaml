@@ -400,9 +400,10 @@
         <Setter Property="CornerRadius" Value="{DynamicResource RadiusPaper}" />
         <Setter Property="BoxShadow" Value="{DynamicResource ShadowPaper}" />
     </Style>
-    <!-- The page on the desk: full strength in light, dimmed in dark so it does not glare. -->
-    <Style Selector="Border.page">
-        <Setter Property="Opacity" Value="{DynamicResource PageOpacity}" />
+    <!-- A veil over the rendered page: clear in light, 10 % black in dark so the page does not glare. -->
+    <Style Selector="Border.page-dim">
+        <Setter Property="Background" Value="{DynamicResource PageDim}" />
+        <Setter Property="IsHitTestVisible" Value="False" />
     </Style>
     <Style Selector="Border.message">
         <Setter Property="Background" Value="{DynamicResource Fg}" />

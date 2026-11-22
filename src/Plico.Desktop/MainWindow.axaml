@@ -701,7 +701,7 @@
                                     </ScrollViewer>
 
                                     <Panel Grid.Column="1" x:Name="DeskPanel" Margin="12,10,12,62">
-                                        <Border x:Name="PreviewPaper" Classes="paper page" IsVisible="{Binding !IsPageTextView}" ClipToBounds="True"
+                                        <Border x:Name="PreviewPaper" Classes="paper" IsVisible="{Binding !IsPageTextView}" ClipToBounds="True"
                                                 HorizontalAlignment="Center" VerticalAlignment="Stretch">
                                             <ScrollViewer x:Name="PreviewScroll" Classes="pdf-preview" Classes.fitWidth="{Binding FitPreviewWidth}"
                                                           Classes.zoomed="{Binding IsPreviewZoomed}"
@@ -711,6 +711,7 @@
                                                     <Image x:Name="PreviewPage" Source="{Binding Preview}" Stretch="Uniform" />
                                                     <local:PdfPageHighlightLayer Source="{Binding Preview}" Highlights="{Binding PreviewHighlights}"
                                                                                   IsHitTestVisible="False" />
+                                                    <Border Classes="page-dim" />
                                                 </Grid>
                                             </ScrollViewer>
                                         </Border>
