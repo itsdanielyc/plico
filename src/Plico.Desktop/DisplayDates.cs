@@ -44,8 +44,10 @@ internal static partial class DisplayDates
     /// <summary>
     /// Reads a date typed into a field the way the interface writes it: "21 Nov 2026", or in French "21 nov. 2026",
     /// with the month written out or abbreviated, in any case, with or without accents or the abbreviation's full stop.
-    /// It also takes "2026-11-21", as search writes dates, and the person's short date ("21/11/2026"). A day that does
-    /// not exist, such as 31 Feb, is refused. O(n) in the length of the text.
+    /// It also takes "2026-11-21", as search writes dates, and the person's short date written in full ("21/11/2026").
+    /// Every form needs the day, the month and a four-digit year, so a date still being typed ("1 Jan 202", "21 Nov",
+    /// "5 6") is never read as a whole one; a day that does not exist, such as 31 Feb, is refused too. Fields save as
+    /// they lose the keyboard, so this is what keeps a half-typed date from being saved. O(n) in the length of the text.
     /// </summary>
     internal static bool TryParseDay(string? text, out DateOnly day)
     {
@@ -57,16 +59,28 @@ internal static partial class DisplayDates
         if (written.Success)
         {
             int month = MonthNumber(written.Groups["month"].Value, culture);
-            return month > 0 && TryCreateDay(int.Parse(written.Groups["year"].Value, CultureInfo.InvariantCulture), month,
-                int.Parse(written.Groups["day"].Value, CultureInfo.InvariantCulture), out day);
+            return month > 0 && TryCreateDay(Number(written.Groups["year"].Value), month, Number(written.Groups["day"].Value), out day);
         }
-        return DateOnly.TryParseExact(value, "yyyy-MM-dd", CultureInfo.InvariantCulture, DateTimeStyles.None, out day)
-            || DateOnly.TryParse(value, culture, DateTimeStyles.AllowWhiteSpaces, out day);
+        var numeric = NumericDay().Match(value);
+        if (!numeric.Success) return false;
+        int first = Number(numeric.Groups["first"].Value), second = Number(numeric.Groups["second"].Value);
+        if (numeric.Groups["isoYear"].Success)
+            return numeric.Groups["separator"].Value == "-" && TryCreateDay(Number(numeric.Groups["isoYear"].Value), first, second, out day);
+        // The person's short date: day and month in the order their own short date puts them.
+        bool monthFirst = culture.DateTimeFormat.ShortDatePattern.TrimStart().StartsWith('M');
+        return TryCreateDay(Number(numeric.Groups["year"].Value), monthFirst ? first : second, monthFirst ? second : first, out day);
     }
 
+    private static int Number(string digits) => int.Parse(digits, CultureInfo.InvariantCulture);
+
     // "21 Nov 2026", "21 nov. 2026", "1 février 2024": a day, a month's name and a four-digit year.
-    [GeneratedRegex(@"^(?<day>\d{1,2})\s+(?<month>\p{L}+)\.?,?\s+(?<year>\d{4})$", RegexOptions.CultureInvariant)]
+    [GeneratedRegex(@"^(?<day>\d{1,2})\s+(?<month>\p{L}+)\.?,?\s+(?<year>[1-9]\d{3})$", RegexOptions.CultureInvariant)]
     private static partial Regex WrittenDay();
+
+    // "2026-11-21" as search writes it, or a short date with its year in full: "21/11/2026", "21.11.2026", "11-21-2026".
+    [GeneratedRegex(@"^(?:(?<isoYear>[1-9]\d{3})(?<separator>-)(?<first>\d{1,2})-(?<second>\d{1,2})|(?<first>\d{1,2})(?<separator>[/.-])(?<second>\d{1,2})\k<separator>(?<year>[1-9]\d{3}))$",
+        RegexOptions.CultureInvariant)]
+    private static partial Regex NumericDay();
 
     /// <summary>The month a name stands for in the interface's language, written out or abbreviated; 0 when none does.</summary>
     private static int MonthNumber(string name, CultureInfo culture)
@@ -85,7 +99,7 @@ internal static partial class DisplayDates
 
     private static bool TryCreateDay(int year, int month, int dayOfMonth, out DateOnly day)
     {
-        bool exists = year is >= 1 and <= 9999 && dayOfMonth >= 1 && dayOfMonth <= DateTime.DaysInMonth(year, month);
+        bool exists = year is >= 1 and <= 9999 && month is >= 1 and <= 12 && dayOfMonth >= 1 && dayOfMonth <= DateTime.DaysInMonth(year, month);
         day = exists ? new DateOnly(year, month, dayOfMonth) : default;
         return exists;
     }

@@ -202,6 +202,31 @@ public sealed partial class InboxWindowTests
         }
     }
 
+    [Theory]
+    [InlineData(false, "1 Jan 202")]
+    [InlineData(false, "1 Jan 0202")]
+    [InlineData(false, "29 Feb 20")]
+    [InlineData(false, "5 6")]
+    [InlineData(false, "Nov 2026")]
+    [InlineData(false, "21 Nov")]
+    [InlineData(false, "1.2")]
+    [InlineData(false, "2024")]
+    [InlineData(false, "31/12/99")]
+    [InlineData(true, "5 6")]
+    [InlineData(true, "1 janv. 202")]
+    public void AnUnfinishedOrAmbiguousDateIsNotRead(bool french, string text)
+    {
+        DesktopText.SetLanguage(french ? InterfaceLanguage.French : InterfaceLanguage.English);
+        try
+        {
+            Assert.False(DisplayDates.TryParseDay(text, out var read), $"“{text}” was read as {read:yyyy-MM-dd}.");
+        }
+        finally
+        {
+            DesktopText.SetLanguage(InterfaceLanguage.English);
+        }
+    }
+
     [AvaloniaFact]
     public async Task TheFrenchDateFieldKeepsItsPlaceholderWholeBesideItsKeycapAtTheMinimumWidth()
     {
