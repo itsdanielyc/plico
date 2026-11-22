@@ -62,6 +62,12 @@ internal sealed partial class InboxViewModel
         }
     }
 
+    /// <summary>
+    /// True when the detail is only the recognition language and where it runs, which a narrow sidebar leaves out; a
+    /// detail that asks the person to act is always shown.
+    /// </summary>
+    public bool StatusCardDetailIsRoutine => IsBusy || (!HasImportFailures && !ShowIndexReport && !HasFailedWatch);
+
     private bool NeedsAttention => HasImportFailures || ShowIndexReport;
     private string PhoneFolderName => PhoneInboxFolder is { } folder ? new DirectoryInfo(folder).Name : "";
 
@@ -75,6 +81,7 @@ internal sealed partial class InboxViewModel
     {
         RaiseDerived(nameof(StatusCardTitle));
         RaiseDerived(nameof(StatusCardDetail));
+        RaiseDerived(nameof(StatusCardDetailIsRoutine));
         RaiseDerived(nameof(StatusCardIsLive));
         RaiseDerived(nameof(StatusCardIsWarning));
         RaiseDerived(nameof(StatusCardIsFailed));

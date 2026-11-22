@@ -19,6 +19,14 @@
         <Style Selector="Grid.compact Button.nav, Grid.compact Button.rail">
             <Setter Property="MinHeight" Value="36" />
         </Style>
+        <!--
+            The status card keeps its state and where new files go. Its routine detail (the recognition language and where
+            it runs) waits for a wider sidebar, where its platform words ("this PC", "this computer") fit one line; a
+            detail that asks the person to act stays. The card's name for a screen reader still carries the detail.
+        -->
+        <Style Selector="Grid.compact TextBlock.status-detail.routine">
+            <Setter Property="IsVisible" Value="False" />
+        </Style>
         <!-- Tag rows keep the "rail" class that verification uses to find them, drawn with the nav row's geometry. -->
         <Style Selector="Button.rail">
             <Setter Property="Background" Value="Transparent" />
@@ -723,7 +731,8 @@
                                     <TextBlock Grid.Column="1" Text="{Binding StatusCardTitle}" FontSize="15" FontWeight="SemiBold" LineHeight="19"
                                                TextWrapping="Wrap" MaxLines="2" TextTrimming="CharacterEllipsis" VerticalAlignment="Center" />
                                 </Grid>
-                                <TextBlock Text="{Binding StatusCardDetail}" FontSize="13" LineHeight="18" Foreground="{DynamicResource Fg2}"
+                                <TextBlock x:Name="StatusCardDetailText" Classes="status-detail" Classes.routine="{Binding StatusCardDetailIsRoutine}"
+                                           Text="{Binding StatusCardDetail}" FontSize="13" LineHeight="18" Foreground="{DynamicResource Fg2}"
                                            TextWrapping="Wrap" />
                                 <Border BorderBrush="{DynamicResource Line}" BorderThickness="0,1,0,0" Margin="0,8,0,0" Padding="0,10,0,0">
                                     <Panel MinHeight="18">
