@@ -130,6 +130,14 @@ public partial class MainWindow
         }
     }
 
+    /// <summary>Enter in the search field asks for the search now, so a query that cannot run says why at once.</summary>
+    private void SearchBox_KeyDown(object? sender, KeyEventArgs e)
+    {
+        if (e.Key != Key.Enter || ViewModel is not { } model) return;
+        model.SearchNow();
+        e.Handled = true;
+    }
+
     private void FocusSearch()
     {
         SearchBox.Focus();

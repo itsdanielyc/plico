@@ -992,6 +992,21 @@
     <Style Selector="TextBox.search.invalid /template/ Border#PART_BorderElement, TextBox.search.invalid:pointerover /template/ Border#PART_BorderElement, TextBox.search.invalid:focus /template/ Border#PART_BorderElement">
         <Setter Property="BorderBrush" Value="{DynamicResource Err}" />
     </Style>
+    <!--
+        The correction under an invalid search floats like a popover (Raised, the pop shadow, 10 px corners) with the err
+        tint over it, so it reads over whatever lies beneath. Its glyph sits under the field's search glyph and its words
+        start where the typed query does: 14 px to the glyph, 12 more to the words.
+    -->
+    <Style Selector="Border.search-hint">
+        <Setter Property="Background" Value="{DynamicResource Raised}" />
+        <Setter Property="CornerRadius" Value="{DynamicResource RadiusControl}" />
+        <Setter Property="BoxShadow" Value="{DynamicResource ShadowPop}" />
+    </Style>
+    <Style Selector="Border.search-hint-tint">
+        <Setter Property="Background" Value="{DynamicResource ErrBg}" />
+        <Setter Property="CornerRadius" Value="{DynamicResource RadiusControl}" />
+        <Setter Property="Padding" Value="14,6,14,6" />
+    </Style>
     <!-- Search tips: examples in mono ink beside what they find in Fg2, 8 px between rows. -->
     <Style Selector="Grid.search-tips">
         <Setter Property="ColumnSpacing" Value="16" />

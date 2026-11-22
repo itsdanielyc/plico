@@ -64,7 +64,8 @@ internal sealed partial class InboxViewModel : ObservableObject, IDisposable
         _importFailureStore = importFailureStore;
         _intakeFolderPreference = intakeFolderPreference;
         _searchDocuments = searchDocuments ?? (static (library, filter, token) => library.Find(filter, token));
-        _searchTimer.Tick += (_, _) => _ = LoadTypedSearchAsync();
+        _searchTimer.Tick += (_, _) => _ = LoadTypedSearchAsync(whileTyping: true);
+        _queryHintTimer.Tick += (_, _) => ShowPendingQueryHint();
         _suggestionTimer.Tick += (_, _) => StartSuggestionRequest();
     }
 

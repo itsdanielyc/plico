@@ -117,6 +117,9 @@ internal sealed partial class InboxViewModel
 
     partial void OnQueryChanged(string value)
     {
+        // A correction still waiting for a pause belongs to the query before this key.
+        _queryHintTimer.Stop();
+        _queryHintAtOnce = false;
         CancelPreviewHighlights();
         OnPropertyChanged(nameof(ShowSaveSearch));
         if (_restoringSavedSearch) return;
@@ -158,7 +161,12 @@ internal sealed partial class InboxViewModel
         _searchCancellation = null;
     }
 
-    private async Task LoadTypedSearchAsync(bool preserveView = false)
+    /// <summary>
+    /// Runs the query in the field. <paramref name="whileTyping"/> is the pause timer's search: a query that cannot run
+    /// then keeps its correction back until typing has paused a little longer, so a filter still being typed
+    /// ("status:i") never flashes a red line.
+    /// </summary>
+    private async Task LoadTypedSearchAsync(bool preserveView = false, bool whileTyping = false)
     {
         _searchTimer.Stop();
         if (_library is not { } library) return;
@@ -184,7 +192,7 @@ internal sealed partial class InboxViewModel
             if (token.IsCancellationRequested) return;
             if (page.QueryIssue is { } issue)
             {
-                ShowQueryIssue(issue);
+                ShowQueryIssue(issue, atOnce: !whileTyping);
                 return;
             }
             if (preserveView && (HasBatchSelection || HasExpandedResults ||
@@ -307,6 +315,7 @@ internal sealed partial class InboxViewModel
         if (!keepQueryHint)
         {
             _unrunnableQuery = null;
+            _queryHintTimer.Stop();
             SearchQueryHint = "";
         }
 
@@ -325,6 +334,37 @@ internal sealed partial class InboxViewModel
 
     public bool HasSearchQueryHint => SearchQueryHint.Length > 0;
 
+    /// <summary>
+    /// How long typing must pause, after the pause search found the query cannot run, before the correction shows: with
+    /// the search's own 180 ms, a little under a second without a key.
+    /// </summary>
+    internal TimeSpan QueryHintDelay { get; set; } = TimeSpan.FromMilliseconds(700);
+
+    private readonly DispatcherTimer _queryHintTimer = new();
+    private string _pendingQueryHint = "";
+
+    // Set by Enter in the search field: the search the person asked for says at once whether it can run.
+    private bool _queryHintAtOnce;
+
+    /// <summary>
+    /// Enter in the search field: runs a search still waiting for the pause now, and shows a correction still waiting
+    /// for the pause at once.
+    /// </summary>
+    internal void SearchNow()
+    {
+        if (_library is null) return;
+        _queryHintAtOnce = true;
+        if (_searchTimer.IsEnabled) _ = LoadTypedSearchAsync();
+        else if (_queryHintTimer.IsEnabled) ShowPendingQueryHint();
+    }
+
+    private void ShowPendingQueryHint()
+    {
+        _queryHintTimer.Stop();
+        _queryHintAtOnce = false;
+        if (QueryCannotRun) SearchQueryHint = _pendingQueryHint;
+    }
+
     // What the queue said about the results it shows, so a search that cannot run leaves the count and the empty state
     // of the last results that could.
     private (string Count, string EmptyTitle, string EmptyMessage) _shownResults = ("", "", "");
@@ -333,13 +373,22 @@ internal sealed partial class InboxViewModel
     /// A typed search that cannot run keeps the last valid results, the open document and its page: only the line
     /// under the field changes. Nothing moves in the queue, so the correction never lands in the narrow strip.
     /// </summary>
-    private void ShowQueryIssue(SearchQueryIssue issue)
+    private void ShowQueryIssue(SearchQueryIssue issue, bool atOnce = true)
     {
         _unrunnableQuery = Query;
         HasMore = false;
         ResultCount = _shownResults.Count;
         SetEmptyState(_shownResults.EmptyTitle, _shownResults.EmptyMessage);
-        SearchQueryHint = SearchCorrection(issue);
+        _pendingQueryHint = SearchCorrection(issue);
+        // A line already showing changes its words at once; a new one waits for typing to pause.
+        if (atOnce || _queryHintAtOnce || HasSearchQueryHint)
+        {
+            ShowPendingQueryHint();
+            return;
+        }
+        _queryHintTimer.Stop();
+        _queryHintTimer.Interval = QueryHintDelay;
+        _queryHintTimer.Start();
     }
 
     private static string SearchCorrection(SearchQueryIssue issue) => issue switch

@@ -731,8 +731,9 @@
                     <!--
                         Toolbar: search with the folder filter and its tips at the left, the two ways in and the tools at the
                         right. A search that cannot run says how to repair it in one line under the field, never in the queue.
+                        The line floats over the sheet, so the toolbar is drawn above the workspace and nothing below it moves.
                     -->
-                    <Border x:Name="Toolbar" BorderBrush="{DynamicResource Line}" BorderThickness="0,0,0,1" MinHeight="64">
+                    <Border x:Name="Toolbar" BorderBrush="{DynamicResource Line}" BorderThickness="0,0,0,1" MinHeight="64" ZIndex="1">
                         <Grid x:Name="ToolbarLayout" ColumnDefinitions="*,Auto">
                             <Grid x:Name="SearchRow" RowDefinitions="Auto,Auto">
                                 <Grid.ColumnDefinitions>
@@ -742,6 +743,7 @@
                                     <ColumnDefinition Width="*" />
                                 </Grid.ColumnDefinitions>
                                 <TextBox x:Name="SearchBox" Classes="search" Classes.invalid="{Binding HasSearchQueryHint}" Text="{Binding Query, Mode=TwoWay}" MaxLength="256"
+                                         KeyDown="SearchBox_KeyDown"
                                          PlaceholderText="{translation:Tr SearchYourPaperwork}" AutomationProperties.Name="{translation:Tr SearchDocuments}">
                                     <TextBox.InnerLeftContent>
                                         <local:Icon Data="{StaticResource Icon.Search}" Width="17" Height="17" StrokeWidth="1.7" Margin="12,0,6,0" Foreground="{DynamicResource Fg3}" />
@@ -794,13 +796,24 @@
                                         </Flyout>
                                     </Button.Flyout>
                                 </Button>
-                                <Grid Grid.Row="1" Grid.ColumnSpan="3" ColumnDefinitions="Auto,*" ColumnSpacing="6" Margin="4,6,0,0"
-                                      IsVisible="{Binding HasSearchQueryHint}">
-                                    <local:Icon Data="{StaticResource Icon.AlertCircle}" Width="14" Height="14" StrokeWidth="1.8" Foreground="{DynamicResource Err}"
-                                                VerticalAlignment="Top" Margin="0,2,0,0" />
-                                    <TextBlock Grid.Column="1" x:Name="SearchQueryHint" Classes="validation" Text="{Binding SearchQueryHint}" LineHeight="18"
-                                               AutomationProperties.LiveSetting="Polite" />
-                                </Grid>
+                                <!--
+                                    The correction hangs under the field without taking room: a zero-height canvas lets it float over the
+                                    sheet, its glyph under the search glyph and its words where the typed query starts. It is as wide as
+                                    the search row, so a long correction keeps to one line where there is room, and clicks pass through it.
+                                -->
+                                <Canvas Grid.Row="1" Grid.ColumnSpan="4" x:Name="SearchQueryHintLayer" Height="0" IsHitTestVisible="False"
+                                        IsVisible="{Binding HasSearchQueryHint}">
+                                    <Border Classes="search-hint" Canvas.Top="3" MaxWidth="{Binding #SearchQueryHintLayer.Bounds.Width}">
+                                        <Border Classes="search-hint-tint">
+                                            <Grid ColumnDefinitions="Auto,*" ColumnSpacing="12">
+                                                <local:Icon Data="{StaticResource Icon.AlertCircle}" Width="14" Height="14" StrokeWidth="1.8" Foreground="{DynamicResource Err}"
+                                                            VerticalAlignment="Top" Margin="0,2,0,0" />
+                                                <TextBlock Grid.Column="1" x:Name="SearchQueryHint" Classes="validation" Text="{Binding SearchQueryHint}" LineHeight="18"
+                                                           AutomationProperties.LiveSetting="Polite" />
+                                            </Grid>
+                                        </Border>
+                                    </Border>
+                                </Canvas>
                             </Grid>
                             <!-- Until the library has its first document the welcome hero carries Scan and Add files. -->
                             <StackPanel Grid.Column="1" x:Name="ToolbarActions" Orientation="Horizontal" Height="40" VerticalAlignment="Top">
