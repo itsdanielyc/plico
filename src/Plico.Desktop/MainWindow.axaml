@@ -1039,7 +1039,7 @@
                                             </Border>
                                             <StackPanel Grid.Column="1" Classes="row-text" Spacing="2" VerticalAlignment="Center">
                                                 <TextBlock Classes="row-title-text" Text="{Binding Title}" />
-                                                <TextBlock Classes="caption" Text="{Binding, Converter={x:Static local:QueueMetaConverter.Instance}}"
+                                                <TextBlock Classes="caption queue-meta" Text="{Binding, Converter={x:Static local:QueueMetaConverter.Instance}}"
                                                            TextTrimming="CharacterEllipsis" FontFeatures="+tnum" />
                                                 <local:SearchExcerpt Document="{Binding}" FontFamily="{DynamicResource VoiceFont}" FontSize="14" LineHeight="20"
                                                                      Foreground="{DynamicResource Fg2}" TextWrapping="Wrap" MaxLines="2" TextTrimming="CharacterEllipsis"

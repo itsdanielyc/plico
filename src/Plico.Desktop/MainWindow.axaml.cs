@@ -21,6 +21,7 @@ public sealed partial class MainWindow : Window
         WireShortcutKeys();
         WireToast();
         WireFieldEditing();
+        WatchTheDay();
         PreviewPage.PropertyChanged += (_, change) =>
         {
             if (change.Property == Image.SourceProperty) UpdatePreviewScrollPosition();
