@@ -94,7 +94,7 @@ internal sealed partial class InboxViewModel
             if (reloadAfterInput) DocumentDateError = "";
             else RestoreDocumentDateText();
             OfferUndo(DateUndo(library, document, date),
-                date.HasValue ? DesktopText.Translate("Document date saved.") : DesktopText.Translate("Document date cleared."));
+                date.HasValue ? DesktopText.Translate("Date set.") : DesktopText.Translate("Date cleared."));
         }
         catch (Exception error)
         {
@@ -139,7 +139,9 @@ internal sealed partial class InboxViewModel
             RetireUndo();
             LoadResults(retainLoadedResults: true);
             string count = DocumentCount(selectedIds.Length);
-            Status = edit.Date.HasValue ? DesktopText.Format($"Document date saved for {count}.") : DesktopText.Format($"Document dates cleared for {count}.");
+            // "Date set" over "2 documents", like the single document's toast, so the title stays a few words.
+            if (edit.Date.HasValue) Announce(DesktopText.Format($"Date set for {count}."), DesktopText.Translate("Date set"), count);
+            else Announce(DesktopText.Format($"Date cleared for {count}."), DesktopText.Translate("Date cleared"), count);
         });
     }
 }

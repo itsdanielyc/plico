@@ -117,7 +117,7 @@ public sealed partial class InboxWindowTests
 
         Assert.True(model.HasLibrary);
         Assert.Empty(model.ImportFailures);
-        Assert.Contains("Could not load saved import errors", model.Status, StringComparison.Ordinal);
+        Assert.Contains("Couldn't load the saved import errors", model.Status, StringComparison.Ordinal);
         Assert.Equal(invalid, File.ReadAllText(saved));
     }
 
@@ -141,7 +141,7 @@ public sealed partial class InboxWindowTests
         await model.InspectImportErrorsCommand.ExecuteAsync(null);
 
         Assert.Equal(failure, Assert.Single(model.ImportFailures));
-        Assert.Contains("Could not save import errors", model.Status, StringComparison.Ordinal);
+        Assert.Contains("Couldn't save the import errors", model.Status, StringComparison.Ordinal);
         Assert.Equal(failure, Assert.Single(new ImportFailureStore(retainedDirectory).Load(library.Path)));
     }
 

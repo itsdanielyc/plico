@@ -193,7 +193,7 @@ internal sealed partial class InboxViewModel
         {
             slot.Failed = true;
             OnPropertyChanged(nameof(HasFailedWatch));
-            return DesktopText.Format($"Could not resume the {DesktopText.Translate(slot.Description)} watch. {error.Message}");
+            return DesktopText.Format($"Couldn't resume the {DesktopText.Translate(slot.Description)} watch. {error.Message}");
         }
     }
 

@@ -15,6 +15,64 @@ namespace Plico.Tests;
 public sealed partial class InboxWindowTests
 {
     [AvaloniaFact]
+    public async Task CountsAndRefreshSummariesSpeakTheInterfacesLanguageAndLeadWithWhatHappened()
+    {
+        using var temporary = new TemporaryLibrary();
+        string pdfs;
+        using (var library = InboxLibrary.Open(temporary.Path))
+        {
+            pdfs = library.PdfDirectory;
+            File.Copy(RedesignFixture("Lease Renewal.pdf"), Path.Combine(pdfs, "Lease Renewal.pdf"));
+            File.Copy(RedesignFixture("Match Ledger.pdf"), Path.Combine(pdfs, "Match Ledger.pdf"));
+            Assert.Equal(2, library.Refresh(TestContext.Current.CancellationToken).Indexed);
+        }
+        DesktopText.SetLanguage(InterfaceLanguage.French);
+        using var model = new InboxViewModel(new FixtureDialogs());
+        var window = new MainWindow { DataContext = model };
+        try
+        {
+            model.InitializeLibrary(() => temporary.Path);
+            window.Show();
+            await WaitForPreviewAsync(model);
+
+            // A search waiting for its pause says so in French.
+            model.Query = "bail";
+            Assert.Equal("Recherche…", model.ResultCount);
+            await WaitForAsync(() => model.ResultCount != "Recherche…");
+            model.Query = "";
+            await WaitForAsync(() => model.ResultCount != "Recherche…");
+            await WaitForPreviewAsync(model);
+
+            // One PDF moved into a folder outside Plico and one gone: the summary says both, in French, and does not
+            // open on "0 documents indexed".
+            Directory.CreateDirectory(Path.Combine(pdfs, "Filed"));
+            File.Move(Path.Combine(pdfs, "Match Ledger.pdf"), Path.Combine(pdfs, "Filed", "Match Ledger.pdf"));
+            File.Delete(Path.Combine(pdfs, "Lease Renewal.pdf"));
+            await model.RefreshIndexCommand.ExecuteAsync(null);
+            Assert.Equal("1 document déplacé. 1 document indisponible.", model.Status);
+            Assert.Equal(("1 document déplacé", "1 document indisponible."), (model.ToastTitle, model.ToastBody));
+        }
+        finally
+        {
+            window.Close();
+            DesktopText.SetLanguage(InterfaceLanguage.English);
+        }
+    }
+
+    [AvaloniaFact]
+    public void TheShortcutSheetNamesEachActionOnce()
+    {
+        var grid = new Grid();
+        ShortcutSheet.Fill(grid);
+        var labels = grid.GetLogicalDescendants().OfType<TextBlock>()
+            .Where(text => text.Parent is Grid && !text.Classes.Contains("meta")).Select(text => text.Text).ToArray();
+        Assert.NotEmpty(labels);
+        Assert.Equal(labels.Distinct().Count(), labels.Length);
+        // Search keeps both its keys on its one row.
+        Assert.Contains("Search", labels);
+    }
+
+    [AvaloniaFact]
     public async Task EachConceptHasOneNameAndOnlyChoicesEndInAnEllipsis()
     {
         using var temporary = new TemporaryLibrary();

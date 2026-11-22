@@ -36,7 +36,7 @@ internal sealed partial class InboxViewModel
 
         RevealNewInboxDocument(document.Id);
         string scanName = scan.Interruption is null ? DesktopText.Translate("Scan") : "Partial scan";
-        Status = document.HasText ? DesktopText.Format($"{scanName} added to inbox.") : DesktopText.Format($"{scanName} added. No searchable text was recognised.");
+        Status = document.HasText ? DesktopText.Format($"{scanName} added to the Inbox.") : DesktopText.Format($"{scanName} added. No searchable text was recognised.");
     });
 
     private async Task ScanBatchAsync(InboxLibrary library, ScanRequest request, OcrLanguage language,

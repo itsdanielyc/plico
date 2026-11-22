@@ -36,14 +36,14 @@ internal static partial class NativeVerification
         Control<TextBox>(window, "SearchBox").SetCurrentValue(TextBox.TextProperty, model.Query + " dated:2024-02");
         await UntilAsync(() => model.Documents.Count == 1 && model.Documents[0].Id == packet.Id && model.Preview is not null &&
             model.Documents[0].Match.Contains(ReceiptKeyword, StringComparison.OrdinalIgnoreCase), () => model.Status);
-        Require(model.SortOption?.Order == DocumentSort.DocumentDate && model.Status == "Document date saved." && field.Text == "29 Feb 2024",
+        Require(model.SortOption?.Order == DocumentSort.DocumentDate && model.Status == "Date set." && field.Text == "29 Feb 2024",
             $"The field did not keep the stored date. {model.Status} {field.Text}");
         await CaptureAsync(window, directory, "document-date.png");
 
         var clear = Control<Button>(window, "ClearDocumentDateButton");
         Require(clear.IsEffectivelyVisible, "The dated PDF did not offer to clear its date.");
         clear.Command!.Execute(clear.CommandParameter);
-        Require(model.Documents.Count == 0 && model.Status == "Document date cleared.", model.Status);
+        Require(model.Documents.Count == 0 && model.Status == "Date cleared.", model.Status);
     }
 
     /// <summary>Types a date into the open document's date field and presses Enter, as a person would.</summary>
@@ -79,7 +79,7 @@ internal static partial class NativeVerification
         try
         {
             edit.RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
-            await UntilAsync(() => model.Status == "Document date saved for 2 documents." && model.HasBatchSelection, () => model.Status);
+            await UntilAsync(() => model.Status == "Date set for 2 documents." && model.HasBatchSelection, () => model.Status);
             Require(model.Documents.Count == loadedCount && model.Documents.All(document =>
                     document.DocumentDate == (selectedIds.Contains(document.Id) ? leapDay : null)) &&
                     selectedIds.SetEquals(list.Selection.SelectedItems.OfType<DocumentSummary>().Select(document => document.Id)),
@@ -97,7 +97,7 @@ internal static partial class NativeVerification
                 return ConfirmDocumentDateAsync(window, current, "", directory: null, documentCount: count);
             };
             edit.RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
-            await UntilAsync(() => model.Status == "Document dates cleared for 2 documents." && model.Documents.Count == 0, () => model.Status);
+            await UntilAsync(() => model.Status == "Date cleared for 2 documents." && model.Documents.Count == 0, () => model.Status);
             Require(model.Query == datedQuery, "Clearing the dates changed the active search.");
         }
         finally

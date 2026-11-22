@@ -26,7 +26,7 @@ internal sealed partial class InboxViewModel
             if (result.Added) RefreshInboxCount();
             Navigate(inboxOnly: !result.Document.Reviewed, preferredId: result.Document.Id);
             if (result.Added)
-                Announce(DesktopText.Translate("Searchable copy added to inbox."), DesktopText.Translate("Searchable copy added"), DesktopText.Translate("In the Inbox"));
+                Announce(DesktopText.Translate("Searchable copy added to the Inbox."), DesktopText.Translate("Searchable copy added"), DesktopText.Translate("In the Inbox"));
             else
                 Status = DesktopText.Translate("Searchable copy already in the library.");
         });

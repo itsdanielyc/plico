@@ -23,6 +23,10 @@ internal sealed partial class InboxViewModel
 
     private void RefreshUnavailableCount() => UnavailableCount = _library?.CountUnavailableDocuments() ?? 0;
 
+    /// <summary>"1 document unavailable.", worded for one or several so French agrees with the number.</summary>
+    private string UnavailableSentence() =>
+        Counted(UnavailableCount, "1 document unavailable.", $"{UnavailableCount} documents unavailable.");
+
     [RelayCommand]
     private Task RefreshIndexAsync() => RunOperationAsync(DesktopText.Translate("Checking the PDF folder…"), async token =>
     {
@@ -35,11 +39,14 @@ internal sealed partial class InboxViewModel
         LoadResults(reloadPreview: result.Indexed > 0 || result.Relocated > 0);
         LatestIndexRefresh = result;
         FolderRestoreNotices = [];
-        Status = Counted(result.Indexed, "1 document indexed.", $"{result.Indexed} documents indexed.");
-        if (result.Relocated > 0) Status += $" {DocumentCount(result.Relocated)} moved.";
-        if (UnavailableCount > 0) Status += $" {DocumentCount(UnavailableCount)} unavailable.";
         int notices = result.Warnings.Count;
-        if (notices > 0) Status += notices == 1 ? " 1 index notice." : $" {notices} index notices.";
+        var summary = new List<string>();
+        if (result.Indexed > 0) summary.Add(Counted(result.Indexed, "1 document indexed.", $"{result.Indexed} documents indexed."));
+        if (result.Relocated > 0) summary.Add(Counted(result.Relocated, "1 document moved.", $"{result.Relocated} documents moved."));
+        if (UnavailableCount > 0) summary.Add(UnavailableSentence());
+        if (notices > 0) summary.Add(Counted(notices, "1 index notice.", $"{notices} index notices."));
+        // The summary opens on what happened, never on "0 documents indexed"; with nothing to report the index is current.
+        Status = summary.Count > 0 ? string.Join(" ", summary) : DesktopText.Translate("Index up to date.");
     });
 
     [RelayCommand]
@@ -119,8 +126,10 @@ internal sealed partial class InboxViewModel
 
             string prefix = result.Cancelled ? DesktopText.Translate("Folder restore cancelled.") + " " : "";
             Status = prefix + Counted(result.Restored, "1 document restored.", $"{result.Restored} documents restored.");
-            if (result.Unmatched > 0) Status += $" No matching copy for {DocumentCount(result.Unmatched)}.";
-            if (UnavailableCount > 0) Status += $" {DocumentCount(UnavailableCount)} unavailable.";
-            if (result.Issues.Count > 0) Status += result.Issues.Count == 1 ? " 1 restore notice." : $" {result.Issues.Count} restore notices.";
+            if (result.Unmatched > 0)
+                Status += " " + Counted(result.Unmatched, "No matching copy for 1 document.", $"No matching copy for {result.Unmatched} documents.");
+            if (UnavailableCount > 0) Status += " " + UnavailableSentence();
+            if (result.Issues.Count > 0)
+                Status += " " + Counted(result.Issues.Count, "1 restore notice.", $"{result.Issues.Count} restore notices.");
         });
 }

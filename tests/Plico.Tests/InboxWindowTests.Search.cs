@@ -57,7 +57,7 @@ public sealed partial class InboxWindowTests
             await WaitForAsync(() => goToMatch.IsVisible && goToMatch.IsEnabled);
             await Assert.IsAssignableFrom<IAsyncRelayCommand>(goToMatch.Command).ExecuteAsync(goToMatch.CommandParameter);
 
-            Assert.Equal("0 matching pages.", model.Status);
+            Assert.Equal("No matching pages.", model.Status);
             Assert.Equal("2 / 2", model.PageLabel);
         }
         finally

@@ -1,5 +1,5 @@
 Add	Add	Ajouter
-AddAFileToStartYourInbox	Add a file to start your inbox.	Ajoutez un fichier à votre boîte de réception.
+AddAFileToStartYourInbox	Add a file to start your Inbox.	Ajoutez un fichier à votre boîte de réception.
 AddFiles	Add files	Ajouter des fichiers
 AddPaperwork	Add paperwork	Ajouter des documents
 AddRevisedPDF	Add revised PDF…	Ajouter un PDF révisé…
@@ -13,7 +13,6 @@ AppearanceSavedReopenPlicoToSwitchTheInterfaceLanguage	Appearance saved. Reopen 
 AppearanceSettingsClosed	Appearance settings closed.	Paramètres d’apparence fermés.
 AppliedFilingSuggestionsTo0	Applied filing suggestions to {0}.	Suggestions de classement appliquées à {0}.
 Apply	Apply	Appliquer
-ApplyChosenFields	Apply chosen fields	Appliquer les champs choisis
 ArchivalPDFA2b	Archival PDF/A-2b	PDF/A-2b d’archivage
 Automatic	Automatic	Automatique
 BackUpLibrary	Back up library…	Sauvegarder…
@@ -119,12 +118,12 @@ Discard	Discard	Ignorer
 DocumentActions	Document actions	Actions du document
 DocumentAddedDateFormat	Added {0:dd MMM yyyy}	Ajouté le {0:dd MMM yyyy}
 DocumentDate	Document date	Date du document
-DocumentDate2	Document date…	Date du document…
-DocumentDateCleared	Document date cleared.	Date du document effacée.
+DocumentDate2	Set date…	Dater…
+DocumentDateCleared	Date cleared.	Date effacée.
 DocumentDateEditorClosed	Document date editor closed.	Modification de la date annulée.
-DocumentDateSaved	Document date saved.	Date du document enregistrée.
-DocumentDateSavedFor0	Document date saved for {0}.	Date enregistrée pour {0}.
-DocumentDatesClearedFor0	Document dates cleared for {0}.	Dates effacées pour {0}.
+DocumentDateSaved	Date set.	Date définie.
+DocumentDateSavedFor0	Date set for {0}.	Date définie pour {0}.
+DocumentDatesClearedFor0	Date cleared for {0}.	Date effacée pour {0}.
 DocumentOrder	Document order	Ordre des documents
 DocumentTextCopied	Document text copied.	Texte du document copié.
 DocumentTitle	Document title	Titre du document
@@ -297,7 +296,7 @@ Password	Password	Mot de passe
 PasswordProtectedOriginal	Password-protected original	Original protégé par mot de passe
 PasswordProtectedPDF	Password-protected PDF	PDF protégé par mot de passe
 PlicoImportsAnUnlockedPDFAndKeepsTheEncryptedOriginalInVersion	Plico imports an unlocked PDF and keeps the encrypted original in version history.	Plico importe un PDF déverrouillé et conserve l’original chiffré dans l’historique.
-PlicoKeepsTheOriginalPDFAndAddsThePartsToYourInbox	Plico keeps the original PDF and adds the parts to your inbox.	Plico conserve le PDF d’origine et ajoute les parties à la boîte de réception.
+PlicoKeepsTheOriginalPDFAndAddsThePartsToYourInbox	Plico keeps the original PDF and adds the parts to your Inbox.	Plico conserve le PDF d’origine et ajoute les parties à la boîte de réception.
 PlicoSavesThePreviousPDFInVersionHistory	Plico saves the previous PDF in version history.	Plico conserve le PDF précédent dans l’historique des versions.
 Position	Position	Position
 PreparingAPagePreview	Preparing a page preview…	Préparation de l’aperçu…
@@ -363,7 +362,7 @@ SaveProfile	Save profile	Enregistrer le profil
 SaveRule	Save rule	Enregistrer la règle
 SaveSearch	Save search	Enregistrer la recherche
 SaveSearch2	Save search…	Enregistrer la recherche…
-SaveTheCapturedPagesToTheInbox	Save the captured pages to the inbox?	Enregistrer les pages numérisées dans la boîte de réception ?
+SaveTheCapturedPagesToTheInbox	Save the captured pages to the Inbox?	Enregistrer les pages numérisées dans la boîte de réception ?
 Saved0	Saved “{0}”.	« {0} » enregistré.
 Saved0FromTheSplitPDF	Saved {0} from the split PDF.	{0} enregistrés à partir du PDF scindé.
 SavedABackupOf0To1	Saved a backup of {0} to {1}.	Sauvegarde de {0} enregistrée dans {1}.
@@ -380,7 +379,7 @@ ScanInterrupted	Scan interrupted	Numérisation interrompue
 ScanPaperwork	Scan paperwork	Numériser des documents
 ScanProfile	Scan profile	Profil de numérisation
 ScanResolution	Scan resolution	Résolution de numérisation
-ScanToInbox	Scan to inbox	Numériser vers la boîte de réception
+ScanToInbox	Scan to Inbox	Numériser vers la boîte de réception
 Scanner	Scanner	Scanner
 ScannerAddress	Scanner address	Adresse du scanner
 ScannerAddressOptional	Scanner address (optional)	Adresse du scanner (facultative)
@@ -390,7 +389,7 @@ SearchDocuments	Search documents	Rechercher des documents
 SearchOrPreviewChanged	Search or preview changed.	La recherche ou l’aperçu a changé.
 SearchResults	Search results	Résultats de recherche
 SearchYourPaperwork	Search your paperwork	Chercher dans vos papiers
-SearchableCopyAddedToInbox	Searchable copy added to inbox.	Copie indexable ajoutée à la boîte de réception.
+SearchableCopyAddedToInbox	Searchable copy added to the Inbox.	Copie indexable ajoutée à la boîte de réception.
 SearchableCopyAlreadyInTheLibrary	Searchable copy already in the library.	La copie indexable est déjà dans la bibliothèque.
 SelectADocumentToPreviewIt	Select a document to preview it	Sélectionnez un document pour afficher son aperçu
 SelectALibraryFolder	Select a library folder	Choisir le dossier de la bibliothèque
@@ -430,7 +429,7 @@ Tags	Tags	Étiquettes
 TagsMergedInto0	Tags merged into “{0}”.	Étiquettes fusionnées dans « {0} ».
 TagsOnTheSelectedPDFs	Tags on the selected PDFs	Étiquettes des PDF sélectionnés
 Text0AddedNoSearchableTextWasRecognized	{0} added. No searchable text was recognised.	{0} ajouté. Aucun texte indexable n’a été reconnu.
-Text0AddedToInbox	{0} added to inbox.	{0} ajouté à la boîte de réception.
+Text0AddedToInbox	{0} added to the Inbox.	{0} ajouté à la boîte de réception.
 Text0Document	{0} document	{0} document
 Text0Documents	0 documents	0 document
 Text0Documents2	{0} documents	{0} documents
@@ -607,7 +606,7 @@ ReminderSuggestedDate	Use suggested due date {0}	Utiliser la date limite propos�
 NamedExistingFolder	phone inbox folder	dossier de la boîte du téléphone
 PhoneInboxStopped	Phone inbox watch stopped.	Surveillance de la boîte du téléphone arrêtée.
 ResumeSavedWatches	Resuming saved watches…	Reprise des surveillances enregistrées…
-CannotResumeNamedWatch	Could not resume the {0} watch. {1}	Impossible de reprendre la surveillance du {0}. {1}
+CannotResumeNamedWatch	Couldn't resume the {0} watch. {1}	Impossible de reprendre la surveillance du {0}. {1}
 NamedCalendarReminder	{0} reminder	Rappel · {0}
 NamedCurrency	{0} currency	Devise · {0}
 LeadTimeError	Enter a lead time from 0 to {0}.	Saisissez un délai de 0 à {0} jours.
@@ -926,3 +925,39 @@ DateHintClearable	Use a date like {0}. Leave it empty to clear the date.	Saisiss
 DocumentDateForCount	Document date for {0} documents	Date du document pour {0} documents
 AlreadyTagged	Already tagged	Déjà étiqueté
 AlreadyTaggedFormat	Already tagged “{0}”.	Déjà étiqueté « {0} ».
+SearchingResults	Searching…	Recherche…
+ShowingCount	Showing {0}	{0} affichés
+CountInTag	{0} in {1}	{0} dans {1}
+ResultsUnavailable	Results unavailable	Résultats indisponibles
+NoMatchingPages	No matching pages.	Aucune page correspondante.
+NoLaterMatchingPages	No later matching pages.	Aucune page correspondante plus loin.
+NoEarlierMatchingPages	No earlier matching pages.	Aucune page correspondante plus haut.
+MovedDocumentOne	1 document moved.	1 document déplacé.
+MovedDocumentSeveral	{0} documents moved.	{0} documents déplacés.
+UnavailableOne	1 document unavailable.	1 document indisponible.
+UnavailableSeveral	{0} documents unavailable.	{0} documents indisponibles.
+IndexNoticeOne	1 index notice.	1 remarque d’indexation.
+IndexNoticeSeveral	{0} index notices.	{0} remarques d’indexation.
+IndexUpToDate	Index up to date.	Index à jour.
+NoMatchingCopyOne	No matching copy for 1 document.	Aucune copie correspondante pour 1 document.
+NoMatchingCopySeveral	No matching copy for {0} documents.	Aucune copie correspondante pour {0} documents.
+RestoreNoticeOne	1 restore notice.	1 remarque de restauration.
+RestoreNoticeSeveral	{0} restore notices.	{0} remarques de restauration.
+CapturedOnePage	1 page captured	1 page numérisée
+CapturedPages	{0} pages captured	{0} pages numérisées
+CannotLoadImportErrors	Couldn't load the saved import errors. {0}	Impossible de charger les erreurs d’import enregistrées. {0}
+CannotSaveImportErrors	Couldn't save the import errors. {0}	Impossible d’enregistrer les erreurs d’import. {0}
+CannotSaveWatchedScanChoice	Couldn't save the watched-scan choice. {0}	Impossible d’enregistrer le choix des numérisations surveillées. {0}
+CannotLoadIntakeSettings	Couldn't load the intake settings. {0}	Impossible de charger les réglages d’arrivée. {0}
+IntegrityMissing	PDF missing	PDF manquant
+IntegrityUnreadable	Couldn't read the PDF	Impossible de lire le PDF
+IntegrityChanged	PDF changed since indexing	PDF modifié depuis l’indexation
+IntegrityNoChecksum	Checksum unavailable	Somme de contrôle indisponible
+IntegrityUnindexed	PDF is outside the index	PDF hors de l’index
+IntegrityNoText	No searchable text	Aucun texte indexable
+IntegrityReturned	PDF returned since indexing	PDF revenu depuis l’indexation
+MovedTitle	Moved	Déplacé
+MovedToPath	Moved to {0}.	Déplacé vers {0}.
+AlreadyInThatFolderOne	This PDF is already in that folder.	Ce PDF est déjà dans ce dossier.
+PdfUpdated	PDF updated	PDF mis à jour
+ShortcutOr	or	ou

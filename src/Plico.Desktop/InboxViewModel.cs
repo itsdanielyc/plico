@@ -29,7 +29,7 @@ internal sealed partial class InboxViewModel : ObservableObject, IDisposable
     [ObservableProperty] private string _tagInput = "";
     [ObservableProperty] private string _heading = DesktopText.Translate("Inbox");
     [ObservableProperty] private string _resultCount = DesktopText.Translate("0 documents");
-    [ObservableProperty] private string _emptyMessage = DesktopText.Translate("Add a file to start your inbox.");
+    [ObservableProperty] private string _emptyMessage = DesktopText.Translate("Add a file to start your Inbox.");
     private string _status = DesktopText.Translate("Choose a library folder to get started.");
     [ObservableProperty] private string _libraryPath = "";
     [ObservableProperty] private string _previewMessage = "";

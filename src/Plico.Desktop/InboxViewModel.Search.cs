@@ -105,9 +105,9 @@ internal sealed partial class InboxViewModel
             {
                 Status = (findFirst, direction) switch
                 {
-                    (true, _) => "0 matching pages.",
-                    (false, PageMatchDirection.Forward) => "No later matching pages.",
-                    _ => "No earlier matching pages."
+                    (true, _) => DesktopText.Translate("No matching pages."),
+                    (false, PageMatchDirection.Forward) => DesktopText.Translate("No later matching pages."),
+                    _ => DesktopText.Translate("No earlier matching pages.")
                 };
                 return;
             }
@@ -142,7 +142,7 @@ internal sealed partial class InboxViewModel
     private void SetSearchPending()
     {
         HasMore = false;
-        ResultCount = "Searching…";
+        ResultCount = DesktopText.Translate("Searching…");
         EmptyMessage = "";
     }
 
@@ -299,7 +299,7 @@ internal sealed partial class InboxViewModel
             if (hasQuery || filter.Tag is not null)
                 SetEmptyState(DesktopText.Translate("No documents match"), DesktopText.Translate("Try other words or a different filter."));
             else if (filter.InboxOnly)
-                SetEmptyState(DesktopText.Translate("Nothing here yet"), DesktopText.Translate("Add a file to start your inbox."));
+                SetEmptyState(DesktopText.Translate("Nothing here yet"), DesktopText.Translate("Add a file to start your Inbox."));
             else
                 SetEmptyState(DesktopText.Translate("No documents yet"), DesktopText.Translate("This library has no documents yet."));
         }
@@ -326,8 +326,8 @@ internal sealed partial class InboxViewModel
             SearchQueryHint = "";
         }
 
-        ResultCount = HasMore ? $"Showing {DocumentCount(Documents.Count)}" : DocumentCount(Documents.Count);
-        if (filter.Tag is not null && !string.IsNullOrWhiteSpace(filter.Query)) ResultCount += $" in {filter.Tag}";
+        ResultCount = HasMore ? DesktopText.Format($"Showing {DocumentCount(Documents.Count)}") : DocumentCount(Documents.Count);
+        if (filter.Tag is not null && !string.IsNullOrWhiteSpace(filter.Query)) ResultCount = DesktopText.Format($"{ResultCount} in {filter.Tag}");
         _shownResults = (ResultCount, EmptyTitle, EmptyMessage);
     }
 
@@ -419,7 +419,7 @@ internal sealed partial class InboxViewModel
         ResetPageMatchNavigation();
         OnPropertyChanged(nameof(HasPageMatchAction));
         HasMore = false;
-        ResultCount = "Results unavailable";
+        ResultCount = DesktopText.Translate("Results unavailable");
         Status = error.Message;
     }
 

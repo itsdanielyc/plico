@@ -7,7 +7,7 @@
         <Border DockPanel.Dock="Bottom" Classes="dialog-footer">
             <StackPanel Classes="dialog-actions">
                 <Button Classes="secondary" Content="{translation:Tr Close}" IsCancel="True" Click="Cancel_Click" />
-                <Button x:Name="ApplyFilingSuggestionsButton" Classes="primary" Content="{translation:Tr ApplyChosenFields}" Click="Apply_Click" />
+                <Button x:Name="ApplyFilingSuggestionsButton" Classes="primary" Content="{translation:Tr LocalFilingApply}" Click="Apply_Click" />
             </StackPanel>
         </Border>
         <StackPanel Classes="dialog-body">

@@ -26,9 +26,11 @@ internal sealed partial class InboxViewModel
             var moved = await Task.Run(() => library.MovePdfAsync(document.Id, folder, token), token);
             RetireUndo();
             LoadResults(moved.Id, reloadPreview: Preview is null);
-            Status = moved.RelativePath == document.RelativePath
-                ? "This PDF is already in that folder."
-                : $"Moved to {moved.RelativePath}.";
+            if (moved.RelativePath == document.RelativePath)
+                Status = DesktopText.Translate("This PDF is already in that folder.");
+            else
+                Announce(DesktopText.Format($"Moved to {moved.RelativePath}."), DesktopText.Translate("Moved"),
+                    string.Join(PathSeparator, moved.RelativePath.Split('/', StringSplitOptions.RemoveEmptyEntries)));
         });
     }
 

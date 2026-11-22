@@ -34,14 +34,14 @@ public sealed partial class InboxWindowTests
             field.RaiseEvent(new KeyEventArgs { RoutedEvent = InputElement.KeyDownEvent, Key = Key.Enter });
             var leapDay = new DateOnly(2024, 2, 29);
             Assert.Equal(leapDay, model.SelectedDocument?.DocumentDate);
-            Assert.Equal("Document date saved.", model.Status);
+            Assert.Equal("Date set.", model.Status);
             model.Query = "dated:2024-02";
             await WaitForAsync(() => model.Heading == "Search results" && model.Documents.Count == 1);
             Assert.Equal("29 Feb 2024", field.Text);
             field.SetCurrentValue(TextBox.TextProperty, "");
             field.RaiseEvent(new KeyEventArgs { RoutedEvent = InputElement.KeyDownEvent, Key = Key.Enter });
             Assert.Empty(model.Documents);
-            Assert.Equal("Document date cleared.", model.Status);
+            Assert.Equal("Date cleared.", model.Status);
             model.ShowAllCommand.Execute(null);
             Assert.Null(Assert.Single(model.Documents).DocumentDate);
         }

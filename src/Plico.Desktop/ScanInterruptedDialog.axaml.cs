@@ -10,9 +10,10 @@ internal sealed partial class ScanInterruptedDialog : Window
     internal ScanInterruptedDialog(ScanInterruption interruption)
     {
         InitializeComponent();
+        // A dialog's title: a few words, no full stop.
         CapturedPageMessage.Text = interruption.CapturedPages == 1
-            ? "The scanner captured 1 page."
-            : $"The scanner captured {interruption.CapturedPages} pages.";
+            ? DesktopText.Translate("1 page captured")
+            : DesktopText.Format($"{interruption.CapturedPages} pages captured");
         ScannerError.Text = interruption.Reason;
     }
 

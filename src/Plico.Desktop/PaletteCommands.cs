@@ -127,7 +127,7 @@ internal static class PaletteCommands
             Act("Tag selected", selection, "Icon.Tag", "", "batch label", window.FocusBatchTagEntry);
             Act("Remove tag…", selection, "Icon.Tag", "", "batch remove label",
                 () => _ = window.UpdateSelectedDocumentsAsync(static batch => batch.RemoveSelectedTagAsync()), model.HasTaggedBatchSelection);
-            Act("Document date…", selection, "Icon.Calendar", "", "batch date",
+            Act("Set date…", selection, "Icon.Calendar", "", "batch date",
                 () => _ = window.UpdateSelectedDocumentsAsync(static batch => batch.EditBatchDocumentDatesAsync()));
             Act("Filing suggestions…", selection, "Icon.Check", "", "batch suggestions",
                 () => _ = window.UpdateSelectedDocumentsAsync(static batch => batch.SuggestSelectedFilingAsync()));
@@ -215,7 +215,7 @@ internal static class ShortcutSheet
         ]);
         AddGroup(grid, 1, DesktopText.Translate("Everywhere"),
         [
-            (mod + " K", "Commands"), ("/", "Search"), (mod + " F", "Search"), (mod + " Z", "Undo"), (mod + " A", "Select all shown"),
+            (mod + " K", "Commands"), ("/ | " + mod + " F", "Search"), (mod + " Z", "Undo"), (mod + " A", "Select all shown"),
             ("Esc", "Close"), (mod + " O", "Add files"), (mod + " Shift S", "Scan"), (mod + " ,", "Settings"), ("?", "Keyboard shortcuts")
         ]);
     }
@@ -234,8 +234,14 @@ internal static class ShortcutSheet
             row.Children.Add(rule);
             row.Children.Add(new TextBlock { Text = DesktopText.Translate(label), VerticalAlignment = VerticalAlignment.Center, FontSize = 14 });
             var caps = new StackPanel { Orientation = Orientation.Horizontal, Spacing = 4, VerticalAlignment = VerticalAlignment.Center, [Grid.ColumnProperty] = 1 };
-            foreach (string key in keys.Split(' ', StringSplitOptions.RemoveEmptyEntries))
-                caps.Children.Add(new Border { Classes = { "key" }, Child = new TextBlock { Text = key } });
+            // "/ | Ctrl F": two ways to the same action on one row, with a quiet "or" between them.
+            string[] ways = keys.Split(" | ");
+            for (int way = 0; way < ways.Length; way++)
+            {
+                if (way > 0) caps.Children.Add(new TextBlock { Text = DesktopText.Translate("or"), Classes = { "meta" }, VerticalAlignment = VerticalAlignment.Center, Margin = new(4, 0) });
+                foreach (string key in ways[way].Split(' ', StringSplitOptions.RemoveEmptyEntries))
+                    caps.Children.Add(new Border { Classes = { "key" }, Child = new TextBlock { Text = key } });
+            }
             row.Children.Add(caps);
             panel.Children.Add(row);
         }

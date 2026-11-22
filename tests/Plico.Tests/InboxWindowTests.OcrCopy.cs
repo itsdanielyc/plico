@@ -35,7 +35,7 @@ public sealed partial class InboxWindowTests
             await command.ExecuteAsync(action.CommandParameter);
             await WaitForPreviewAsync(model);
 
-            Assert.Equal("Searchable copy added to inbox.", model.Status);
+            Assert.Equal("Searchable copy added to the Inbox.", model.Status);
             Assert.True(model.InboxSelected);
             Assert.Contains(model.Documents, document => document.Id == source.Id && !document.HasText);
             Assert.True(Assert.IsType<DocumentSummary>(model.SelectedDocument).HasText);

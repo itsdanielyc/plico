@@ -22,13 +22,13 @@ internal sealed partial class IntegrityReportDialog : Window
 
     private static string Label(IntegrityIssueKind kind) => kind switch
     {
-        IntegrityIssueKind.Missing => "PDF missing",
-        IntegrityIssueKind.Unreadable => "Could not read PDF",
-        IntegrityIssueKind.ChecksumMismatch => "PDF changed since indexing",
-        IntegrityIssueKind.NoChecksum => "Checksum unavailable",
-        IntegrityIssueKind.Unindexed => "PDF is outside the index",
-        IntegrityIssueKind.NoSearchableText => "No searchable text",
-        IntegrityIssueKind.IndexPending => "PDF returned since indexing",
+        IntegrityIssueKind.Missing => DesktopText.Translate("PDF missing"),
+        IntegrityIssueKind.Unreadable => DesktopText.Translate("Couldn't read the PDF"),
+        IntegrityIssueKind.ChecksumMismatch => DesktopText.Translate("PDF changed since indexing"),
+        IntegrityIssueKind.NoChecksum => DesktopText.Translate("Checksum unavailable"),
+        IntegrityIssueKind.Unindexed => DesktopText.Translate("PDF is outside the index"),
+        IntegrityIssueKind.NoSearchableText => DesktopText.Translate("No searchable text"),
+        IntegrityIssueKind.IndexPending => DesktopText.Translate("PDF returned since indexing"),
         _ => kind.ToString()
     };
 

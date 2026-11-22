@@ -67,7 +67,7 @@ public sealed partial class InboxWindowTests
             save = Assert.IsType<Button>(dialog.FindControl<Button>("ConfirmDocumentDateButton"));
             Assert.True(save.IsEnabled);
             save.RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
-            await WaitForAsync(() => model.Status == "Document date saved for 2 documents." && model.HasBatchSelection);
+            await WaitForAsync(() => model.Status == "Date set for 2 documents." && model.HasBatchSelection);
             Assert.Equal(newDate, DateOf(firstTitle));
             Assert.Equal(newDate, DateOf(secondTitle));
             Assert.Equal(outsideDate, DateOf(outsideTitle));
@@ -81,7 +81,7 @@ public sealed partial class InboxWindowTests
             var clear = Assert.IsType<Button>(dialog.FindControl<Button>("ClearDocumentDatesButton"));
             Assert.True(clear.IsEffectivelyVisible);
             clear.RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
-            await WaitForAsync(() => model.Status == "Document dates cleared for 2 documents." && !model.IsBusy);
+            await WaitForAsync(() => model.Status == "Date cleared for 2 documents." && !model.IsBusy);
             Assert.Empty(model.Documents);
             Assert.Equal(query, model.Query);
             model.ShowAllCommand.Execute(null);
