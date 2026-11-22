@@ -393,7 +393,7 @@ internal sealed partial class InboxViewModel : ObservableObject, IDisposable
         }
 
         var outcomes = new List<string>();
-        if (added > 0) outcomes.Add(DesktopText.Format($"{DocumentCount(added)} added."));
+        if (added > 0) outcomes.Add(Counted(added, "1 document added.", $"{added} documents added."));
         if (alreadyPresent > 0) outcomes.Add(DesktopText.Format($"{DocumentCount(alreadyPresent)} already in the library."));
         if (unreadable > 0) outcomes.Add(DesktopText.Format($"No text recognized in {DocumentCount(unreadable)}."));
         if (failures.Count > 0) outcomes.Add($"{failures.Count} failed. {failures[0].Filename} — {failures[0].Reason}");
@@ -508,6 +508,13 @@ internal sealed partial class InboxViewModel : ObservableObject, IDisposable
         _library ?? throw new InvalidOperationException("Choose a library folder first.");
 
     private static string DocumentCount(long count) => count == 1 ? "1 document" : DesktopText.Format($"{count} documents");
+
+    /// <summary>
+    /// A message about a number of documents, worded for one or for several, so a language whose words agree with the
+    /// number reads naturally: "1 document ajouté", "2 documents ajoutés". Each wording has its own catalog row.
+    /// </summary>
+    private static string Counted(long count, string one, FormattableString several) =>
+        count == 1 ? DesktopText.Translate(one) : DesktopText.Format(several);
 
     partial void OnDocumentsChanged(IReadOnlyList<DocumentSummary> value)
     {

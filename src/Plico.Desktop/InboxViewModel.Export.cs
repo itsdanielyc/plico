@@ -63,7 +63,8 @@ internal sealed partial class InboxViewModel
             });
             var export = await Task.Run(() => library.ExportPdfsAsync(selectedIds, destination, progress, token), token);
             NoteExport(export.Location);
-            AnnounceExport(DesktopText.Format($"Exported {DocumentCount(export.PdfCount)} to {export.Location}."), DocumentCount(export.PdfCount));
+            AnnounceExport(export.PdfCount == 1 ? DesktopText.Format($"Exported 1 document to {export.Location}.")
+                : DesktopText.Format($"Exported {export.PdfCount} documents to {export.Location}."), DocumentCount(export.PdfCount));
         });
     }
 

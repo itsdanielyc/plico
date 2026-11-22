@@ -101,6 +101,31 @@
         <Style Selector="Grid.compact Button#CommandPaletteButton">
             <Setter Property="IsVisible" Value="False" />
         </Style>
+        <!-- The toolbar's spacing tightens in narrow windows too, so "Chercher dans vos papiers" stays whole beside "/". -->
+        <Style Selector="Border#Toolbar">
+            <Setter Property="Padding" Value="16,12" />
+        </Style>
+        <Style Selector="Grid#ToolbarLayout">
+            <Setter Property="ColumnSpacing" Value="12" />
+        </Style>
+        <Style Selector="StackPanel#ToolbarActions">
+            <Setter Property="Spacing" Value="8" />
+        </Style>
+        <Style Selector="Grid#SearchRow">
+            <Setter Property="ColumnSpacing" Value="4" />
+        </Style>
+        <Style Selector="Grid.compact Grid#SearchRow">
+            <Setter Property="ColumnSpacing" Value="2" />
+        </Style>
+        <Style Selector="Grid.compact Border#Toolbar">
+            <Setter Property="Padding" Value="12,12" />
+        </Style>
+        <Style Selector="Grid.compact Grid#ToolbarLayout">
+            <Setter Property="ColumnSpacing" Value="8" />
+        </Style>
+        <Style Selector="Grid.compact StackPanel#ToolbarActions">
+            <Setter Property="Spacing" Value="6" />
+        </Style>
         <!-- Card actions: quiet 34 px rows with a 16 px Fg2 glyph and a 14 Medium label in ink. -->
         <Style Selector="Button.action">
             <Setter Property="Background" Value="Transparent" />
@@ -274,7 +299,8 @@
         <Style Selector="TextBlock.fact">
             <Setter Property="FontSize" Value="13" />
             <Setter Property="Foreground" Value="{DynamicResource Fg}" />
-            <Setter Property="TextTrimming" Value="CharacterEllipsis" />
+            <!-- A fact is never cut: a long one ("Dans la boîte de réception") takes a second line. -->
+            <Setter Property="TextWrapping" Value="Wrap" />
         </Style>
         <Style Selector="TextBlock.fact-label">
             <Setter Property="FontSize" Value="13" />
@@ -418,15 +444,15 @@
                 </DataTemplate>
             </Setter>
         </Style>
-        <!-- Match buttons are quiet like the rest of the bar; amber stays on the hits, here only as a small dot. -->
+        <!--
+            Match buttons are chevrons on the viewer bar's own row, up for the previous match and down for the next, after
+            a small amber dot; amber stays on the hits. Their words stay the content: the tooltip and what a screen reader says.
+        -->
         <Style Selector="Grid.viewer-bar Button.match">
             <Setter Property="Foreground" Value="{DynamicResource Fg}" />
             <Setter Property="ContentTemplate">
                 <DataTemplate x:DataType="x:String">
-                    <StackPanel Orientation="Horizontal" Spacing="7">
-                        <Ellipse Width="7" Height="7" Fill="{DynamicResource HighlightMark}" VerticalAlignment="Center" />
-                        <TextBlock Text="{Binding}" VerticalAlignment="Center" />
-                    </StackPanel>
+                    <local:Icon Data="{Binding $parent[Button].(local:Ui.Icon)}" StrokeWidth="1.8" VerticalAlignment="Center" />
                 </DataTemplate>
             </Setter>
         </Style>
@@ -447,6 +473,10 @@
         </Style>
         <Style Selector="Grid.compact StackPanel.row-text">
             <Setter Property="IsVisible" Value="False" />
+        </Style>
+        <!-- The queue's own actions are small buttons, so Save search and Select shown share one row when they fit. -->
+        <Style Selector="WrapPanel.queue-actions > Button">
+            <Setter Property="Padding" Value="9,0" />
         </Style>
         <Style Selector="Grid.compact Border.queue-header">
             <Setter Property="BorderThickness" Value="0,0,0,1" />
@@ -534,7 +564,7 @@
                     only under the pointer, and the places fade into the desk above the status card instead of being cut.
                 -->
                 <Border Grid.Row="1" Height="20" VerticalAlignment="Bottom" Background="{DynamicResource SidebarFade}" IsHitTestVisible="False" ZIndex="1" />
-                <ScrollViewer Grid.Row="1" Classes="quiet" HorizontalScrollBarVisibility="Disabled" Padding="12,0">
+                <ScrollViewer Grid.Row="1" HorizontalScrollBarVisibility="Disabled" Padding="12,0">
                     <StackPanel Margin="0,0,0,12">
                         <StackPanel Spacing="2">
                             <Button x:Name="InboxButton" Classes="nav" Classes.current="{Binding InboxSelected}"
@@ -702,9 +732,9 @@
                         Toolbar: search with the folder filter and its tips at the left, the two ways in and the tools at the
                         right. A search that cannot run says how to repair it in one line under the field, never in the queue.
                     -->
-                    <Border x:Name="Toolbar" BorderBrush="{DynamicResource Line}" BorderThickness="0,0,0,1" Padding="16,12" MinHeight="64">
-                        <Grid ColumnDefinitions="*,Auto" ColumnSpacing="12">
-                            <Grid ColumnSpacing="4" RowDefinitions="Auto,Auto">
+                    <Border x:Name="Toolbar" BorderBrush="{DynamicResource Line}" BorderThickness="0,0,0,1" MinHeight="64">
+                        <Grid x:Name="ToolbarLayout" ColumnDefinitions="*,Auto">
+                            <Grid x:Name="SearchRow" RowDefinitions="Auto,Auto">
                                 <Grid.ColumnDefinitions>
                                     <ColumnDefinition Width="100*" MaxWidth="560" />
                                     <ColumnDefinition Width="Auto" />
@@ -773,7 +803,7 @@
                                 </Grid>
                             </Grid>
                             <!-- Until the library has its first document the welcome hero carries Scan and Add files. -->
-                            <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="8" Height="40" VerticalAlignment="Top">
+                            <StackPanel Grid.Column="1" x:Name="ToolbarActions" Orientation="Horizontal" Height="40" VerticalAlignment="Top">
                                 <Button x:Name="ScanButton" Classes="secondary large with-icon" local:Ui.Icon="{StaticResource Icon.ScanFrame}" IsVisible="{Binding !ShowWelcome}"
                                         Command="{Binding ScanCommand}" Content="{translation:Tr Scan}" IsEnabled="{Binding CanWork}" ToolTip.Tip="{translation:Tr ScanTip}" />
                                 <StackPanel Orientation="Horizontal" IsVisible="{Binding !ShowWelcome}">
@@ -875,17 +905,17 @@
                                         </ComboBox.SelectionBoxItemTemplate>
                                     </ComboBox>
                                 </local:CountLinePanel>
-                                <WrapPanel Orientation="Horizontal" ItemSpacing="6" LineSpacing="6" Margin="0,2,10,0">
-                                    <Button x:Name="SaveSearchButton" Classes="secondary" Content="{translation:Tr SaveSearch2}" Command="{Binding SaveSearchCommand}"
+                                <WrapPanel Classes="queue-actions" Orientation="Horizontal" ItemSpacing="6" LineSpacing="6" Margin="0,2,0,0">
+                                    <Button x:Name="SaveSearchButton" Classes="secondary small" Content="{translation:Tr SaveSearch2}" Command="{Binding SaveSearchCommand}"
                                             IsVisible="{Binding ShowSaveSearch}" IsEnabled="{Binding CanWork}" />
-                                    <Button x:Name="EditSavedSearchButton" Classes="secondary" Content="{translation:Tr EditSearch}" Command="{Binding EditActiveSavedSearchCommand}"
+                                    <Button x:Name="EditSavedSearchButton" Classes="secondary small" Content="{translation:Tr EditSearch}" Command="{Binding EditActiveSavedSearchCommand}"
                                             IsVisible="{Binding HasActiveSavedSearch}" IsEnabled="{Binding CanWork}" />
-                                    <Button x:Name="RefreshWatchedResultsButton" Classes="secondary" Content="{translation:Tr RefreshResults}"
+                                    <Button x:Name="RefreshWatchedResultsButton" Classes="secondary small" Content="{translation:Tr RefreshResults}"
                                             Command="{Binding RefreshWatchedResultsCommand}" IsVisible="{Binding HasDeferredWatchResults}"
                                             IsEnabled="{Binding CanWork}" ToolTip.Tip="{translation:Tr RefreshAfterWatchedImports}" />
-                                    <Button x:Name="SelectShownButton" Classes="secondary" Content="{Binding SelectShownAction}" Click="SelectShown_Click"
+                                    <Button x:Name="SelectShownButton" Classes="secondary small" Content="{Binding SelectShownAction}" Click="SelectShown_Click"
                                             IsVisible="{Binding HasBatchCandidates}" AutomationProperties.Name="{Binding SelectShownAction}" />
-                                    <Button Classes="secondary" Content="{translation:Tr LoadMore}" Command="{Binding LoadMoreCommand}" IsVisible="{Binding HasMore}" />
+                                    <Button Classes="secondary small" Content="{translation:Tr LoadMore}" Command="{Binding LoadMoreCommand}" IsVisible="{Binding HasMore}" />
                                 </WrapPanel>
                             </StackPanel>
                         </Border>
@@ -949,42 +979,49 @@
                                     </StackPanel>
                                 </Panel>
                                 <Grid IsVisible="{Binding HasSelection}" RowDefinitions="Auto,*">
-                                    <Grid Classes="viewer-bar" RowDefinitions="Auto,Auto" Margin="12,10,12,0">
-                                        <WrapPanel ItemSpacing="2" IsVisible="{Binding HasPageMatchAction}" VerticalAlignment="Center">
-                                            <Button x:Name="PreviousMatchButton" Content="{translation:Tr PreviousMatch}"
-                                                    Command="{Binding PreviousMatchCommand}"
-                                                    IsVisible="{Binding PageMatchNavigationActive}" IsEnabled="{Binding CanWork}"
-                                                    ToolTip.Tip="{translation:Tr GoToThePreviousPageThatMatchesTheTextTerms}" />
-                                            <Button x:Name="GoToMatchButton" Classes="match" Content="{Binding PageMatchActionLabel}"
-                                                    Command="{Binding GoToMatchCommand}"
-                                                    IsVisible="{Binding HasPageMatchAction}" IsEnabled="{Binding CanWork}"
-                                                    ToolTip.Tip="{Binding PageMatchActionHelp}" />
-                                        </WrapPanel>
-                                        <WrapPanel Grid.Row="1" HorizontalAlignment="Right" ItemSpacing="2" VerticalAlignment="Center">
-                                            <Button x:Name="PreviewFitButton" Content="{Binding PreviewFitAction}" Command="{Binding TogglePreviewFitCommand}"
-                                                    Classes.fit-page="{Binding FitPreviewWidth}" ToolTip.Tip="{Binding PreviewFitAction}"
-                                                    IsEnabled="{Binding HasPreview}" IsVisible="{Binding !IsPageTextView}" />
-                                            <ToggleButton x:Name="PageThumbnailsButton" Classes="page-icon" IsChecked="{Binding ShowPageThumbnails, Mode=OneWay}"
-                                                          Command="{Binding TogglePageThumbnailsCommand}" IsEnabled="{Binding HasMultiplePages}"
-                                                          IsVisible="{Binding !IsPageTextView}" ToolTip.Tip="{translation:Tr Thumbnails}"
-                                                          AutomationProperties.Name="{translation:Tr Thumbnails}">
-                                                <local:Icon Data="{StaticResource Icon.Pages}" />
-                                            </ToggleButton>
-                                            <Button x:Name="ZoomOutButton" Classes="page-icon" Command="{Binding ZoomOutCommand}" IsVisible="{Binding !IsPageTextView}"
-                                                    IsEnabled="{Binding CanZoomOut}" AutomationProperties.Name="{translation:Tr ZoomOut}" ToolTip.Tip="{translation:Tr ZoomOut}">
-                                                <local:Icon Data="{StaticResource Icon.Minus}" />
-                                            </Button>
-                                            <TextBlock Text="{Binding PreviewZoomLabel}" IsVisible="{Binding !IsPageTextView}" VerticalAlignment="Center" FontSize="13"
-                                                       FontWeight="Medium" MinWidth="40" TextAlignment="Center" FontFeatures="+tnum" Foreground="{DynamicResource Fg2}" />
-                                            <Button x:Name="ZoomInButton" Classes="page-icon" Command="{Binding ZoomInCommand}" IsVisible="{Binding !IsPageTextView}"
-                                                    IsEnabled="{Binding CanZoomIn}" AutomationProperties.Name="{translation:Tr ZoomIn}" ToolTip.Tip="{translation:Tr ZoomIn}">
-                                                <local:Icon Data="{StaticResource Icon.Plus}" />
-                                            </Button>
-                                            <Button x:Name="OpenPdfButton" Classes="page-icon" Command="{Binding OpenPdfCommand}" ToolTip.Tip="{translation:Tr OpenInPdfViewer}"
-                                                    AutomationProperties.Name="{translation:Tr OpenPDF}">
-                                                <local:Icon Data="{StaticResource Icon.Open}" />
-                                            </Button>
-                                        </WrapPanel>
+                                    <!-- One row: the match chevrons at the left, fit, thumbnails, zoom and open at the right. -->
+                                    <Grid Classes="viewer-bar" Margin="12,10,12,0">
+                                        <local:ViewerBarPanel Spacing="8">
+                                            <StackPanel Orientation="Horizontal" Spacing="2" IsVisible="{Binding HasPageMatchAction}" VerticalAlignment="Center">
+                                                <Ellipse Width="7" Height="7" Fill="{DynamicResource HighlightMark}" Margin="6,0,5,0" VerticalAlignment="Center"
+                                                         IsHitTestVisible="False" />
+                                                <Button x:Name="PreviousMatchButton" Classes="page-icon match" local:Ui.Icon="{StaticResource Icon.ChevronUp}"
+                                                        Content="{translation:Tr PreviousMatch}" Command="{Binding PreviousMatchCommand}"
+                                                        IsVisible="{Binding PageMatchNavigationActive}" IsEnabled="{Binding CanWork}"
+                                                        ToolTip.Tip="{translation:Tr PreviousMatch}" AutomationProperties.Name="{translation:Tr PreviousMatch}"
+                                                        AutomationProperties.HelpText="{translation:Tr GoToThePreviousPageThatMatchesTheTextTerms}" />
+                                                <Button x:Name="GoToMatchButton" Classes="page-icon match" local:Ui.Icon="{StaticResource Icon.ChevronDown}"
+                                                        Content="{Binding PageMatchActionLabel}" Command="{Binding GoToMatchCommand}"
+                                                        IsVisible="{Binding HasPageMatchAction}" IsEnabled="{Binding CanWork}"
+                                                        ToolTip.Tip="{Binding PageMatchActionLabel}" AutomationProperties.Name="{Binding PageMatchActionLabel}"
+                                                        AutomationProperties.HelpText="{Binding PageMatchActionHelp}" />
+                                            </StackPanel>
+                                            <WrapPanel HorizontalAlignment="Right" ItemSpacing="2" VerticalAlignment="Center">
+                                                <Button x:Name="PreviewFitButton" Content="{Binding PreviewFitAction}" Command="{Binding TogglePreviewFitCommand}"
+                                                        Classes.fit-page="{Binding FitPreviewWidth}" ToolTip.Tip="{Binding PreviewFitAction}"
+                                                        IsEnabled="{Binding HasPreview}" IsVisible="{Binding !IsPageTextView}" />
+                                                <ToggleButton x:Name="PageThumbnailsButton" Classes="page-icon" IsChecked="{Binding ShowPageThumbnails, Mode=OneWay}"
+                                                              Command="{Binding TogglePageThumbnailsCommand}" IsEnabled="{Binding HasMultiplePages}"
+                                                              IsVisible="{Binding !IsPageTextView}" ToolTip.Tip="{translation:Tr Thumbnails}"
+                                                              AutomationProperties.Name="{translation:Tr Thumbnails}">
+                                                    <local:Icon Data="{StaticResource Icon.Pages}" />
+                                                </ToggleButton>
+                                                <Button x:Name="ZoomOutButton" Classes="page-icon" Command="{Binding ZoomOutCommand}" IsVisible="{Binding !IsPageTextView}"
+                                                        IsEnabled="{Binding CanZoomOut}" AutomationProperties.Name="{translation:Tr ZoomOut}" ToolTip.Tip="{translation:Tr ZoomOut}">
+                                                    <local:Icon Data="{StaticResource Icon.Minus}" />
+                                                </Button>
+                                                <TextBlock Text="{Binding PreviewZoomLabel}" IsVisible="{Binding !IsPageTextView}" VerticalAlignment="Center" FontSize="13"
+                                                           FontWeight="Medium" MinWidth="40" TextAlignment="Center" FontFeatures="+tnum" Foreground="{DynamicResource Fg2}" />
+                                                <Button x:Name="ZoomInButton" Classes="page-icon" Command="{Binding ZoomInCommand}" IsVisible="{Binding !IsPageTextView}"
+                                                        IsEnabled="{Binding CanZoomIn}" AutomationProperties.Name="{translation:Tr ZoomIn}" ToolTip.Tip="{translation:Tr ZoomIn}">
+                                                    <local:Icon Data="{StaticResource Icon.Plus}" />
+                                                </Button>
+                                                <Button x:Name="OpenPdfButton" Classes="page-icon" Command="{Binding OpenPdfCommand}" ToolTip.Tip="{translation:Tr OpenInPdfViewer}"
+                                                        AutomationProperties.Name="{translation:Tr OpenPDF}">
+                                                    <local:Icon Data="{StaticResource Icon.Open}" />
+                                                </Button>
+                                            </WrapPanel>
+                                        </local:ViewerBarPanel>
                                     </Grid>
 
                                     <Grid Grid.Row="1" ColumnDefinitions="Auto,*">

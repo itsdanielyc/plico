@@ -83,7 +83,8 @@ internal sealed partial class InboxViewModel
     {
         var selected = await _dialogs.ShowSimilarityMatchesAsync(title, matches);
         if (selected is not null) _dialogs.OpenPath(library.ResolveReminderPdf(selected.Document.Id));
-        Status = matches.Count == 0 ? DesktopText.Translate("No matching documents.") : DesktopText.Format($"Found {DocumentCount(matches.Count)}.");
+        Status = matches.Count == 0 ? DesktopText.Translate("No matching documents.")
+            : Counted(matches.Count, "Found 1 document.", $"Found {matches.Count} documents.");
     }
 
     [RelayCommand]

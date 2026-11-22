@@ -68,8 +68,8 @@ internal sealed partial class InboxViewModel
     private static string BatchMoveStatus(BatchMoveResult result)
     {
         var messages = new List<string>(3);
-        if (result.Moved > 0) messages.Add($"Moved {DocumentCount(result.Moved)}.");
-        if (result.AlreadyInFolder > 0) messages.Add($"{DocumentCount(result.AlreadyInFolder)} already in that folder.");
+        if (result.Moved > 0) messages.Add(Counted(result.Moved, "Moved 1 document.", $"Moved {result.Moved} documents."));
+        if (result.AlreadyInFolder > 0) messages.Add(DesktopText.Format($"{DocumentCount(result.AlreadyInFolder)} already in that folder."));
         if (result.Cancelled) messages.Add($"Cancelled with {DocumentCount(result.Remaining)} left to file.");
         if (result.Failure is { } failure)
         {

@@ -35,7 +35,7 @@ internal sealed partial class InboxViewModel
         LoadResults(reloadPreview: result.Indexed > 0 || result.Relocated > 0);
         LatestIndexRefresh = result;
         FolderRestoreNotices = [];
-        Status = DesktopText.Format($"{DocumentCount(result.Indexed)} indexed.");
+        Status = Counted(result.Indexed, "1 document indexed.", $"{result.Indexed} documents indexed.");
         if (result.Relocated > 0) Status += $" {DocumentCount(result.Relocated)} moved.";
         if (UnavailableCount > 0) Status += $" {DocumentCount(UnavailableCount)} unavailable.";
         int notices = result.Warnings.Count;
@@ -117,8 +117,8 @@ internal sealed partial class InboxViewModel
                 LoadResults();
             }
 
-            string prefix = result.Cancelled ? "Folder restore cancelled. " : "";
-            Status = $"{prefix}{DocumentCount(result.Restored)} restored.";
+            string prefix = result.Cancelled ? DesktopText.Translate("Folder restore cancelled.") + " " : "";
+            Status = prefix + Counted(result.Restored, "1 document restored.", $"{result.Restored} documents restored.");
             if (result.Unmatched > 0) Status += $" No matching copy for {DocumentCount(result.Unmatched)}.";
             if (UnavailableCount > 0) Status += $" {DocumentCount(UnavailableCount)} unavailable.";
             if (result.Issues.Count > 0) Status += result.Issues.Count == 1 ? " 1 restore notice." : $" {result.Issues.Count} restore notices.";

@@ -44,9 +44,11 @@ internal sealed partial class InboxViewModel
     public bool HasPageMatchAction => !string.IsNullOrWhiteSpace(Query) && Query == _appliedQuery &&
         SelectedDocument is { HasText: true, PageCount: > 1, Match.Length: > 0 };
     public string PageMatchActionLabel => PageMatchNavigationActive ? DesktopText.Translate("Next match") : DesktopText.Translate("Go to match");
+
+    /// <summary>What the next-match chevron does, for screen readers; its tooltip is its name.</summary>
     public string PageMatchActionHelp => PageMatchNavigationActive
-        ? "Go to the next page that matches the text terms"
-        : "Go to the first page that matches the text terms";
+        ? DesktopText.Translate("Go to the next page that matches the text terms")
+        : DesktopText.Translate("Go to the first page that matches the text terms");
 
     [RelayCommand]
     private Task GoToMatchAsync() => SeekPageMatchAsync(PageMatchDirection.Forward);

@@ -82,7 +82,7 @@ ClosedTrash	Closed Trash.	Corbeille fermée.
 ColourMode	Colour mode	Mode couleur
 CombinePDFs	Combine PDFs	Fusionner les PDF
 CombinePDFs2	Combine PDFs…	Fusionner les PDF…
-Combined0Into1	Combined {0} into “{1}”.	Fusion de {0} dans « {1} ».
+Combined0Into1	Combined {0} into “{1}”.	{0} fusionnés dans « {1} ».
 Combined0Of1PDFs	Combined {0} of {1} PDFs…	{0} PDF sur {1} fusionnés…
 CombinedDocumentTitle	Combined document title	Titre du document fusionné
 CombinedPaperwork	Combined paperwork	Documents fusionnés
@@ -438,9 +438,7 @@ Text0AddedToInbox	{0} added to inbox.	{0} ajouté à la boîte de réception.
 Text0Document	{0} document	{0} document
 Text0Documents	0 documents	0 document
 Text0Documents2	{0} documents	{0} documents
-Text0Indexed	{0} indexed.	{0} indexés.
 Text0MarkedReviewed	{0} marked reviewed.	{0} marqués comme vérifiés.
-Text0Restored	{0} restored.	{0} restaurés.
 Text0ReturnedToInbox	{0} returned to inbox.	{0} renvoyés dans la boîte de réception.
 Text0Selected	{0} selected	{0} sélectionnés
 Text90Clockwise	90° clockwise	90° dans le sens horaire
@@ -632,7 +630,6 @@ NamedCurrency	{0} currency	Devise · {0}
 NamedDateFormatError	Enter {0} as YYYY-MM-DD.	Saisissez {0} au format AAAA-MM-JJ.
 LeadTimeError	Enter a lead time from 0 to {0}.	Saisissez un délai de 0 à {0} jours.
 MetaNamedValueError	Enter a valid value for “{0}”.	Saisissez une valeur valide pour « {0} ».
-ResultFoundCount	Found {0}.	{0} trouvé(s).
 NamedOpenedItem	Opened {0}.	Ouverture de {0}.
 NamedPhoneQueue	{0} queued for the folder watch.	{0} en attente de la surveillance du dossier.
 ArchiveSerialMenu	Archive serial numbers	Numéros d’archives
@@ -667,7 +664,6 @@ SaveMigrationJson	Save JSON…	Enregistrer le JSON…
 DropSupportedDocument	Drop a supported document or image.	Déposez un document ou une image prise en charge.
 DatedDateFormat	Dated {0:dd MMM yyyy}	Daté du {0:dd MMM yyyy}
 TagAdded	Tag added.	Étiquette ajoutée.
-ImportAddedFormat	{0} added.	Ajout de {0}.
 ImportAlreadyPresentFormat	{0} already in the library.	{0} déjà dans la bibliothèque.
 ImportUnreadableFormat	No text recognized in {0}.	Aucun texte reconnu dans {0}.
 AcceptAll	Accept all	Tout accepter
@@ -828,7 +824,7 @@ ModelServerTitle	Model server	Serveur de modèles
 SemanticIndexHelp	Plico builds it again the next time you search by meaning.	Plico le reconstruit à la prochaine recherche par le sens.
 MatchWindows	Match Windows	Comme Windows
 MatchSystem	Match the system	Comme le système
-IntakeDestinationFormat	New files go to {0}	Les nouveaux fichiers vont dans {0}
+IntakeDestinationFormat	New files go to {0}	Nouveaux fichiers : {0}
 WatchingFolderFormat	Watching {0}	Surveillance de {0}
 IntegrityHelp	Look for missing, changed or unindexed PDFs.	Rechercher les PDF manquants, modifiés ou non indexés.
 CheckAction	Check…	Vérifier…
@@ -930,8 +926,23 @@ SearchFixTag	Use a tag of up to {0} printable characters, like tag:tax or tag:"P
 SearchFixAdded	Use one date added, like added:2024-02, or dates that overlap.	Utilisez une date d’ajout, comme added:2024-02, ou des dates qui se chevauchent.
 SearchFixDated	Use one date on the paper, like dated:2024-02, or dates that overlap.	Utilisez une date du papier, comme dated:2024-02, ou des dates qui se chevauchent.
 SearchFixFolder	Use one folder or a folder inside it, like folder:"Filed/Tax".	Utilisez un seul dossier ou un dossier qu’il contient, comme folder:"Classé/Impôts".
-SearchFixStatus	Use one review status: status:inbox or status:reviewed.	Utilisez un seul état de vérification : status:inbox ou status:reviewed.
-SearchFixText	Use one text filter: text:missing or text:present.	Utilisez un seul filtre de texte : text:missing ou text:present.
+SearchFixStatus	Use one review status: status:inbox or status:reviewed.	Utilisez un seul état de vérification : status:inbox ou status:reviewed.
+SearchFixText	Use one text filter: text:missing or text:present.	Utilisez un seul filtre de texte : text:missing ou text:present.
 SearchFixDetail	Use a detail like type:lease, correspondent:"Northstar Properties", field:deposit or asn:123.	Utilisez un détail comme type:bail, correspondent:"Northstar Properties", field:caution ou asn:123.
 SearchFixExpression	Finish the expression, like (receipt OR invoice) -tag:archive.	Terminez l’expression, comme (reçu OR facture) -tag:archive.
 SearchFixEmpty	Type a word, a number or a filter.	Tapez un mot, un nombre ou un filtre.
+GoToTheNextMatchingPage	Go to the next page that matches the text terms	Accéder à la page suivante contenant les termes recherchés
+GoToTheFirstMatchingPage	Go to the first page that matches the text terms	Accéder à la première page contenant les termes recherchés
+ImportAddedOne	1 document added.	1 document ajouté.
+ImportAddedSeveral	{0} documents added.	{0} documents ajoutés.
+ExportedOneTo	Exported 1 document to {0}.	1 document exporté vers {0}.
+ExportedSeveralTo	Exported {0} documents to {1}.	{0} documents exportés vers {1}.
+IndexedOne	1 document indexed.	1 document indexé.
+IndexedSeveral	{0} documents indexed.	{0} documents indexés.
+RestoredOne	1 document restored.	1 document restauré.
+RestoredSeveral	{0} documents restored.	{0} documents restaurés.
+FoundOne	Found 1 document.	1 document trouvé.
+FoundSeveral	Found {0} documents.	{0} documents trouvés.
+MovedOne	Moved 1 document.	1 document déplacé.
+MovedSeveral	Moved {0} documents.	{0} documents déplacés.
+AlreadyInThatFolder	{0} already in that folder.	{0} déjà dans ce dossier.
