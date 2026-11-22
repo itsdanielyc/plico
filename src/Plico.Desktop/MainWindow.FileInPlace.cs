@@ -20,15 +20,22 @@ public partial class MainWindow
     {
         // The fields' own handlers run first; Enter and Escape still belong to the edit.
         TitleEditBox.AddHandler(KeyDownEvent, TitleEdit_KeyDown, RoutingStrategies.Bubble, handledEventsToo: true);
-        // Leaving a field saves it. The keyboard leaves as a click begins, so the results reload after that click.
-        TitleEditBox.LostFocus += (_, _) => ViewModel?.CommitTitleEdit(reloadAfterInput: true);
+        // Leaving a field saves it. The keyboard leaves as a click begins, so the results reload after that click. Leaving
+        // for the toast drops the edit instead: saving it first would make it the offer that the toast's Undo then reverses.
+        TitleEditBox.LostFocus += (_, e) =>
+        {
+            if (MovesIntoToast(e)) ViewModel?.CancelTitleEdit();
+            else ViewModel?.CommitTitleEdit(reloadAfterInput: true);
+        };
         DocumentDateField.AddHandler(KeyDownEvent, DocumentDate_KeyDown, RoutingStrategies.Bubble, handledEventsToo: true);
         // The suggestion list takes Enter for itself; the tag is added after it has filled in its choice.
         TagBox.AddHandler(KeyDownEvent, TagBox_KeyDown, RoutingStrategies.Bubble, handledEventsToo: true);
         DocumentDateField.LostFocus += (_, e) =>
         {
             // The field's own buttons lose focus too, and the calendar takes it while a day is being chosen.
-            if (ReferenceEquals(e.Source, DocumentDateField) && !DocumentDatePicker.IsOpen) ViewModel?.CommitDocumentDate(reloadAfterInput: true);
+            if (!ReferenceEquals(e.Source, DocumentDateField) || DocumentDatePicker.IsOpen) return;
+            if (MovesIntoToast(e)) ViewModel?.RestoreDocumentDateText();
+            else ViewModel?.CommitDocumentDate(reloadAfterInput: true);
         };
         DocumentDatePicker.PlacementTarget = DocumentDateField;
         DocumentDatePicker.Closed += (_, _) => RestoreCultureAfterCalendar();
@@ -59,6 +66,9 @@ public partial class MainWindow
         Run(model.UndoCommand);
         e.Handled = true;
     }
+
+    /// <summary>True when the keyboard is going to one of the toast's buttons, such as Undo, by a click or by Tab.</summary>
+    private bool MovesIntoToast(FocusChangedEventArgs e) => e.NewFocusedElement is Visual next && Toast.IsVisualAncestorOf(next);
 
     private bool InSettledField(InboxViewModel model) => FocusManager?.GetFocusedElement() switch
     {

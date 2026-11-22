@@ -155,6 +155,46 @@ public sealed partial class InboxWindowTests
     }
 
     [AvaloniaFact]
+    public async Task TheToastsUndoReversesTheActionItNamesWhileADateIsBeingTyped()
+    {
+        using var temporary = new TemporaryLibrary();
+        using (var library = InboxLibrary.Open(temporary.Path)) BatchFixtures.AddTwoDocuments(library, TestContext.Current.CancellationToken);
+        using var model = new InboxViewModel(new FixtureDialogs());
+        model.InitializeLibrary(() => temporary.Path);
+        var window = new MainWindow { DataContext = model, Width = 1280, Height = 800 };
+        window.Show();
+        try
+        {
+            await WaitForPreviewAsync(model);
+            var reviewed = model.SelectedDocument!;
+            ClickAt(window, Assert.IsType<Button>(window.FindControl<Button>("ReviewButton")));
+            await WaitForPreviewAsync(model);
+            var next = model.SelectedDocument!;
+            Assert.NotEqual(reviewed.Id, next.Id);
+            Assert.Null(next.DocumentDate);
+
+            // Halfway through typing a date for the next document, the toast's Undo is clicked.
+            PressKey(window, Key.D, PhysicalKey.D, "d");
+            TypeText(window, "1 Jan 2025");
+            ClickAt(window, Assert.IsType<Button>(window.FindControl<Button>("UndoButton")));
+            await WaitForAsync(() => !model.IsBusy);
+            await WaitForPreviewAsync(model);
+
+            // The review the toast named is reversed, and the typed date was never saved.
+            model.ShowAllCommand.Execute(null);
+            Assert.False(model.Documents.Single(document => document.Id == reviewed.Id).Reviewed);
+            Assert.Null(model.Documents.Single(document => document.Id == next.Id).DocumentDate);
+            Assert.Equal(2, model.InboxCount);
+            Assert.False(model.HasUndo);
+            await WaitForPreviewAsync(model);
+        }
+        finally
+        {
+            window.Close();
+        }
+    }
+
+    [AvaloniaFact]
     public async Task EditsMadeWhilePlicoWorksAreSaved()
     {
         using var temporary = new TemporaryLibrary();

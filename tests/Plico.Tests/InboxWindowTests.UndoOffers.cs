@@ -33,6 +33,8 @@ public sealed partial class InboxWindowTests
             Assert.Equal(("Marked reviewed", reviewed.Title), (model.ToastTitle, model.ToastBody));
             Assert.Equal("Marked reviewed", model.UndoLabel);
             Assert.True(undo.IsVisible);
+            // The keyboard reaches Undo too: Tab stops on it like on any other button, and Ctrl+Z is the shortcut.
+            Assert.True(undo.Focusable && KeyboardNavigation.GetIsTabStop(undo), "The toast’s Undo cannot be reached with Tab.");
 
             var trashed = model.SelectedDocument!;
             Assert.NotEqual(reviewed.Id, trashed.Id);

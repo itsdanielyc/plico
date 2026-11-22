@@ -1648,10 +1648,10 @@
                                 </StackPanel>
                                 <Panel Grid.Column="2" VerticalAlignment="Center">
                                     <!--
-                                        A click on Undo leaves the keyboard where it is. Taking it would save a field being typed in first, and that
-                                        edit would become the offer the click then reverses; Ctrl+Z is Undo from the keyboard.
+                                        Undo takes the keyboard like any button, so Tab reaches it. A title or date being typed when it does is
+                                        dropped rather than saved (MainWindow.FileInPlace), so the click reverses the action the toast names.
                                     -->
-                                    <Button x:Name="UndoButton" Classes="toast-action" Content="{translation:Tr UndoAction}" Command="{Binding UndoCommand}" Focusable="False"
+                                    <Button x:Name="UndoButton" Classes="toast-action" Content="{translation:Tr UndoAction}" Command="{Binding UndoCommand}"
                                             IsVisible="{Binding ToastOffersUndo}" IsEnabled="{Binding CanWork}" ToolTip.Tip="{Binding UndoLabel}" />
                                     <Button x:Name="OpenBackupFolderButton" Classes="toast-action" Content="{translation:Tr OpenBackup}"
                                             Command="{Binding OpenBackupFolderCommand}" IsVisible="{Binding ToastOffersBackup}" IsEnabled="{Binding CanWork}" />
