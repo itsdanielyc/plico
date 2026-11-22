@@ -118,7 +118,6 @@ DeletePermanently	Delete permanently…	Supprimer définitivement…
 DetectedPaymentDetails	Detected payment details	Informations de paiement détectées
 Discard	Discard	Ignorer
 DocumentActions	Document actions	Actions du document
-DocumentAddedDateFormat	Added {0:dd MMM yyyy}	Ajouté le {0:dd MMM yyyy}
 DocumentDate	Document date	Date du document
 DocumentDate2	Set date…	Dater…
 DocumentDateCleared	Date cleared.	Date effacée.
@@ -135,7 +134,6 @@ DocumentsInOutputOrder	Documents in output order	Documents dans l’ordre de sor
 Done	Done	Terminé
 DrawABoxOverEachAreaToRemoveFromTheExportedPDF	Draw a box over each area to remove from the exported PDF.	Encadrez chaque zone à retirer du PDF exporté.
 DropAPDFPNGJPEGOrTIFFDocument	Drop a PDF, PNG, JPEG, or TIFF document.	Déposez un document PDF, PNG, JPEG ou TIFF.
-DropPDFsOrImagesToAddThem	Drop PDFs or images to add them	Déposez des PDF ou des images pour les ajouter
 EarlierPDF	Earlier PDF	PDF précédent
 EditDocumentDate	Edit document date	Modifier la date du document
 EditPDFPages	Edit PDF pages	Modifier les pages du PDF
@@ -252,7 +250,6 @@ NewestAdded	Newest added	Ajout récent
 NextMatch	Next match	Occurrence suivante
 NextPage	Next page	Page suivante
 NoAdditionalFilesToCheck	No additional files to check.	Tous les fichiers ont été vérifiés.
-NoDocumentsMatch	No documents match.	Aucun document correspondant.
 NoFilesSelected	No files selected.	Aucun fichier sélectionné.
 NoFilingSuggestionsForThisDocument	No filing suggestions for this document.	Aucune suggestion de classement pour ce document.
 NoPDFsWithoutSearchableText	No PDFs without searchable text.	Tous les PDF contiennent du texte indexable.
@@ -627,7 +624,6 @@ MigratePaperlessFolder	Paperless-ngx folder…	Dossier Paperless-ngx…
 MigratePaperlessZip	Paperless-ngx ZIP…	Archive ZIP Paperless-ngx…
 MigrateEvernote	Evernote ENEX…	Evernote ENEX…
 MigrateMariner	Mariner Paperless…	Mariner Paperless…
-OcrEngineOrientation	OCR engine and orientation	Moteur OCR et orientation
 UseRapidOcr	Use RapidOCR	Utiliser RapidOCR
 AutoOrientPages	Turn sideways pages upright	Redresser les pages orientées de côté
 ScanBatchSeparators	Batch separators	Séparateurs de lot
@@ -646,7 +642,6 @@ MigrationReport	Migration report	Rapport de migration
 MigrationDetails	Migration details	Détails de la migration
 SaveMigrationJson	Save JSON…	Enregistrer le JSON…
 DropSupportedDocument	Drop a supported document or image.	Déposez un document ou une image prise en charge.
-DatedDateFormat	Dated {0:dd MMM yyyy}	Daté du {0:dd MMM yyyy}
 TagAdded	Tag added.	Étiquette ajoutée.
 ImportAlreadyPresentFormat	{0} already in the library.	{0} déjà dans la bibliothèque.
 ImportUnreadableFormat	No text recognised in {0}.	Aucun texte reconnu dans {0}.
@@ -656,8 +651,6 @@ ActionsSection	Actions	Actions
 AddATag	Add a tag	Étiqueter
 AddedField	Added	Ajouté
 AddFilesTip	Add PDFs, photos, scans, email and Office files to the Inbox	Ajouter des PDF, photos, numérisations, e-mails et fichiers Office à la boîte de réception
-AppearanceHelp	Light, dark or the system setting, and the interface language.	Clair, sombre ou le réglage du système, et la langue de l’interface.
-AppearanceTitle	Theme and language	Thème et langue
 BackupTitle	A complete copy you can open as a library	Une copie complète que vous pouvez ouvrir comme bibliothèque
 BatchHelp	Changes apply to every selected document.	Les modifications s’appliquent à chaque document sélectionné.
 ChangeEllipsis	Change…	Modifier…
@@ -671,9 +664,7 @@ FieldsField	Details	Détails
 InboxClear	Inbox clear	Tout est classé
 IntakeSection	Intake	Réception
 KeyboardShortcuts	Keyboard shortcuts	Raccourcis clavier
-LibraryFolderHelp	An ordinary folder of PDFs. Back it up or move it like any other folder.	Un dossier ordinaire de PDF. Sauvegardez-le ou déplacez-le comme n’importe quel dossier.
 LocalModelsHelpComputer	Optional. A model server on this computer for filing suggestions and questions.	Facultatif. Un serveur de modèles sur cet ordinateur pour les suggestions de classement et les questions.
-MaintenanceTitle	Check and refresh	Vérifier et actualiser
 MoreWaysToAdd	More ways to add	Autres façons d’ajouter
 OpenInPdfViewer	Open in your PDF viewer (O)	Ouvrir dans votre lecteur PDF (O)
 PaletteEmpty	No matching commands	Aucune commande correspondante
@@ -700,11 +691,8 @@ Upcoming	Upcoming	À venir
 UpcomingHelp	Reminders and deadlines that are due	Rappels et échéances arrivés à terme
 WatchedFolderHelp	Plico adds new files from the folder your scanner or phone app saves to.	Plico ajoute les nouveaux fichiers du dossier où votre scanner ou votre application enregistre.
 WatchedFolderTitle	Watched folder	Dossier surveillé
-Watching	Watching	Surveillé
-WayAddFiles	PDFs, photos, scans, email and Office documents.	PDF, photos, numérisations, e-mails et documents Office.
 WayMove	Paperless-ngx, Evernote or Mariner Paperless, with tags and dates.	Paperless-ngx, Evernote ou Mariner Paperless, avec étiquettes et dates.
 WayMoveTitle	Move from another app	Venir d’une autre application
-WayScan	From a USB or network scanner, with a feeder or flatbed.	Depuis un scanner USB ou réseau, avec chargeur ou vitre.
 WayWatch	Where your scanner software or phone app already saves.	Là où votre logiciel de numérisation ou votre téléphone enregistre déjà.
 WelcomeTitle	Welcome to Plico	Bienvenue dans Plico
 RedesignOneSuggestion	1 suggestion	1 suggestion
@@ -722,7 +710,6 @@ RedesignSuggestionsAccepted	{0} suggestions accepted.	{0} suggestions acceptées
 RedesignUndoing	Undoing…	Annulation…
 RedesignUndone	Undone: {0}.	Annulé : {0}.
 RedesignMarkedReviewed	Marked reviewed	Marqué comme vérifié
-RedesignMarkedReviewedLower	marked reviewed	marqués comme vérifiés
 RedesignMovedToTrash	Moved {0} to Trash	{0} placé dans la corbeille
 RedesignZeroNone	Everything you have added is filed. New scans and files will wait here.	Tout ce que vous avez ajouté est classé. Les nouveaux fichiers et numérisations attendront ici.
 RedesignZeroOne	Everything is filed. One reminder is due.	Tout est classé. Un rappel arrive à échéance.
