@@ -28,6 +28,9 @@ public sealed class FolderWatch : IAsyncDisposable
     private readonly CancellationTokenSource _stop = new();
     private readonly Lazy<Task> _disposal;
     private readonly ConcurrentDictionary<string, Observation> _pending = new(PathComparer);
+    // The files handed to the import, until it returns. A file joins this before it leaves _pending, so
+    // HasYetToDeliver never finds it in neither.
+    private readonly ConcurrentDictionary<string, byte> _delivering = new(PathComparer);
     private readonly Channel<bool> _wakeups = Channel.CreateBounded<bool>(new BoundedChannelOptions(1)
     {
         SingleReader = true,
@@ -104,8 +107,8 @@ public sealed class FolderWatch : IAsyncDisposable
 
     // O(n) time to scan n directory entries and O(k) space for the k supported paths.
     /// <summary>Queues supported nonempty files already in the watched directory for stability checking.</summary>
-    /// <returns>The number of files newly added to the watch's queue.</returns>
-    public int QueueExistingFiles(CancellationToken cancellationToken = default)
+    /// <returns>The full paths of the files newly added to the watch's queue.</returns>
+    public IReadOnlyList<string> QueueExistingFiles(CancellationToken cancellationToken = default)
     {
         using var cancelWithWatch = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken, _stop.Token);
         var token = cancelWithWatch.Token;
@@ -117,17 +120,25 @@ public sealed class FolderWatch : IAsyncDisposable
 
         // Gather the candidates before changing the live queue so cancellation leaves the request unqueued.
         token.ThrowIfCancellationRequested();
-        int queued = 0;
+        var queued = new List<string>();
         foreach (string file in candidates)
         {
             var requested = new Observation(includeKnownVersion: true);
             var observation = _pending.AddOrUpdate(file, requested, static (_, pending) =>
                 pending.IncludeKnownVersion ? pending : new Observation(pending.Sample, includeKnownVersion: true));
-            if (ReferenceEquals(observation, requested)) queued++;
+            if (ReferenceEquals(observation, requested)) queued.Add(file);
         }
-        if (queued > 0) _wakeups.Writer.TryWrite(true);
+        if (queued.Count > 0) _wakeups.Writer.TryWrite(true);
         return queued;
     }
+
+    /// <summary>
+    /// Whether the watch has yet to deliver <paramref name="path"/>: it is queued and waiting to settle, or the import
+    /// has it and has not returned. A queued file that goes before it settles is dropped, and a stopped watch delivers
+    /// nothing more. O(1).
+    /// </summary>
+    public bool HasYetToDeliver(string path) =>
+        !_stop.IsCancellationRequested && (_pending.ContainsKey(path) || _delivering.ContainsKey(path));
 
     /// <summary>Stops intake and waits for the active watch operation to unwind.</summary>
     public ValueTask DisposeAsync() => new(_disposal.Value);
@@ -185,15 +196,23 @@ public sealed class FolderWatch : IAsyncDisposable
                     RecoverAfterNotificationLoss(cancellationToken);
                     var ready = TakeStableFiles();
                     if (ready.Count == 0) continue;
-                    cancellationToken.ThrowIfCancellationRequested();
-                    await _import(ready, cancellationToken).ConfigureAwait(false);
+                    try
+                    {
+                        cancellationToken.ThrowIfCancellationRequested();
+                        await _import(ready, cancellationToken).ConfigureAwait(false);
+                    }
+                    finally
+                    {
+                        foreach (string path in ready) _delivering.TryRemove(path, out _);
+                    }
                 }
             }
         }
         catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested) { }
     }
 
-    // O(pending) time and up to O(ready) space. A later notification invalidates the first sample atomically.
+    // O(pending) time and up to O(ready) space. A later notification invalidates the first sample atomically. A file
+    // to deliver joins _delivering before it leaves _pending, and leaves it again if a notification replaced it.
     private List<string> TakeStableFiles()
     {
         var ready = new List<string>();
@@ -209,11 +228,14 @@ public sealed class FolderWatch : IAsyncDisposable
                 _pending.TryUpdate(entry.Key, new Observation(current, entry.Value.IncludeKnownVersion), entry.Value);
                 continue;
             }
-            if (!_pending.TryRemove(entry)) continue;
-            if (!entry.Value.IncludeKnownVersion && _knownFiles.TryGetValue(entry.Key, out var known) && current == known)
+            bool deliver = entry.Value.IncludeKnownVersion || !_knownFiles.TryGetValue(entry.Key, out var known) || current != known;
+            if (deliver) _delivering.TryAdd(entry.Key, 0);
+            if (!_pending.TryRemove(entry))
             {
+                if (deliver) _delivering.TryRemove(entry.Key, out _);
                 continue;
             }
+            if (!deliver) continue;
             _knownFiles[entry.Key] = current;
             ready.Add(entry.Key);
         }

@@ -152,8 +152,10 @@ public sealed partial class InboxWindowTests
         }
     }
 
-    [AvaloniaFact]
-    public async Task AStartupNoticeOutlastsTheImportOfWhatTheCatchUpQueued()
+    [AvaloniaTheory]
+    [InlineData(false)]
+    [InlineData(true)]
+    public async Task AStartupNoticeOutlastsTheImportOfWhatTheCatchUpQueued(bool phoneInboxToo)
     {
         using var temporary = new TemporaryLibrary();
         using var settings = new TemporaryLibrary();
@@ -170,6 +172,15 @@ public sealed partial class InboxWindowTests
         watchPreference.SaveCatchUpOnOpen(Path.GetFullPath(temporary.Path), true);
         // A scan landed in the watched folder while Plico was closed, which is what catching up on open is for.
         File.Copy(Path.Combine(AppContext.BaseDirectory, "fixtures", "Match Ledger.pdf"), Path.Combine(watchFolder, "Saved scan.pdf"));
+        if (phoneInboxToo)
+        {
+            // The phone inbox catches up on open as well, and a transfer waits there too; each watch imports its own.
+            string phoneFolder = Path.Combine(watched.Path, "Phone");
+            Directory.CreateDirectory(phoneFolder);
+            watchPreference.Save(Path.GetFullPath(temporary.Path), phoneFolder, WatchSource.Phone);
+            watchPreference.SaveCatchUpOnOpen(Path.GetFullPath(temporary.Path), true, WatchSource.Phone);
+            File.Copy(Path.Combine(AppContext.BaseDirectory, "fixtures", "Mixed Pages.pdf"), Path.Combine(phoneFolder, "Phone transfer.pdf"));
+        }
 
         using var model = new InboxViewModel(new FixtureDialogs(), watchPreference: watchPreference, importFailureStore: store);
         model.InitializeLibrary(() => temporary.Path);
@@ -187,15 +198,65 @@ public sealed partial class InboxWindowTests
         try
         {
             // The catch-up queues the scan and the watch imports it as its own work, a moment later.
+            int documents = phoneInboxToo ? 4 : 3;
+            await WaitForAsync(() => model.InboxCount == documents && !model.IsBusy);
+            await WaitForPreviewAsync(model);
+            Dispatcher.UIThread.RunJobs();
+
+            // One toast, from the window opening to the last import's end: the startup notice is still there to read,
+            // with the alert, and the latest import's result follows it, as the catch-up's own message did.
+            Assert.Equal(($"{notice} 1 document added.", true, "rose"),
+                (model.ToastStatus, ToastWearsTheAlert(toast), string.Join(", ", comings)));
+            Assert.Equal("Couldn't load the saved import errors", model.ToastTitle);
+        }
+        finally
+        {
+            await model.PrepareCloseAsync();
+            window.Close();
+        }
+    }
+
+    [AvaloniaFact]
+    public async Task AScanAfterTheCatchUpsScanHasGoneSaysOnlyItsOwnNews()
+    {
+        using var temporary = new TemporaryLibrary();
+        using var settings = new TemporaryLibrary();
+        using var watched = new TemporaryLibrary();
+        using (var library = InboxLibrary.Open(temporary.Path)) BatchFixtures.AddTwoDocuments(library, TestContext.Current.CancellationToken);
+        string settingsDirectory = Path.Combine(settings.Path, "Settings");
+        var store = new ImportFailureStore(settingsDirectory);
+        store.Save(temporary.Path, [new ImportFailure(Path.Combine(temporary.Path, "Damaged.pdf"), "Unreadable")]);
+        foreach (string file in Directory.GetFiles(settingsDirectory, "import-errors-*.json")) File.WriteAllText(file, "{ not json");
+        var watchPreference = new WatchFolderPreference(settingsDirectory);
+        string watchFolder = Path.Combine(watched.Path, "Scans");
+        Directory.CreateDirectory(watchFolder);
+        watchPreference.Save(Path.GetFullPath(temporary.Path), watchFolder);
+        watchPreference.SaveCatchUpOnOpen(Path.GetFullPath(temporary.Path), true);
+        string fixture = Path.Combine(AppContext.BaseDirectory, "fixtures", "Match Ledger.pdf");
+        string waiting = Path.Combine(watchFolder, "Saved scan.pdf");
+        File.Copy(fixture, waiting);
+
+        using var model = new InboxViewModel(new FixtureDialogs(), watchPreference: watchPreference, importFailureStore: store);
+        model.InitializeLibrary(() => temporary.Path);
+        Assert.StartsWith("Couldn't load the saved import errors.", model.ToastStatus, StringComparison.Ordinal);
+        var window = new MainWindow { DataContext = model, Width = 1280, Height = 800 };
+        window.Show();
+        try
+        {
+            // The catch-up queues the waiting scan, which goes (a phone's sync takes it back) before the watch imports it,
+            // and another scan arrives.
+            await WaitForAsync(() => model.IsWatchingFolder && !model.IsBusy);
+            Assert.Contains("1 document queued", model.ToastStatus, StringComparison.Ordinal);
+            File.Delete(waiting);
+            File.Copy(fixture, Path.Combine(watchFolder, "Later scan.pdf"));
             await WaitForAsync(() => model.InboxCount == 3 && !model.IsBusy);
             await WaitForPreviewAsync(model);
             Dispatcher.UIThread.RunJobs();
 
-            // One toast, from the window opening to the import's end: the startup notice is still there to read, with
-            // the alert, and the import's result follows it, as the catch-up's own message did.
-            Assert.Equal(($"{notice} 1 document added.", true, "rose"),
-                (model.ToastStatus, ToastWearsTheAlert(toast), string.Join(", ", comings)));
-            Assert.Equal("Couldn't load the saved import errors", model.ToastTitle);
+            // That scan is not what the catch-up found, so its import says only its own news, with the check: the startup
+            // notice went with the catch-up's scan and does not come back.
+            var toast = Assert.IsType<Border>(window.FindControl<Border>("Toast"));
+            Assert.Equal(("1 document added.", false, true), (model.ToastStatus, ToastWearsTheAlert(toast), toast.IsVisible));
         }
         finally
         {

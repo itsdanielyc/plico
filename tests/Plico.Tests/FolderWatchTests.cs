@@ -178,11 +178,56 @@ public sealed class FolderWatchTests
         }, TestContext.Current.CancellationToken);
 
         Assert.Throws<OperationCanceledException>(() => watch.QueueExistingFiles(new CancellationToken(canceled: true)));
-        Assert.Equal(1, watch.QueueExistingFiles(TestContext.Current.CancellationToken));
+        Assert.Equal(savedScan, Assert.Single(watch.QueueExistingFiles(TestContext.Current.CancellationToken)));
         var batch = await received.Task.WaitAsync(TimeSpan.FromSeconds(15), TestContext.Current.CancellationToken);
 
         Assert.Equal(savedScan, Assert.Single(batch));
         Assert.True(File.Exists(savedScan));
+    }
+
+    [Fact]
+    public async Task SaysWhichQueuedFilesItHasYetToDeliver()
+    {
+        using var incoming = new TemporaryLibrary();
+        using var destination = new TemporaryLibrary();
+        string fixture = Path.Combine(AppContext.BaseDirectory, "fixtures", "Lease Renewal.pdf");
+        string kept = Path.Combine(incoming.Path, "Kept scan.pdf");
+        string taken = Path.Combine(incoming.Path, "Taken back.pdf");
+        string next = Path.Combine(incoming.Path, "Next scan.pdf");
+        File.Copy(fixture, kept);
+        File.Copy(fixture, taken);
+        var token = TestContext.Current.CancellationToken;
+        // Each import records what the watch says of the two queued files while the import has its batch; the first
+        // import holds its batch until the test lets it go.
+        var imports = Channel.CreateUnbounded<(IReadOnlyList<string> Paths, bool KeptYetToDeliver, bool TakenYetToDeliver)>();
+        var releaseFirst = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+        FolderWatch? started = null;
+        await using var watch = started = FolderWatch.Start(incoming.Path, destination.Path, async (paths, cancellation) =>
+        {
+            await imports.Writer.WriteAsync((paths, started!.HasYetToDeliver(kept), started.HasYetToDeliver(taken)), cancellation);
+            await releaseFirst.Task.WaitAsync(cancellation);
+        }, token);
+
+        var queued = watch.QueueExistingFiles(token);
+        bool keptBeforeSettling = watch.HasYetToDeliver(kept);
+        // One queued file goes before it settles, so the watch drops it.
+        File.Delete(taken);
+        var first = await imports.Reader.ReadAsync(token).AsTask().WaitAsync(WatchTestDeadline, token);
+        releaseFirst.TrySetResult();
+        // Another scan brings a second import, which starts once the first has returned.
+        File.Copy(fixture, next);
+        var second = await imports.Reader.ReadAsync(token).AsTask().WaitAsync(WatchTestDeadline, token);
+        // Queued again, the kept scan is to deliver until the watch stops.
+        watch.QueueExistingFiles(token);
+        bool keptQueuedAgain = watch.HasYetToDeliver(kept);
+        await watch.DisposeAsync();
+        bool keptAfterStop = watch.HasYetToDeliver(kept);
+
+        Assert.Equal(
+            ($"{kept}, {taken}", true, kept, true, false, next, false, true, false),
+            (string.Join(", ", queued.Order(StringComparer.Ordinal)), keptBeforeSettling, string.Join(", ", first.Paths),
+                first.KeptYetToDeliver, first.TakenYetToDeliver, string.Join(", ", second.Paths), second.KeptYetToDeliver,
+                keptQueuedAgain, keptAfterStop));
     }
 
     [Fact]
@@ -199,7 +244,7 @@ public sealed class FolderWatchTests
         await using var watch = FolderWatch.Start(incoming.Path, destination.Path,
             (paths, cancellation) => delivered.Writer.WriteAsync(paths, cancellation).AsTask(), token);
 
-        Assert.Equal(0, watch.QueueExistingFiles(token));
+        Assert.Empty(watch.QueueExistingFiles(token));
         File.Copy(fixture, transfer, overwrite: true);
 
         Assert.Equal(transfer, Assert.Single(await NextBatchAsync(delivered.Reader, watch)));

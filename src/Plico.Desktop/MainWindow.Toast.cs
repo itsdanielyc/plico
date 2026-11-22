@@ -25,8 +25,8 @@ public partial class MainWindow
     private InboxViewModel? _toastModel;
 
     // What the model said before the window was there waits for the window to open; once shown, it stays while the work
-    // that opening starts (catching up saved watches) runs, until the next message, and while the files that catch-up
-    // queued are imported, once it has joined the notice (InboxViewModel.ToastCarriesStartupNews).
+    // that opening starts (catching up saved watches) runs, until the next message. Once the catch-up has joined it, the
+    // model says whether it stays while the files that catch-up queued are imported (InboxViewModel.ToastCarriesStartupNews).
     private bool _startupToastOwed;
     private bool _toastCarriesStartupNews;
 
@@ -101,9 +101,8 @@ public partial class MainWindow
         {
             case nameof(InboxViewModel.ToastStatus):
                 // While work runs its progress is on the status card and its message arrives when it ends; an edit the
-                // person makes meanwhile is news at once. The startup notice the catch-up joined stays through the
-                // import of what that catch-up queued.
-                _toastCarriesStartupNews = model.ToastCarriesStartupNews;
+                // person makes meanwhile is news at once.
+                _toastCarriesStartupNews = false;
                 if (!model.IsBusy || model.ToastIsForeground) ShowToast(model);
                 break;
             case nameof(InboxViewModel.ToastOffer):
@@ -112,13 +111,13 @@ public partial class MainWindow
                 break;
             case nameof(InboxViewModel.IsBusy):
                 // A toast the pointer or the keyboard is on stays, as it does when its time is up, and so does the
-                // person's own edit.
+                // person's own edit, and the startup notice while the catch-up that opening starts is still coming in.
                 if (!model.IsBusy)
                 {
                     // The work may have reloaded the queue under a keyboard that had just landed on it.
                     if (_keyboardOwedToOpenDocument) OweKeyboardToOpenDocument();
                 }
-                else if (!ToastIsHeld && !model.ToastIsForeground && !_toastCarriesStartupNews)
+                else if (!ToastIsHeld && !model.ToastIsForeground && !_toastCarriesStartupNews && !model.ToastCarriesStartupNews)
                 {
                     HideToast();
                 }
