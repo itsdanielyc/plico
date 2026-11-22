@@ -63,14 +63,14 @@ internal sealed partial class InboxViewModel
     }
 
     /// <summary>
-    /// The recognition language and where it runs, or what selecting the card will do about a problem; for a library
-    /// that did not open, why.
+    /// The recognition language and where it runs, or what selecting the card will do about a problem. Why a library did
+    /// not open is the empty queue's sentence, beside its way forward.
     /// </summary>
     public string StatusCardDetail
     {
         get
         {
-            if (!IsBusy && HasLibraryProblem) return LibraryProblem!;
+            if (!IsBusy && HasLibraryProblem) return DesktopText.Translate("Select to choose a library folder.");
             if (!IsBusy && HasImportFailures) return DesktopText.Translate("Couldn't add them. Select to see why.");
             if (!IsBusy && ShowIndexReport) return DesktopText.Translate("Select to open the index report.");
             if (!IsBusy && HasFailedWatch) return DesktopText.Translate("Select to resume it in Settings.");

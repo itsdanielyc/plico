@@ -739,7 +739,14 @@
                                 <TextBlock x:Name="StatusCardDetailText" Classes="status-detail" Classes.routine="{Binding StatusCardDetailIsRoutine}"
                                            Text="{Binding StatusCardDetail}" FontSize="13" LineHeight="18" Foreground="{DynamicResource Fg2}"
                                            TextWrapping="Wrap" />
+                                <!-- Where new files go, or the work's progress; without a library and its work there is neither. -->
                                 <Border BorderBrush="{DynamicResource Line}" BorderThickness="0,1,0,0" Margin="0,8,0,0" Padding="0,10,0,0">
+                                    <Border.IsVisible>
+                                        <MultiBinding Converter="{x:Static BoolConverters.Or}">
+                                            <Binding Path="HasLibrary" />
+                                            <Binding Path="IsBusy" />
+                                        </MultiBinding>
+                                    </Border.IsVisible>
                                     <Panel MinHeight="18">
                                         <Grid ColumnDefinitions="Auto,*" ColumnSpacing="8" IsVisible="{Binding !IsBusy}">
                                             <local:Icon Data="{StaticResource Icon.Folder}" Width="14" Height="14" Foreground="{DynamicResource Fg2}"
@@ -1008,7 +1015,12 @@
                                 <Rectangle Classes="dashed-frame" />
                                 <StackPanel Classes="empty" Margin="20,28">
                                     <Border Classes="tile empty-tile">
-                                        <local:Icon Data="{StaticResource Icon.Search}" Width="20" Height="20" StrokeWidth="2" HorizontalAlignment="Center" VerticalAlignment="Center" />
+                                        <Panel>
+                                            <local:Icon Data="{StaticResource Icon.Search}" Width="20" Height="20" StrokeWidth="2" HorizontalAlignment="Center" VerticalAlignment="Center"
+                                                        IsVisible="{Binding !HasLibraryProblem}" />
+                                            <local:Icon Data="{StaticResource Icon.Folder}" Width="20" Height="20" StrokeWidth="2" HorizontalAlignment="Center" VerticalAlignment="Center"
+                                                        IsVisible="{Binding HasLibraryProblem}" />
+                                        </Panel>
                                     </Border>
                                     <TextBlock Classes="empty-title" Text="{Binding EmptyTitle}" />
                                     <TextBlock x:Name="EmptyResultsMessage" Classes="empty-text" Text="{Binding EmptyMessage}" IsVisible="{Binding !HasDocuments}"

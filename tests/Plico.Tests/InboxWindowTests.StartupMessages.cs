@@ -39,14 +39,16 @@ public sealed partial class InboxWindowTests
             Dispatcher.UIThread.RunJobs();
             window.UpdateLayout();
 
-            // The status card keeps the problem and its reason for as long as no library is open.
+            // The status card keeps the problem for as long as no library is open, and says what selecting it does, as it
+            // does for every problem. Where new files go means nothing without a library, so the card leaves it out.
             var card = Assert.IsType<Panel>(window.FindControl<Panel>("StatusCard"));
             string[] cardTexts = VisibleTexts(card);
-            Assert.True(cardTexts.Contains("Library didn't open") && cardTexts.Contains(reason),
-                $"The status card says “{string.Join(" / ", cardTexts)}”; the reason the library did not open is not on it.");
-            // The queue says so too, with the way forward.
+            Assert.True(cardTexts.SequenceEqual(["Library didn't open", "Select to choose a library folder."]),
+                $"The status card says “{string.Join(" / ", cardTexts)}”.");
+            // The queue says why, under the folder glyph, with the way forward.
             var empty = Assert.IsType<Panel>(window.FindControl<Panel>("QueueEmptyState"));
-            Assert.Contains("Library didn't open", VisibleTexts(empty));
+            Assert.Equal(new[] { "Library didn't open", reason }, VisibleTexts(empty).Take(2));
+            AssertEmptyStateGlyph(empty, "Icon.Folder");
 
             // The message also rises as a toast once the window opens.
             var toast = Assert.IsType<Border>(window.FindControl<Border>("Toast"));
@@ -91,9 +93,13 @@ public sealed partial class InboxWindowTests
             await WaitForPreviewAsync(model);
             var toast = Assert.IsType<Border>(window.FindControl<Border>("Toast"));
             Assert.True(toast.IsVisible, $"Nothing rose to say what happened while Plico started: “{model.Status}”.");
-            // Both notices are in the message, whichever came last.
+            // Both notices are in the message, whichever came last, in the person's words: a damaged file is named as
+            // one, never with the parser's account of it.
             Assert.Contains("Couldn't load the saved import errors.", model.ToastStatus, StringComparison.Ordinal);
-            Assert.Contains(ocrError, model.ToastStatus, StringComparison.Ordinal);
+            Assert.Contains("Couldn't load the recognition settings.", model.ToastStatus, StringComparison.Ordinal);
+            Assert.True(!model.ToastStatus.Contains(ocrError, StringComparison.Ordinal) && !model.ToastStatus.Contains("LineNumber", StringComparison.Ordinal),
+                $"The toast reads “{model.ToastStatus}”.");
+            Assert.Equal(2, CountOf(model.ToastStatus, "The file is damaged, so Plico carries on without it."));
             Assert.True(model.HasLibrary);
         }
         finally
@@ -210,12 +216,74 @@ public sealed partial class InboxWindowTests
             var lines = title.TextLayout.TextLines;
             Assert.True(lines.All(line => !line.HasCollapsed),
                 $"The card's title “{title.Text}” is cut in {title.Bounds.Width:F0} px after {lines.Count} lines.");
+            // Why, in the interface's language: Plico.Core says it in English.
+            string expected = french
+                ? "Plico n’a pas pu verrouiller cette bibliothèque. Fermez toute autre fenêtre de Plico qui utilise ce dossier."
+                : "Plico could not lock this library. Close any other copy that has this folder open.";
+            Assert.Equal(expected, model.EmptyMessage);
+            Assert.Equal(expected, model.ToastStatus);
         }
         finally
         {
             window.Close();
             DesktopText.SetLanguage(InterfaceLanguage.English);
         }
+    }
+
+    [AvaloniaFact]
+    public async Task ALibraryThatDidNotOpenStaysTheQueuesStateInEveryView()
+    {
+        using var temporary = new TemporaryLibrary();
+        using var model = new InboxViewModel(new FixtureDialogs());
+        var window = new MainWindow { Width = 1280, Height = 800 };
+        using (InboxLibrary.Open(temporary.Path)) model.InitializeLibrary(() => temporary.Path);
+        string reason = model.LibraryProblem!;
+        window.DataContext = model;
+        window.Show();
+        try
+        {
+            Dispatcher.UIThread.RunJobs();
+            var empty = Assert.IsType<Panel>(window.FindControl<Panel>("QueueEmptyState"));
+            var choose = Named<Button>(window, "EmptyChooseLibraryButton");
+
+            // Another view, then a search: neither has a library to look in, so the queue goes on saying why, and never
+            // that the library is empty or that nothing matches.
+            ClickAt(window, Named<Button>(window, "AllDocumentsButton"));
+            Dispatcher.UIThread.RunJobs();
+            Assert.True(VisibleTexts(empty).Take(2).SequenceEqual(["Library didn't open", reason]),
+                $"In All documents the queue says “{string.Join(" / ", VisibleTexts(empty))}”.");
+            ClickAt(window, Named<TextBox>(window, "SearchBox"));
+            TypeText(window, "lease");
+            await WaitForAsync(() => model.Query == "lease");
+            await Task.Delay(400, TestContext.Current.CancellationToken);
+            Dispatcher.UIThread.RunJobs();
+            Assert.True(VisibleTexts(empty).Take(2).SequenceEqual(["Library didn't open", reason]),
+                $"After a search the queue says “{string.Join(" / ", VisibleTexts(empty))}”.");
+            Assert.True(choose.IsEffectivelyVisible);
+            AssertEmptyStateGlyph(empty, "Icon.Folder");
+            // Nothing is counted where there is nothing to count.
+            Assert.Equal("", model.ResultCount);
+        }
+        finally
+        {
+            window.Close();
+        }
+    }
+
+    /// <summary>The empty state's tile shows the glyph with this resource key, and only that one.</summary>
+    private static void AssertEmptyStateGlyph(Panel empty, string key)
+    {
+        var glyphs = empty.GetVisualDescendants().OfType<Icon>().Where(icon => icon.IsEffectivelyVisible).ToArray();
+        var expected = Avalonia.Application.Current!.FindResource(key);
+        Assert.True(glyphs.Length == 1 && ReferenceEquals(glyphs[0].Data, expected),
+            $"The empty state shows {glyphs.Length} glyph(s), not {key}.");
+    }
+
+    private static int CountOf(string text, string part)
+    {
+        int count = 0;
+        for (int at = text.IndexOf(part, StringComparison.Ordinal); at >= 0; at = text.IndexOf(part, at + part.Length, StringComparison.Ordinal)) count++;
+        return count;
     }
 
     /// <summary>The toast shows its alert glyph and not the check: the message says something went wrong.</summary>

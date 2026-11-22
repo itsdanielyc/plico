@@ -230,6 +230,9 @@ internal sealed partial class InboxViewModel
         if (_library is not { } library)
         {
             UpdateResultHeading(filter);
+            // Without a library no view has anything to show: a library that did not open goes on saying why.
+            if (HasLibraryProblem) ShowLibraryProblem();
+            else ResultCount = "";
             return;
         }
 

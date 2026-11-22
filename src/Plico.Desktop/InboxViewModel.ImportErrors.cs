@@ -66,7 +66,7 @@ internal sealed partial class InboxViewModel
         }
         catch (Exception error) when (error is IOException or UnauthorizedAccessException or JsonException)
         {
-            return DesktopText.Format($"Couldn't load the saved import errors. {error.Message}");
+            return DesktopText.Format($"Couldn't load the saved import errors. {Unreadable(error)}");
         }
     }
 

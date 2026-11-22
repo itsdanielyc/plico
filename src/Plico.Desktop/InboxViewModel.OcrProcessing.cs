@@ -37,7 +37,7 @@ internal sealed partial class InboxViewModel
         }
         catch (Exception error) when (error is IOException or UnauthorizedAccessException or JsonException)
         {
-            AddStartupNotice(DesktopText.Format($"Couldn't load the recognition settings. {error.Message}"));
+            AddStartupNotice(DesktopText.Format($"Couldn't load the recognition settings. {Unreadable(error)}"));
         }
         _saveOcrProcessing = preference.Save;
     }

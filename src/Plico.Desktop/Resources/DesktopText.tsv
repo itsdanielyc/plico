@@ -806,6 +806,7 @@ StatusNoLibrary	No library open	Aucune bibliothèque ouverte
 StatusImportErrorsDetail	Couldn't add them. Select to see why.	Impossible de les ajouter. Sélectionnez pour voir pourquoi.
 StatusIndexDetail	Select to open the index report.	Sélectionnez pour ouvrir le rapport d’indexation.
 StatusWatchStoppedDetail	Select to resume it in Settings.	Sélectionnez pour la reprendre dans les réglages.
+StatusLibraryProblemDetail	Select to choose a library folder.	Sélectionnez pour choisir le dossier de la bibliothèque.
 ReadOnThisPc	read on this PC	lu sur ce PC
 ReadOnThisComputer	read on this computer	lu sur cet ordinateur
 LanguageEnglish	English	Anglais
@@ -946,6 +947,8 @@ CannotLoadSavedWatches	Couldn't load the saved watches. {0}	Impossible de charge
 CannotLoadRecognitionSettings	Couldn't load the recognition settings. {0}	Impossible de charger les réglages de reconnaissance. {0}
 CannotLoadRecognitionLanguage	Couldn't load the recognition language. {0}	Impossible de charger la langue de reconnaissance. {0}
 CannotLoadLocalModelSettings	Couldn't load the local model settings. {0}	Impossible de charger les réglages des modèles locaux. {0}
+DamagedSettingsFile	The file is damaged, so Plico carries on without it.	Le fichier est endommagé : Plico continue sans lui.
+LibraryLockedElsewhere	Plico could not lock this library. Close any other copy that has this folder open.	Plico n’a pas pu verrouiller cette bibliothèque. Fermez toute autre fenêtre de Plico qui utilise ce dossier.
 IntegrityMissing	PDF missing	PDF manquant
 IntegrityUnreadable	Couldn't read the PDF	Impossible de lire le PDF
 IntegrityChanged	PDF changed since indexing	PDF modifié depuis l’indexation

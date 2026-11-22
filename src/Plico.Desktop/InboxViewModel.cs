@@ -109,20 +109,27 @@ internal sealed partial class InboxViewModel : ObservableObject, IDisposable
         }
         catch (Exception error)
         {
-            NoteLibraryProblem(error.Message);
-            Fail(error.Message);
+            NoteLibraryProblem(Plainly(error));
+            Fail(Plainly(error));
         }
     }
 
     /// <summary>
-    /// Keeps why a library did not open while no library is open: the status card and the empty queue say it, with the
-    /// way forward, long after the toast has gone.
+    /// Keeps why a library did not open while no library is open: the status card names the problem and the empty queue
+    /// says why, with the way forward, long after the toast has gone.
     /// </summary>
     private void NoteLibraryProblem(string reason)
     {
         if (HasLibrary) return;
         LibraryProblem = reason;
-        SetEmptyState(DesktopText.Translate("Library didn't open"), reason);
+        ShowLibraryProblem();
+    }
+
+    /// <summary>The empty queue says why the library did not open, whichever view is chosen, and counts nothing.</summary>
+    private void ShowLibraryProblem()
+    {
+        ResultCount = "";
+        SetEmptyState(DesktopText.Translate("Library didn't open"), LibraryProblem!);
     }
 
     internal async Task PrepareCloseAsync()
@@ -178,7 +185,7 @@ internal sealed partial class InboxViewModel : ObservableObject, IDisposable
             }
             catch (Exception error) when (error is not OperationCanceledException)
             {
-                NoteLibraryProblem(error.Message);
+                NoteLibraryProblem(Plainly(error));
                 throw;
             }
             try
@@ -553,8 +560,16 @@ internal sealed partial class InboxViewModel : ObservableObject, IDisposable
     }
 
     /// <summary>An error's message as a person reads it, without the "(Parameter 'folder')" .NET adds to an argument's.</summary>
-    private static string Plainly(Exception error) => error is ArgumentException { ParamName: { } name } argument
-        ? argument.Message.Replace($" (Parameter '{name}')", "", StringComparison.Ordinal) : error.Message;
+    /// <summary>
+    /// An error's message as the person reads it: without the parameter name .NET adds, and in the interface's language
+    /// when the catalog has the sentence (Plico.Core writes in English).
+    /// </summary>
+    private static string Plainly(Exception error) => DesktopText.Translate(error is ArgumentException { ParamName: { } name } argument
+        ? argument.Message.Replace($" (Parameter '{name}')", "", StringComparison.Ordinal) : error.Message);
+
+    /// <summary>Why a saved file could not be read: a damaged file is named as one, never with the parser's account of it.</summary>
+    private static string Unreadable(Exception error) => error is System.Text.Json.JsonException
+        ? DesktopText.Translate("The file is damaged, so Plico carries on without it.") : Plainly(error);
 
     private InboxLibrary RequireLibrary() =>
         _library ?? throw new InvalidOperationException("Choose a library folder first.");
