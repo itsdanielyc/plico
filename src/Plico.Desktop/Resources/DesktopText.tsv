@@ -871,7 +871,6 @@ VersionHistoryHeading	Version history	Historique des versions
 ResumeWatchOnly	Resume watch	Reprendre
 ToastMovedToTrash	Moved to Trash	Mis à la corbeille
 ToastTagRemoved	Tag removed	Étiquette retirée
-ToastBatchTagAdded	Tag “{0}” added to {1}	Étiquette « {0} » ajoutée à {1}
 ToastRenamed	Renamed	Renommé
 RenameTitleInvalid	Couldn't rename. Enter a title of 1 to {0} characters.	Impossible de renommer. Saisissez un titre de 1 à {0} caractères.
 ChooseADate	Choose a date	Choisir une date

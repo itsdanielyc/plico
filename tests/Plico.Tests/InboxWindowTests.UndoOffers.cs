@@ -192,6 +192,38 @@ public sealed partial class InboxWindowTests
         }
     }
 
+    [AvaloniaTheory]
+    [InlineData(false, "Tag added", "“Verification” · 2 documents")]
+    [InlineData(true, "Étiquette ajoutée", "“Verification” · 2 documents")]
+    public async Task ABatchTagsToastHasAShortTitleOverTheTagAndTheCount(bool useFrench, string title, string body)
+    {
+        using var temporary = new TemporaryLibrary();
+        using (var library = InboxLibrary.Open(temporary.Path)) BatchFixtures.AddTwoDocuments(library, TestContext.Current.CancellationToken);
+        DesktopText.SetLanguage(useFrench ? InterfaceLanguage.French : InterfaceLanguage.English);
+        using var model = new InboxViewModel(new FixtureDialogs());
+        var window = new MainWindow { DataContext = model };
+        try
+        {
+            model.InitializeLibrary(() => temporary.Path);
+            window.Show();
+            await WaitForPreviewAsync(model);
+            Assert.IsType<Button>(window.FindControl<Button>("SelectShownButton")).RaiseEvent(new Avalonia.Interactivity.RoutedEventArgs(Button.ClickEvent));
+            Assert.IsType<AutoCompleteBox>(window.FindControl<AutoCompleteBox>("BatchTagBox")).SetCurrentValue(AutoCompleteBox.TextProperty, "Verification");
+            Assert.IsType<Button>(window.FindControl<Button>("ApplyBatchTagButton")).RaiseEvent(new Avalonia.Interactivity.RoutedEventArgs(Button.ClickEvent));
+            await WaitForAsync(() => model.HasUndo && !model.IsBusy);
+            await WaitForPreviewAsync(model);
+
+            // Like every other Undo, a short title over what it was about, so the number never parts from its noun.
+            Assert.Equal((title, body), (model.ToastTitle, model.ToastBody));
+            Assert.Equal(title, model.UndoLabel);
+        }
+        finally
+        {
+            window.Close();
+            DesktopText.SetLanguage(InterfaceLanguage.English);
+        }
+    }
+
     /// <summary>Ctrl+Z (⌘Z on macOS) on the window, then waits for whatever it started to finish.</summary>
     private static async Task PressUndoKeyAsync(MainWindow window, InboxViewModel model)
     {

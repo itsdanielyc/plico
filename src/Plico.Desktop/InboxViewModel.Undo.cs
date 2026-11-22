@@ -88,9 +88,12 @@ internal sealed partial class InboxViewModel
             return documentId;
         });
 
-    /// <summary>Takes a tag back off the documents in a selection that did not have it before.</summary>
+    /// <summary>
+    /// Takes a tag back off the documents in a selection that did not have it before. Like every other offer it is a
+    /// short title over what it was about ("Tag added" over "“Tax” · 3 documents"), so the count never parts from its noun.
+    /// </summary>
     private static UndoOffer BatchTagUndo(InboxLibrary library, IReadOnlyList<long> documentIds, string label, int selectedCount) =>
-        new(DesktopText.Format($"Tag “{label}” added to {DocumentCount(selectedCount)}"), null, async token =>
+        new(DesktopText.Translate("Tag added"), $"“{label}” · {DocumentCount(selectedCount)}", async token =>
         {
             await Task.Run(() => library.RemoveTagFromDocuments(documentIds, label, token), token);
             return null;
