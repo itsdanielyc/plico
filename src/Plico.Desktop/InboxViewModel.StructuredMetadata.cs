@@ -33,6 +33,7 @@ internal sealed partial class InboxViewModel
             return;
         }
         await Task.Run(() => library.SaveDocumentMetadata(document.Id, changed, token), token);
+        RetireUndo();
         LoadResults(document.Id, retainLoadedResults: true);
         Status = DesktopText.Translate("Document metadata saved.");
     });

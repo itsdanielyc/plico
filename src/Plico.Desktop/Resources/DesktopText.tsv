@@ -910,3 +910,6 @@ RemoveTagHeading	Remove a tag	Retirer une étiquette
 ScanBackSidesHeading	Scan the back sides	Numériser les versos
 VersionHistoryHeading	Version history	Historique des versions
 ResumeWatchOnly	Resume watch	Reprendre
+ToastMovedToTrash	Moved to Trash	Mis à la corbeille
+ToastTagRemoved	Tag removed	Étiquette retirée
+ToastBatchTagAdded	Tag “{0}” added to {1}	Étiquette « {0} » ajoutée à {1}

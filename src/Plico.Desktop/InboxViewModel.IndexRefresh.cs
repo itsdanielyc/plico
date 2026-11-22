@@ -28,6 +28,7 @@ internal sealed partial class InboxViewModel
     {
         var library = RequireLibrary();
         var result = await Task.Run(() => library.Refresh(token), token);
+        RetireUndo();
         Tags = library.GetTags();
         RefreshInboxCount();
         RefreshUnavailableCount();
@@ -86,6 +87,7 @@ internal sealed partial class InboxViewModel
 
             Status = DesktopText.Translate("Restoring PDF…");
             var restored = await Task.Run(() => library.RestoreUnavailablePdfAsync(relativePath, copyPath, token), token);
+            RetireUndo();
             Tags = library.GetTags();
             RefreshInboxCount();
             RefreshUnavailableCount();
@@ -104,6 +106,7 @@ internal sealed partial class InboxViewModel
             }
 
             Status = DesktopText.Translate("Matching backup PDFs…");
+            RetireUndo();
             var result = await Task.Run(() => library.RestoreUnavailablePdfsFromFolderAsync(folder, cancellationToken: token), token);
             FolderRestoreNotices = result.Issues.Select(issue => $"{issue.Path} — {issue.Reason}").ToArray();
             RefreshUnavailableCount();

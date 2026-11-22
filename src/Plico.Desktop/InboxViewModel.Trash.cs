@@ -13,11 +13,10 @@ internal sealed partial class InboxViewModel
         {
             var library = RequireLibrary();
             await Task.Run(() => library.TrashPdfAsync(document.Id, token), token);
-            OfferTrashUndo(document.Id, document.Title);
             Tags = library.GetTags();
             RefreshInboxCount();
             LoadResults(retainLoadedResults: true, reviewPosition: position);
-            Status = DesktopText.Translate("Moved to Trash. Use Trash to restore the PDF.");
+            OfferUndo(TrashUndo(library, document), DesktopText.Translate("Moved to Trash. Use Trash to restore the PDF."));
         });
     }
 
@@ -35,13 +34,13 @@ internal sealed partial class InboxViewModel
         if (decision.Purge)
         {
             await Task.Run(() => library.PurgeTrashedPdfAsync(decision.DocumentId, token), token);
-            if (PendingUndo?.TrashedDocumentId == decision.DocumentId) PendingUndo = null;
+            RetireUndo();
             Status = DesktopText.Translate("PDF permanently deleted.");
             return;
         }
 
         var restored = await Task.Run(() => library.RestoreTrashedPdfAsync(decision.DocumentId, token), token);
-        if (PendingUndo?.TrashedDocumentId == restored.Id) PendingUndo = null;
+        RetireUndo();
         Tags = library.GetTags();
         RefreshInboxCount();
         Navigate(inboxOnly: false, preferredId: restored.Id);

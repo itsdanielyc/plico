@@ -57,6 +57,7 @@ internal sealed partial class InboxViewModel
             return;
         }
         await Task.Run(() => library.SaveDeadlines(document.Id, edited, token), token);
+        RetireUndo();
         RefreshDueReminderCount();
         Status = DesktopText.Translate("Document deadlines saved.");
     });

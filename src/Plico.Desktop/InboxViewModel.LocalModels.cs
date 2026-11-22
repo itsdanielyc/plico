@@ -97,6 +97,7 @@ internal sealed partial class InboxViewModel
         var edit = await _dialogs.ReviewLocalFilingAsync(proposal, library.GetMetadataDefinitions());
         if (edit is null) { Status = DesktopText.Translate("Local filing suggestions closed."); return; }
         await Task.Run(() => library.ApplyLocalFiling(edit, token), token);
+        RetireUndo();
         Tags = library.GetTags();
         LoadResults(document.Id, retainLoadedResults: true);
         Status = DesktopText.Translate("Local filing saved.");
@@ -112,6 +113,7 @@ internal sealed partial class InboxViewModel
             Status = DesktopText.Translate("There is no local filing change to undo for this PDF.");
             return;
         }
+        RetireUndo();
         Tags = library.GetTags();
         LoadResults(document.Id, retainLoadedResults: true);
         Status = DesktopText.Translate("Local filing undone.");

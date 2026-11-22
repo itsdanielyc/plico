@@ -24,6 +24,7 @@ internal sealed partial class InboxViewModel
             if (request is SplitPdfPages split)
             {
                 var parts = await Task.Run(() => library.SplitPdfAsync(document.Id, split.PartStarts, token), token);
+                RetireUndo();
                 RevealNewInboxDocument(parts[0].Id);
                 Status = DesktopText.Format($"Saved {DocumentCount(parts.Count)} from the split PDF.");
                 return;
@@ -104,6 +105,7 @@ internal sealed partial class InboxViewModel
 
     private void ReloadPdfVersion(DocumentSummary changed)
     {
+        RetireUndo();
         LoadResults(preferredId: changed.Id, reloadPreview: true, retainLoadedResults: true);
         Status = DesktopText.Format($"Saved the current PDF for “{changed.Title}”.");
     }

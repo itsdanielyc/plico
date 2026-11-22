@@ -44,13 +44,19 @@ public sealed partial class InboxWindowTests
             var pageBar = page.GetVisualDescendants().OfType<Border>().Single(border => border.Classes.Contains("pagebar"));
             Assert.True(toastBounds.Bottom <= Bounds(pageBar, window).Top - 15, "The toast does not sit above the page bar.");
 
-            // A later, unrelated message keeps the undo on Ctrl+Z and in the palette, but not in its toast.
+            // A later undoable action replaces the offer: the toast carries the tag's own Undo, which removes the tag
+            // and leaves the earlier review alone.
             model.TagInput = "Toast check";
             model.AddTagCommand.Execute(null);
             await WaitForAsync(() => model.SelectedDocument?.Tags.Contains("Toast check") == true);
-            Assert.True(model.HasUndo);
+            Assert.Equal(("Tag added", "“Toast check”"), (model.ToastTitle, model.ToastBody));
+            Assert.Equal("Tag added", model.UndoLabel);
             Assert.True(toast.IsEffectivelyVisible);
-            Assert.False(undo.IsEffectivelyVisible);
+            Assert.True(undo.IsEffectivelyVisible);
+            await model.UndoCommand.ExecuteAsync(null);
+            Assert.DoesNotContain("Toast check", model.SelectedDocument!.Tags);
+            Assert.Equal(1, model.InboxCount);
+            Assert.False(model.HasUndo);
         }
         finally
         {

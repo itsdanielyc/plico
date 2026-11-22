@@ -253,6 +253,7 @@ internal sealed partial class InboxViewModel : ObservableObject, IDisposable
         }
         var library = RequireLibrary();
         await Task.Run(() => library.SetTitle(document.Id, title), token);
+        RetireUndo();
         LoadResults(document.Id);
         Status = DesktopText.Translate("Title saved.");
     });
@@ -261,8 +262,14 @@ internal sealed partial class InboxViewModel : ObservableObject, IDisposable
     private void AddTag()
     {
         if (string.IsNullOrWhiteSpace(TagInput)) return;
-        if (UpdateDocument((library, document) => library.AddTag(document.Id, TagInput), DesktopText.Translate("Tag added."),
-            new ToastText(DesktopText.Translate("Tag added"), $"“{TagInput.Trim()}”"))) TagInput = "";
+        string label = TagInput.Trim();
+        if (UpdateDocument((library, document) =>
+        {
+            // A tag the document already has changes nothing, so there is nothing to take back off.
+            bool present = document.Tags.Any(tag => InboxLibrary.GetTagKey(tag) == InboxLibrary.GetTagKey(label));
+            library.AddTag(document.Id, TagInput);
+            return present ? null : TagUndo(library, document.Id, label, added: true);
+        }, DesktopText.Translate("Tag added."), new ToastText(DesktopText.Translate("Tag added"), $"“{label}”"))) TagInput = "";
     }
 
     [RelayCommand] private void PreviousPage() => NavigatePage(-1);
@@ -270,8 +277,11 @@ internal sealed partial class InboxViewModel : ObservableObject, IDisposable
 
     internal void FilterByTag(string tag) => Navigate(inboxOnly: false, tag);
 
-    internal void RemoveTag(string tag) =>
-        UpdateDocument((library, document) => library.RemoveTag(document.Id, tag), DesktopText.Translate("Tag removed."));
+    internal void RemoveTag(string tag) => UpdateDocument((library, document) =>
+    {
+        library.RemoveTag(document.Id, tag);
+        return TagUndo(library, document.Id, tag, added: false);
+    }, DesktopText.Translate("Tag removed."));
 
     private bool AlreadyOpen(string target)
     {
@@ -291,7 +301,7 @@ internal sealed partial class InboxViewModel : ObservableObject, IDisposable
         }
         _library = replacement;
         replacement.ConfigureOcr(_ocrProcessing);
-        PendingUndo = null;
+        UndoOffer = null;
         ForgetAllThumbnails();
         var importNotice = RestoreImportFailures(replacement.RootPath);
         var intakeNotice = RestoreIntakeFolder(replacement.RootPath);
@@ -471,15 +481,25 @@ internal sealed partial class InboxViewModel : ObservableObject, IDisposable
         UpdateSelection(previous, SelectedDocument, reloadPreview);
     }
 
-    private bool UpdateDocument(Action<InboxLibrary, DocumentSummary> update, string success, ToastText? toast = null)
+    /// <summary>
+    /// Applies one change to the open document, reloads it and announces it. The change returns its Undo offer, which
+    /// replaces the current one, or null when there is nothing to undo, which retires the current one.
+    /// </summary>
+    private bool UpdateDocument(Func<InboxLibrary, DocumentSummary, UndoOffer?> update, string success, ToastText? toast = null)
     {
         if (!CanWork || SelectedDocument is not { } document) return false;
         try
         {
             var library = RequireLibrary();
-            update(library, document);
+            var offer = update(library, document);
             Tags = library.GetTags();
             LoadResults(document.Id);
+            if (offer is not null)
+            {
+                OfferUndo(offer, success);
+                return true;
+            }
+            RetireUndo();
             _pendingToast = toast;
             Status = success;
             return true;

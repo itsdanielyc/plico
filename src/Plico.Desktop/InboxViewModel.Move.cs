@@ -24,6 +24,7 @@ internal sealed partial class InboxViewModel
 
             Status = DesktopText.Translate("Moving the PDF…");
             var moved = await Task.Run(() => library.MovePdfAsync(document.Id, folder, token), token);
+            RetireUndo();
             LoadResults(moved.Id, reloadPreview: Preview is null);
             Status = moved.RelativePath == document.RelativePath
                 ? "This PDF is already in that folder."
@@ -56,6 +57,8 @@ internal sealed partial class InboxViewModel
                 Status = DesktopText.Format($"Filed {processed} of {orderedIds.Length} PDFs…");
             });
             long? displayedDocument = SelectedDocument?.Id;
+            // A cancelled or failed batch may already have moved some PDFs, so the offer goes before the outcome is known.
+            RetireUndo();
             var result = await Task.Run(() => library.MoveSelectedPdfsAsync(orderedIds, folder, progress, token), token);
             LoadResults(displayedDocument, reloadPreview: Preview is null);
             Status = BatchMoveStatus(result);

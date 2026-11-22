@@ -68,12 +68,13 @@ internal sealed partial class InboxViewModel
         bool reviewed = !document.Reviewed;
         try
         {
-            RequireLibrary().SetReviewed(document.Id, reviewed);
-            OfferReviewUndo([document.Id], reviewed);
+            var library = RequireLibrary();
+            library.SetReviewed(document.Id, reviewed);
             RefreshInboxCount();
             LoadResults(document.Id, retainLoadedResults: true, reviewPosition: position);
-            Announce(reviewed ? DesktopText.Translate("Marked as reviewed.") : DesktopText.Translate("Returned to inbox."),
-                reviewed ? DesktopText.Translate("Marked reviewed") : DesktopText.Translate("Back in the Inbox"), document.Title);
+            string title = reviewed ? DesktopText.Translate("Marked reviewed") : DesktopText.Translate("Back in the Inbox");
+            OfferUndo(ReviewUndo(library, [document.Id], reviewed, title, document.Title),
+                reviewed ? DesktopText.Translate("Marked as reviewed.") : DesktopText.Translate("Returned to inbox."));
         }
         catch (Exception error)
         {
@@ -93,11 +94,12 @@ internal sealed partial class InboxViewModel
         {
             var library = RequireLibrary();
             await Task.Run(() => library.SetReviewedDocuments(selectedIds, reviewed), token);
-            OfferReviewUndo(changedIds, reviewed);
             RefreshInboxCount();
             LoadResults(retainLoadedResults: true, reviewPosition: position);
             var count = DocumentCount(selectedIds.Length);
-            Status = reviewed ? DesktopText.Format($"{count} marked reviewed.") : DesktopText.Format($"{count} returned to inbox.");
+            string status = reviewed ? DesktopText.Format($"{count} marked reviewed.") : DesktopText.Format($"{count} returned to inbox.");
+            // The offer puts back only the documents that changed, so already reviewed members stay reviewed.
+            OfferUndo(ReviewUndo(library, changedIds, reviewed, WithoutFullStop(status), null), status);
         });
     }
 
@@ -145,16 +147,28 @@ internal sealed partial class InboxViewModel
             Status = DesktopText.Translate("Enter a tag for the selection.");
             return Task.CompletedTask;
         }
-        var selectedIds = _batchSelection.Select(document => document.Id).ToArray();
+        var selection = _batchSelection;
+        var selectedIds = selection.Select(document => document.Id).ToArray();
         var tag = BatchTagInput;
         return RunOperationAsync("Tagging the selected documents…", async token =>
         {
             var library = RequireLibrary();
+            // O(t) over the selection's tags: Undo takes the tag back off only the documents that did not have it.
+            string key = InboxLibrary.GetTagKey(tag);
+            long[] untagged = selection.Where(document => !document.Tags.Any(label => InboxLibrary.GetTagKey(label) == key))
+                .Select(document => document.Id).ToArray();
             await Task.Run(() => library.AddTagToDocuments(selectedIds, tag), token);
             Tags = library.GetTags();
             LoadResults(retainLoadedResults: true);
             BatchTagInput = "";
-            Status = DesktopText.Format($"Tag applied to {DocumentCount(selectedIds.Length)}.");
+            string status = DesktopText.Format($"Tag applied to {DocumentCount(selectedIds.Length)}.");
+            if (untagged.Length > 0)
+            {
+                OfferUndo(BatchTagUndo(library, untagged, tag.Trim(), selectedIds.Length), status);
+                return;
+            }
+            RetireUndo();
+            Status = status;
         });
     }
 
@@ -174,6 +188,7 @@ internal sealed partial class InboxViewModel
 
             var selectedIds = selectedDocuments.Select(document => document.Id).ToArray();
             int changed = await Task.Run(() => library.RemoveTagFromDocuments(selectedIds, tag, token), token);
+            RetireUndo();
             Tags = library.GetTags();
             LoadResults(retainLoadedResults: true);
             Status = changed == 0 ? DesktopText.Translate("The selected documents no longer have that tag.") : DesktopText.Format($"Tag removed from {DocumentCount(changed)}.");

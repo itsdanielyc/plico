@@ -20,7 +20,8 @@ internal readonly record struct ToastText(string Title, string? Body);
 /// What the ink toast says and offers. The message of record is <see cref="Status"/> (the live region and the log);
 /// the toast shows it as a short title with no full stop and an optional body ("Marked reviewed" over the document's
 /// title), never cut. The action is the latest offer made, so "Exported" carries Open export and "Marked reviewed"
-/// carries Undo. Older offers stay in the command palette.
+/// carries Undo. Undo has one offer at a time (see <see cref="UndoOffer"/>), which Ctrl+Z and the palette reach after
+/// the toast has gone.
 /// </summary>
 internal sealed partial class InboxViewModel
 {
@@ -73,7 +74,7 @@ internal sealed partial class InboxViewModel
     public bool HasToastBody => !string.IsNullOrEmpty(_toastText.Body);
 
     // Counts status messages, so an offer travels with the message that follows it and not with later, unrelated ones
-    // ("Tag added." never carries the Undo of an earlier review). Ctrl+Z and the palette still reach every offer.
+    // ("Exported" never carries the Undo of an earlier review). Ctrl+Z and the palette reach the current Undo offer.
     private long _statusSerial;
     private long _offerSerial = long.MinValue / 2;
     private bool OfferIsCurrent => _offerSerial >= _statusSerial - 1;
@@ -180,7 +181,7 @@ internal sealed partial class InboxViewModel
     {
         switch (property)
         {
-            case nameof(PendingUndo):
+            case nameof(UndoOffer):
                 UpdateToastOffer(HasUndo, ToastOffer.Undo);
                 break;
             case nameof(LatestBackupLocation):

@@ -20,6 +20,7 @@ internal sealed partial class InboxViewModel
 
         var library = RequireLibrary();
         await Task.Run(() => library.SetDocumentDate(document.Id, edit.Date), token);
+        RetireUndo();
         LoadResults(document.Id);
         Status = edit.Date.HasValue ? DesktopText.Translate("Document date saved.") : DesktopText.Translate("Document date cleared.");
     });
@@ -43,6 +44,7 @@ internal sealed partial class InboxViewModel
 
             var library = RequireLibrary();
             await Task.Run(() => library.SetDocumentDates(selectedIds, edit.Date, token), token);
+            RetireUndo();
             LoadResults(retainLoadedResults: true);
             string count = DocumentCount(selectedIds.Length);
             Status = edit.Date.HasValue ? DesktopText.Format($"Document date saved for {count}.") : DesktopText.Format($"Document dates cleared for {count}.");

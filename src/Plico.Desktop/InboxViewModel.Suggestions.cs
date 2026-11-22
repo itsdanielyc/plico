@@ -77,13 +77,16 @@ internal sealed partial class InboxViewModel
         try
         {
             var library = RequireLibrary();
-            // Filing selections add tags and leave existing assignments in place.
+            // Filing selections add tags and leave existing assignments in place, so Undo takes back only new ones.
+            var present = document.Tags.Select(InboxLibrary.GetTagKey).ToHashSet(StringComparer.Ordinal);
+            string[] added = tags.Where(tag => present.Add(InboxLibrary.GetTagKey(tag))).ToArray();
             var selection = new FilingSelection(document.Id, includeDate ? SuggestedDate : null, tags);
             library.ApplyFilingSuggestions([selection]);
             int accepted = tags.Count + (includeDate ? 1 : 0);
             Tags = library.GetTags();
             LoadResults(document.Id, retainLoadedResults: true);
-            Status = accepted == 1 ? DesktopText.Translate("Suggestion accepted.") : DesktopText.Format($"{accepted} suggestions accepted.");
+            string status = accepted == 1 ? DesktopText.Translate("Suggestion accepted.") : DesktopText.Format($"{accepted} suggestions accepted.");
+            OfferUndo(FilingUndo(library, document.Id, WithoutFullStop(status), document.Title, added, includeDate, document.DocumentDate), status);
         }
         catch (Exception error)
         {
