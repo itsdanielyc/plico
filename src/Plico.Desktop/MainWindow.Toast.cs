@@ -11,7 +11,9 @@ namespace Plico.Desktop;
 /// <summary>
 /// The ink toast that replaced the status bar. It rises from the bottom of the page canvas when the status message
 /// changes, carries at most one action, leaves after about six seconds and stays while the pointer or the keyboard
-/// is on it. Progress and anything that needs attention go to the sidebar's status card instead.
+/// is on it, work in the background included. Progress and anything that needs attention go to the sidebar's status
+/// card instead. When the toast lets go of the keyboard (it is closed, or the button holding it goes), the keyboard
+/// lands on the open document's row rather than out of the window.
 /// </summary>
 public partial class MainWindow
 {
@@ -25,12 +27,18 @@ public partial class MainWindow
         _toastTimer.Tick += (_, _) =>
         {
             _toastTimer.Stop();
-            if (Toast.IsPointerOver || Toast.IsKeyboardFocusWithin) return;
+            if (ToastIsHeld) return;
             Toast.IsVisible = false;
         };
         Toast.PointerExited += (_, _) => RestartToastTimer();
         Toast.AddHandler(GettingFocusEvent, Toast_GettingFocus);
-        Toast.LostFocus += (_, _) => RestartToastTimer();
+        Toast.LostFocus += (_, e) =>
+        {
+            RestartToastTimer();
+            // A toast button that hides or turns off while it has the keyboard (Undo once it has run, or while Plico
+            // works) lets go of it; the keyboard then goes to the open document instead of out of the window.
+            if (e.NewFocusedElement is null) OweKeyboardToOpenDocument();
+        };
         DataContextChanged += (_, _) => AttachToast();
         Closed += (_, _) =>
         {
@@ -57,11 +65,49 @@ public partial class MainWindow
                 if (!model.IsBusy) ShowToast(model);
                 break;
             case nameof(InboxViewModel.IsBusy):
-                // While work runs its progress is on the status card; the result arrives as a toast when it ends.
-                if (model.IsBusy) HideToast();
-                else ShowToast(model);
+                // While work runs its progress is on the status card; the result arrives as a toast when it ends. A toast
+                // the pointer or the keyboard is on stays, as it does when its time is up.
+                if (!model.IsBusy)
+                {
+                    ShowToast(model);
+                    // The work may have reloaded the queue under a keyboard that had just landed on it.
+                    if (_keyboardOwedToOpenDocument) OweKeyboardToOpenDocument();
+                }
+                else if (!ToastIsHeld)
+                {
+                    HideToast();
+                }
                 break;
         }
+    }
+
+    /// <summary>
+    /// True while the pointer or the keyboard is on the toast, which then stays. That includes a keyboard that has just
+    /// fallen out of it and not landed yet: work that begins turns Undo off before the toast hears of the work.
+    /// </summary>
+    private bool ToastIsHeld => Toast.IsPointerOver || Toast.IsKeyboardFocusWithin
+        || _keyboardOwedToOpenDocument && FocusManager?.GetFocusedElement() is null;
+
+    // Set when the keyboard fell out of the toast, until it has landed on the open document with no work in hand.
+    private bool _keyboardOwedToOpenDocument;
+
+    /// <summary>Settles the keyboard on the open document once the input in hand is done; see <see cref="SettleKeyboard"/>.</summary>
+    private void OweKeyboardToOpenDocument()
+    {
+        _keyboardOwedToOpenDocument = true;
+        Dispatcher.UIThread.Post(SettleKeyboard, DispatcherPriority.Background);
+    }
+
+    /// <summary>
+    /// Puts a keyboard that is nowhere on the open document's row. It runs after the input and the layout in hand, so a
+    /// queue reloaded by that input has its new row; work still running may reload the queue again, so the debt stays
+    /// until the work ends. A keyboard that has gone somewhere else meanwhile is left there.
+    /// </summary>
+    private void SettleKeyboard()
+    {
+        if (!_keyboardOwedToOpenDocument) return;
+        if (ViewModel is not { IsBusy: true }) _keyboardOwedToOpenDocument = false;
+        if (IsVisible && FocusManager?.GetFocusedElement() is null) FocusOpenDocument();
     }
 
     private void ShowToast(InboxViewModel model)

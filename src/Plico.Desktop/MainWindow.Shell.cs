@@ -267,7 +267,8 @@ public partial class MainWindow
         ShortcutsOverlay.IsVisible = false;
         if (!wasOpen) return;
         ShellGrid.IsEnabled = true;
-        if (_overlayReturnFocus?.Focus() != true && !DocumentList.Focus()) SearchBox.Focus();
+        // The control that had the keyboard may have gone with the overlay open (the toast's Undo hides under it).
+        if (_overlayReturnFocus?.Focus() != true) FocusOpenDocument();
         _overlayReturnFocus = null;
     }
 

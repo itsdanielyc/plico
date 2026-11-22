@@ -398,6 +398,10 @@ public sealed partial class InboxWindowTests
         }
     }
 
+    /// <summary>True when the keyboard is on the queue's row for a document.</summary>
+    private static bool KeyboardIsOnRow(Window window, long documentId) =>
+        window.FocusManager?.GetFocusedElement() is ListBoxItem { DataContext: DocumentSummary document } && document.Id == documentId;
+
     /// <summary>The queue's row for a document.</summary>
     private static ListBoxItem QueueRow(Window window, long documentId)
     {
