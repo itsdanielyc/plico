@@ -88,6 +88,34 @@ public sealed partial class InboxWindowTests
         }
     }
 
+    [AvaloniaFact]
+    public async Task TheFrenchMarkReviewedKeepsItsKeycapAtTheMinimumWidth()
+    {
+        using var temporary = new TemporaryLibrary();
+        using (var library = InboxLibrary.Open(temporary.Path)) BatchFixtures.AddTwoDocuments(library, TestContext.Current.CancellationToken);
+        DesktopText.SetLanguage(InterfaceLanguage.French);
+        using var model = new InboxViewModel(new FixtureDialogs());
+        var window = new MainWindow { DataContext = model, Width = 900, Height = 590 };
+        try
+        {
+            model.InitializeLibrary(() => temporary.Path);
+            window.Show();
+            await WaitForPreviewAsync(model);
+            window.UpdateLayout();
+            var review = Assert.IsType<Button>(window.FindControl<Button>("ReviewButton"));
+            var key = review.GetVisualDescendants().OfType<Border>().Single(border => border.Classes.Contains("key"));
+            var label = review.GetVisualDescendants().OfType<TextBlock>().First(text => text.Text == model.ReviewAction);
+            var button = Bounds(review, window);
+            Assert.True(Bounds(key, window).Right <= button.Right - 4, $"The R keycap {Bounds(key, window)} leaves {button}.");
+            Assert.True(Bounds(label, window).Left >= button.Left + 4, $"The label {Bounds(label, window)} leaves {button}.");
+        }
+        finally
+        {
+            window.Close();
+            DesktopText.SetLanguage(InterfaceLanguage.English);
+        }
+    }
+
     private static Rect Bounds(Visual visual, Visual relativeTo)
     {
         var origin = visual.TranslatePoint(default, relativeTo) ?? throw new InvalidOperationException("The control is not in the window.");

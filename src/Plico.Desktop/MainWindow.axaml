@@ -426,10 +426,10 @@
                                 </Grid>
                             </Button>
                             <Button x:Name="AllDocumentsButton" Classes="nav" Classes.current="{Binding AllSelected}" Command="{Binding ShowAllCommand}">
-                                <StackPanel Orientation="Horizontal" Spacing="12">
+                                <Grid ColumnDefinitions="Auto,*" ColumnSpacing="12">
                                     <local:Icon Data="{StaticResource Icon.AllDocuments}" Width="18" Height="18" StrokeWidth="1.7" VerticalAlignment="Center" />
-                                    <TextBlock Text="{translation:Tr AllDocuments}" VerticalAlignment="Center" />
-                                </StackPanel>
+                                    <TextBlock Grid.Column="1" Text="{translation:Tr AllDocuments}" TextTrimming="CharacterEllipsis" VerticalAlignment="Center" />
+                                </Grid>
                             </Button>
                             <Button x:Name="UpcomingButton" Classes="nav" Command="{Binding RemindersCommand}" IsEnabled="{Binding CanWork}"
                                     ToolTip.Tip="{translation:Tr UpcomingHelp}">
@@ -442,10 +442,10 @@
                             </Button>
                             <Button x:Name="WithoutTextButton" Classes="nav" Classes.current="{Binding WithoutTextSelected}"
                                     Command="{Binding ShowWithoutTextCommand}" ToolTip.Tip="{translation:Tr FindPDFsWithoutSearchableText}">
-                                <StackPanel Orientation="Horizontal" Spacing="12">
+                                <Grid ColumnDefinitions="Auto,*" ColumnSpacing="12">
                                     <local:Icon Data="{StaticResource Icon.ScanFrame}" Width="18" Height="18" StrokeWidth="1.7" VerticalAlignment="Center" />
-                                    <TextBlock Text="{translation:Tr WithoutText}" VerticalAlignment="Center" />
-                                </StackPanel>
+                                    <TextBlock Grid.Column="1" Text="{translation:Tr WithoutText}" TextTrimming="CharacterEllipsis" VerticalAlignment="Center" />
+                                </Grid>
                             </Button>
                         </StackPanel>
 
@@ -544,17 +544,17 @@
                         </Button>
                     </Panel>
                     <Button x:Name="OpenTrashButton" Classes="nav" Command="{Binding OpenTrashCommand}" IsEnabled="{Binding CanWork}">
-                        <StackPanel Orientation="Horizontal" Spacing="12">
+                        <Grid ColumnDefinitions="Auto,*" ColumnSpacing="12">
                             <local:Icon Data="{StaticResource Icon.Trash}" Width="18" Height="18" StrokeWidth="1.7" VerticalAlignment="Center" />
-                            <TextBlock Text="{translation:Tr Trash}" VerticalAlignment="Center" />
-                        </StackPanel>
+                            <TextBlock Grid.Column="1" Text="{translation:Tr Trash}" TextTrimming="CharacterEllipsis" VerticalAlignment="Center" />
+                        </Grid>
                     </Button>
                     <Button x:Name="SettingsButton" Classes="nav" Click="OpenSettings_Click" ToolTip.Tip="{translation:Tr SettingsTip}"
                             AutomationProperties.Name="{translation:Tr SettingsAction}">
-                        <StackPanel Orientation="Horizontal" Spacing="12">
+                        <Grid ColumnDefinitions="Auto,*" ColumnSpacing="12">
                             <local:Icon Data="{StaticResource Icon.Settings}" Width="18" Height="18" StrokeWidth="1.7" VerticalAlignment="Center" />
-                            <TextBlock Text="{translation:Tr SettingsTip}" VerticalAlignment="Center" />
-                        </StackPanel>
+                            <TextBlock Grid.Column="1" Text="{translation:Tr SettingsTip}" TextTrimming="CharacterEllipsis" VerticalAlignment="Center" />
+                        </Grid>
                     </Button>
                 </StackPanel>
             </Grid>
@@ -1127,11 +1127,11 @@
                                     </ScrollViewer>
 
                                     <!-- Pinned outside the scroll: Mark reviewed fills the width, Trash beside it. -->
-                                    <Border Grid.Row="2" BorderBrush="{DynamicResource Line}" BorderThickness="0,1,0,0" Padding="16">
+                                    <Border Grid.Row="2" BorderBrush="{DynamicResource Line}" BorderThickness="0,1,0,0" Padding="14">
                                         <Grid ColumnDefinitions="*,Auto" ColumnSpacing="8">
-                                            <Button x:Name="ReviewButton" Classes="primary" MinHeight="40" HorizontalAlignment="Stretch" HorizontalContentAlignment="Center"
+                                            <Button x:Name="ReviewButton" Classes="primary" MinHeight="40" Padding="10,0" HorizontalAlignment="Stretch" HorizontalContentAlignment="Center"
                                                     Command="{Binding ToggleReviewCommand}" Click="ReviewButton_Click">
-                                                <StackPanel Orientation="Horizontal" Spacing="10">
+                                                <StackPanel Orientation="Horizontal" Spacing="8">
                                                     <TextBlock Text="{Binding ReviewAction}" VerticalAlignment="Center" />
                                                     <Border Classes="key"><TextBlock Text="R" /></Border>
                                                 </StackPanel>
