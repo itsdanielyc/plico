@@ -236,6 +236,24 @@ public sealed partial class InboxWindowTests
             PressKey(window, Key.Enter, PhysicalKey.Enter);
             Assert.Equal(new DateOnly(2026, 3, 4), model.SelectedDocument!.DocumentDate);
             Assert.Equal(2, model.InboxCount);
+
+            // With another date typed while the calendar is open, the first Escape closes only the calendar: the typed
+            // date stays in the field, unsaved, and the keyboard stays with it.
+            ClickAt(window, glyph);
+            Assert.True(picker.IsOpen);
+            TypeKeys(window, "5 Mar 2026");
+            PressKey(window, Key.Escape, PhysicalKey.Escape);
+            Assert.False(picker.IsOpen, "Escape left the calendar open.");
+            Assert.True(field.IsFocused, $"After Escape closed the calendar the keyboard is on {KeyboardOwner(window)}.");
+            Assert.Equal("5 Mar 2026", field.Text);
+            Assert.Equal(new DateOnly(2026, 3, 4), model.SelectedDocument!.DocumentDate);
+
+            // The second Escape puts the saved date back, and the keyboard is still in the field.
+            PressKey(window, Key.Escape, PhysicalKey.Escape);
+            Assert.Equal("4 Mar 2026", field.Text);
+            Assert.True(field.IsFocused, $"After the second Escape the keyboard is on {KeyboardOwner(window)}.");
+            Assert.Equal(new DateOnly(2026, 3, 4), model.SelectedDocument!.DocumentDate);
+            Assert.False(picker.IsOpen);
         }
         finally
         {
