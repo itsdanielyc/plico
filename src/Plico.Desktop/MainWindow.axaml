@@ -430,9 +430,6 @@
                 </DataTemplate>
             </Setter>
         </Style>
-        <Style Selector="Grid.compact Border.queue-tile, Grid.compact TextBlock.queue-tile, Grid.compact Button.queue-tile">
-            <Setter Property="IsVisible" Value="False" />
-        </Style>
 
         <!-- Queue rows: 10 px inside, 12 px corners; the selected row sits in the sunken well with a hairline. -->
         <Style Selector="ListBox#DocumentList ListBoxItem" x:DataType="core:DocumentSummary">
@@ -689,18 +686,21 @@
             <Border Grid.Column="1" x:Name="Sheet" Margin="0,6,0,0" CornerRadius="12,0,0,0" BorderThickness="1,1,0,0"
                     BorderBrush="{DynamicResource Line}" Background="{DynamicResource Panel}" ClipToBounds="True">
                 <Grid RowDefinitions="Auto,*">
-                    <!-- Toolbar: search and the folder filter at the left, the two ways in and the tools at the right. -->
+                    <!--
+                        Toolbar: search with the folder filter and its tips at the left, the two ways in and the tools at the
+                        right. A search that cannot run says how to repair it in one line under the field, never in the queue.
+                    -->
                     <Border x:Name="Toolbar" BorderBrush="{DynamicResource Line}" BorderThickness="0,0,0,1" Padding="16,12" MinHeight="64">
                         <Grid ColumnDefinitions="*,Auto" ColumnSpacing="12">
-                            <Grid ColumnSpacing="4">
+                            <Grid ColumnSpacing="4" RowDefinitions="Auto,Auto">
                                 <Grid.ColumnDefinitions>
                                     <ColumnDefinition Width="100*" MaxWidth="560" />
                                     <ColumnDefinition Width="Auto" />
+                                    <ColumnDefinition Width="Auto" />
                                     <ColumnDefinition Width="*" />
                                 </Grid.ColumnDefinitions>
-                                <TextBox x:Name="SearchBox" Classes="search" Text="{Binding Query, Mode=TwoWay}" MaxLength="256"
-                                         PlaceholderText="{translation:Tr SearchYourPaperwork}" AutomationProperties.Name="{translation:Tr SearchDocuments}"
-                                         ToolTip.Tip="Try (receipt OR invoice) -tag:archive. Use uppercase AND, OR, NOT, and quotes for phrases.&#10;Use status:inbox or status:reviewed for review status.&#10;Use text:missing or text:present for searchable text.&#10;dated:2024-02 matches the document date. added:2026-11 matches the date added.&#10;Use folder:&quot;Filed/Property&quot; for a folder branch.">
+                                <TextBox x:Name="SearchBox" Classes="search" Classes.invalid="{Binding HasSearchQueryHint}" Text="{Binding Query, Mode=TwoWay}" MaxLength="256"
+                                         PlaceholderText="{translation:Tr SearchYourPaperwork}" AutomationProperties.Name="{translation:Tr SearchDocuments}">
                                     <TextBox.InnerLeftContent>
                                         <local:Icon Data="{StaticResource Icon.Search}" Width="17" Height="17" StrokeWidth="1.7" Margin="12,0,6,0" Foreground="{DynamicResource Fg3}" />
                                     </TextBox.InnerLeftContent>
@@ -716,8 +716,51 @@
                                         ToolTip.Tip="{translation:Tr ChooseALibraryFolderToSearch}">
                                     <local:Icon Data="{StaticResource Icon.Folder}" Width="17" Height="17" StrokeWidth="1.7" />
                                 </Button>
+                                <!-- The search syntax, in the interface's language, behind a small help button instead of a tooltip. -->
+                                <Button Grid.Column="2" x:Name="SearchTipsButton" Classes="icon" AutomationProperties.Name="{translation:Tr SearchTips}"
+                                        ToolTip.Tip="{translation:Tr SearchTips}">
+                                    <local:Icon Data="{StaticResource Icon.Help}" Width="17" Height="17" StrokeWidth="1.7" />
+                                    <Button.Flyout>
+                                        <Flyout Placement="BottomEdgeAlignedLeft">
+                                            <StackPanel Width="380" Spacing="12">
+                                                <StackPanel Spacing="3">
+                                                    <TextBlock Text="{translation:Tr SearchTips}" FontSize="15" FontWeight="SemiBold" />
+                                                    <TextBlock Classes="caption" Text="{translation:Tr SearchTipsLede}" TextWrapping="Wrap" />
+                                                </StackPanel>
+                                                <Grid Classes="search-tips" ColumnDefinitions="Auto,*" RowDefinitions="Auto,Auto,Auto,Auto,Auto,Auto,Auto,Auto,Auto">
+                                                    <TextBlock Classes="mono" Text="receipt OR invoice" />
+                                                    <TextBlock Grid.Column="1" Text="{translation:Tr SearchTipEither}" />
+                                                    <TextBlock Grid.Row="1" Classes="mono" Text="&quot;oil change&quot;" />
+                                                    <TextBlock Grid.Row="1" Grid.Column="1" Text="{translation:Tr SearchTipPhrase}" />
+                                                    <TextBlock Grid.Row="2" Classes="mono" Text="-tag:archive" />
+                                                    <TextBlock Grid.Row="2" Grid.Column="1" Text="{translation:Tr SearchTipLeaveOut}" />
+                                                    <TextBlock Grid.Row="3" Classes="mono" Text="tag:tax" />
+                                                    <TextBlock Grid.Row="3" Grid.Column="1" Text="{translation:Tr SearchTipTag}" />
+                                                    <TextBlock Grid.Row="4" Classes="mono" Text="status:inbox" />
+                                                    <TextBlock Grid.Row="4" Grid.Column="1" Text="{translation:Tr SearchTipStatus}" />
+                                                    <TextBlock Grid.Row="5" Classes="mono" Text="text:missing" />
+                                                    <TextBlock Grid.Row="5" Grid.Column="1" Text="{translation:Tr SearchTipText}" />
+                                                    <TextBlock Grid.Row="6" Classes="mono" Text="dated:2024-02" />
+                                                    <TextBlock Grid.Row="6" Grid.Column="1" Text="{translation:Tr SearchTipDated}" />
+                                                    <TextBlock Grid.Row="7" Classes="mono" Text="added:2026-11" />
+                                                    <TextBlock Grid.Row="7" Grid.Column="1" Text="{translation:Tr SearchTipAdded}" />
+                                                    <TextBlock Grid.Row="8" Classes="mono" Text="folder:&quot;Filed/Property&quot;" />
+                                                    <TextBlock Grid.Row="8" Grid.Column="1" Text="{translation:Tr SearchTipFolder}" />
+                                                </Grid>
+                                                <TextBlock Classes="caption" Text="{translation:Tr SearchTipCapitals}" TextWrapping="Wrap" />
+                                            </StackPanel>
+                                        </Flyout>
+                                    </Button.Flyout>
+                                </Button>
+                                <Grid Grid.Row="1" Grid.ColumnSpan="3" ColumnDefinitions="Auto,*" ColumnSpacing="6" Margin="4,6,0,0"
+                                      IsVisible="{Binding HasSearchQueryHint}">
+                                    <local:Icon Data="{StaticResource Icon.AlertCircle}" Width="14" Height="14" StrokeWidth="1.8" Foreground="{DynamicResource Err}"
+                                                VerticalAlignment="Top" Margin="0,2,0,0" />
+                                    <TextBlock Grid.Column="1" x:Name="SearchQueryHint" Classes="validation" Text="{Binding SearchQueryHint}" LineHeight="18"
+                                               AutomationProperties.LiveSetting="Polite" />
+                                </Grid>
                             </Grid>
-                            <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="8">
+                            <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="8" Height="40" VerticalAlignment="Top">
                                 <Button x:Name="ScanButton" Classes="secondary large with-icon" local:Ui.Icon="{StaticResource Icon.ScanFrame}"
                                         Command="{Binding ScanCommand}" Content="{translation:Tr Scan}" IsEnabled="{Binding CanWork}" ToolTip.Tip="{translation:Tr ScanTip}" />
                                 <StackPanel Orientation="Horizontal">
@@ -834,18 +877,27 @@
                             </StackPanel>
                         </Border>
 
-                        <!-- Queue. An empty queue is the family empty state: a tile, a title, one sentence and one action. -->
+                        <!--
+                            An empty queue is the family empty state: a dashed outline, the graphite tile, a title that says
+                            what is true, one sentence and Clear search when a search caused it. In compact windows it spans
+                            the thumbnail strip and the page, which has nothing to show, so its words are never squeezed.
+                        -->
+                        <Panel Grid.Row="1" x:Name="QueueEmptyState" Background="{DynamicResource Panel}" IsVisible="{Binding !HasDocuments}" ZIndex="1">
+                            <Panel HorizontalAlignment="Stretch" VerticalAlignment="Center" MaxWidth="400" Margin="16">
+                                <Rectangle Classes="dashed-frame" />
+                                <StackPanel Classes="empty" Margin="20,28">
+                                    <Border Classes="tile empty-tile">
+                                        <local:Icon Data="{StaticResource Icon.Search}" Width="20" Height="20" StrokeWidth="2" HorizontalAlignment="Center" VerticalAlignment="Center" />
+                                    </Border>
+                                    <TextBlock Classes="empty-title" Text="{Binding EmptyTitle}" />
+                                    <TextBlock x:Name="EmptyResultsMessage" Classes="empty-text" Text="{Binding EmptyMessage}" IsVisible="{Binding !HasDocuments}"
+                                               AutomationProperties.LiveSetting="Polite" />
+                                    <Button Classes="secondary" HorizontalAlignment="Center" Margin="0,10,0,0" Content="{translation:Tr ClearSearch}"
+                                            Command="{Binding ClearSearchCommand}" IsVisible="{Binding HasQuery}" />
+                                </StackPanel>
+                            </Panel>
+                        </Panel>
                         <Grid Grid.Row="1" Background="{DynamicResource Panel}">
-                            <StackPanel Classes="empty" IsVisible="{Binding !HasDocuments}" Margin="16">
-                                <Border Classes="tile empty-tile queue-tile">
-                                    <local:Icon Data="{StaticResource Icon.Search}" Width="20" Height="20" StrokeWidth="2" HorizontalAlignment="Center" VerticalAlignment="Center" />
-                                </Border>
-                                <TextBlock Classes="empty-title queue-tile" Text="{Binding EmptyTitle}" />
-                                <TextBlock x:Name="EmptyResultsMessage" Classes="empty-text" Text="{Binding EmptyMessage}" IsVisible="{Binding !HasDocuments}"
-                                           AutomationProperties.LiveSetting="Polite" />
-                                <Button Classes="secondary queue-tile" HorizontalAlignment="Center" Margin="0,10,0,0" Content="{translation:Tr ClearSearch}"
-                                        Command="{Binding ClearSearchCommand}" IsVisible="{Binding HasQuery}" />
-                            </StackPanel>
                             <ListBox x:Name="DocumentList" Classes="plain" ItemsSource="{Binding Documents}" SelectedItem="{Binding SelectedDocument, Mode=TwoWay}"
                                      IsVisible="{Binding HasDocuments}" Padding="0,2,0,8"
                                      SelectionMode="Multiple" SelectionChanged="Documents_SelectionChanged"
@@ -1320,7 +1372,7 @@
                         </Border>
 
                         <!-- Inbox clear and the welcome page -->
-                        <Border Grid.ColumnSpan="3" Grid.RowSpan="2" Background="{DynamicResource Panel}" IsVisible="{Binding ShowInboxZero}">
+                        <Border Grid.ColumnSpan="3" Grid.RowSpan="2" Background="{DynamicResource Panel}" IsVisible="{Binding ShowInboxZero}" ZIndex="2">
                             <Panel>
                                 <Panel IsVisible="{Binding ShowInboxClear}" HorizontalAlignment="Center" VerticalAlignment="Center" Width="420" Margin="24">
                                     <Rectangle Classes="dashed-frame" />

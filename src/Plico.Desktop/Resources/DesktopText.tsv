@@ -891,7 +891,6 @@ DayYesterday	Yesterday	Hier
 ClearSearch	Clear search	Effacer la recherche
 EmptyNoMatchTitle	No documents match	Aucun document correspondant
 EmptyNoMatch	Try other words or a different filter.	Essayez d’autres mots ou un autre filtre.
-EmptyCheckSearch	Check the search	Vérifiez la recherche
 EmptyAllSearchable	Everything is searchable	Tout est indexable
 EmptyNothingYet	Nothing here yet	Rien pour l’instant
 EmptyNoDocumentsYet	No documents yet	Aucun document pour l’instant
@@ -915,3 +914,24 @@ ToastDateSet	Date set	Date définie
 ToastDateCleared	Date cleared	Date effacée
 DateFieldInvalid	Use a date like {0}.	Saisissez une date comme {0}.
 DocumentDateFieldTip	Type a date like 21 Nov 2026, or choose one.	Saisissez une date comme 21 nov. 2026, ou choisissez-en une.
+SearchTips	Search tips	Astuces de recherche
+SearchTipsLede	Type words from the paper, or narrow the search with these.	Tapez des mots du papier, ou affinez la recherche avec ceux-ci.
+SearchTipEither	Either word	L’un ou l’autre mot
+SearchTipPhrase	These words together	Ces mots ensemble
+SearchTipLeaveOut	Leave out a tag or a word	Sans cette étiquette ou ce mot
+SearchTipTag	Documents with a tag	Documents avec une étiquette
+SearchTipStatus	Waiting for review, or status:reviewed	À traiter, ou status:reviewed
+SearchTipText	Not searchable yet, or text:present	Pas encore indexable, ou text:present
+SearchTipDated	The date on the paper	La date sur le papier
+SearchTipAdded	The day it was added	Le jour de son ajout
+SearchTipFolder	A folder and the folders in it	Un dossier et ses sous-dossiers
+SearchTipCapitals	Write AND, OR and NOT in capitals.	Écrivez AND, OR et NOT en majuscules.
+SearchFixTag	Use a tag of up to {0} printable characters, like tag:tax or tag:"Property tax".	Utilisez une étiquette de {0} caractères imprimables au plus, comme tag:impots ou tag:"Taxe foncière".
+SearchFixAdded	Use one date added, like added:2024-02, or dates that overlap.	Utilisez une date d’ajout, comme added:2024-02, ou des dates qui se chevauchent.
+SearchFixDated	Use one date on the paper, like dated:2024-02, or dates that overlap.	Utilisez une date du papier, comme dated:2024-02, ou des dates qui se chevauchent.
+SearchFixFolder	Use one folder or a folder inside it, like folder:"Filed/Tax".	Utilisez un seul dossier ou un dossier qu’il contient, comme folder:"Classé/Impôts".
+SearchFixStatus	Use one review status: status:inbox or status:reviewed.	Utilisez un seul état de vérification : status:inbox ou status:reviewed.
+SearchFixText	Use one text filter: text:missing or text:present.	Utilisez un seul filtre de texte : text:missing ou text:present.
+SearchFixDetail	Use a detail like type:lease, correspondent:"Northstar Properties", field:deposit or asn:123.	Utilisez un détail comme type:bail, correspondent:"Northstar Properties", field:caution ou asn:123.
+SearchFixExpression	Finish the expression, like (receipt OR invoice) -tag:archive.	Terminez l’expression, comme (reçu OR facture) -tag:archive.
+SearchFixEmpty	Type a word, a number or a filter.	Tapez un mot, un nombre ou un filtre.

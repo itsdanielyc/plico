@@ -180,6 +180,11 @@ internal sealed partial class InboxViewModel
 
             // A cancelled provider can still finish its read. Only the current request can publish its page.
             if (token.IsCancellationRequested) return;
+            if (page.QueryIssue is { } issue)
+            {
+                ShowQueryIssue(issue);
+                return;
+            }
             if (preserveView && (HasBatchSelection || HasExpandedResults ||
                 (SelectedDocument is { } open && !page.Items.Any(document => document.Id == open.Id))))
             {
@@ -204,13 +209,22 @@ internal sealed partial class InboxViewModel
     {
         CancelTypedSearch();
         var filter = CurrentFilter(append ? Documents.Count : 0);
-        UpdateResultHeading(filter);
-        if (_library is not { } library) return;
+        if (_library is not { } library)
+        {
+            UpdateResultHeading(filter);
+            return;
+        }
 
         try
         {
             bool reloadExpandedResults = retainLoadedResults && !append && HasExpandedResults && _appliedQuery == filter.Query;
             var page = reloadExpandedResults ? library.Find(filter, Documents.Count, CancellationToken.None) : library.Find(filter);
+            if (page.QueryIssue is { } issue)
+            {
+                ShowQueryIssue(issue);
+                return;
+            }
+            UpdateResultHeading(filter);
             if (reviewPosition is { } position && position.Filter == filter)
             {
                 preferredId = ChooseReviewResult(page.Items, position);
@@ -219,6 +233,7 @@ internal sealed partial class InboxViewModel
         }
         catch (Exception error)
         {
+            UpdateResultHeading(filter);
             ReportResultFailure(error);
         }
     }
@@ -259,33 +274,52 @@ internal sealed partial class InboxViewModel
         ReplaceResults(filter.Offset > 0 ? [.. Documents, .. page.Items] : page.Items, selection, reloadPreview);
         if (queryChanged && Preview is not null) UpdatePreviewHighlights();
         HasMore = page.HasMore;
-
-        if (page.QueryIssue is { } issue)
-        {
-            ResultCount = QueryIssueCount;
-            SetEmptyState(DesktopText.Translate("Check the search"), SearchCorrection(issue));
-            return;
-        }
+        SearchQueryHint = "";
 
         ResultCount = HasMore ? $"Showing {DocumentCount(Documents.Count)}" : DocumentCount(Documents.Count);
         if (filter.Tag is not null && !string.IsNullOrWhiteSpace(filter.Query)) ResultCount += $" in {filter.Tag}";
+        _shownResults = (ResultCount, EmptyTitle, EmptyMessage);
     }
 
-    /// <summary>The result count while a search cannot run; the empty state carries the correction.</summary>
-    private const string QueryIssueCount = "Check search";
+    /// <summary>
+    /// The one line under the search field while the typed search cannot run, saying how to repair it
+    /// ("Use one review status: status:inbox or status:reviewed."); empty while the search runs.
+    /// </summary>
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(HasSearchQueryHint))]
+    private string _searchQueryHint = "";
+
+    public bool HasSearchQueryHint => SearchQueryHint.Length > 0;
+
+    // What the queue said about the results it shows, so a search that cannot run leaves the count and the empty state
+    // of the last results that could.
+    private (string Count, string EmptyTitle, string EmptyMessage) _shownResults = ("", "", "");
+
+    /// <summary>
+    /// A typed search that cannot run keeps the last valid results, the open document and its page: only the line
+    /// under the field changes. Nothing moves in the queue, so the correction never lands in the narrow strip.
+    /// </summary>
+    private void ShowQueryIssue(SearchQueryIssue issue)
+    {
+        HasMore = false;
+        ResultCount = _shownResults.Count;
+        SetEmptyState(_shownResults.EmptyTitle, _shownResults.EmptyMessage);
+        SearchQueryHint = SearchCorrection(issue);
+    }
 
     private static string SearchCorrection(SearchQueryIssue issue) => issue switch
     {
         SearchQueryIssue.Tag =>
-            $"Use a tag of up to {InboxLibrary.MaximumTagNameLength} printable characters. Try tag:tax or tag:\"Property tax\".",
-        SearchQueryIssue.AddedDate => "Use a date such as added:2024-02. Added-date filters must overlap.",
-        SearchQueryIssue.DocumentDate => "Use a date such as dated:2024-02. Document-date filters must overlap.",
-        SearchQueryIssue.Folder => "Use a folder such as folder:\"Filed/Tax\". Use one folder or nested folders.",
-        SearchQueryIssue.ReviewStatus => "Use one review status. Try status:inbox or status:reviewed.",
-        SearchQueryIssue.TextAvailability => "Use one text filter. Try text:missing or text:present.",
-        SearchQueryIssue.StructuredMetadata => "Try type:lease, correspondent:\"Northstar Properties\", field:deposit, or asn:123.",
-        SearchQueryIssue.BooleanSyntax => "Complete the expression. Try (receipt OR invoice) -tag:archive.",
-        _ => "Enter a word, number, or search filter."
+            DesktopText.Format($"Use a tag of up to {InboxLibrary.MaximumTagNameLength} printable characters, like tag:tax or tag:\"Property tax\"."),
+        SearchQueryIssue.AddedDate => DesktopText.Translate("Use one date added, like added:2024-02, or dates that overlap."),
+        SearchQueryIssue.DocumentDate => DesktopText.Translate("Use one date on the paper, like dated:2024-02, or dates that overlap."),
+        SearchQueryIssue.Folder => DesktopText.Translate("Use one folder or a folder inside it, like folder:\"Filed/Tax\"."),
+        SearchQueryIssue.ReviewStatus => DesktopText.Translate("Use one review status: status:inbox or status:reviewed."),
+        SearchQueryIssue.TextAvailability => DesktopText.Translate("Use one text filter: text:missing or text:present."),
+        SearchQueryIssue.StructuredMetadata =>
+            DesktopText.Translate("Use a detail like type:lease, correspondent:\"Northstar Properties\", field:deposit or asn:123."),
+        SearchQueryIssue.BooleanSyntax => DesktopText.Translate("Finish the expression, like (receipt OR invoice) -tag:archive."),
+        _ => DesktopText.Translate("Type a word, a number or a filter.")
     };
 
     private void ReportResultFailure(Exception error)

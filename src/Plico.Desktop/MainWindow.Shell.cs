@@ -36,7 +36,7 @@ public partial class MainWindow
     private void ApplyWorkspaceLayout(double width)
     {
         // Window size changes arrive while the XAML is still loading, before the named grids exist.
-        if (ShellGrid is null || WorkspaceGrid is null || QueueHeader is null || PageColumn is null || double.IsNaN(width)) return;
+        if (ShellGrid is null || WorkspaceGrid is null || QueueHeader is null || QueueEmptyState is null || PageColumn is null || double.IsNaN(width)) return;
         bool compact = width < CompactWidth;
         bool medium = width < MediumWidth;
         ShellGrid.ColumnDefinitions[0].Width = new GridLength(compact ? 200 : medium ? 208 : 252);
@@ -48,6 +48,8 @@ public partial class MainWindow
         ShellGrid.Classes.Set("compact", compact);
         // Compact: the header spans the thumbnail strip and the page, and the page starts below it.
         Grid.SetColumnSpan(QueueHeader, compact ? 2 : 1);
+        // An empty queue explains itself across the strip and the page, so its sentence is never one word a line.
+        Grid.SetColumnSpan(QueueEmptyState, compact ? 2 : 1);
         Grid.SetRow(PageColumn, compact ? 1 : 0);
         Grid.SetRowSpan(PageColumn, compact ? 1 : 2);
     }

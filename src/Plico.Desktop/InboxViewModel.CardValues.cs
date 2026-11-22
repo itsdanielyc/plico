@@ -16,7 +16,7 @@ internal sealed partial class InboxViewModel
 
     /// <summary>"3 to review" in the Inbox; elsewhere the result count ("12 documents", "Searching…").</summary>
     public string QueueCountLabel => KeepNumberWithNoun(InboxSelected && HasInboxCount ? DesktopText.Format($"{InboxCount} to review")
-        : ResultCount == QueryIssueCount ? DesktopText.Translate("0 documents") : ResultCount);
+        : ResultCount);
 
     /// <summary>"61 documents" never breaks between the number and its noun when the count line wraps.</summary>
     private static string KeepNumberWithNoun(string count)
