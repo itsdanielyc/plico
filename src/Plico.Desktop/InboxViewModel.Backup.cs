@@ -38,6 +38,7 @@ internal sealed partial class InboxViewModel
         });
         var backup = await Task.Run(() => library.BackupAsync(destination, progress, token), token);
         LatestBackupLocation = backup.Location;
-        Status = DesktopText.Format($"Saved a backup of {DocumentCount(backup.PdfCount)} to {backup.Location}.");
+        Announce(DesktopText.Format($"Saved a backup of {DocumentCount(backup.PdfCount)} to {backup.Location}."), DesktopText.Translate("Backup saved"),
+            $"{DocumentCount(backup.PdfCount)} · {FriendlyPath(Path.GetDirectoryName(backup.Location) ?? backup.Location)}");
     });
 }

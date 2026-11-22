@@ -42,7 +42,7 @@ internal sealed partial class InboxViewModel
             string exported = await Task.Run(() =>
                 library.ExportHouseholdBinderAsync(request.DocumentIds, request.Title, destination, progress, token), token);
             NoteExport(Path.GetDirectoryName(exported)!);
-            Status = DesktopText.Format($"Exported {Path.GetFileName(exported)} to {LatestExportLocation}.");
+            AnnounceExport(DesktopText.Format($"Exported {Path.GetFileName(exported)} to {LatestExportLocation}."), Path.GetFileName(exported));
         });
     }
 }

@@ -1277,14 +1277,18 @@
                         <Border Grid.Column="1" Grid.RowSpan="2" x:Name="Toast" Classes="toast" Classes.low="{Binding !HasSelection}" HorizontalAlignment="Center" VerticalAlignment="Bottom"
                                 IsVisible="False" ZIndex="10">
                             <Grid ColumnDefinitions="Auto,*,Auto,Auto" ColumnSpacing="10">
-                                <Panel Width="18" Height="18" VerticalAlignment="Center">
+                                <Panel Width="18" Height="18" VerticalAlignment="Top" Margin="0,3,0,0">
                                     <local:Icon Data="{StaticResource Icon.Check}" Width="18" Height="18" StrokeWidth="1.8" Foreground="{DynamicResource OnFg}"
                                                 IsVisible="{Binding !StatusIsProblem}" />
                                     <local:Icon Data="{StaticResource Icon.AlertCircle}" Width="18" Height="18" StrokeWidth="1.8" Foreground="{DynamicResource ToastAlert}"
                                                 IsVisible="{Binding StatusIsProblem}" />
                                 </Panel>
-                                <TextBlock Grid.Column="1" Classes="toast-title" Text="{Binding Status}" VerticalAlignment="Center" Margin="0,3"
-                                           AutomationProperties.LiveSetting="Polite" />
+                                <!-- The title and body are never cut; the live region speaks the whole message of record. -->
+                                <StackPanel Grid.Column="1" Spacing="1" VerticalAlignment="Center" Margin="0,3">
+                                    <TextBlock Classes="toast-title" Text="{Binding ToastTitle}"
+                                               AutomationProperties.Name="{Binding Status}" AutomationProperties.LiveSetting="Polite" />
+                                    <TextBlock Classes="toast-body" Text="{Binding ToastBody}" IsVisible="{Binding HasToastBody}" />
+                                </StackPanel>
                                 <Panel Grid.Column="2" VerticalAlignment="Center">
                                     <Button x:Name="UndoButton" Classes="toast-action" Content="{translation:Tr UndoAction}" Command="{Binding UndoCommand}"
                                             IsVisible="{Binding ToastOffersUndo}" IsEnabled="{Binding CanWork}" ToolTip.Tip="{Binding UndoLabel}" />

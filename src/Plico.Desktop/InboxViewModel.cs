@@ -261,7 +261,8 @@ internal sealed partial class InboxViewModel : ObservableObject, IDisposable
     private void AddTag()
     {
         if (string.IsNullOrWhiteSpace(TagInput)) return;
-        if (UpdateDocument((library, document) => library.AddTag(document.Id, TagInput), DesktopText.Translate("Tag added."))) TagInput = "";
+        if (UpdateDocument((library, document) => library.AddTag(document.Id, TagInput), DesktopText.Translate("Tag added."),
+            new ToastText(DesktopText.Translate("Tag added"), $"“{TagInput.Trim()}”"))) TagInput = "";
     }
 
     [RelayCommand] private void PreviousPage() => NavigatePage(-1);
@@ -314,7 +315,8 @@ internal sealed partial class InboxViewModel : ObservableObject, IDisposable
         RefreshUnavailableCount();
         PrepareReminderPolling();
         Navigate(inboxOnly: true);
-        Status = watchNotice is null ? DesktopText.Translate("Library ready.") : DesktopText.Format($"Library ready. {watchNotice}");
+        if (watchNotice is null) Note(DesktopText.Translate("Library ready."));
+        else Status = DesktopText.Format($"Library ready. {watchNotice}");
         if (importNotice is not null) Status += $" {importNotice}";
         if (intakeNotice is not null) Status += $" {intakeNotice}";
         if (replacement.MoveRecoveryNotice is { } moveNotice) Status += $" {moveNotice}";
@@ -469,7 +471,7 @@ internal sealed partial class InboxViewModel : ObservableObject, IDisposable
         UpdateSelection(previous, SelectedDocument, reloadPreview);
     }
 
-    private bool UpdateDocument(Action<InboxLibrary, DocumentSummary> update, string success)
+    private bool UpdateDocument(Action<InboxLibrary, DocumentSummary> update, string success, ToastText? toast = null)
     {
         if (!CanWork || SelectedDocument is not { } document) return false;
         try
@@ -478,6 +480,7 @@ internal sealed partial class InboxViewModel : ObservableObject, IDisposable
             update(library, document);
             Tags = library.GetTags();
             LoadResults(document.Id);
+            _pendingToast = toast;
             Status = success;
             return true;
         }

@@ -885,3 +885,8 @@ WatchAFolderTitle	Watch a folder	Surveiller un dossier
 NothingUpcoming	Nothing upcoming	Rien à venir
 IncreaseValue	Increase	Augmenter
 DecreaseValue	Decrease	Diminuer
+ToastBackInInbox	Back in the Inbox	Renvoyé en réception
+ToastTagAdded	Tag added	Étiquette ajoutée
+ToastBackupSaved	Backup saved	Sauvegarde enregistrée
+ToastExported	Exported	Exporté
+ToastSearchableCopyAdded	Searchable copy added	Copie indexable ajoutée

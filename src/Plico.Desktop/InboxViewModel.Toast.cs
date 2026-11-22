@@ -1,3 +1,4 @@
+using System.Text.RegularExpressions;
 using CommunityToolkit.Mvvm.ComponentModel;
 
 namespace Plico.Desktop;
@@ -12,15 +13,28 @@ internal enum ToastOffer
     OcrResults
 }
 
+/// <summary>What a toast says: a short title in the family voice and an optional body line.</summary>
+internal readonly record struct ToastText(string Title, string? Body);
+
 /// <summary>
-/// What the ink toast says and offers. The message is <see cref="Status"/>; the action is the latest offer made, so
-/// "Exported…" carries Open export and "Marked as reviewed." carries Undo. Older offers stay in the command palette.
+/// What the ink toast says and offers. The message of record is <see cref="Status"/> (the live region and the log);
+/// the toast shows it as a short title with no full stop and an optional body ("Marked reviewed" over the document's
+/// title), never cut. The action is the latest offer made, so "Exported" carries Open export and "Marked reviewed"
+/// carries Undo. Older offers stay in the command palette.
 /// </summary>
 internal sealed partial class InboxViewModel
 {
+    // A sentence ends at a full stop, question mark or exclamation mark followed by space and a capital, a digit or
+    // an opening quote, so "58.50" and "PDFs/Inbox" stay whole.
+    private static readonly Regex SentenceEnd = new(@"[.!?](?=\s+[\p{Lu}\p{N}“""«])", RegexOptions.CultureInvariant);
+
     [ObservableProperty]
     [NotifyPropertyChangedFor(nameof(ToastOffersUndo), nameof(ToastOffersBackup), nameof(ToastOffersExport), nameof(ToastOffersOcrResults))]
     private ToastOffer _toastOffer;
+
+    private ToastText _toastText;
+    private ToastText? _pendingToast;
+    private bool _pendingQuiet;
 
     /// <summary>
     /// The latest message. It is raised on every assignment, even when the words repeat ("Tag added." twice), because
@@ -33,10 +47,30 @@ internal sealed partial class InboxViewModel
         {
             _status = value;
             _statusSerial++;
+            _toastText = _pendingToast ?? DescribeForToast(value);
+            _pendingToast = null;
+            ToastIsQuiet = _pendingQuiet;
+            _pendingQuiet = false;
+            RaiseDerived(nameof(ToastTitle));
+            RaiseDerived(nameof(ToastBody));
+            RaiseDerived(nameof(HasToastBody));
             OnPropertyChanged();
             RaiseToastOffers();
         }
     }
+
+    /// <summary>
+    /// A message the window already shows by itself, such as "Library ready." when a library opens: it is the message
+    /// of record and the live region, but raises no toast over the page.
+    /// </summary>
+    public bool ToastIsQuiet { get; private set; }
+
+    /// <summary>The toast's title: two to five words with no full stop ("Marked reviewed", "Backup saved").</summary>
+    public string ToastTitle => _toastText.Title;
+
+    /// <summary>The toast's second line at 84 %: what it was about or where it went ("Documents › Plico backups").</summary>
+    public string ToastBody => _toastText.Body ?? "";
+    public bool HasToastBody => !string.IsNullOrEmpty(_toastText.Body);
 
     // Counts status messages, so an offer travels with the message that follows it and not with later, unrelated ones
     // ("Tag added." never carries the Undo of an earlier review). Ctrl+Z and the palette still reach every offer.
@@ -62,6 +96,54 @@ internal sealed partial class InboxViewModel
                 || status.Contains("didn't", StringComparison.Ordinal) || status.Contains(" failed", StringComparison.Ordinal)
                 || status.Contains("échou", StringComparison.Ordinal);
         }
+    }
+
+    /// <summary>Sets the message of record without a toast, for news the window already shows.</summary>
+    private void Note(string status)
+    {
+        _pendingQuiet = true;
+        Status = status;
+    }
+
+    /// <summary>Sets the message of record and gives its toast a short title and an optional body.</summary>
+    private void Announce(string status, string title, string? body = null)
+    {
+        _pendingToast = new ToastText(title, string.IsNullOrWhiteSpace(body) ? null : body);
+        Status = status;
+    }
+
+    /// <summary>Announces a finished export: "Exported" over what was exported and the folder it went to.</summary>
+    private void AnnounceExport(string status, string what) =>
+        Announce(status, DesktopText.Translate("Exported"), $"{what} · {FriendlyPath(LatestExportLocation)}");
+
+    /// <summary>
+    /// The toast's words for a message that did not choose its own: the first sentence as the title without its full
+    /// stop, the rest as the body, and folders the person knows written as friendly paths instead of raw ones.
+    /// O(n) in the message length.
+    /// </summary>
+    private ToastText DescribeForToast(string? status)
+    {
+        string text = (status ?? "").Trim();
+        foreach (string? location in new[] { LatestBackupLocation, LatestExportLocation, LibraryPath })
+            if (!string.IsNullOrEmpty(location) && Path.IsPathRooted(location))
+                text = text.Replace(location, FriendlyPath(location), StringComparison.Ordinal);
+        var end = SentenceEnd.Match(text);
+        string title = end.Success ? text[..(end.Index + 1)] : text;
+        string? body = end.Success ? text[(end.Index + 1)..].Trim() : null;
+        return new ToastText(WithoutFullStop(title), string.IsNullOrEmpty(body) ? null : body);
+    }
+
+    private static string WithoutFullStop(string title) =>
+        title.EndsWith('.') && !title.EndsWith("..", StringComparison.Ordinal) ? title[..^1] : title;
+
+    /// <summary>
+    /// A folder as a person reads it: "Documents › Plico backups" inside their home folder, and only the last two
+    /// steps of a deeper path ("… › Plico › Exports").
+    /// </summary>
+    internal static string FriendlyPath(string? folder)
+    {
+        string[] steps = HomeRelativeSteps(folder);
+        return steps.Length <= 3 ? string.Join(PathSeparator, steps) : "…" + PathSeparator + string.Join(PathSeparator, steps[^2..]);
     }
 
     /// <summary>Records an export destination and offers it, even when it is the same folder as the last export.</summary>

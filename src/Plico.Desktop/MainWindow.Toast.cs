@@ -65,6 +65,11 @@ public partial class MainWindow
     private void ShowToast(InboxViewModel model)
     {
         if (string.IsNullOrWhiteSpace(model.Status)) return;
+        if (model.ToastIsQuiet)
+        {
+            HideToast();
+            return;
+        }
         bool entering = !Toast.IsVisible;
         Toast.IsVisible = true;
         if (entering) PlayToastEntrance();

@@ -14,22 +14,21 @@ internal sealed partial class InboxViewModel
     public string WatchedFolderSummary => IsWatchingFolder ? DesktopText.Format($"Watching {WatchedFolderName}") : "";
 
     /// <summary>The library folder as a person reads it: "Documents › Plico" inside their home folder.</summary>
-    public string FriendlyLibraryPath
+    public string FriendlyLibraryPath => string.Join(PathSeparator, HomeRelativeSteps(LibraryPath));
+
+    /// <summary>A folder's steps, starting inside the person's home folder when it is there. O(n) in the path length.</summary>
+    private static string[] HomeRelativeSteps(string? folder)
     {
-        get
+        if (string.IsNullOrEmpty(folder)) return [];
+        string path = Path.TrimEndingDirectorySeparator(folder);
+        string home = Environment.GetFolderPath(Environment.SpecialFolder.UserProfile);
+        if (home.Length > 0)
         {
-            if (string.IsNullOrEmpty(LibraryPath)) return "";
-            string path = Path.TrimEndingDirectorySeparator(LibraryPath);
-            string home = Environment.GetFolderPath(Environment.SpecialFolder.UserProfile);
-            if (home.Length > 0)
-            {
-                string relative = Path.GetRelativePath(home, path);
-                if (relative != "." && !relative.StartsWith("..", StringComparison.Ordinal) && !Path.IsPathRooted(relative))
-                    path = relative;
-            }
-            return string.Join(PathSeparator, path.Split([Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar],
-                StringSplitOptions.RemoveEmptyEntries));
+            string relative = Path.GetRelativePath(home, path);
+            if (relative != "." && !relative.StartsWith("..", StringComparison.Ordinal) && !Path.IsPathRooted(relative))
+                path = relative;
         }
+        return path.Split([Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar], StringSplitOptions.RemoveEmptyEntries);
     }
 
     /// <summary>"Watching Phone", for an active phone inbox watch.</summary>

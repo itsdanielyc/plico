@@ -72,7 +72,8 @@ internal sealed partial class InboxViewModel
             OfferReviewUndo([document.Id], reviewed);
             RefreshInboxCount();
             LoadResults(document.Id, retainLoadedResults: true, reviewPosition: position);
-            Status = reviewed ? DesktopText.Translate("Marked as reviewed.") : DesktopText.Translate("Returned to inbox.");
+            Announce(reviewed ? DesktopText.Translate("Marked as reviewed.") : DesktopText.Translate("Returned to inbox."),
+                reviewed ? DesktopText.Translate("Marked reviewed") : DesktopText.Translate("Back in the Inbox"), document.Title);
         }
         catch (Exception error)
         {

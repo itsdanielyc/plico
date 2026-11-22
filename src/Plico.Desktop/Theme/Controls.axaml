@@ -745,19 +745,18 @@
         <Setter Property="MaxWidth" Value="380" />
         <Setter Property="TextElement.Foreground" Value="{DynamicResource OnFg}" />
     </Style>
+    <!-- A toast is the message, so its words wrap and are never cut. -->
     <Style Selector="Border.toast TextBlock.toast-title">
         <Setter Property="FontSize" Value="14" />
         <Setter Property="FontWeight" Value="SemiBold" />
+        <Setter Property="LineHeight" Value="19" />
         <Setter Property="TextWrapping" Value="Wrap" />
-        <Setter Property="MaxLines" Value="2" />
-        <Setter Property="TextTrimming" Value="CharacterEllipsis" />
     </Style>
     <Style Selector="Border.toast TextBlock.toast-body">
         <Setter Property="FontSize" Value="13" />
+        <Setter Property="LineHeight" Value="18" />
         <Setter Property="Opacity" Value="0.84" />
         <Setter Property="TextWrapping" Value="Wrap" />
-        <Setter Property="MaxLines" Value="2" />
-        <Setter Property="TextTrimming" Value="CharacterEllipsis" />
     </Style>
     <Style Selector="Border.toast Button.toast-action">
         <Setter Property="MinHeight" Value="28" />

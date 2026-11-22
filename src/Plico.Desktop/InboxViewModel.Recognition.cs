@@ -25,7 +25,10 @@ internal sealed partial class InboxViewModel
             var result = await Task.Run(() => library.CreateSearchableCopyAsync(scan.Id, token, language), token);
             if (result.Added) RefreshInboxCount();
             Navigate(inboxOnly: !result.Document.Reviewed, preferredId: result.Document.Id);
-            Status = result.Added ? DesktopText.Translate("Searchable copy added to inbox.") : DesktopText.Translate("Searchable copy already in the library.");
+            if (result.Added)
+                Announce(DesktopText.Translate("Searchable copy added to inbox."), DesktopText.Translate("Searchable copy added"), DesktopText.Translate("In the Inbox"));
+            else
+                Status = DesktopText.Translate("Searchable copy already in the library.");
         });
     }
 

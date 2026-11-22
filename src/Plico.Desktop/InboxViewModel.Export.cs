@@ -35,7 +35,7 @@ internal sealed partial class InboxViewModel
             Status = options.Format == PdfExportFormat.PdfA ? DesktopText.Translate("Creating an archival PDF…") : DesktopText.Translate("Copying PDF…");
             string export = await Task.Run(() => library.ExportPdfAsync(document.Id, destination, options, token), token);
             NoteExport(Path.GetDirectoryName(export)!);
-            Status = DesktopText.Format($"Exported {Path.GetFileName(export)} to {LatestExportLocation}.");
+            AnnounceExport(DesktopText.Format($"Exported {Path.GetFileName(export)} to {LatestExportLocation}."), Path.GetFileName(export));
         });
     }
 
@@ -63,7 +63,7 @@ internal sealed partial class InboxViewModel
             });
             var export = await Task.Run(() => library.ExportPdfsAsync(selectedIds, destination, progress, token), token);
             NoteExport(export.Location);
-            Status = DesktopText.Format($"Exported {DocumentCount(export.PdfCount)} to {export.Location}.");
+            AnnounceExport(DesktopText.Format($"Exported {DocumentCount(export.PdfCount)} to {export.Location}."), DocumentCount(export.PdfCount));
         });
     }
 

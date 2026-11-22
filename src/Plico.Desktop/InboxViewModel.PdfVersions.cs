@@ -64,7 +64,7 @@ internal sealed partial class InboxViewModel
                 }
                 string exported = await Task.Run(() => library.ExportPdfVersionAsync(document.Id, choice.Key, destination, token), token);
                 NoteExport(Path.GetDirectoryName(exported)!);
-                Status = DesktopText.Format($"Exported {Path.GetFileName(exported)} to {LatestExportLocation}.");
+                AnnounceExport(DesktopText.Format($"Exported {Path.GetFileName(exported)} to {LatestExportLocation}."), Path.GetFileName(exported));
                 return;
             }
             if (choice.Action == PdfVersionAction.Restore)
