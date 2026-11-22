@@ -22,8 +22,10 @@ internal readonly record struct ToastText(string Title, string? Body);
 /// optional body ("Marked reviewed" over the document's title), never cut. While work runs, its lines go to the status
 /// card (<see cref="WorkStatus"/>) and its last message becomes the toast when it ends; work that ends on a line still
 /// in progress ("Set the archive number…") has nothing to say and raises no toast. An edit the person makes meanwhile
-/// is news at once (<see cref="ToastIsForeground"/>). The action is the latest offer made, so "Exported" carries Open
-/// export and "Marked reviewed" carries Undo. Undo has one offer at a time (see <see cref="UndoOffer"/>), which Ctrl+Z
+/// is news at once (<see cref="ToastIsForeground"/>). A choice Settings saves on the spot meanwhile (the theme, the
+/// interface language) is Settings' news, for the line at the foot of its sheet: never a line of the work, and no toast
+/// over the page while the work runs. The action is the latest offer made, so "Exported" carries Open export and
+/// "Marked reviewed" carries Undo. Undo has one offer at a time (see <see cref="UndoOffer"/>), which Ctrl+Z
 /// and the palette reach after the toast has gone.
 /// </summary>
 internal sealed partial class InboxViewModel
@@ -57,6 +59,9 @@ internal sealed partial class InboxViewModel
     // once, even while work runs.
     private int _editsInHand;
 
+    // Above zero while a choice Settings saves on the spot (the theme, the interface language) is saved; see SaveChoice.
+    private int _choicesInHand;
+
     /// <summary>
     /// The latest message, a line of the work in hand included. It is raised on every assignment, even when the words
     /// repeat ("Tag added." twice), because each one is a new event.
@@ -74,8 +79,8 @@ internal sealed partial class InboxViewModel
             _pendingQuiet = false;
             _pendingProblem = false;
             _statusIsProblem = problem;
-            if (IsBusy && _editsInHand == 0) NoteWorkLine(value, toast, quiet, problem);
-            else ShowMessage(value, toast, quiet, foreground: IsBusy, problem);
+            if (IsBusy && _editsInHand == 0 && _choicesInHand == 0) NoteWorkLine(value, toast, quiet, problem);
+            else ShowMessage(value, toast, quiet, foreground: IsBusy && _editsInHand > 0, problem);
             OnPropertyChanged();
         }
     }

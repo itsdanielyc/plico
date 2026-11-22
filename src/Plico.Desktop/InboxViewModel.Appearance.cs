@@ -43,16 +43,10 @@ internal sealed partial class InboxViewModel
         set
         {
             if (value < 0 || !Enum.IsDefined((InterfaceLanguage)value) || (InterfaceLanguage)value == _appearance.Language) return;
-            var chosen = _appearance with { Language = (InterfaceLanguage)value };
             try
             {
-                _saveAppearance?.Invoke(chosen);
-                _appearance = chosen;
-                Status = DesktopText.Translate("Appearance saved. Reopen Plico to switch the interface language.");
-            }
-            catch (Exception error) when (error is IOException or UnauthorizedAccessException or ArgumentException)
-            {
-                Fail(error.Message);
+                SaveChoice(_appearance with { Language = (InterfaceLanguage)value },
+                    DesktopText.Translate("Appearance saved. Reopen Plico to switch the interface language."));
             }
             finally
             {
@@ -80,12 +74,29 @@ internal sealed partial class InboxViewModel
     private void ChooseTheme(AppearanceTheme theme)
     {
         if (_appearance.Theme == theme) return;
-        var chosen = _appearance with { Theme = theme };
+        try
+        {
+            SaveChoice(_appearance with { Theme = theme }, DesktopText.Translate("Appearance saved."));
+        }
+        finally
+        {
+            NotifyThemeChoice();
+        }
+    }
+
+    /// <summary>
+    /// Saves an appearance chosen in Settings on the spot and says <paramref name="saved"/>, or why it could not be
+    /// saved. Settings is open over the main window then, so this is Settings' news even while Plico works: it goes to
+    /// the line at the foot of Settings' sheet, never to the status card as a line of the work.
+    /// </summary>
+    private void SaveChoice(AppearanceOptions chosen, string saved)
+    {
+        _choicesInHand++;
         try
         {
             _saveAppearance?.Invoke(chosen);
             _appearance = chosen;
-            Status = DesktopText.Translate("Appearance saved.");
+            Status = saved;
         }
         catch (Exception error) when (error is IOException or UnauthorizedAccessException or ArgumentException)
         {
@@ -93,7 +104,7 @@ internal sealed partial class InboxViewModel
         }
         finally
         {
-            NotifyThemeChoice();
+            _choicesInHand--;
         }
     }
 

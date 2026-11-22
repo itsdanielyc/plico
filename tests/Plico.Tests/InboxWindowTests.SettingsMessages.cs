@@ -270,6 +270,76 @@ public sealed partial class InboxWindowTests
         Assert.False(window.IsActive, $"{window.GetType().Name} is still active after its platform said it was not.");
     }
 
+    [AvaloniaTheory]
+    [InlineData("theme")]
+    [InlineData("language")]
+    public async Task AChoiceSettingsSavesWhilePlicoWorksIsSaidInSettingsAndLeavesTheCardToTheWork(string choice)
+    {
+        using var temporary = new TemporaryLibrary();
+        using (var library = InboxLibrary.Open(temporary.Path)) BatchFixtures.AddTwoDocuments(library, TestContext.Current.CancellationToken);
+        var pending = new TaskCompletionSource<TrashDecision?>();
+        using var model = new InboxViewModel(new FixtureDialogs { TrashChoice = _ => pending.Task });
+        model.InitializeLibrary(() => temporary.Path);
+        var window = new MainWindow { DataContext = model, Width = 1280, Height = 800 };
+        window.Show();
+        Task? work = null;
+        try
+        {
+            await WaitForPreviewAsync(model);
+            var settings = OpenSettingsAt(window, "GeneralGroup");
+            var line = Assert.IsType<TextBlock>(settings.FindControl<TextBlock>("SettingsMessage"));
+            var bar = Assert.IsType<Border>(settings.FindControl<Border>("SettingsMessageBar"));
+            var toast = Assert.IsType<Border>(window.FindControl<Border>("Toast"));
+
+            // Work begins (Trash left open holds Plico busy, as a watched folder's import does); the status card says so.
+            work = model.OpenTrashCommand.ExecuteAsync(null);
+            Dispatcher.UIThread.RunJobs();
+            Assert.True(model.IsBusy);
+            string working = model.StatusCardTitle;
+
+            // The person chooses the dark theme with the pointer, or another interface language from the keyboard; each
+            // is saved on the spot, while Plico works.
+            string said;
+            if (choice == "theme")
+            {
+                ClickAt(settings, settings.GetVisualDescendants().OfType<RadioButton>()
+                    .Single(card => AutomationProperties.GetName(card) == "Dark"));
+                Assert.True(model.UsesDarkTheme);
+                said = "Appearance saved.";
+            }
+            else
+            {
+                var language = Assert.IsType<ComboBox>(settings.FindControl<ComboBox>("InterfaceLanguageBox"));
+                TabTo(settings, language);
+                PressKey(settings, Key.Down, PhysicalKey.ArrowDown);
+                Assert.Equal(1, model.InterfaceLanguageIndex);
+                said = "Appearance saved. Reopen Plico to switch the interface language.";
+            }
+            settings.UpdateLayout();
+            Assert.True(bar.IsVisible && line.Text == said,
+                $"Settings' line says “{(bar.IsVisible ? line.Text : "")}”, and the status card says “{model.StatusCardTitle}”.");
+            Assert.Equal(working, model.StatusCardTitle);
+            // The main window's news waits for the work.
+            Assert.False(toast.IsVisible, $"The main window's toast rose under Settings while Plico works, saying “{model.ToastTitle}”.");
+
+            // When the work ends, its own result rises in the main window, and Settings' line keeps the choice.
+            pending.SetResult(null);
+            await work;
+            work = null;
+            Dispatcher.UIThread.RunJobs();
+            Assert.True(toast.IsVisible, $"No toast rose when the work ended; the toast would say “{model.ToastTitle}”.");
+            Assert.Equal("Trash is empty", model.ToastTitle);
+            Assert.Equal(said, line.Text);
+            settings.Close();
+        }
+        finally
+        {
+            pending.TrySetResult(null);
+            if (work is not null) await work;
+            window.Close();
+        }
+    }
+
     [AvaloniaFact]
     public async Task TheRapidOcrSwitchWaitsWhilePlicoWorks()
     {
