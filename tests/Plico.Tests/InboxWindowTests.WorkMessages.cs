@@ -10,8 +10,8 @@ namespace Plico.Tests;
 
 /// <summary>
 /// Messages and the work in hand, with the keyboard and the pointer a person uses. Work that ends with nothing to say
-/// raises no toast, so an old message or the work's own "…" never rises as news; an edit made while Plico works shows
-/// its own toast and Undo at once, while the status card keeps saying what the work is doing.
+/// raises no toast, so an old message or the work's own "…" never rises as news; an edit made while Plico works (a tag,
+/// a title, a date) shows its own toast and Undo at once, while the status card keeps saying what the work is doing.
 /// </summary>
 public sealed partial class InboxWindowTests
 {
@@ -174,6 +174,42 @@ public sealed partial class InboxWindowTests
             ClickAt(window, undo);
             Assert.DoesNotContain("Lease", model.SelectedDocument!.Tags);
             Assert.False(model.HasUndo);
+            Assert.True(model.IsBusy);
+
+            // A title renamed with E while Plico works: "Renamed" rises over the new title at once, and its Undo puts the
+            // old title back while the work goes on.
+            string title = model.SelectedDocument!.Title;
+            PressKey(window, Key.E, PhysicalKey.E, "e");
+            TypeText(window, "Typed while busy");
+            PressKey(window, Key.Enter, PhysicalKey.Enter);
+            Assert.Equal("Typed while busy", model.SelectedDocument!.Title);
+            Assert.True(toast.IsVisible, "The title renamed while Plico works raised no toast.");
+            Assert.Equal(("Renamed", "“Typed while busy”"), (model.ToastTitle, model.ToastBody));
+            Assert.True(undo.IsEffectivelyVisible && undo.IsEffectivelyEnabled, "The rename's Undo is missing or turned off while Plico works.");
+            Assert.Equal(working, model.StatusCardTitle);
+            ClickAt(window, undo);
+            Assert.Equal(title, model.SelectedDocument!.Title);
+            Assert.False(model.HasUndo);
+            Assert.Equal(working, model.StatusCardTitle);
+            Assert.True(model.IsBusy);
+
+            // A date typed with D while Plico works: "Date set" rises over the day at once, and its Undo puts the old
+            // date back while the work goes on.
+            var dateField = Named<TextBox>(window, "DocumentDateField");
+            DateOnly? date = model.SelectedDocument!.DocumentDate;
+            PressKey(window, Key.D, PhysicalKey.D, "d");
+            Assert.True(dateField.IsFocused, $"D put the keyboard on {KeyboardOwner(window)}.");
+            TypeText(window, "4 Jul 2025");
+            PressKey(window, Key.Enter, PhysicalKey.Enter);
+            Assert.Equal(new DateOnly(2025, 7, 4), model.SelectedDocument!.DocumentDate);
+            Assert.True(toast.IsVisible, "The date set while Plico works raised no toast.");
+            Assert.Equal(("Date set", "4 Jul 2025"), (model.ToastTitle, model.ToastBody));
+            Assert.True(undo.IsEffectivelyVisible && undo.IsEffectivelyEnabled, "The date's Undo is missing or turned off while Plico works.");
+            Assert.Equal(working, model.StatusCardTitle);
+            ClickAt(window, undo);
+            Assert.Equal(date, model.SelectedDocument!.DocumentDate);
+            Assert.False(model.HasUndo);
+            Assert.Equal(working, model.StatusCardTitle);
             Assert.True(model.IsBusy);
 
             // A tag the document already has says so at once.
