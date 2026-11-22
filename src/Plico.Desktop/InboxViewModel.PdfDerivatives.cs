@@ -91,7 +91,7 @@ internal sealed partial class InboxViewModel
 
     private void ReportEditedPdfExport(string path)
     {
-        LatestExportLocation = Path.GetDirectoryName(path)!;
+        NoteExport(Path.GetDirectoryName(path)!);
         Status = DesktopText.Format($"Exported {Path.GetFileName(path)} to {LatestExportLocation}.");
     }
 }

@@ -82,7 +82,7 @@ internal sealed partial class InboxViewModel
                 var destination = await _dialogs.PickFolderAsync(DesktopText.Translate("Choose where to save the calendar"));
                 if (destination is null) { Status = DesktopText.Translate("Calendar destination not chosen."); break; }
                 string path = await Task.Run(() => library.ExportDeadlinesAsync(destination, cancellationToken: token), token);
-                LatestExportLocation = Path.GetDirectoryName(path);
+                NoteExport(Path.GetDirectoryName(path));
                 Status = DesktopText.Format($"Exported {Path.GetFileName(path)}.");
                 break;
             default:

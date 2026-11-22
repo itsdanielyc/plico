@@ -36,7 +36,7 @@ internal sealed partial class InboxViewModel
             string path = await Task.Run(() => csv
                 ? library.ExportSearchCsvAsync(filter, directory, token)
                 : library.ExportMetadataAsync(directory, token), token);
-            LatestExportLocation = Path.GetDirectoryName(path);
+            NoteExport(Path.GetDirectoryName(path));
             Status = DesktopText.Format($"Exported {Path.GetFileName(path)}.");
         });
     }

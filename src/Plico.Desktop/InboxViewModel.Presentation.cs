@@ -54,6 +54,8 @@ internal sealed partial class InboxViewModel
                 break;
         }
         if (IsStatusCardInput(e.PropertyName)) NotifyStatusCard();
+        TrackToastOffer(e.PropertyName);
+        NotifyCardValues(e.PropertyName);
     }
 
     /// <summary>Raises a composed property without running the input checks again, so composition cannot loop.</summary>
