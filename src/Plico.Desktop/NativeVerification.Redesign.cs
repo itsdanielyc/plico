@@ -19,6 +19,18 @@ internal static partial class NativeVerification
         Require(model.ShowWelcome, $"An empty library did not open on the welcome page. {model.Status}");
         await CaptureAsync(window, evidence, "welcome.png");
 
+        // The welcome page fits the minimum window without scrolling, and its decorative mark gives way first.
+        window.Width = window.MinWidth;
+        window.Height = window.MinHeight;
+        var welcomeScroll = (ScrollViewer)Control<StackPanel>(window, "WelcomePage").Parent!;
+        await UntilAsync(() => welcomeScroll.Viewport.Width is > 0 and < 700,
+            () => $"The window did not reach its minimum size. {welcomeScroll.Viewport}");
+        Require(welcomeScroll.Extent.Height <= welcomeScroll.Viewport.Height + 1 && welcomeScroll.Extent.Width <= welcomeScroll.Viewport.Width + 1,
+            $"The welcome page did not fit {window.MinWidth} x {window.MinHeight}: {welcomeScroll.Extent} in {welcomeScroll.Viewport}.");
+        await CaptureAsync(window, evidence, "welcome-compact.png");
+        window.Width = 1280;
+        window.Height = 800;
+
         window.RaiseEvent(new KeyEventArgs { RoutedEvent = InputElement.KeyDownEvent, Key = Key.K, KeyModifiers = KeyModifiers.Control });
         var palette = Control<Border>(window, "PaletteOverlay");
         var query = Control<TextBox>(window, "PaletteQuery");

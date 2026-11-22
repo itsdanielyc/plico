@@ -372,6 +372,14 @@
             <Setter Property="ColumnSpacing" Value="16" />
         </Style>
 
+        <!-- The toast sits 16 px above the page bar (14 below it, 40 tall), or 16 px from the bottom when no page is open. -->
+        <Style Selector="Border#Toast">
+            <Setter Property="Margin" Value="16,0,16,70" />
+        </Style>
+        <Style Selector="Border#Toast.low">
+            <Setter Property="Margin" Value="16,0,16,16" />
+        </Style>
+
         <Style Selector="Border.overlay-scrim">
             <Setter Property="Background" Value="{DynamicResource Scrim}" />
         </Style>
@@ -1158,7 +1166,7 @@
                                 </Panel>
 
                                 <ScrollViewer IsVisible="{Binding ShowWelcome}" HorizontalScrollBarVisibility="Disabled">
-                                    <StackPanel x:Name="WelcomePage" Margin="44,34,44,24" MaxWidth="832" HorizontalAlignment="Left" Spacing="20">
+                                    <StackPanel x:Name="WelcomePage" Margin="44,34,44,20" MaxWidth="832" HorizontalAlignment="Left" Spacing="16">
                                         <!-- The hero: the graphite tile, a soft light at 78 % 40 %, the welcome and the two ways in. -->
                                         <Border CornerRadius="{DynamicResource RadiusHero}" Background="{DynamicResource Tile}" BoxShadow="inset 0 1 0 0 #24FFFFFF" ClipToBounds="True">
                                             <Panel>
@@ -1266,8 +1274,8 @@
                             page bar, so it never covers the filing card where Mark reviewed lives. It carries the latest
                             message and at most one action; progress and attention live on the sidebar's status card.
                         -->
-                        <Border Grid.Column="1" Grid.RowSpan="2" x:Name="Toast" Classes="toast" HorizontalAlignment="Center" VerticalAlignment="Bottom"
-                                Margin="16,0,16,70" IsVisible="False" ZIndex="10">
+                        <Border Grid.Column="1" Grid.RowSpan="2" x:Name="Toast" Classes="toast" Classes.low="{Binding !HasSelection}" HorizontalAlignment="Center" VerticalAlignment="Bottom"
+                                IsVisible="False" ZIndex="10">
                             <Grid ColumnDefinitions="Auto,*,Auto,Auto" ColumnSpacing="10">
                                 <Panel Width="18" Height="18" VerticalAlignment="Center">
                                     <local:Icon Data="{StaticResource Icon.Check}" Width="18" Height="18" StrokeWidth="1.8" Foreground="{DynamicResource OnFg}"
