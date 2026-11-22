@@ -121,7 +121,8 @@ public sealed partial class InboxWindowTests
             Assert.Contains(suggestion, field.GetVisualDescendants());
             Assert.Equal("3 Apr 2026", model.SuggestedDateLabel);
 
-            suggestion.Command!.Execute(suggestion.CommandParameter);
+            // The headless renderer finds a dashed chip by its outline, so the click lands just inside its left edge.
+            ClickAt(window, suggestion, new Point(2, suggestion.Bounds.Height / 2));
             Assert.Equal(new DateOnly(2026, 4, 3), model.SelectedDocument!.DocumentDate);
             Assert.Equal("3 Apr 2026", field.Text);
             Assert.False(suggestion.IsEffectivelyVisible);

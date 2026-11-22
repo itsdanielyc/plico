@@ -63,7 +63,12 @@ public partial class MainWindow
 
     // ───────── Keyboard ─────────
 
-    private bool IsTyping => FocusManager?.GetFocusedElement() is TextBox or AutoCompleteBox or ComboBox { IsDropDownOpen: true }
+    /// <summary>
+    /// True while keys belong to a field: a text or tag field has the keyboard, a list is open, or the date's calendar is
+    /// open (its days take the keyboard while one is chosen), so letters are text and never single-key shortcuts.
+    /// </summary>
+    private bool IsTyping => DocumentDatePicker.IsOpen
+        || FocusManager?.GetFocusedElement() is TextBox or AutoCompleteBox or ComboBox { IsDropDownOpen: true }
         || FocusManager?.GetFocusedElement() is Visual visual && visual.FindAncestorOfType<AutoCompleteBox>() is not null;
 
     private bool IsOverlayOpen => PaletteOverlay.IsVisible || ShortcutsOverlay.IsVisible;

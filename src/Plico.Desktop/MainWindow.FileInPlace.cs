@@ -32,8 +32,10 @@ public partial class MainWindow
         TagBox.AddHandler(KeyDownEvent, TagBox_KeyDown, RoutingStrategies.Bubble, handledEventsToo: true);
         DocumentDateField.LostFocus += (_, e) =>
         {
-            // The field's own buttons lose focus too, and the calendar takes it while a day is being chosen.
-            if (!ReferenceEquals(e.Source, DocumentDateField) || DocumentDatePicker.IsOpen) return;
+            // A day in the open calendar takes the keyboard while it is chosen, and saves itself. Anywhere else, the
+            // calendar closes with the field and what was typed is saved, as when it is closed.
+            if (!ReferenceEquals(e.Source, DocumentDateField) || MovesIntoCalendar(e)) return;
+            DocumentDatePicker.IsOpen = false;
             if (MovesIntoToast(e)) ViewModel?.RestoreDocumentDateText();
             else ViewModel?.CommitDocumentDate(reloadAfterInput: true);
         };
@@ -69,6 +71,11 @@ public partial class MainWindow
 
     /// <summary>True when the keyboard is going to one of the toast's buttons, such as Undo, by a click or by Tab.</summary>
     private bool MovesIntoToast(FocusChangedEventArgs e) => e.NewFocusedElement is Visual next && Toast.IsVisualAncestorOf(next);
+
+    /// <summary>True when the keyboard is going into the date's open calendar, to a day being chosen.</summary>
+    private bool MovesIntoCalendar(FocusChangedEventArgs e) =>
+        DocumentDatePicker is { IsOpen: true, Child: Visual popover } && e.NewFocusedElement is Visual next &&
+        (ReferenceEquals(next, popover) || popover.IsVisualAncestorOf(next));
 
     private bool InSettledField(InboxViewModel model) => FocusManager?.GetFocusedElement() switch
     {
@@ -116,8 +123,13 @@ public partial class MainWindow
         if (ViewModel is not { } model) return;
         switch (e.Key)
         {
-            case Key.Enter: model.CommitDocumentDate(); break;
+            // Escape closes the open calendar first, the topmost layer; with it closed, Escape puts the saved date back.
+            case Key.Escape when DocumentDatePicker.IsOpen: DocumentDatePicker.IsOpen = false; break;
             case Key.Escape: model.RestoreDocumentDateText(); break;
+            case Key.Enter:
+                DocumentDatePicker.IsOpen = false;
+                model.CommitDocumentDate();
+                break;
             default: return;
         }
         e.Handled = true;
@@ -127,7 +139,21 @@ public partial class MainWindow
         else DocumentDateField.ClearSelection();
     }
 
-    /// <summary>Opens the calendar at the saved date, or at the suggested date or today when there is none.</summary>
+    /// <summary>
+    /// Files the suggested date from its chip in the field. The keyboard stays in the field with that date selected, as
+    /// after Enter, so a different date is one more typed over it.
+    /// </summary>
+    private void AcceptSuggestedDate_Click(object? sender, RoutedEventArgs e)
+    {
+        if (ViewModel is not { } model) return;
+        Run(model.AcceptSuggestedDateCommand);
+        FocusDocumentDate();
+    }
+
+    /// <summary>
+    /// Opens the calendar at the saved date, or at the suggested date or today when there is none. The keyboard stays in
+    /// the field with its date selected, so a date can be typed instead of chosen, and Escape closes the calendar.
+    /// </summary>
     private void OpenDocumentDateCalendar_Click(object? sender, RoutedEventArgs e)
     {
         if (ViewModel is not { HasLibrary: true, SelectedDocument: { } document } model) return;
@@ -148,6 +174,7 @@ public partial class MainWindow
         {
             _showingDocumentDate = false;
         }
+        FocusDocumentDate();
         DocumentDatePicker.IsOpen = true;
     }
 

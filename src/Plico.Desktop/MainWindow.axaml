@@ -1309,7 +1309,9 @@
                                                 <!--
                                                     The date is typed where it is shown, as the interface writes it, with its calendar at the left.
                                                     While it is empty the dashed suggestion sits inside it (or the D keycap when there is none),
-                                                    and a saved date has a clear button. Enter or leaving saves; Escape restores.
+                                                    and a saved date has a clear button. Enter or leaving saves; Escape restores. The glyph, the
+                                                    suggestion and the clear button never take the keyboard, so it stays in the field for the
+                                                    next date.
                                                 -->
                                                 <StackPanel Grid.Column="1" Spacing="4">
                                                     <TextBox x:Name="DocumentDateField" Classes="date-field" Classes.invalid="{Binding HasDocumentDateError}"
@@ -1318,7 +1320,7 @@
                                                              AutomationProperties.Name="{translation:Tr EditDocumentDate}">
                                                         <TextBox.InnerLeftContent>
                                                             <Button x:Name="DocumentDateCalendarButton" Classes="field-glyph" Click="OpenDocumentDateCalendar_Click" Margin="2,0,0,0"
-                                                                    IsTabStop="False" ToolTip.Tip="{translation:Tr ChooseADate}"
+                                                                    Focusable="False" ToolTip.Tip="{translation:Tr ChooseADate}"
                                                                     AutomationProperties.Name="{translation:Tr ChooseADate}">
                                                                 <local:Icon Data="{StaticResource Icon.Calendar}" Width="16" Height="16" />
                                                             </Button>
@@ -1326,7 +1328,7 @@
                                                         <TextBox.InnerRightContent>
                                                             <Panel VerticalAlignment="Center">
                                                                 <Button x:Name="SuggestedDateButton" Classes="suggested" IsVisible="{Binding ShowSuggestedDateInField}"
-                                                                        IsTabStop="False" Command="{Binding AcceptSuggestedDateCommand}"
+                                                                        Focusable="False" Click="AcceptSuggestedDate_Click"
                                                                         ToolTip.Tip="{translation:Tr SuggestedDateTip}" AutomationProperties.Name="{Binding SuggestedDateLabel}">
                                                                     <StackPanel Orientation="Horizontal" Spacing="5">
                                                                         <local:Icon Data="{StaticResource Icon.Plus}" Width="13" Height="13" StrokeWidth="1.8" VerticalAlignment="Center" />
@@ -1334,7 +1336,7 @@
                                                                     </StackPanel>
                                                                 </Button>
                                                                 <Button x:Name="ClearDocumentDateButton" Classes="field-glyph" IsVisible="{Binding HasSelectedDocumentDate}"
-                                                                        IsTabStop="False" Command="{Binding ClearDocumentDateCommand}"
+                                                                        Focusable="False" Command="{Binding ClearDocumentDateCommand}"
                                                                         ToolTip.Tip="{translation:Tr ClearTheDate}" AutomationProperties.Name="{translation:Tr ClearTheDate}">
                                                                     <local:Icon Data="{StaticResource Icon.Close}" Width="14" Height="14" StrokeWidth="1.8" />
                                                                 </Button>
