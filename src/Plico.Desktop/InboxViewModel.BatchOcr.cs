@@ -33,6 +33,7 @@ internal sealed partial class InboxViewModel
         for (int index = 0; index < sources.Length && !token.IsCancellationRequested; index++)
         {
             var source = sources[index];
+            ReportProgress(index, sources.Length);
             Status = $"{language} OCR {index + 1} of {sources.Length}. {source.Title}";
             FileImportResult copy;
             try

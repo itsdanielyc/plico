@@ -51,7 +51,9 @@ internal sealed partial class InboxViewModel
             Status = DesktopText.Translate("Moving selected PDFs…");
             var progress = new Progress<int>(processed =>
             {
-                if (IsBusy && !token.IsCancellationRequested) Status = DesktopText.Format($"Filed {processed} of {orderedIds.Length} PDFs…");
+                if (!IsBusy || token.IsCancellationRequested) return;
+                ReportProgress(processed, orderedIds.Length);
+                Status = DesktopText.Format($"Filed {processed} of {orderedIds.Length} PDFs…");
             });
             long? displayedDocument = SelectedDocument?.Id;
             var result = await Task.Run(() => library.MoveSelectedPdfsAsync(orderedIds, folder, progress, token), token);

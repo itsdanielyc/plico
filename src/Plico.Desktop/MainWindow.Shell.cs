@@ -16,7 +16,6 @@ public partial class MainWindow
 {
     private const double CompactWidth = 1100;
     private const double MediumWidth = 1240;
-    private const double MaximumIntakeHeightFraction = 0.4;
     private static readonly TimeSpan ReviewMotionDuration = TimeSpan.FromMilliseconds(380);
     private static readonly TimeSpan RepeatedReviewWindow = TimeSpan.FromMilliseconds(1200);
     private DateTime _lastReview = DateTime.MinValue;
@@ -48,8 +47,6 @@ public partial class MainWindow
     {
         // Choose the column widths for this pass before the grids measure.
         ApplyWorkspaceLayout(double.IsFinite(availableSize.Width) ? availableSize.Width : Width);
-        if (SidebarIntake is not null && double.IsFinite(availableSize.Height))
-            SidebarIntake.MaxHeight = availableSize.Height * MaximumIntakeHeightFraction;
         return base.MeasureOverride(availableSize);
     }
 
@@ -216,6 +213,7 @@ public partial class MainWindow
     private void OpenPalette_Click(object? sender, RoutedEventArgs e) => ShowPalette();
     private void OpenShortcuts_Click(object? sender, RoutedEventArgs e) => ShowShortcuts();
     private void OpenSettings_Click(object? sender, RoutedEventArgs e) => OpenSettings();
+    private void StatusCard_Click(object? sender, RoutedEventArgs e) => ShowSettings("IntakeGroup");
     private void CloseOverlays_Click(object? sender, RoutedEventArgs e) => CloseOverlays();
 
     private void Overlay_PointerPressed(object? sender, PointerPressedEventArgs e) => CloseOverlays();
@@ -315,18 +313,29 @@ public partial class MainWindow
         CloseShortcutsButton.Focus();
     }
 
-    internal void OpenSettings()
+    internal void OpenSettings() => ShowSettings();
+
+    /// <summary>Opens Settings, or brings it forward, at one of its sections (for example "IntakeGroup").</summary>
+    internal SettingsWindow? ShowSettings(string? section = null)
     {
-        if (ViewModel is not { } model) return;
+        if (ViewModel is not { } model) return null;
         CloseOverlays();
-        if (_settings is { IsVisible: true })
+        if (_settings is not { IsVisible: true })
+        {
+            _settings = new SettingsWindow { DataContext = model };
+            var opened = _settings;
+            opened.Closed += (_, _) =>
+            {
+                if (ReferenceEquals(_settings, opened)) _settings = null;
+            };
+            opened.Show(this);
+        }
+        else
         {
             _settings.Activate();
-            return;
         }
-        _settings = new SettingsWindow { DataContext = model };
-        _settings.Closed += (_, _) => _settings = null;
-        _settings.Show(this);
+        if (section is not null) _settings.ShowSection(section);
+        return _settings;
     }
 
     internal void FocusTagEntry() => TagBox.Focus();

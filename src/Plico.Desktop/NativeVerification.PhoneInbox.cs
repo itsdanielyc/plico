@@ -19,15 +19,16 @@ internal static partial class NativeVerification
         await model.ChooseLibraryCommand.ExecuteAsync(null);
         dialogs.FolderPath = scanner;
         await model.StartFolderWatchCommand.ExecuteAsync(null);
-        var phoneButton = Control<Button>(window, "PhoneInboxButton");
+        var phoneButton = SettingsControl<Button>(window, "IntakeGroup", "PhoneInboxButton");
         Require(phoneButton.IsEffectivelyVisible && phoneButton.IsEnabled && phoneButton.Flyout is MenuFlyout,
-            "The native window did not offer the phone inbox.");
+            "Settings did not offer the phone inbox.");
         var menu = (MenuFlyout)phoneButton.Flyout!;
         menu.ShowAt(phoneButton);
         var choose = PhoneInboxCommand(menu, "ChoosePhoneInboxFolder");
         var stop = PhoneInboxCommand(menu, "StopPhoneInbox");
         var catchUp = PhoneInboxCommand(menu, "CatchUpPhoneInbox");
         menu.Hide();
+        CloseSettings(window);
 
         dialogs.FolderPath = phone;
         await choose.ExecuteAsync(null);

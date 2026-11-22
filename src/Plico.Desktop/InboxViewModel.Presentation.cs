@@ -32,20 +32,30 @@ internal sealed partial class InboxViewModel
         }
     }
 
+    /// <summary>"Watching Phone", for an active phone inbox watch.</summary>
+    public string PhoneInboxSummary => IsWatchingPhoneInbox ? DesktopText.Format($"Watching {PhoneFolderName}") : "";
+
     protected override void OnPropertyChanged(PropertyChangedEventArgs e)
     {
         base.OnPropertyChanged(e);
         switch (e.PropertyName)
         {
             case nameof(IntakeFolderLabel):
-                base.OnPropertyChanged(new PropertyChangedEventArgs(nameof(IntakeDestinationLabel)));
+                RaiseDerived(nameof(IntakeDestinationLabel));
                 break;
             case nameof(IsWatchingFolder) or nameof(WatchedFolderName):
-                base.OnPropertyChanged(new PropertyChangedEventArgs(nameof(WatchedFolderSummary)));
+                RaiseDerived(nameof(WatchedFolderSummary));
+                break;
+            case nameof(IsWatchingPhoneInbox) or nameof(PhoneInboxFolder):
+                RaiseDerived(nameof(PhoneInboxSummary));
                 break;
             case nameof(LibraryPath):
-                base.OnPropertyChanged(new PropertyChangedEventArgs(nameof(FriendlyLibraryPath)));
+                RaiseDerived(nameof(FriendlyLibraryPath));
                 break;
         }
+        if (IsStatusCardInput(e.PropertyName)) NotifyStatusCard();
     }
+
+    /// <summary>Raises a composed property without running the input checks again, so composition cannot loop.</summary>
+    private void RaiseDerived(string property) => base.OnPropertyChanged(new PropertyChangedEventArgs(property));
 }

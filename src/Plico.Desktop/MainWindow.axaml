@@ -331,127 +331,68 @@
                         </StackPanel>
                     </ScrollViewer>
 
-                    <!-- Intake: where paperwork comes from, the language it is read in, and the watches. -->
-                    <Border Grid.Row="2" x:Name="SidebarIntake" BorderBrush="{DynamicResource LineBrush}" BorderThickness="0,1,0,0" Padding="8,10,8,8">
-                        <ScrollViewer HorizontalScrollBarVisibility="Disabled" VerticalScrollBarVisibility="Auto">
-                        <StackPanel Spacing="1">
-                            <TextBlock Classes="section" Text="{translation:Tr IntakeSection}" Margin="8,0,0,4" />
-                            <Button x:Name="IntakeFolderButton" Classes="nav" Command="{Binding ChooseIntakeFolderCommand}"
-                                    IsEnabled="{Binding CanWork}" ToolTip.Tip="{Binding IntakeFolderLabel}" AutomationProperties.Name="{translation:Tr ChooseIntakeFolder}">
-                                <Grid ColumnDefinitions="Auto,*" ColumnSpacing="10">
-                                    <local:Icon Data="{StaticResource Icon.Folder}" VerticalAlignment="Center" />
-                                    <StackPanel Grid.Column="1" VerticalAlignment="Center">
-                                        <TextBlock Text="{translation:Tr IntakeFolder}" TextTrimming="CharacterEllipsis" />
-                                        <TextBlock Text="{Binding IntakeFolderLabel}" IsVisible="{Binding HasCustomIntakeFolder}" Classes="caption"
-                                                   TextTrimming="CharacterEllipsis" />
-                                    </StackPanel>
-                                </Grid>
-                            </Button>
-                            <CheckBox x:Name="IncludeWatchedScansCheckBox" Classes="inline" Content="{translation:Tr IncludeWatchedScans}"
-                                      IsVisible="{Binding HasCustomIntakeFolder}" IsEnabled="{Binding CanWork}" IsChecked="{Binding IncludeWatchedScans, Mode=TwoWay}"
-                                      ToolTip.Tip="{translation:Tr FileScansFromTheWatchedFolderInThisIntakeFolder}" />
-
-                            <Button x:Name="StartFolderWatchButton" Classes="nav" Command="{Binding StartFolderWatchCommand}"
-                                    IsVisible="{Binding !IsWatchingFolder}" IsEnabled="{Binding CanStartFolderWatch}">
-                                <StackPanel Orientation="Horizontal" Spacing="10">
-                                    <local:Icon Data="{StaticResource Icon.Watch}" VerticalAlignment="Center" />
-                                    <TextBlock Text="{translation:Tr WatchAFolder}" VerticalAlignment="Center" />
+                    <!--
+                        The foot: the status card, then Trash and Settings. The card is Plico's live state and one button:
+                        it opens Settings at Intake, or the import errors or the index report when they need the person.
+                        Intake, the watches, the phone inbox and the recognition language live in Settings.
+                    -->
+                    <StackPanel Grid.Row="2" x:Name="SidebarFoot" Spacing="2" Margin="12,8,12,14">
+                        <Panel x:Name="StatusCard" Margin="0,0,0,8">
+                            <Border Classes="status">
+                                <StackPanel Spacing="3">
+                                    <Grid ColumnDefinitions="Auto,*" ColumnSpacing="5">
+                                        <Border Classes="status-halo" Classes.live="{Binding StatusCardIsLive}" Classes.warning="{Binding StatusCardIsWarning}"
+                                                Classes.failed="{Binding StatusCardIsFailed}">
+                                            <Ellipse />
+                                        </Border>
+                                        <TextBlock Grid.Column="1" Text="{Binding StatusCardTitle}" FontSize="15" FontWeight="SemiBold"
+                                                   TextTrimming="CharacterEllipsis" VerticalAlignment="Center" />
+                                    </Grid>
+                                    <TextBlock Text="{Binding StatusCardDetail}" FontSize="13" Foreground="{DynamicResource Fg2}"
+                                               TextTrimming="CharacterEllipsis" />
+                                    <Border BorderBrush="{DynamicResource Line}" BorderThickness="0,1,0,0" Margin="0,7,0,0" Padding="0,10,0,0">
+                                        <Panel MinHeight="18">
+                                            <Grid ColumnDefinitions="Auto,*" ColumnSpacing="8" IsVisible="{Binding !IsBusy}">
+                                                <local:Icon Data="{StaticResource Icon.Folder}" Width="14" Height="14" Foreground="{DynamicResource Fg2}"
+                                                            VerticalAlignment="Center" />
+                                                <TextBlock Grid.Column="1" Text="{Binding IntakeDestinationLabel}" FontSize="13" Foreground="{DynamicResource Fg2}"
+                                                           TextTrimming="CharacterEllipsis" VerticalAlignment="Center" />
+                                            </Grid>
+                                            <ProgressBar Classes="slim" Margin="0,0,32,0" IsVisible="{Binding IsBusy}" IsIndeterminate="{Binding !HasWorkProgress}"
+                                                         Minimum="0" Maximum="100" Value="{Binding WorkPercent}" />
+                                        </Panel>
+                                    </Border>
                                 </StackPanel>
+                            </Border>
+                            <Button x:Name="StatusCardButton" Classes="status-hit" IsVisible="{Binding ShowStatusCardButton}" Click="StatusCard_Click"
+                                    AutomationProperties.Name="{Binding StatusCardTitle}" AutomationProperties.HelpText="{Binding StatusCardDetail}"
+                                    ToolTip.Tip="{translation:Tr OpenIntakeSettings}" />
+                            <Button x:Name="ImportErrorsButton" Classes="status-hit" IsVisible="{Binding HasImportFailures}" IsEnabled="{Binding CanWork}"
+                                    Command="{Binding InspectImportErrorsCommand}" AutomationProperties.Name="{Binding StatusCardTitle}"
+                                    AutomationProperties.HelpText="{Binding StatusCardDetail}" ToolTip.Tip="{translation:Tr ImportErrors}" />
+                            <Button x:Name="IndexReportButton" Classes="status-hit" IsVisible="{Binding ShowIndexReportCard}"
+                                    Command="{Binding ShowIndexReportCommand}" AutomationProperties.Name="{Binding StatusCardTitle}"
+                                    AutomationProperties.HelpText="{Binding StatusCardDetail}" ToolTip.Tip="{translation:Tr IndexReport}" />
+                            <Button x:Name="CancelWorkButton" Classes="icon small" HorizontalAlignment="Right" VerticalAlignment="Bottom" Margin="0,0,9,9"
+                                    IsVisible="{Binding IsBusy}" Command="{Binding CancelCommand}"
+                                    AutomationProperties.Name="{translation:Tr Cancel}" ToolTip.Tip="{translation:Tr Cancel}">
+                                <local:Icon Data="{StaticResource Icon.Close}" Width="14" Height="14" />
                             </Button>
-                            <Grid ColumnDefinitions="*,Auto" IsVisible="{Binding IsWatchingFolder}" MinHeight="30">
-                                <StackPanel Orientation="Horizontal" Spacing="10" Margin="8,0,0,0" VerticalAlignment="Center"
-                                            ToolTip.Tip="{Binding WatchedFolderPath}">
-                                    <local:Icon Data="{StaticResource Icon.Watch}" Foreground="{DynamicResource SecondaryInk}" VerticalAlignment="Center" />
-                                    <StackPanel VerticalAlignment="Center">
-                                        <TextBlock Text="{Binding WatchedFolderName}" MaxWidth="120" TextTrimming="CharacterEllipsis" />
-                                        <StackPanel Orientation="Horizontal" Spacing="5">
-                                            <Ellipse Width="6" Height="6" Fill="{DynamicResource LiveInk}" VerticalAlignment="Center" />
-                                            <TextBlock Text="{translation:Tr Watching}" FontSize="13" Foreground="{DynamicResource LiveInk}" />
-                                        </StackPanel>
-                                    </StackPanel>
-                                </StackPanel>
-                                <Button Grid.Column="1" x:Name="StopFolderWatchButton" Classes="icon small" Command="{Binding StopFolderWatchCommand}"
-                                        IsVisible="{Binding IsWatchingFolder}" ToolTip.Tip="{translation:Tr StopWatching}"
-                                        AutomationProperties.Name="{translation:Tr StopWatching}">
-                                    <local:Icon Data="{StaticResource Icon.Close}" Width="14" Height="14" />
-                                </Button>
-                            </Grid>
-                            <Button x:Name="ResumeFolderWatchButton" Classes="subaction" Content="{translation:Tr ResumeFolderWatch}"
-                                    Command="{Binding ResumeFolderWatchCommand}" IsVisible="{Binding CanOfferResumeFolderWatch}"
-                                    IsEnabled="{Binding CanWork}" ToolTip.Tip="{Binding RememberedWatchFolder}" />
-                            <Button x:Name="ImportWatchFolderFilesButton" Classes="subaction" Content="{Binding ImportWatchFilesLabel}"
-                                    Command="{Binding ImportWatchFolderFilesCommand}" IsVisible="{Binding CanOfferImportWatchFiles}"
-                                    IsEnabled="{Binding CanWork}" ToolTip.Tip="{Binding RememberedWatchFolder}" />
-                            <CheckBox x:Name="CatchUpOnOpenCheckBox" Classes="inline" Content="{translation:Tr CatchUpOnOpen}"
-                                      IsVisible="{Binding CanOfferCatchUpOnOpen}" IsEnabled="{Binding CanWork}" IsChecked="{Binding CatchUpOnOpen, Mode=TwoWay}"
-                                      ToolTip.Tip="{translation:Tr ResumeTheSavedWatchAndCheckScansWhenThisLibraryOpens}" />
-
-                            <Button x:Name="PhoneInboxButton" Classes="nav" IsEnabled="{Binding HasLibrary}" ToolTip.Tip="{Binding PhoneInboxFolder}">
-                                <Grid ColumnDefinitions="Auto,*,Auto" ColumnSpacing="10">
-                                    <local:Icon Data="{StaticResource Icon.Phone}" VerticalAlignment="Center" />
-                                    <TextBlock Grid.Column="1" Text="{Binding PhoneInboxLabel}" TextTrimming="CharacterEllipsis" VerticalAlignment="Center" />
-                                    <Ellipse Grid.Column="2" Width="6" Height="6" Fill="{DynamicResource LiveInk}" VerticalAlignment="Center"
-                                             IsVisible="{Binding IsWatchingPhoneInbox}" />
-                                </Grid>
-                                <Button.Flyout>
-                                    <MenuFlyout Placement="RightEdgeAlignedBottom">
-                                        <MenuItem x:Name="ChoosePhoneInboxFolder" Header="{translation:Tr ChoosePhoneFolder}" Command="{Binding ChoosePhoneInboxFolderCommand}"
-                                                  IsVisible="{Binding !IsWatchingPhoneInbox}" IsEnabled="{Binding CanWork}" />
-                                        <MenuItem Header="{translation:Tr ResumePhoneInbox}" Command="{Binding ResumePhoneInboxCommand}"
-                                                  IsVisible="{Binding CanResumePhoneInbox}" IsEnabled="{Binding CanWork}" />
-                                        <MenuItem x:Name="CatchUpPhoneInbox" Header="{Binding PhoneCatchUpLabel}" Command="{Binding CatchUpPhoneInboxCommand}"
-                                                  IsVisible="{Binding CanCatchUpPhoneInbox}" IsEnabled="{Binding CanWork}" />
-                                        <MenuItem x:Name="StopPhoneInbox" Header="{translation:Tr StopPhoneInbox}" Command="{Binding StopPhoneInboxCommand}"
-                                                  IsVisible="{Binding IsWatchingPhoneInbox}" />
-                                        <MenuItem x:Name="PhoneCatchUpOnOpen" Header="{translation:Tr CatchUpOnOpen}" ToggleType="CheckBox"
-                                                  IsChecked="{Binding PhoneCatchUpOnOpen, Mode=TwoWay}" IsVisible="{Binding CanSetPhoneCatchUpOnOpen}"
-                                                  IsEnabled="{Binding CanWork}" />
-                                    </MenuFlyout>
-                                </Button.Flyout>
-                            </Button>
-
-                            <Grid ColumnDefinitions="Auto,*,Auto" ColumnSpacing="6" Margin="8,2,0,0" MinHeight="30">
-                                <local:Icon Data="{StaticResource Icon.Text}" Foreground="{DynamicResource SecondaryInk}" VerticalAlignment="Center" />
-                                <ComboBox Grid.Column="1" x:Name="OcrLanguageBox" ItemsSource="{Binding RecognitionLanguages}" Margin="4,0,0,0"
-                                          SelectedItem="{Binding RecognitionLanguage, Mode=TwoWay}" HorizontalAlignment="Stretch" MinHeight="28"
-                                          Padding="8,2" FontSize="13" BorderThickness="0" Background="Transparent"
-                                          IsEnabled="{Binding IsIdle}" AutomationProperties.Name="{translation:Tr OCRLanguage}"
-                                          ToolTip.Tip="{translation:Tr TextLanguageHelp}" />
-                                <Button Grid.Column="2" x:Name="OcrProcessingButton" Classes="icon small" IsEnabled="{Binding IsIdle}"
-                                        AutomationProperties.Name="{translation:Tr OcrEngineOrientation}" ToolTip.Tip="{translation:Tr OcrEngineOrientation}">
-                                    <local:Icon Data="{StaticResource Icon.Sliders}" />
-                                    <Button.Flyout>
-                                        <MenuFlyout Placement="RightEdgeAlignedBottom">
-                                            <MenuItem x:Name="RapidOcrChoice" Header="{translation:Tr UseRapidOcr}" ToggleType="CheckBox"
-                                                      IsChecked="{Binding UseRapidOcr, Mode=TwoWay}" IsEnabled="{Binding CanUseRapidOcr}" />
-                                            <MenuItem x:Name="OrientPagesChoice" Header="{translation:Tr AutoOrientPages}" ToggleType="CheckBox"
-                                                      IsChecked="{Binding AutoOrientPages, Mode=TwoWay}" />
-                                        </MenuFlyout>
-                                    </Button.Flyout>
-                                </Button>
-                            </Grid>
-
-                            <Separator Classes="hairline" Margin="0,6" />
-                            <Grid ColumnDefinitions="*,Auto,Auto">
-                                <Button x:Name="OpenTrashButton" Classes="nav" Command="{Binding OpenTrashCommand}" IsEnabled="{Binding CanWork}">
-                                    <StackPanel Orientation="Horizontal" Spacing="10">
-                                        <local:Icon Data="{StaticResource Icon.Trash}" VerticalAlignment="Center" />
-                                        <TextBlock Text="{translation:Tr Trash}" VerticalAlignment="Center" />
-                                    </StackPanel>
-                                </Button>
-                                <Button Grid.Column="1" x:Name="BackUpLibraryButton" Classes="icon" Command="{Binding BackUpLibraryCommand}"
-                                        IsEnabled="{Binding CanWork}" ToolTip.Tip="{translation:Tr BackUpLibrary}"
-                                        AutomationProperties.Name="{translation:Tr BackUpLibrary}">
-                                    <local:Icon Data="{StaticResource Icon.Binder}" />
-                                </Button>
-                                <Button Grid.Column="2" x:Name="SettingsButton" Classes="icon" Click="OpenSettings_Click"
-                                        ToolTip.Tip="{translation:Tr SettingsTip}" AutomationProperties.Name="{translation:Tr SettingsAction}">
-                                    <local:Icon Data="{StaticResource Icon.Settings}" />
-                                </Button>
-                            </Grid>
-                        </StackPanel>
-                        </ScrollViewer>
-                    </Border>
+                        </Panel>
+                        <Button x:Name="OpenTrashButton" Classes="nav" Command="{Binding OpenTrashCommand}" IsEnabled="{Binding CanWork}">
+                            <StackPanel Orientation="Horizontal" Spacing="12">
+                                <local:Icon Data="{StaticResource Icon.Trash}" Width="18" Height="18" VerticalAlignment="Center" />
+                                <TextBlock Text="{translation:Tr Trash}" VerticalAlignment="Center" />
+                            </StackPanel>
+                        </Button>
+                        <Button x:Name="SettingsButton" Classes="nav" Click="OpenSettings_Click" ToolTip.Tip="{translation:Tr SettingsTip}"
+                                AutomationProperties.Name="{translation:Tr SettingsAction}">
+                            <StackPanel Orientation="Horizontal" Spacing="12">
+                                <local:Icon Data="{StaticResource Icon.Settings}" Width="18" Height="18" VerticalAlignment="Center" />
+                                <TextBlock Text="{translation:Tr SettingsTip}" VerticalAlignment="Center" />
+                            </StackPanel>
+                        </Button>
+                    </StackPanel>
                 </Grid>
             </Border>
 
@@ -1090,16 +1031,12 @@
                                 <TextBlock Text="{translation:Tr UndoAction}" VerticalAlignment="Center" />
                             </StackPanel>
                         </Button>
-                        <Button Grid.Column="2" x:Name="ImportErrorsButton" Classes="ghost small" Content="{translation:Tr ImportErrors}" Foreground="{DynamicResource ErrorInk}"
-                                Command="{Binding InspectImportErrorsCommand}" IsVisible="{Binding HasImportFailures}" IsEnabled="{Binding CanWork}" />
                         <Button Grid.Column="3" x:Name="OpenBackupFolderButton" Classes="ghost small" Content="{translation:Tr OpenBackup}"
                                 Command="{Binding OpenBackupFolderCommand}" IsVisible="{Binding HasLatestBackup}" IsEnabled="{Binding CanWork}" />
                         <Button Grid.Column="4" x:Name="OpenExportFolderButton" Classes="ghost small" Content="{translation:Tr OpenExport}"
                                 Command="{Binding OpenExportFolderCommand}" IsVisible="{Binding HasLatestExport}" IsEnabled="{Binding CanWork}" />
                         <Button Grid.Column="5" x:Name="OcrCopyBatchResultsButton" Classes="ghost small" Content="{translation:Tr OCRResults}"
                                 Command="{Binding InspectOcrCopyBatchResultsCommand}" IsVisible="{Binding HasOcrCopyBatchResults}" IsEnabled="{Binding CanWork}" />
-                        <Button Grid.Column="6" x:Name="IndexReportButton" Classes="ghost small" Content="{translation:Tr IndexReport}"
-                                Command="{Binding ShowIndexReportCommand}" IsVisible="{Binding ShowIndexReport}" />
                         <ProgressBar Grid.Column="7" Width="72" IsIndeterminate="True" IsVisible="{Binding IsBusy}" VerticalAlignment="Center" />
                         <Button Grid.Column="8" Classes="ghost small" Content="{translation:Tr Cancel}" Command="{Binding CancelCommand}" IsVisible="{Binding IsBusy}" />
                     </Grid>

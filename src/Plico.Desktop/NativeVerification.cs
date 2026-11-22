@@ -228,7 +228,7 @@ internal static partial class NativeVerification
     private static async Task<long> VerifySearchableCopyAsync(MainWindow window, InboxViewModel model, string fixture, string directory)
     {
         const string scanName = "Pending OCR.pdf";
-        Control<ComboBox>(window, "OcrLanguageBox").SetCurrentValue(ComboBox.SelectedItemProperty, OcrLanguage.English);
+        ChooseRecognitionLanguage(window, OcrLanguage.English);
         string scanPath = Path.Combine(model.LibraryPath, "PDFs", scanName);
         string scannedFixture = Path.Combine(Path.GetDirectoryName(fixture)!, "Scanned Receipt.pdf");
         byte[] sourceBytes = File.ReadAllBytes(scannedFixture);
@@ -631,7 +631,7 @@ internal static partial class NativeVerification
             }
 
             File.Copy(Path.Combine(Path.GetDirectoryName(fixture)!, "Mixed Pages.pdf"), damaged, overwrite: true);
-            Control<ComboBox>(window, "OcrLanguageBox").SetCurrentValue(ComboBox.SelectedItemProperty, OcrLanguage.English);
+            ChooseRecognitionLanguage(window, OcrLanguage.English);
             dialogs.ImportErrorsChoice = ImportErrorsAction.Retry;
             await ((IAsyncRelayCommand)errors.Command!).ExecuteAsync(null);
             await UntilAsync(() => model.SelectedDocument?.Title == "Check import" && model.Preview is not null, () => model.Status);
@@ -651,9 +651,11 @@ internal static partial class NativeVerification
         try
         {
             dialogs.FolderPath = destination.FullName;
-            var button = Control<Button>(window, "BackUpLibraryButton");
-            Require(button.IsEnabled && button.Command is IAsyncRelayCommand, "The library backup action was unavailable.");
+            var button = SettingsControl<Button>(window, "LibraryGroup", "BackUpLibraryButton");
+            Require(button.IsEffectivelyVisible && button.IsEnabled && button.Command is IAsyncRelayCommand,
+                "The library backup action was unavailable in Settings.");
             await ((IAsyncRelayCommand)button.Command!).ExecuteAsync(null);
+            CloseSettings(window);
             var backupFolder = Directory.EnumerateDirectories(destination.FullName).Single();
             using var backup = InboxLibrary.Open(backupFolder);
             var receipt = backup.Find(new DocumentFilter(Query: ReceiptKeyword, Tag: TestTag)).Items.Single();
@@ -683,7 +685,7 @@ internal static partial class NativeVerification
         const string repairTag = "Repairs";
         Control<AutoCompleteBox>(window, "TagBox").SetCurrentValue(AutoCompleteBox.TextProperty, repairTag);
         Control<Button>(window, "AddTagButton").Command!.Execute(null);
-        Control<ComboBox>(window, "OcrLanguageBox").SetCurrentValue(ComboBox.SelectedItemProperty, OcrLanguage.Spanish);
+        ChooseRecognitionLanguage(window, OcrLanguage.Spanish);
         var copy = Control<Button>(window, "CreateSearchableCopyButton");
         Require(model.RecognitionLanguage == OcrLanguage.Spanish && copy.IsEffectivelyVisible && copy.IsEnabled &&
             Equals(copy.Content, "Create OCR copy"), "The searchable receipt did not offer a fresh OCR copy in Spanish.");
@@ -700,7 +702,7 @@ internal static partial class NativeVerification
     private static async Task<DocumentSummary> ImportOcrFixtureAsync(MainWindow window, InboxViewModel model, FixtureDialogs dialogs,
         string path, OcrLanguage language)
     {
-        Control<ComboBox>(window, "OcrLanguageBox").SetCurrentValue(ComboBox.SelectedItemProperty, language);
+        ChooseRecognitionLanguage(window, language);
         Require(model.RecognitionLanguage == language, $"The OCR language control did not select {language}.");
         dialogs.SelectedFiles = [path];
         await ((IAsyncRelayCommand)Control<Button>(window, "AddFilesButton").Command!).ExecuteAsync(null);
@@ -982,10 +984,12 @@ internal static partial class NativeVerification
 
     private static async Task VerifyWatchedFolderAsync(MainWindow window, InboxViewModel model, string fixture, string directory)
     {
-        var start = Control<Button>(window, "StartFolderWatchButton");
-        var stop = Control<Button>(window, "StopFolderWatchButton");
-        var existing = Control<Button>(window, "ImportWatchFolderFilesButton");
-        Require(start.IsEnabled && start.Command is IAsyncRelayCommand, "The folder watch control was not available.");
+        // The watch controls live in Settings › Intake; the sidebar's status card reports the watch.
+        var start = SettingsControl<Button>(window, "IntakeGroup", "StartFolderWatchButton");
+        var settings = (Window)TopLevel.GetTopLevel(start)!;
+        var stop = Control<Button>(settings, "StopFolderWatchButton");
+        var existing = Control<Button>(settings, "ImportWatchFolderFilesButton");
+        Require(start.IsEffectivelyVisible && start.IsEnabled && start.Command is IAsyncRelayCommand, "The folder watch control was not available.");
         await ((IAsyncRelayCommand)start.Command!).ExecuteAsync(null);
         Require(model.IsWatchingFolder && stop.IsVisible, $"The folder watch did not start. {model.Status}");
 
@@ -1011,9 +1015,9 @@ internal static partial class NativeVerification
         await ((IAsyncRelayCommand)stop.Command!).ExecuteAsync(null);
         Require(!model.IsWatchingFolder && existing.IsVisible && Equals(existing.Content, "Resume and catch up"),
             "The stopped watch did not offer catch-up for its remembered folder.");
-        var resume = Control<Button>(window, "ResumeFolderWatchButton");
-        Require(resume.IsVisible && resume.Command is IAsyncRelayCommand, "The native window did not offer the remembered folder.");
-        await CaptureAsync(window, directory, "resume-watch.png");
+        var resume = Control<Button>(settings, "ResumeFolderWatchButton");
+        Require(resume.IsEffectivelyVisible && resume.Command is IAsyncRelayCommand, "Settings did not offer the remembered folder.");
+        await CaptureAsync(settings, directory, "resume-watch.png");
         await ((IAsyncRelayCommand)resume.Command!).ExecuteAsync(null);
         Require(model.IsWatchingFolder && model.WatchedFolderPath == originalFolder, "The watch did not resume its previous folder.");
         Require(existing.IsVisible && existing.IsEnabled && Equals(existing.Content, "Import existing files") &&
@@ -1025,6 +1029,7 @@ internal static partial class NativeVerification
             "Importing the existing file changed the current search or consumed its source.");
         await CaptureAsync(window, directory, "watch-existing-files.png");
         await ((IAsyncRelayCommand)stop.Command!).ExecuteAsync(null);
+        CloseSettings(window);
     }
 
     private static async Task VerifyDropAsync(MainWindow window, InboxViewModel model, string fixture, string directory)
@@ -1056,6 +1061,27 @@ internal static partial class NativeVerification
 
     private static T Control<T>(Window window, string name) where T : Control =>
         window.FindControl<T>(name) ?? throw new InvalidOperationException($"Missing control {name}.");
+
+    /// <summary>
+    /// Opens Settings at a section and finds a control there. The intake folder, the watches, the phone inbox, the
+    /// recognition choices and backups moved from the sidebar into Settings under the same names.
+    /// </summary>
+    private static T SettingsControl<T>(Window window, string section, string name) where T : Control
+    {
+        var settings = ((MainWindow)window).ShowSettings(section) ?? throw new InvalidOperationException("Settings did not open.");
+        return Control<T>(settings, name);
+    }
+
+    private static void CloseSettings(Window window)
+    {
+        foreach (var settings in window.OwnedWindows.OfType<SettingsWindow>().ToArray()) settings.Close();
+    }
+
+    private static void ChooseRecognitionLanguage(Window window, OcrLanguage language)
+    {
+        SettingsControl<ComboBox>(window, "RecognitionGroup", "OcrLanguageBox").SetCurrentValue(ComboBox.SelectedItemProperty, language);
+        CloseSettings(window);
+    }
 
     private static void Require(bool condition, string message)
     {

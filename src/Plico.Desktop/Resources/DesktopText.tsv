@@ -842,3 +842,28 @@ LabelSheetsTitle	Archive labels	Étiquettes d’archive
 SaveEllipsis	Save…	Enregistrer…
 SeparatorSheetTitle	Separator sheet	Feuille de séparation
 SeparatorSheetHelp	A PATCH-T page that splits a stack of scans into documents.	Une page PATCH-T qui sépare une pile de numérisations en documents.
+CatchUpTitle	Files already in the folder	Fichiers déjà dans le dossier
+CatchUpHelp	Add scans that arrived while the watch was off.	Ajouter les numérisations arrivées pendant la pause de la surveillance.
+OpenIntakeSettings	Settings › Intake	Réglages › Réception
+StatusOneFileNeedsYou	1 file needs you	1 fichier a besoin de vous
+StatusFilesNeedYou	{0} files need you	{0} fichiers ont besoin de vous
+StatusIndexNotices	The index has notices	L’index signale des remarques
+StatusOneFileMissing	1 file is missing	1 fichier est introuvable
+StatusFilesMissing	{0} files are missing	{0} fichiers sont introuvables
+StatusWatchStopped	A folder watch stopped	Une surveillance s’est arrêtée
+StatusWatchingTwo	Watching 2 folders	Surveillance de 2 dossiers
+StatusNotWatching	Not watching a folder	Aucun dossier surveillé
+StatusNoLibrary	No library open	Aucune bibliothèque ouverte
+StatusImportErrorsDetail	Couldn't add them. Select to see why.	Impossible de les ajouter. Sélectionnez pour voir pourquoi.
+StatusIndexDetail	Select to open the index report.	Sélectionnez pour ouvrir le rapport d’indexation.
+StatusWatchStoppedDetail	Select to resume it in Settings.	Sélectionnez pour la reprendre dans les réglages.
+ReadOnThisPc	read on this PC	lu sur ce PC
+ReadOnThisComputer	read on this computer	lu sur cet ordinateur
+LanguageEnglish	English	Anglais
+LanguageFrench	French	Français
+LanguageGerman	German	Allemand
+LanguageSpanish	Spanish	Espagnol
+LanguageItalian	Italian	Italien
+LanguagePortuguese	Portuguese	Portugais
+LanguageDutch	Dutch	Néerlandais
+LanguagePolish	Polish	Polonais

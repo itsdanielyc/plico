@@ -57,7 +57,9 @@ internal sealed partial class InboxViewModel
             Status = DesktopText.Translate("Copying selected PDFs…");
             var progress = new Progress<int>(copied =>
             {
-                if (IsBusy && !token.IsCancellationRequested) Status = DesktopText.Format($"Copied {copied} of {selectedIds.Length} PDFs…");
+                if (!IsBusy || token.IsCancellationRequested) return;
+                ReportProgress(copied, selectedIds.Length);
+                Status = DesktopText.Format($"Copied {copied} of {selectedIds.Length} PDFs…");
             });
             var export = await Task.Run(() => library.ExportPdfsAsync(selectedIds, destination, progress, token), token);
             LatestExportLocation = export.Location;

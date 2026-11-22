@@ -47,7 +47,9 @@ public sealed partial class InboxWindowTests
         try
         {
             await WaitForPreviewAsync(model);
-            var include = Assert.IsType<CheckBox>(window.FindControl<CheckBox>("IncludeWatchedScansCheckBox"));
+            // The sidebar holds places and the status card; the intake choices live in Settings.
+            var settingsWindow = OpenSettingsAt(window, "IntakeGroup");
+            var include = Assert.IsType<CheckBox>(settingsWindow.FindControl<CheckBox>("IncludeWatchedScansCheckBox"));
             Assert.True(include.IsEffectivelyVisible && include.IsEnabled);
             Assert.Equal(false, include.IsChecked);
             include.SetCurrentValue(ToggleButton.IsCheckedProperty, true);
@@ -58,11 +60,21 @@ public sealed partial class InboxWindowTests
             await model.ChooseLibraryCommand.ExecuteAsync(null);
             Assert.Equal(true, include.IsChecked);
 
-            var catchUp = Assert.IsType<Button>(window.FindControl<Button>("ImportWatchFolderFilesButton"));
-            var startup = Assert.IsType<CheckBox>(window.FindControl<CheckBox>("CatchUpOnOpenCheckBox"));
+            var catchUp = Assert.IsType<Button>(settingsWindow.FindControl<Button>("ImportWatchFolderFilesButton"));
+            var startup = Assert.IsType<CheckBox>(settingsWindow.FindControl<CheckBox>("CatchUpOnOpenCheckBox"));
+            // At the minimum sizes the watch choices stay reachable: Settings scrolls to them, and the status card
+            // that opens them stays on screen at the foot of the sidebar.
+            settingsWindow.Width = settingsWindow.MinWidth;
+            settingsWindow.Height = settingsWindow.MinHeight;
+            settingsWindow.UpdateLayout();
+            startup.BringIntoView();
+            settingsWindow.UpdateLayout();
+            var startupBottom = Assert.IsType<Point>(startup.TranslatePoint(new Point(0, startup.Bounds.Height), settingsWindow));
+            Assert.InRange(startupBottom.Y, 0, settingsWindow.Bounds.Height);
+            var card = Assert.IsType<Button>(window.FindControl<Button>("StatusCardButton"));
             window.UpdateLayout();
-            var railBottom = Assert.IsType<Point>(startup.TranslatePoint(new Point(0, startup.Bounds.Height), window));
-            Assert.InRange(railBottom.Y, 0, window.Bounds.Height);
+            var cardBottom = Assert.IsType<Point>(card.TranslatePoint(new Point(0, card.Bounds.Height), window));
+            Assert.InRange(cardBottom.Y, 0, window.Bounds.Height);
             await Assert.IsAssignableFrom<IAsyncRelayCommand>(catchUp.Command).ExecuteAsync(null);
             await WaitForAsync(() => !model.IsBusy && model.Documents.Count == 2);
             await WaitForPreviewAsync(model);
@@ -102,7 +114,7 @@ public sealed partial class InboxWindowTests
 
         try
         {
-            var include = Assert.IsType<CheckBox>(window.FindControl<CheckBox>("IncludeWatchedScansCheckBox"));
+            var include = Assert.IsType<CheckBox>(OpenSettingsAt(window, "IntakeGroup").FindControl<CheckBox>("IncludeWatchedScansCheckBox"));
             include.SetCurrentValue(ToggleButton.IsCheckedProperty, true);
             Directory.Delete(target);
             await model.ResumeFolderWatchCommand.ExecuteAsync(null);

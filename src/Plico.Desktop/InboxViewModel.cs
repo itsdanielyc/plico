@@ -516,6 +516,7 @@ internal sealed partial class InboxViewModel : ObservableObject, IDisposable
 
     partial void OnIsBusyChanged(bool value)
     {
+        WorkProgress = -1;
         OnPropertyChanged(nameof(CanWork));
         OnPropertyChanged(nameof(IsIdle));
         OnPropertyChanged(nameof(CanStartFolderWatch));

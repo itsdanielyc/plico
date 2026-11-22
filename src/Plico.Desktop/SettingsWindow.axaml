@@ -236,7 +236,7 @@
                                         <TextBlock Classes="row-title" Text="{translation:Tr OCRLanguage}" />
                                         <TextBlock Classes="row-help" Text="{translation:Tr TextLanguageHelp}" />
                                     </StackPanel>
-                                    <ComboBox Grid.Column="2" x:Name="SettingsLanguageBox" ItemsSource="{Binding RecognitionLanguages}" MinWidth="190"
+                                    <ComboBox Grid.Column="2" x:Name="OcrLanguageBox" ItemsSource="{Binding RecognitionLanguages}" MinWidth="190"
                                               SelectedItem="{Binding RecognitionLanguage, Mode=TwoWay}" IsEnabled="{Binding IsIdle}"
                                               AutomationProperties.Name="{translation:Tr OCRLanguage}" ToolTip.Tip="{translation:Tr TextLanguageHelp}" />
                                 </Grid>
@@ -247,7 +247,7 @@
                                         <TextBlock Classes="row-title" Text="{translation:Tr UseRapidOcr}" />
                                         <TextBlock Classes="row-help" Text="{translation:Tr RapidOcrHelp}" />
                                     </StackPanel>
-                                    <CheckBox Grid.Column="2" Classes="switch" IsChecked="{Binding UseRapidOcr, Mode=TwoWay}" IsEnabled="{Binding CanUseRapidOcr}"
+                                    <CheckBox Grid.Column="2" x:Name="RapidOcrChoice" Classes="switch" IsChecked="{Binding UseRapidOcr, Mode=TwoWay}" IsEnabled="{Binding CanUseRapidOcr}"
                                               AutomationProperties.Name="{translation:Tr UseRapidOcr}" />
                                 </Grid>
                                 <Separator />
@@ -257,7 +257,7 @@
                                         <TextBlock Classes="row-title" Text="{translation:Tr AutoOrientPages}" />
                                         <TextBlock Classes="row-help" Text="{translation:Tr AutoOrientHelp}" />
                                     </StackPanel>
-                                    <CheckBox Grid.Column="2" Classes="switch" IsChecked="{Binding AutoOrientPages, Mode=TwoWay}" IsEnabled="{Binding IsIdle}"
+                                    <CheckBox Grid.Column="2" x:Name="OrientPagesChoice" Classes="switch" IsChecked="{Binding AutoOrientPages, Mode=TwoWay}" IsEnabled="{Binding IsIdle}"
                                               AutomationProperties.Name="{translation:Tr AutoOrientPages}" />
                                 </Grid>
                             </StackPanel>
@@ -276,8 +276,8 @@
                                         <TextBlock Classes="row-title" Text="{translation:Tr IntakeFolderTitle}" />
                                         <TextBlock Classes="row-help" Text="{Binding IntakeDestinationLabel}" />
                                     </StackPanel>
-                                    <Button Grid.Column="2" Classes="secondary" Content="{translation:Tr ChangeEllipsis}"
-                                            Command="{Binding ChooseIntakeFolderCommand}" IsEnabled="{Binding CanWork}"
+                                    <Button Grid.Column="2" x:Name="IntakeFolderButton" Classes="secondary" Content="{translation:Tr ChangeEllipsis}"
+                                            Command="{Binding ChooseIntakeFolderCommand}" IsEnabled="{Binding CanWork}" ToolTip.Tip="{Binding IntakeFolderLabel}"
                                             AutomationProperties.Name="{translation:Tr ChooseIntakeFolder}" />
                                 </Grid>
                                 <Separator IsVisible="{Binding HasCustomIntakeFolder}" />
@@ -287,7 +287,7 @@
                                         <TextBlock Classes="row-title" Text="{translation:Tr IncludeWatchedScans}" />
                                         <TextBlock Classes="row-help" Text="{translation:Tr FileScansFromTheWatchedFolderInThisIntakeFolder}" />
                                     </StackPanel>
-                                    <CheckBox Grid.Column="2" Classes="switch" IsChecked="{Binding IncludeWatchedScans, Mode=TwoWay}" IsEnabled="{Binding CanWork}"
+                                    <CheckBox Grid.Column="2" x:Name="IncludeWatchedScansCheckBox" Classes="switch" IsChecked="{Binding IncludeWatchedScans, Mode=TwoWay}" IsEnabled="{Binding CanWork}"
                                               AutomationProperties.Name="{translation:Tr IncludeWatchedScans}" />
                                 </Grid>
                                 <Separator />
@@ -303,10 +303,26 @@
                                         </StackPanel>
                                     </StackPanel>
                                     <StackPanel Grid.Column="2" Orientation="Horizontal" Spacing="8">
-                                        <Button Classes="secondary" Content="{translation:Tr WatchAFolder}" Command="{Binding StartFolderWatchCommand}"
+                                        <Button x:Name="StartFolderWatchButton" Classes="secondary" Content="{translation:Tr WatchAFolder}" Command="{Binding StartFolderWatchCommand}"
                                                 IsVisible="{Binding !IsWatchingFolder}" IsEnabled="{Binding CanStartFolderWatch}" />
-                                        <Button Classes="secondary" Content="{translation:Tr StopWatching}" Command="{Binding StopFolderWatchCommand}"
-                                                IsVisible="{Binding IsWatchingFolder}" />
+                                        <Button x:Name="StopFolderWatchButton" Classes="secondary" Content="{translation:Tr StopWatching}" Command="{Binding StopFolderWatchCommand}"
+                                                IsVisible="{Binding IsWatchingFolder}" ToolTip.Tip="{Binding WatchedFolderPath}" />
+                                    </StackPanel>
+                                </Grid>
+                                <Separator IsVisible="{Binding CanOfferImportWatchFiles}" />
+                                <Grid Classes="row" ColumnDefinitions="Auto,*,Auto" IsVisible="{Binding CanOfferImportWatchFiles}">
+                                    <Border Classes="row-tile"><local:Icon Data="{StaticResource Icon.History}" /></Border>
+                                    <StackPanel Grid.Column="1" VerticalAlignment="Center">
+                                        <TextBlock Classes="row-title" Text="{translation:Tr CatchUpTitle}" />
+                                        <TextBlock Classes="row-help" Text="{translation:Tr CatchUpHelp}" />
+                                    </StackPanel>
+                                    <StackPanel Grid.Column="2" Spacing="6" ToolTip.Tip="{Binding RememberedWatchFolder}">
+                                        <Button x:Name="ResumeFolderWatchButton" Classes="secondary" HorizontalAlignment="Stretch" HorizontalContentAlignment="Center"
+                                                Content="{translation:Tr ResumeFolderWatch}" Command="{Binding ResumeFolderWatchCommand}"
+                                                IsVisible="{Binding CanOfferResumeFolderWatch}" IsEnabled="{Binding CanWork}" />
+                                        <Button x:Name="ImportWatchFolderFilesButton" Classes="secondary" HorizontalAlignment="Stretch" HorizontalContentAlignment="Center"
+                                                Content="{Binding ImportWatchFilesLabel}" Command="{Binding ImportWatchFolderFilesCommand}"
+                                                IsVisible="{Binding CanOfferImportWatchFiles}" IsEnabled="{Binding CanWork}" />
                                     </StackPanel>
                                 </Grid>
                                 <Separator IsVisible="{Binding CanOfferCatchUpOnOpen}" />
@@ -316,7 +332,7 @@
                                         <TextBlock Classes="row-title" Text="{translation:Tr CatchUpOnOpen}" />
                                         <TextBlock Classes="row-help" Text="{translation:Tr ResumeTheSavedWatchAndCheckScansWhenThisLibraryOpens}" />
                                     </StackPanel>
-                                    <CheckBox Grid.Column="2" Classes="switch" IsChecked="{Binding CatchUpOnOpen, Mode=TwoWay}" IsEnabled="{Binding CanWork}"
+                                    <CheckBox Grid.Column="2" x:Name="CatchUpOnOpenCheckBox" Classes="switch" IsChecked="{Binding CatchUpOnOpen, Mode=TwoWay}" IsEnabled="{Binding CanWork}"
                                               AutomationProperties.Name="{translation:Tr CatchUpOnOpen}" />
                                 </Grid>
                                 <Separator />
@@ -324,14 +340,36 @@
                                     <Border Classes="row-tile"><local:Icon Data="{StaticResource Icon.Phone}" /></Border>
                                     <StackPanel Grid.Column="1" VerticalAlignment="Center">
                                         <TextBlock Classes="row-title" Text="{translation:Tr PhoneInboxTitle}" />
-                                        <TextBlock Classes="row-help" Text="{translation:Tr PhoneInboxHelp}" />
+                                        <TextBlock Classes="row-help" Text="{translation:Tr PhoneInboxHelp}" IsVisible="{Binding !IsWatchingPhoneInbox}" />
+                                        <StackPanel Orientation="Horizontal" Spacing="6" Margin="0,2,0,0" IsVisible="{Binding IsWatchingPhoneInbox}"
+                                                    ToolTip.Tip="{Binding PhoneInboxFolder}">
+                                            <Ellipse Width="7" Height="7" Fill="{DynamicResource LiveInk}" VerticalAlignment="Center" />
+                                            <TextBlock Classes="live-label" Text="{Binding PhoneInboxSummary}" TextTrimming="CharacterEllipsis" />
+                                        </StackPanel>
                                     </StackPanel>
-                                    <StackPanel Grid.Column="2" Orientation="Horizontal" Spacing="8">
-                                        <Button Classes="secondary" Content="{translation:Tr ChoosePhoneFolder}" Command="{Binding ChoosePhoneInboxFolderCommand}"
-                                                IsVisible="{Binding !IsWatchingPhoneInbox}" IsEnabled="{Binding CanWork}" />
-                                        <Button Classes="secondary" Content="{translation:Tr StopPhoneInbox}" Command="{Binding StopPhoneInboxCommand}"
-                                                IsVisible="{Binding IsWatchingPhoneInbox}" />
-                                    </StackPanel>
+                                    <!-- The phone inbox's folder, catch-up and stop actions, with its own catch-up on open. -->
+                                    <Button Grid.Column="2" x:Name="PhoneInboxButton" Classes="secondary" IsEnabled="{Binding HasLibrary}"
+                                            ToolTip.Tip="{Binding PhoneInboxFolder}" AutomationProperties.Name="{Binding PhoneInboxLabel}">
+                                        <StackPanel Orientation="Horizontal" Spacing="8">
+                                            <TextBlock Text="{Binding PhoneInboxLabel}" VerticalAlignment="Center" />
+                                            <local:Icon Data="{StaticResource Icon.ChevronDown}" Width="14" Height="14" VerticalAlignment="Center" />
+                                        </StackPanel>
+                                        <Button.Flyout>
+                                            <MenuFlyout Placement="BottomEdgeAlignedRight">
+                                                <MenuItem x:Name="ChoosePhoneInboxFolder" Header="{translation:Tr ChoosePhoneFolder}" Command="{Binding ChoosePhoneInboxFolderCommand}"
+                                                          IsVisible="{Binding !IsWatchingPhoneInbox}" IsEnabled="{Binding CanWork}" />
+                                                <MenuItem Header="{translation:Tr ResumePhoneInbox}" Command="{Binding ResumePhoneInboxCommand}"
+                                                          IsVisible="{Binding CanResumePhoneInbox}" IsEnabled="{Binding CanWork}" />
+                                                <MenuItem x:Name="CatchUpPhoneInbox" Header="{Binding PhoneCatchUpLabel}" Command="{Binding CatchUpPhoneInboxCommand}"
+                                                          IsVisible="{Binding CanCatchUpPhoneInbox}" IsEnabled="{Binding CanWork}" />
+                                                <MenuItem x:Name="StopPhoneInbox" Header="{translation:Tr StopPhoneInbox}" Command="{Binding StopPhoneInboxCommand}"
+                                                          IsVisible="{Binding IsWatchingPhoneInbox}" />
+                                                <MenuItem x:Name="PhoneCatchUpOnOpen" Header="{translation:Tr CatchUpOnOpen}" ToggleType="CheckBox"
+                                                          IsChecked="{Binding PhoneCatchUpOnOpen, Mode=TwoWay}" IsVisible="{Binding CanSetPhoneCatchUpOnOpen}"
+                                                          IsEnabled="{Binding CanWork}" />
+                                            </MenuFlyout>
+                                        </Button.Flyout>
+                                    </Button>
                                 </Grid>
                             </StackPanel>
                         </Border>
@@ -363,7 +401,7 @@
                                         <TextBlock Classes="row-title" Text="{translation:Tr BackupsTitle}" />
                                         <TextBlock Classes="row-help" Text="{translation:Tr BackupTitle}" />
                                     </StackPanel>
-                                    <Button Grid.Column="2" Classes="secondary" Content="{translation:Tr BackUpLibrary}" Command="{Binding BackUpLibraryCommand}" IsEnabled="{Binding CanWork}" />
+                                    <Button Grid.Column="2" x:Name="BackUpLibraryButton" Classes="secondary" Content="{translation:Tr BackUpLibrary}" Command="{Binding BackUpLibraryCommand}" IsEnabled="{Binding CanWork}" />
                                 </Grid>
                                 <Separator />
                                 <Grid Classes="row" ColumnDefinitions="Auto,*,Auto">

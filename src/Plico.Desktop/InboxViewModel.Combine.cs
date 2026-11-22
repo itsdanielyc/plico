@@ -24,7 +24,9 @@ internal sealed partial class InboxViewModel
             Status = DesktopText.Translate("Combining PDFs…");
             var progress = new Progress<int>(count =>
             {
-                if (IsBusy && !token.IsCancellationRequested) Status = DesktopText.Format($"Combined {count} of {request.DocumentIds.Count} PDFs…");
+                if (!IsBusy || token.IsCancellationRequested) return;
+                ReportProgress(count, request.DocumentIds.Count);
+                Status = DesktopText.Format($"Combined {count} of {request.DocumentIds.Count} PDFs…");
             });
             var combined = await Task.Run(() => library.CombinePdfsAsync(request.DocumentIds, request.Title, progress, token), token);
             RevealNewInboxDocument(combined.Id);

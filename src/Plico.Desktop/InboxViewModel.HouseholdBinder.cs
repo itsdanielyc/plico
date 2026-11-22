@@ -35,8 +35,9 @@ internal sealed partial class InboxViewModel
             Status = DesktopText.Translate("Creating the household binder…");
             var progress = new Progress<int>(copied =>
             {
-                if (IsBusy && !token.IsCancellationRequested)
-                    Status = DesktopText.Format($"Added {copied} of {request.DocumentIds.Count} PDFs to the binder…");
+                if (!IsBusy || token.IsCancellationRequested) return;
+                ReportProgress(copied, request.DocumentIds.Count);
+                Status = DesktopText.Format($"Added {copied} of {request.DocumentIds.Count} PDFs to the binder…");
             });
             string exported = await Task.Run(() =>
                 library.ExportHouseholdBinderAsync(request.DocumentIds, request.Title, destination, progress, token), token);

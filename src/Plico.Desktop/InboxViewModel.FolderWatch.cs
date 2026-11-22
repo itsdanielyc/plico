@@ -14,6 +14,8 @@ internal sealed partial class InboxViewModel
         internal FolderWatch? Active { get; set; }
         internal string? RememberedFolder { get; set; }
         internal bool CatchUpOnOpen { get; set; }
+        /// <summary>The watch stopped on its own or could not resume, until it starts again or the library changes.</summary>
+        internal bool Failed { get; set; }
         internal bool CanResume => Active is null && RememberedFolder is not null;
         internal bool CanCatchUp => Active is not null || CanResume;
         internal string CatchUpLabel => Active is null ? DesktopText.Translate("Resume and catch up") : DesktopText.Translate("Import existing files");
@@ -157,6 +159,7 @@ internal sealed partial class InboxViewModel
         }
         slot.Active = watch;
         slot.RememberedFolder = watch.Folder;
+        slot.Failed = false;
         NotifyWatchChanged(slot);
         Status = DesktopText.Format($"Watching for new or updated files in {new DirectoryInfo(watch.Folder).Name}.");
         if (queued > 0) Status += " " + DesktopText.Format($"{DocumentCount(queued)} queued for the folder watch.");
@@ -188,6 +191,8 @@ internal sealed partial class InboxViewModel
         }
         catch (Exception error) when (error is IOException or UnauthorizedAccessException or ArgumentException)
         {
+            slot.Failed = true;
+            OnPropertyChanged(nameof(HasFailedWatch));
             return DesktopText.Format($"Could not resume the {DesktopText.Translate(slot.Description)} watch. {error.Message}");
         }
     }
@@ -199,6 +204,7 @@ internal sealed partial class InboxViewModel
     {
         slot.RememberedFolder = null;
         slot.CatchUpOnOpen = false;
+        slot.Failed = false;
         try
         {
             if (_watchPreference is { } preference && preference.Load(libraryRoot, slot.Source) is { } folder)
@@ -259,12 +265,16 @@ internal sealed partial class InboxViewModel
         }
         catch (Exception)
         {
-            if (ReferenceEquals(slot.Active, watch)) await StopWatchAsync(slot);
+            if (!ReferenceEquals(slot.Active, watch)) return;
+            await StopWatchAsync(slot);
+            slot.Failed = true;
+            OnPropertyChanged(nameof(HasFailedWatch));
         }
     }
 
     private void NotifyWatchChanged(WatchSlot slot)
     {
+        OnPropertyChanged(nameof(HasFailedWatch));
         if (slot.Source == WatchSource.Scanner)
         {
             OnPropertyChanged(nameof(IsWatchingFolder));

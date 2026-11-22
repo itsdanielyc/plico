@@ -418,6 +418,18 @@ public sealed partial class InboxWindowTests
     private static async Task WaitForPreviewAsync(InboxViewModel model)
         => await WaitForAsync(() => (model.Preview is not null || model.HasPreviewMessage) && !model.IsReadingInBackground);
 
+    /// <summary>
+    /// Opens Settings at a section, as the sidebar's status card does. The intake, watch, phone inbox and recognition
+    /// controls moved there when the sidebar became places only; they keep their names and types.
+    /// </summary>
+    private static SettingsWindow OpenSettingsAt(MainWindow window, string section)
+    {
+        var settings = Assert.IsType<SettingsWindow>(window.ShowSettings(section));
+        Avalonia.Threading.Dispatcher.UIThread.RunJobs();
+        settings.UpdateLayout();
+        return settings;
+    }
+
     [AvaloniaFact]
     public async Task ScannerPickerStartsAtStandardResolutionAndReturnsTheChoice()
     {
@@ -456,7 +468,7 @@ public sealed partial class InboxWindowTests
         window.Show();
         try
         {
-            var languages = Assert.IsType<ComboBox>(window.FindControl<ComboBox>("OcrLanguageBox"));
+            var languages = Assert.IsType<ComboBox>(OpenSettingsAt(window, "RecognitionGroup").FindControl<ComboBox>("OcrLanguageBox"));
             Assert.Equal(OcrLanguage.German, languages.SelectedItem);
             Assert.Contains(OcrLanguage.Spanish, languages.Items.OfType<OcrLanguage>());
             languages.SetCurrentValue(ComboBox.SelectedItemProperty, OcrLanguage.Spanish);

@@ -26,7 +26,7 @@ internal static partial class NativeVerification
 
         var newSource = model.Documents.Single(document => document.RelativePath == scanName);
         var priorSource = model.Documents.Single(document => document.Id == priorSourceId);
-        Control<ComboBox>(window, "OcrLanguageBox").SetCurrentValue(ComboBox.SelectedItemProperty, OcrLanguage.English);
+        ChooseRecognitionLanguage(window, OcrLanguage.English);
         var list = Control<ListBox>(window, "DocumentList");
         list.SelectedItems = new List<DocumentSummary> { priorSource, newSource };
         var create = Control<Button>(window, "CreateSelectedOcrCopiesButton");

@@ -25,7 +25,7 @@ public sealed partial class InboxWindowTests
             try
             {
                 Assert.False(first.IsWatchingFolder);
-                var check = Assert.IsType<CheckBox>(window.FindControl<CheckBox>("CatchUpOnOpenCheckBox"));
+                var check = Assert.IsType<CheckBox>(OpenSettingsAt(window, "IntakeGroup").FindControl<CheckBox>("CatchUpOnOpenCheckBox"));
                 Assert.True(check.IsEffectivelyVisible);
                 Assert.Equal(false, check.IsChecked);
                 check.SetCurrentValue(ToggleButton.IsCheckedProperty, true);
@@ -44,7 +44,7 @@ public sealed partial class InboxWindowTests
             {
                 await WaitForAsync(() => reopened.IsWatchingFolder && reopened.InboxCount == 1 && !reopened.IsBusy);
                 Assert.True(File.Exists(scan));
-                var check = Assert.IsType<CheckBox>(window.FindControl<CheckBox>("CatchUpOnOpenCheckBox"));
+                var check = Assert.IsType<CheckBox>(OpenSettingsAt(window, "IntakeGroup").FindControl<CheckBox>("CatchUpOnOpenCheckBox"));
                 Assert.Equal(true, check.IsChecked);
                 check.SetCurrentValue(ToggleButton.IsCheckedProperty, false);
                 await WaitForAsync(() => reopened.Documents.Count == 1);
@@ -65,7 +65,7 @@ public sealed partial class InboxWindowTests
         {
             Assert.False(disabled.IsWatchingFolder);
             Assert.False(disabled.IsBusy);
-            Assert.Equal(false, Assert.IsType<CheckBox>(disabledWindow.FindControl<CheckBox>("CatchUpOnOpenCheckBox")).IsChecked);
+            Assert.Equal(false, Assert.IsType<CheckBox>(OpenSettingsAt(disabledWindow, "IntakeGroup").FindControl<CheckBox>("CatchUpOnOpenCheckBox")).IsChecked);
             await WaitForPreviewAsync(disabled);
         }
         finally

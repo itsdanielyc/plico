@@ -13,7 +13,8 @@ internal static partial class NativeVerification
         const string fixturePadding = "\n  \n\n";
         string target = Directory.CreateDirectory(Path.Combine(model.LibraryPath, "PDFs", folderName)).FullName;
         await ChooseNativeIntakeFolderAsync(window, model, dialogs, target);
-        Require(model.IntakeFolderLabel == $"PDFs/{folderName}", "The native rail did not show the chosen intake folder.");
+        Require(model.IntakeFolderLabel == $"PDFs/{folderName}" && model.IntakeDestinationLabel.EndsWith($"PDFs/{folderName}", StringComparison.Ordinal),
+            "The status card did not show the chosen intake folder.");
 
         string inputDirectory = Directory.CreateTempSubdirectory("plico-intake-").FullName;
         string source = Path.Combine(inputDirectory, fileName);
@@ -43,9 +44,9 @@ internal static partial class NativeVerification
 
     private static async Task ChooseNativeIntakeFolderAsync(Window window, InboxViewModel model, FixtureDialogs dialogs, string target)
     {
-        var choose = Control<Button>(window, "IntakeFolderButton");
+        var choose = SettingsControl<Button>(window, "IntakeGroup", "IntakeFolderButton");
         Require(choose.IsEffectivelyVisible && choose.IsEnabled && choose.Command is IAsyncRelayCommand,
-            "The native library rail did not offer an intake folder choice.");
+            "Settings did not offer an intake folder choice.");
         string? originalFolder = dialogs.FolderPath;
         dialogs.FolderPath = target;
         try
@@ -57,6 +58,7 @@ internal static partial class NativeVerification
         finally
         {
             dialogs.FolderPath = originalFolder;
+            CloseSettings(window);
         }
     }
 }

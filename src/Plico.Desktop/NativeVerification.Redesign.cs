@@ -38,7 +38,7 @@ internal static partial class NativeVerification
 
         window.OpenSettings();
         var settings = await WaitForOwnedAsync<SettingsWindow>(window);
-        Require(Equals(Control<ComboBox>(settings, "SettingsLanguageBox").SelectedItem, model.RecognitionLanguage),
+        Require(Equals(Control<ComboBox>(settings, "OcrLanguageBox").SelectedItem, model.RecognitionLanguage),
             "Settings did not show the recognition language.");
         await CaptureAsync(settings, evidence, "settings.png");
         settings.Close();
