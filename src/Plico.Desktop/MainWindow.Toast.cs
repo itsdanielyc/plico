@@ -1,6 +1,7 @@
 using System.ComponentModel;
 using Avalonia.Animation;
 using Avalonia.Animation.Easings;
+using Avalonia.Controls;
 using Avalonia.Input;
 using Avalonia.Interactivity;
 using Avalonia.Media.Transformation;
@@ -42,9 +43,14 @@ public partial class MainWindow
         {
             RestartToastTimer();
             // A toast button that hides or turns off while it has the keyboard (Undo once it has run, or while Plico
-            // works) lets go of it; the keyboard then goes to the open document instead of out of the window.
-            if (e.NewFocusedElement is null) OweKeyboardToOpenDocument();
+            // works) lets go of it; the keyboard then goes to the open document instead of out of the window. When the
+            // keyboard leaves with the window itself (Settings or a dialog opens in front), it belongs to that window
+            // until this one is active again.
+            if (e.NewFocusedElement is not null) return;
+            if (IsInFront) OweKeyboardToOpenDocument();
+            else _keyboardLeftWithToast = true;
         };
+        Activated += (_, _) => ReturnKeyboardFromAnotherWindow();
         DataContextChanged += (_, _) => AttachToast();
         Opened += (_, _) =>
         {
@@ -122,6 +128,28 @@ public partial class MainWindow
     // Set when the keyboard fell out of the toast, until it has landed on the open document with no work in hand.
     private bool _keyboardOwedToOpenDocument;
 
+    // Set when the toast had the keyboard as another window came in front, until this one is in front again.
+    private bool _keyboardLeftWithToast;
+
+    /// <summary>
+    /// True while this window is the one in front: active, with none of its own windows (Settings, a dialog) active
+    /// over it. The keyboard belongs to the whole application, so only the window in front may take it.
+    /// </summary>
+    private bool IsInFront => IsActive && !OwnedWindows.Any(IsOrOwnsActiveWindow);
+
+    private static bool IsOrOwnsActiveWindow(Window window) => window.IsActive || window.OwnedWindows.Any(IsOrOwnsActiveWindow);
+
+    /// <summary>
+    /// Called when this window is in front again (it is activated, or Settings closes): a keyboard that left with the
+    /// toast lands on the open document if nothing has it, since the toast may have gone meanwhile.
+    /// </summary>
+    internal void ReturnKeyboardFromAnotherWindow()
+    {
+        if (!_keyboardLeftWithToast) return;
+        _keyboardLeftWithToast = false;
+        OweKeyboardToOpenDocument();
+    }
+
     /// <summary>Settles the keyboard on the open document once the input in hand is done; see <see cref="SettleKeyboard"/>.</summary>
     private void OweKeyboardToOpenDocument()
     {
@@ -132,12 +160,20 @@ public partial class MainWindow
     /// <summary>
     /// Puts a keyboard that is nowhere on the open document's row. It runs after the input and the layout in hand, so a
     /// queue reloaded by that input has its new row; work still running may reload the queue again, so the debt stays
-    /// until the work ends. A keyboard that has gone somewhere else meanwhile is left there.
+    /// until the work ends. A keyboard that has gone somewhere else meanwhile is left there, and so is one that went with
+    /// the window to another in front (Settings, a dialog): the keyboard is the whole application's, so taking it back
+    /// would send what is typed there to this window's shortcuts.
     /// </summary>
     private void SettleKeyboard()
     {
         if (!_keyboardOwedToOpenDocument) return;
         if (ViewModel is not { IsBusy: true }) _keyboardOwedToOpenDocument = false;
+        if (!IsInFront)
+        {
+            _keyboardOwedToOpenDocument = false;
+            _keyboardLeftWithToast = true;
+            return;
+        }
         if (IsVisible && FocusManager?.GetFocusedElement() is null) FocusOpenDocument();
     }
 

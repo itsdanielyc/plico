@@ -133,6 +133,63 @@ public sealed partial class InboxWindowTests
         }
     }
 
+    [AvaloniaTheory]
+    [InlineData("CloseToastButton")]
+    [InlineData("UndoButton")]
+    public async Task SettingsOpenedWhileTheToastHasTheKeyboardKeepsTheKeyboard(string toastButton)
+    {
+        using var temporary = new TemporaryLibrary();
+        using (var library = InboxLibrary.Open(temporary.Path)) BatchFixtures.AddTwoDocuments(library, TestContext.Current.CancellationToken);
+        using var model = new InboxViewModel(new FixtureDialogs());
+        model.InitializeLibrary(() => temporary.Path);
+        var window = new MainWindow { DataContext = model, Width = 1280, Height = 800 };
+        window.Show();
+        try
+        {
+            await WaitForPreviewAsync(model);
+            ClickAt(window, Named<Button>(window, "ReviewButton"));
+            await WaitForPreviewAsync(model);
+            var open = model.SelectedDocument!;
+            long inbox = model.InboxCount;
+            TabTo(window, Named<Button>(window, toastButton));
+
+            // Ctrl+, (⌘, on a Mac) opens Settings in front while the keyboard is on the toast.
+            PressKey(window, Key.OemComma, PhysicalKey.Comma, ",",
+                OperatingSystem.IsMacOS() ? RawInputModifiers.Meta : RawInputModifiers.Control);
+            var settings = Assert.Single(window.OwnedWindows.OfType<SettingsWindow>());
+            await Task.Delay(50);
+            Dispatcher.UIThread.RunJobs();
+
+            // The main window behind Settings never takes the keyboard back: Tab walks Settings, and a letter typed
+            // there runs no shortcut on the open document.
+            Assert.False(KeyboardIsIn(window), $"With Settings open the keyboard is on {KeyboardOwner(window)} in the main window.");
+            PressKey(settings, Key.Tab, PhysicalKey.Tab);
+            Assert.False(KeyboardIsIn(window), $"Tab in Settings went to {KeyboardOwner(window)} in the main window.");
+            TypeKeys(settings, "x");
+            await WaitForAsync(() => !model.IsBusy);
+            Assert.True(model.Documents.Any(document => document.Id == open.Id) && model.InboxCount == inbox,
+                $"An X typed in Settings ran {model.ToastTitle} on the main window.");
+
+            // Escape closes Settings as it goes down, so it comes up in the main window. The keyboard is back in the main
+            // window, on the open document, which is still the one shown.
+            settings.KeyPress(Key.Escape, RawInputModifiers.None, PhysicalKey.Escape, null);
+            Dispatcher.UIThread.RunJobs();
+            window.KeyRelease(Key.Escape, RawInputModifiers.None, PhysicalKey.Escape, null);
+            Dispatcher.UIThread.RunJobs();
+            Assert.False(settings.IsVisible);
+            Assert.Equal(open.Id, model.SelectedDocument?.Id);
+            Assert.True(KeyboardIsOnRow(window, open.Id), $"After Settings closed the keyboard is on {KeyboardOwner(window)}.");
+        }
+        finally
+        {
+            window.Close();
+        }
+    }
+
+    /// <summary>True when the control with the keyboard belongs to <paramref name="window"/>.</summary>
+    private static bool KeyboardIsIn(Window window) =>
+        window.FocusManager?.GetFocusedElement() is Visual focused && ReferenceEquals(TopLevel.GetTopLevel(focused), window);
+
     [AvaloniaFact]
     public async Task TheKeyboardLandsOnTheOpenDocumentWhenTheToastOrThePaletteCloses()
     {

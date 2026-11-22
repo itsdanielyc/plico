@@ -380,6 +380,7 @@ public partial class MainWindow
             opened.Closed += (_, _) =>
             {
                 if (ReferenceEquals(_settings, opened)) _settings = null;
+                ReturnKeyboardFromAnotherWindow();
             };
             opened.Show(this);
         }
