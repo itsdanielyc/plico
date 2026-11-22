@@ -16,7 +16,15 @@ internal static class DialogLayout
     /// <param name="body">The dialog's content between the heading and the footer.</param>
     /// <param name="footerStart">A status line or a lone action on the left of the footer, or null.</param>
     /// <param name="actions">The footer actions, secondary first and the primary last.</param>
-    internal static void Compose(Window dialog, string? heading, Control body, Control? footerStart, params Button[] actions)
+    internal static void Compose(Window dialog, string? heading, Control body, Control? footerStart, params Button[] actions) =>
+        Compose(dialog, heading, null, body, footerStart, actions);
+
+    /// <summary>
+    /// Marks <paramref name="dialog"/> as a dialog with a head (a 20 px title that names the task and a 14 px Fg2
+    /// description), the body, and the footer.
+    /// </summary>
+    /// <param name="description">One sentence under the title in Fg2, or null.</param>
+    internal static void Compose(Window dialog, string? heading, string? description, Control body, Control? footerStart, params Button[] actions)
     {
         dialog.Classes.Add("dialog");
         var buttons = new StackPanel { Classes = { "dialog-actions" } };
@@ -33,8 +41,13 @@ internal static class DialogLayout
         DockPanel.SetDock(footer, Dock.Bottom);
 
         var content = new Grid { Classes = { "dialog-body" }, RowDefinitions = new("Auto,*"), RowSpacing = 14 };
-        if (heading is not null)
-            content.Children.Add(new TextBlock { Text = heading, Classes = { "heading" }, TextWrapping = TextWrapping.Wrap });
+        if (heading is not null || description is not null)
+        {
+            var head = new StackPanel { Spacing = 4 };
+            if (heading is not null) head.Children.Add(new TextBlock { Text = heading, Classes = { "heading" }, TextWrapping = TextWrapping.Wrap });
+            if (description is not null) head.Children.Add(new TextBlock { Text = description, Classes = { "description" } });
+            content.Children.Add(head);
+        }
         Grid.SetRow(body, 1);
         content.Children.Add(body);
         dialog.Content = new DockPanel { Children = { footer, content } };

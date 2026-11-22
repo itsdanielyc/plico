@@ -902,4 +902,11 @@ EmptyAllSearchable	Everything is searchable	Tout est indexable
 EmptyNothingYet	Nothing here yet	Rien pour l’instant
 EmptyNoDocumentsYet	No documents yet	Aucun document pour l’instant
 PhoneInboxOptions	Options	Options
+MetadataHeading	Details for “{0}”	Détails de « {0} »
+MetadataDescription	What kind of document this is, who it is from, and anything else to keep with it.	Le type de document, son expéditeur et tout ce qu’il faut garder avec lui.
+DeadlinesHeading	Dates for “{0}”	Dates de « {0} »
+DeadlinesDescription	Plico reminds you the chosen number of days before each date.	Plico vous le rappelle le nombre de jours choisi avant chaque date.
+RemoveTagHeading	Remove a tag	Retirer une étiquette
+ScanBackSidesHeading	Scan the back sides	Numériser les versos
+VersionHistoryHeading	Version history	Historique des versions
 ResumeWatchOnly	Resume watch	Reprendre

@@ -13,6 +13,8 @@ internal sealed record DeadlineEditInput(DocumentSummary Document, IReadOnlyList
 internal sealed class DeadlineEditor : Window
 {
     private const string DateFormat = "yyyy-MM-dd";
+    /// <summary>The date field's hint, in the words a person reads rather than a format string.</summary>
+    private const string DatePlaceholder = "YYYY-MM-DD";
     private readonly List<(DeadlineKind Kind, TextBox Date, TextBox Lead)> _editors = [];
     private readonly TextBlock _status = DialogLayout.Message();
 
@@ -20,7 +22,8 @@ internal sealed class DeadlineEditor : Window
     {
         Title = DesktopText.Translate("Document deadlines");
         Width = 560;
-        Height = 520;
+        SizeToContent = SizeToContent.Height;
+        MaxHeight = 640;
         WindowStartupLocation = WindowStartupLocation.CenterOwner;
         var fields = new StackPanel { Spacing = 12 };
         var dates = input.Dates.ToDictionary(item => item.Kind);
@@ -28,11 +31,12 @@ internal sealed class DeadlineEditor : Window
         {
             var previous = dates.GetValueOrDefault(kind);
             string label = Label(kind);
-            var date = CreateTextBox(label, previous?.Date.ToString(DateFormat, CultureInfo.InvariantCulture), DateFormat);
+            var date = CreateTextBox(label, previous?.Date.ToString(DateFormat, CultureInfo.InvariantCulture), DatePlaceholder);
             date.Name = $"DeadlineDate{kind}";
             var lead = CreateTextBox(DesktopText.Format($"{label} reminder"), previous?.LeadDays?.ToString(CultureInfo.CurrentCulture),
                 DesktopText.Translate("Days before"));
-            var row = new Grid { ColumnDefinitions = new("*,130,130"), ColumnSpacing = 10 };
+            // Labels sit beside their fields: a label column as wide as the longest label, then the date and the lead time.
+            var row = new Grid { ColumnDefinitions = new("150,*,120"), ColumnSpacing = 10 };
             row.Children.Add(new TextBlock { Text = label, VerticalAlignment = VerticalAlignment.Center });
             Grid.SetColumn(date, 1);
             Grid.SetColumn(lead, 2);
@@ -54,7 +58,9 @@ internal sealed class DeadlineEditor : Window
         save.Click += (_, _) => Save();
         var cancel = DialogLayout.Secondary(DesktopText.Translate("Cancel"), isCancel: true);
         cancel.Click += (_, _) => Close();
-        DialogLayout.Compose(this, input.Document.Title, new ScrollViewer { Content = fields }, _status, cancel, save);
+        DialogLayout.Compose(this, DesktopText.Format($"Dates for “{input.Document.Title}”"),
+            DesktopText.Translate("Plico reminds you the chosen number of days before each date."),
+            new ScrollViewer { Content = fields }, _status, cancel, save);
     }
 
     private void Save()

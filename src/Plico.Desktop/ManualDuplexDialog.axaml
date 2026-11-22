@@ -12,7 +12,10 @@
             </Grid>
         </Border>
         <StackPanel Classes="dialog-body">
-            <TextBlock x:Name="FrontSidesMessage" Classes="heading" TextWrapping="Wrap" />
+            <StackPanel Spacing="4">
+                <TextBlock Classes="heading" Text="{translation:Tr ScanBackSidesHeading}" TextWrapping="Wrap" />
+                <TextBlock x:Name="FrontSidesMessage" Classes="description" />
+            </StackPanel>
             <TextBlock Text="{translation:Tr ManualDuplexInstructions}" TextWrapping="Wrap" />
         </StackPanel>
     </DockPanel>

@@ -7,12 +7,15 @@
                 <TextBlock x:Name="MigrationSaveStatus" Classes="description" VerticalAlignment="Center" />
                 <StackPanel Grid.Column="1" Classes="dialog-actions">
                     <Button Classes="secondary" Content="{translation:Tr SaveMigrationJson}" Click="Save_Click" />
-                    <Button Classes="secondary" Content="{translation:Tr Close}" IsCancel="True" Click="Close_Click" />
+                    <Button Classes="primary" Content="{translation:Tr Close}" IsCancel="True" IsDefault="True" Click="Close_Click" />
                 </StackPanel>
             </Grid>
         </Border>
         <Grid Classes="dialog-body" RowDefinitions="Auto,*" RowSpacing="14">
-            <TextBlock x:Name="MigrationSummary" Classes="heading" TextWrapping="Wrap" />
+            <StackPanel Spacing="4">
+                <TextBlock Classes="heading" Text="{translation:Tr MigrationReport}" />
+                <TextBlock x:Name="MigrationSummary" Classes="description" />
+            </StackPanel>
             <TextBox x:Name="MigrationNotices" Grid.Row="1" IsReadOnly="True" AcceptsReturn="True"
                      TextWrapping="Wrap" ScrollViewer.VerticalScrollBarVisibility="Auto"
                      AutomationProperties.Name="{translation:Tr MigrationDetails}" />

@@ -12,7 +12,10 @@
             </StackPanel>
         </Border>
         <StackPanel Classes="dialog-body">
-            <TextBlock Classes="heading" Text="{translation:Tr ChooseATagFromTheSelectedPDFs}" TextWrapping="Wrap" />
+            <StackPanel Spacing="4">
+                <TextBlock Classes="heading" Text="{translation:Tr RemoveTagHeading}" TextWrapping="Wrap" />
+                <TextBlock Classes="description" Text="{translation:Tr ChooseATagFromTheSelectedPDFs}" />
+            </StackPanel>
             <ListBox x:Name="BatchTagChoices" Classes="plain framed" MaxHeight="230"
                      ScrollViewer.HorizontalScrollBarVisibility="Disabled" AutomationProperties.Name="{translation:Tr TagsOnTheSelectedPDFs}"
                      SelectionChanged="TagChoice_Changed">

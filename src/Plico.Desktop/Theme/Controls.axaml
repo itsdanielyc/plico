@@ -1105,6 +1105,13 @@
         <Setter Property="Foreground" Value="{DynamicResource Fg}" />
     </Style>
 
+    <Style Selector="ListBox.plain.framed ListBoxItem:selected /template/ ContentPresenter#PART_ContentPresenter, ListBox.plain.framed ListBoxItem:selected:pointerover /template/ ContentPresenter#PART_ContentPresenter, ListBox.plain.framed ListBoxItem:selected:focus /template/ ContentPresenter#PART_ContentPresenter">
+        <Setter Property="BorderBrush" Value="{DynamicResource LineStrong}" />
+    </Style>
+    <Style Selector="ListBox.plain.framed ListBoxItem:selected">
+        <Setter Property="FontWeight" Value="Medium" />
+    </Style>
+
     <!-- The command palette: a 54 px query on the raised sheet, 40 px rows with the active one in Hover. -->
     <Style Selector="TextBox.palette-query">
         <Setter Property="Background" Value="Transparent" />

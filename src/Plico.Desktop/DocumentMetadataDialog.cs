@@ -27,10 +27,11 @@ internal sealed class DocumentMetadataDialog : Window
     internal DocumentMetadataDialog(MetadataEditInput input)
     {
         Title = DesktopText.Translate("Document metadata");
+        // The dialog is as tall as its fields, up to a height that leaves the window around it visible.
         Width = 560;
-        Height = 620;
+        SizeToContent = SizeToContent.Height;
+        MaxHeight = 680;
         MinWidth = 400;
-        MinHeight = 360;
         WindowStartupLocation = WindowStartupLocation.CenterOwner;
 
         var body = new StackPanel { Spacing = 14 };
@@ -78,7 +79,9 @@ internal sealed class DocumentMetadataDialog : Window
         save.Click += (_, _) => Save();
         var cancel = DialogLayout.Secondary(DesktopText.Translate("Cancel"), isCancel: true);
         cancel.Click += (_, _) => Close();
-        DialogLayout.Compose(this, input.Document.Title, new ScrollViewer { Content = body }, _error, cancel, save);
+        DialogLayout.Compose(this, DesktopText.Format($"Details for “{input.Document.Title}”"),
+            DesktopText.Translate("What kind of document this is, who it is from, and anything else to keep with it."),
+            new ScrollViewer { Content = body }, _error, cancel, save);
     }
 
     private void Save()
