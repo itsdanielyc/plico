@@ -1,3 +1,5 @@
+using System.Collections.Concurrent;
+using System.Reflection;
 using Avalonia.Automation;
 using Avalonia.Controls;
 using Avalonia.Headless;
@@ -457,6 +459,7 @@ public sealed partial class InboxWindowTests
 
     [AvaloniaTheory]
     [InlineData("Stop watching")]
+    [InlineData("Stop watching while a scan waits")]
     [InlineData("Stop phone inbox")]
     [InlineData("Show PDF folder")]
     public async Task AnActionTakenInSettingsWhilePlicoWorksIsSaidInSettingsAndLeavesTheCardToTheWork(string action)
@@ -494,7 +497,7 @@ public sealed partial class InboxWindowTests
             }
 
             // The watch to stop is started from Settings while Plico is idle.
-            if (action == "Stop watching")
+            if (action.StartsWith("Stop watching", StringComparison.Ordinal))
             {
                 ClickAt(settings, Named<Button>(settings, "StartFolderWatchButton"));
                 await WaitForAsync(() => !model.IsBusy && model.IsWatchingFolder);
@@ -513,8 +516,15 @@ public sealed partial class InboxWindowTests
 
             // The person takes the action with the pointer in Settings while Plico works.
             string said;
-            if (action == "Stop watching")
+            if (action.StartsWith("Stop watching", StringComparison.Ordinal))
             {
+                if (action == "Stop watching while a scan waits")
+                {
+                    // A scan lands in the watched folder meanwhile, and the watch hands it to an import that waits for the
+                    // work: the watch lets go of it as it stops, so it says it has stopped a little later.
+                    File.Copy(Path.Combine(AppContext.BaseDirectory, "fixtures", "Match Ledger.pdf"), Path.Combine(scans, "Waiting scan.pdf"));
+                    await WaitForAsync(() => ScannerWatchHasAScanWaitingForTheWork(model));
+                }
                 ClickAt(settings, Named<Button>(settings, "StopFolderWatchButton"));
                 said = "Folder watch stopped.";
             }
@@ -555,6 +565,20 @@ public sealed partial class InboxWindowTests
             await model.PrepareCloseAsync();
             window.Close();
         }
+    }
+
+    /// <summary>
+    /// Whether the scanner watch has handed a scan to an import that waits for the work in hand. Nothing public tells such
+    /// a scan from one still settling in the folder, so the watch's own state is read by reflection.
+    /// </summary>
+    private static bool ScannerWatchHasAScanWaitingForTheWork(InboxViewModel model)
+    {
+        const BindingFlags Hidden = BindingFlags.Instance | BindingFlags.NonPublic;
+        var slot = typeof(InboxViewModel).GetField("_scannerWatch", Hidden)?.GetValue(model);
+        Assert.NotNull(slot);
+        var watch = Assert.IsType<FolderWatch>(slot.GetType().GetProperty("Active", Hidden)?.GetValue(slot));
+        var delivering = Assert.IsType<ConcurrentDictionary<string, byte>>(typeof(FolderWatch).GetField("_delivering", Hidden)?.GetValue(watch));
+        return !delivering.IsEmpty;
     }
 
     [AvaloniaTheory]

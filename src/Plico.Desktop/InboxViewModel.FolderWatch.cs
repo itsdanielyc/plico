@@ -335,10 +335,10 @@ internal sealed partial class InboxViewModel
     }
 
     /// <summary>
-    /// Stops the watch in <paramref name="slot"/> and says so. When the person <paramref name="asked"/> for it (Stop
-    /// watching, the phone inbox's Stop), what it says is an aside to any work in hand (see <see cref="SayAside"/>).
-    /// Otherwise (a library switch, closing, a watch that failed) it is said as any message is, so while Plico works it is
-    /// a line of the work.
+    /// Stops the watch in <paramref name="slot"/> and says so once it has let go of its folder. When the person
+    /// <paramref name="asked"/> for it (Stop watching, the phone inbox's Stop), what it says is an aside to any work in
+    /// hand (see <see cref="SayAside"/>), under way until it is said (<see cref="AsideIsUnderWay"/>). Otherwise (a library
+    /// switch, closing, a watch that failed) it is said as any message is, so while Plico works it is a line of the work.
     /// </summary>
     private async Task StopWatchAsync(WatchSlot slot, bool asked = false)
     {
@@ -350,6 +350,7 @@ internal sealed partial class InboxViewModel
             if (asked) SayAside(say);
             else say();
         }
+        if (asked) CountAsideUnderWay(started: true);
         try
         {
             await watch.DisposeAsync();
@@ -358,6 +359,10 @@ internal sealed partial class InboxViewModel
         catch (Exception error)
         {
             Say(() => Fail(error.Message));
+        }
+        finally
+        {
+            if (asked) CountAsideUnderWay(started: false);
         }
     }
 

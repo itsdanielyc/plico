@@ -65,12 +65,23 @@ internal sealed partial class InboxViewModel
     // Above zero while another action the person takes beside the work in hand says what it has to say; see SayAside.
     private int _asidesInHand;
 
+    // Above zero from the start of such an action that says what it has to say only once it has finished (a watch
+    // stopped) until it has said it; see AsideIsUnderWay.
+    private int _asidesUnderWay;
+
     /// <summary>
     /// True while Settings has an action of the person's in hand: from a press or a key in Settings until it settles, or
-    /// until the work it started ends, unless the person has given the main window input since. An aside
+    /// until the work or the aside it started ends, unless the person has given the main window input since. An aside
     /// said meanwhile (see <see cref="SayAside"/>) is Settings' to say on its line. Settings sets it.
     /// </summary>
     internal bool SettingsHasActionInHand { get; set; }
+
+    /// <summary>
+    /// True from the start of an action the person takes beside the work in hand that says what it has to say only once
+    /// it has finished, until it has said it: a watch stopped says so once it has let go of its folder, which takes a
+    /// moment longer while a scan it found waits for the work. Settings keeps such an action in hand until then.
+    /// </summary>
+    internal bool AsideIsUnderWay => _asidesUnderWay > 0;
 
     /// <summary>
     /// The latest message, a line of the work in hand included. It is raised on every assignment, even when the words
@@ -246,6 +257,16 @@ internal sealed partial class InboxViewModel
         {
             _asidesInHand--;
         }
+    }
+
+    /// <summary>
+    /// Counts an aside that says what it has to say only once it has finished, from its start (<paramref name="started"/>
+    /// true) until it has said it (false), so <see cref="AsideIsUnderWay"/> holds meanwhile and is raised as it changes.
+    /// </summary>
+    private void CountAsideUnderWay(bool started)
+    {
+        _asidesUnderWay += started ? 1 : -1;
+        if (_asidesUnderWay == (started ? 1 : 0)) RaiseDerived(nameof(AsideIsUnderWay));
     }
 
     /// <summary>

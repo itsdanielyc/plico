@@ -22,7 +22,7 @@ public sealed partial class SettingsWindow : Window
     // True from a press in Settings until what it started has finished: messages raised meanwhile are Settings' own.
     private bool _actionInHand;
     private bool _busyBeforeAction;
-    // Set once the input has settled while the work the action started has yet to finish.
+    // Set once the input has settled while the work the action started, or a stop it asked for, has yet to finish.
     private bool _waitingForWork;
     private Window? _watchedOwner;
     // How the control with the keyboard got it, so a keyboard moved for it shows the focus ring only if it did.
@@ -162,8 +162,9 @@ public sealed partial class SettingsWindow : Window
     }
 
     /// <summary>
-    /// Once the input in hand has been handled, an action that started work waits for it to end; anything else is done.
-    /// Work that was already running (a watched import, say) is not this action's.
+    /// Once the input in hand has been handled, an action that started work waits for it to end, and one that stopped a
+    /// watch waits until the stop has said so (<see cref="InboxViewModel.AsideIsUnderWay"/>); anything else is done. Work
+    /// that was already running (a watched import, say) is not this action's.
     /// </summary>
     private void SettleAction() => Dispatcher.UIThread.Post(SettleActionNow, DispatcherPriority.Background);
 
@@ -174,8 +175,8 @@ public sealed partial class SettingsWindow : Window
         else if (!_waitingForWork) EndAction();
     }
 
-    /// <summary>Whether the work the action in hand started has yet to finish.</summary>
-    private bool IsStillUnderWay(InboxViewModel model) => model.IsBusy && !_busyBeforeAction;
+    /// <summary>Whether the work the action in hand started, or a stop it asked for, has yet to finish.</summary>
+    private bool IsStillUnderWay(InboxViewModel model) => model.IsBusy && !_busyBeforeAction || model.AsideIsUnderWay;
 
     private void EndAction()
     {
@@ -193,8 +194,9 @@ public sealed partial class SettingsWindow : Window
                 // The person's own edits, and what an action taken in the main window says, are its news, not Settings'.
                 if (_actionInHand && !model.ToastIsQuiet && !model.ToastIsForeground) ShowMessage(model.ToastStatus, model.ToastIsProblem);
                 break;
-            case nameof(InboxViewModel.IsBusy) when _waitingForWork && !IsStillUnderWay(model):
-                // The work's message follows straight after it stops being busy; the action is done after that.
+            case nameof(InboxViewModel.IsBusy) or nameof(InboxViewModel.AsideIsUnderWay) when _waitingForWork && !IsStillUnderWay(model):
+                // The work's message follows straight after it stops being busy, and a stop has said so before it is no
+                // longer under way; the action is done after that.
                 Dispatcher.UIThread.Post(EndAction, DispatcherPriority.Background);
                 break;
         }
