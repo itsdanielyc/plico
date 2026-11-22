@@ -1,3 +1,4 @@
+using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Headless.XUnit;
 using Avalonia.Input;
@@ -197,6 +198,35 @@ public sealed partial class InboxWindowTests
         }
         finally
         {
+            DesktopText.SetLanguage(InterfaceLanguage.English);
+        }
+    }
+
+    [AvaloniaFact]
+    public async Task TheFrenchDateFieldKeepsItsPlaceholderWholeBesideItsKeycapAtTheMinimumWidth()
+    {
+        using var temporary = new TemporaryLibrary();
+        using (var library = InboxLibrary.Open(temporary.Path)) BatchFixtures.AddTwoDocuments(library, TestContext.Current.CancellationToken);
+        DesktopText.SetLanguage(InterfaceLanguage.French);
+        using var model = new InboxViewModel(new FixtureDialogs());
+        var window = new MainWindow { DataContext = model, Width = 900, Height = 590 };
+        try
+        {
+            model.InitializeLibrary(() => temporary.Path);
+            window.Show();
+            await WaitForPreviewAsync(model);
+            window.UpdateLayout();
+            var field = Assert.IsType<TextBox>(window.FindControl<TextBox>("DocumentDateField"));
+            var calendar = Assert.IsType<Button>(window.FindControl<Button>("DocumentDateCalendarButton"));
+            var key = field.GetVisualDescendants().OfType<Border>().Single(border => border.Classes.Contains("key") && border.IsEffectivelyVisible);
+            var words = new TextBlock { Text = field.PlaceholderText, FontSize = field.FontSize, FontWeight = field.FontWeight, FontFamily = field.FontFamily };
+            words.Measure(Size.Infinity);
+            double room = Bounds(key, window).Left - Bounds(calendar, window).Right - field.Padding.Left - field.Padding.Right;
+            Assert.True(words.DesiredSize.Width <= room, $"“{field.PlaceholderText}” needs {words.DesiredSize.Width:0.#} px and has {room:0.#}.");
+        }
+        finally
+        {
+            window.Close();
             DesktopText.SetLanguage(InterfaceLanguage.English);
         }
     }
