@@ -278,6 +278,39 @@ public sealed partial class InboxWindowTests
     }
 
     [AvaloniaFact]
+    public async Task TheCardsHeadingSaysTheTitleItRenames()
+    {
+        using var temporary = new TemporaryLibrary();
+        using (var library = InboxLibrary.Open(temporary.Path)) BatchFixtures.AddTwoDocuments(library, TestContext.Current.CancellationToken);
+        using var model = new InboxViewModel(new FixtureDialogs());
+        model.InitializeLibrary(() => temporary.Path);
+        var window = new MainWindow { DataContext = model, Width = 1280, Height = 800 };
+        window.Show();
+        try
+        {
+            await WaitForPreviewAsync(model);
+            var open = model.SelectedDocument!;
+            var heading = Assert.IsType<Button>(window.FindControl<Button>("EditTitleButton"));
+
+            // Tabbing from the queue into the card, a screen reader hears the document's title and that it can be renamed.
+            ClickAt(window, QueueRow(window, open.Id));
+            TabTo(window, heading);
+            Assert.Equal($"Rename “{open.Title}”", Avalonia.Automation.Peers.ControlAutomationPeer.CreatePeerForElement(heading).GetName());
+
+            // After a rename the keyboard is back on the heading, which now names the new title.
+            PressKey(window, Key.E, PhysicalKey.E, "e");
+            TypeText(window, "Lease for April");
+            PressKey(window, Key.Enter, PhysicalKey.Enter);
+            Assert.True(heading.IsFocused);
+            Assert.Equal("Rename “Lease for April”", Avalonia.Automation.Peers.ControlAutomationPeer.CreatePeerForElement(heading).GetName());
+        }
+        finally
+        {
+            window.Close();
+        }
+    }
+
+    [AvaloniaFact]
     public async Task EditsMadeWhilePlicoWorksAreSaved()
     {
         using var temporary = new TemporaryLibrary();

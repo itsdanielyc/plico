@@ -1253,11 +1253,14 @@
                                 <!-- Filing card -->
                                 <Grid RowDefinitions="Auto,*,Auto" IsVisible="{Binding ShowFilingCard}">
                                     <StackPanel Margin="20,16,12,10" Spacing="6">
-                                        <!-- The heading is the title's own field: E or a click edits it here, Enter or leaving saves, Escape restores. -->
+                                        <!--
+                                            The heading is the title's own field: E or a click edits it here, Enter or leaving saves, Escape
+                                            restores. A screen reader hears the title with the action ("Rename “April lease”").
+                                        -->
                                         <Panel>
                                             <Button x:Name="EditTitleButton" Classes="title-edit" Click="EditTitle_Click" IsEnabled="{Binding HasLibrary}"
                                                     IsVisible="{Binding !IsEditingTitle}" ToolTip.Tip="{translation:Tr ShortcutRename}"
-                                                    AutomationProperties.Name="{translation:Tr ShortcutRename}">
+                                                    AutomationProperties.Name="{Binding SelectedDocument.Title, StringFormat={translation:Tr RenameTitleAutomationFormat}, FallbackValue={translation:Tr ShortcutRename}}">
                                                 <Grid ColumnDefinitions="*,Auto" ColumnSpacing="8">
                                                     <TextBlock Classes="heading" Text="{Binding SelectedDocument.Title}" TextWrapping="Wrap" MaxLines="3"
                                                                TextTrimming="CharacterEllipsis" VerticalAlignment="Center" />

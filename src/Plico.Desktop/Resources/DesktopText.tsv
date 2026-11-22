@@ -872,6 +872,7 @@ ToastMovedToTrash	Moved to Trash	Mis à la corbeille
 ToastTagRemoved	Tag removed	Étiquette retirée
 ToastRenamed	Renamed	Renommé
 RenameTitleInvalid	Couldn't rename. Enter a title of 1 to {0} characters.	Impossible de renommer. Saisissez un titre de 1 à {0} caractères.
+RenameTitleAutomationFormat	Rename “{0}”	Renommer « {0} »
 ChooseADate	Choose a date	Choisir une date
 ClearTheDate	Clear the date	Effacer la date
 ToastDateSet	Date set	Date définie
