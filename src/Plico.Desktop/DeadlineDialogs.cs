@@ -12,15 +12,17 @@ internal sealed record DeadlineEditInput(DocumentSummary Document, IReadOnlyList
 
 internal sealed class DeadlineEditor : Window
 {
-    private const string DateFormat = "yyyy-MM-dd";
-    /// <summary>The date field's hint, in the words a person reads rather than a format string.</summary>
-    private const string DatePlaceholder = "YYYY-MM-DD";
+    /// <summary>
+    /// The date fields show and take dates as the interface writes them ("1 Dec 2026"), 2026-12-01 too; their hint is
+    /// today, written that way.
+    /// </summary>
+    private static string DatePlaceholder => DisplayDates.Day(DateOnly.FromDateTime(DateTime.Today));
     private readonly List<(DeadlineKind Kind, TextBox Date, TextBox Lead)> _editors = [];
     private readonly TextBlock _status = DialogLayout.Message();
 
     internal DeadlineEditor(DeadlineEditInput input)
     {
-        Title = DesktopText.Translate("Document deadlines");
+        Title = DesktopText.Translate("Reminder");
         Width = 560;
         SizeToContent = SizeToContent.Height;
         MaxHeight = 640;
@@ -31,7 +33,7 @@ internal sealed class DeadlineEditor : Window
         {
             var previous = dates.GetValueOrDefault(kind);
             string label = Label(kind);
-            var date = CreateTextBox(label, previous?.Date.ToString(DateFormat, CultureInfo.InvariantCulture), DatePlaceholder);
+            var date = CreateTextBox(label, previous is { } saved ? DisplayDates.Day(saved.Date) : null, DatePlaceholder);
             date.Name = $"DeadlineDate{kind}";
             var lead = CreateTextBox(DesktopText.Format($"{label} reminder"), previous?.LeadDays?.ToString(CultureInfo.CurrentCulture),
                 DesktopText.Translate("Days before"));
@@ -50,7 +52,7 @@ internal sealed class DeadlineEditor : Window
             var suggested = input.SuggestedDueDates[0];
             var button = DialogLayout.Secondary(DesktopText.Format($"Use suggested due date {DisplayDates.Day(suggested)}"));
             button.Click += (_, _) => _editors.First(item => item.Kind == DeadlineKind.Due).Date.Text =
-                suggested.ToString(DateFormat, CultureInfo.InvariantCulture);
+                DisplayDates.Day(suggested);
             fields.Children.Add(button);
         }
         var save = DialogLayout.Primary(DesktopText.Translate("Save"), isDefault: true);
@@ -69,9 +71,9 @@ internal sealed class DeadlineEditor : Window
         foreach (var (kind, date, lead) in _editors)
         {
             if (string.IsNullOrWhiteSpace(date.Text) && string.IsNullOrWhiteSpace(lead.Text)) continue;
-            if (!DateOnly.TryParseExact(date.Text?.Trim(), DateFormat, CultureInfo.InvariantCulture, DateTimeStyles.None, out var day))
+            if (!DisplayDates.TryParseDay(date.Text, out var day))
             {
-                _status.Text = DesktopText.Format($"Enter {Label(kind).ToLowerInvariant()} as YYYY-MM-DD.");
+                _status.Text = DesktopText.Format($"Use a date like {DatePlaceholder}.");
                 date.Focus();
                 return;
             }

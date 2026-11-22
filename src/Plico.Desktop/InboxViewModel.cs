@@ -88,7 +88,7 @@ internal sealed partial class InboxViewModel : ObservableObject, IDisposable
             return name.Length == 0 ? LibraryPath : name;
         }
     }
-    public string ReviewAction => SelectedDocument?.Reviewed == true ? DesktopText.Translate("Return to inbox") : DesktopText.Translate("Mark reviewed");
+    public string ReviewAction => SelectedDocument?.Reviewed == true ? DesktopText.Translate("Back to Inbox") : DesktopText.Translate("Mark reviewed");
     public string PageLabel => SelectedDocument is { } document ? $"{_pageNumber} / {document.PageCount}" : "";
     public bool CanGoBack => _pageNumber > 1;
     public bool CanGoForward => _pageNumber < SelectedDocument?.PageCount;
@@ -395,7 +395,7 @@ internal sealed partial class InboxViewModel : ObservableObject, IDisposable
         var outcomes = new List<string>();
         if (added > 0) outcomes.Add(Counted(added, "1 document added.", $"{added} documents added."));
         if (alreadyPresent > 0) outcomes.Add(DesktopText.Format($"{DocumentCount(alreadyPresent)} already in the library."));
-        if (unreadable > 0) outcomes.Add(DesktopText.Format($"No text recognized in {DocumentCount(unreadable)}."));
+        if (unreadable > 0) outcomes.Add(DesktopText.Format($"No text recognised in {DocumentCount(unreadable)}."));
         if (failures.Count > 0) outcomes.Add($"{failures.Count} failed. {failures[0].Filename} — {failures[0].Reason}");
         if (saveWarning is not null) outcomes.Add(saveWarning);
         Status = string.Join(" ", outcomes);

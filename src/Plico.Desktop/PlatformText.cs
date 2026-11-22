@@ -13,6 +13,7 @@ internal static class PlatformText
     public static string MatchSystemTheme => DesktopText.ByKey(OnWindows ? "MatchWindows" : "MatchSystem");
     public static string WelcomeLede => DesktopText.ByKey(OnWindows ? "WelcomeHeroLedePc" : "WelcomeHeroLedeComputer");
     public static string PrivacyLine => DesktopText.ByKey(OnWindows ? "PrivacyShortPc" : "PrivacyShortComputer");
+    public static string LocalModelsHelp => DesktopText.ByKey(OnWindows ? "LocalModelsHelpPc" : "LocalModelsHelpComputer");
 
     /// <summary>"English · read on this PC": the recognition language and where recognition runs.</summary>
     internal static string RecognitionPlace(OcrLanguage language) =>

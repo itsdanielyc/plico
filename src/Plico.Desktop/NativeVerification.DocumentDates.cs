@@ -73,7 +73,8 @@ internal static partial class NativeVerification
         dialogs.BatchDocumentDateChoice = (current, count) =>
         {
             Require(current is null && count == selectedCount, "The batch editor did not receive both selected, undated PDFs.");
-            return ConfirmDocumentDateAsync(window, current, leapDayInput, directory, count);
+            // Typed as the interface writes dates; search keeps its ISO form.
+            return ConfirmDocumentDateAsync(window, current, "29 Feb 2024", directory, count);
         };
         try
         {

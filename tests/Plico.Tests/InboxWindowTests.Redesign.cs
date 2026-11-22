@@ -172,7 +172,7 @@ public sealed partial class InboxWindowTests
             Assert.True(overlay.IsVisible);
 
             query.Text = "trash";
-            Assert.Equal("Trash…", Assert.IsType<PaletteCommand>(list.SelectedItem).Title);
+            Assert.Equal("Trash", Assert.IsType<PaletteCommand>(list.SelectedItem).Title);
             var trash = Assert.Single(list.ItemsSource!.Cast<PaletteCommand>(), command => command.Title == "Move to Trash");
             Assert.Equal(["X"], trash.Keys);
 

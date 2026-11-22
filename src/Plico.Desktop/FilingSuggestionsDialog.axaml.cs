@@ -51,7 +51,7 @@ internal sealed partial class FilingSuggestionsDialog : Window
             SuggestionTitle.IsVisible = _drafts.Length <= 1;
             var sameDate = new DateChoice(null, item.CurrentDate is { } current ? $"Keep {DisplayDates.Day(current)}" : "Leave document date empty");
             var alternatives = fields.DocumentDates.Where(date => date != item.CurrentDate)
-                .Select(date => new DateChoice(date, date.ToString("D", CultureInfo.CurrentCulture))).ToArray();
+                .Select(date => new DateChoice(date, DisplayDates.Day(date))).ToArray();
             SuggestedDateBox.ItemsSource = new[] { sameDate }.Concat(alternatives).ToArray();
             SuggestedDateBox.SelectedItem = SuggestedDateBox.Items.OfType<DateChoice>().First(choice => choice.Value == draft.Date);
             SuggestedDates.IsVisible = alternatives.Length > 0;

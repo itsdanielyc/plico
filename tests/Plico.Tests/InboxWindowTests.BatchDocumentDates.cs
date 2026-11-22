@@ -76,7 +76,8 @@ public sealed partial class InboxWindowTests
             await WaitForAsync(() => model.Heading == "Search results" && model.Documents.Count == 2);
             list.SelectedItems = model.Documents.ToList();
             dialog = await OpenEditorAsync();
-            Assert.Equal(dateInput, Assert.IsType<TextBox>(dialog.FindControl<TextBox>("DocumentDateBox")).Text);
+            // The shared date comes back written the way the interface writes dates, whichever way it was typed.
+            Assert.Equal("29 Feb 2024", Assert.IsType<TextBox>(dialog.FindControl<TextBox>("DocumentDateBox")).Text);
             var clear = Assert.IsType<Button>(dialog.FindControl<Button>("ClearDocumentDatesButton"));
             Assert.True(clear.IsEffectivelyVisible);
             clear.RaiseEvent(new RoutedEventArgs(Button.ClickEvent));

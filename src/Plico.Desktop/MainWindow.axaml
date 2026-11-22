@@ -554,7 +554,7 @@
                             <MenuItem Header="{translation:Tr ShowPDFFolder}" Command="{Binding OpenPdfFolderCommand}" IsEnabled="{Binding HasLibrary}" />
                             <MenuItem Header="{translation:Tr BackUpLibrary}" Command="{Binding BackUpLibraryCommand}" IsEnabled="{Binding CanWork}" />
                             <Separator />
-                            <MenuItem Header="{translation:Tr SettingsAction}" Click="OpenSettings_Click" InputGesture="{x:Static local:PaletteCommands.SettingsGesture}" />
+                            <MenuItem Header="{translation:Tr SettingsTip}" Click="OpenSettings_Click" InputGesture="{x:Static local:PaletteCommands.SettingsGesture}" />
                         </MenuFlyout>
                     </Button.Flyout>
                 </Button>
@@ -715,7 +715,7 @@
                         </Grid>
                     </Button>
                     <Button x:Name="SettingsButton" Classes="nav" Click="OpenSettings_Click" ToolTip.Tip="{translation:Tr SettingsTip}"
-                            AutomationProperties.Name="{translation:Tr SettingsAction}">
+                            AutomationProperties.Name="{translation:Tr SettingsTip}">
                         <Grid ColumnDefinitions="Auto,*" ColumnSpacing="12">
                             <local:Icon Data="{StaticResource Icon.Settings}" Width="18" Height="18" StrokeWidth="1.7" VerticalAlignment="Center" />
                             <TextBlock Grid.Column="1" Text="{translation:Tr SettingsTip}" TextTrimming="CharacterEllipsis" VerticalAlignment="Center" />
@@ -869,7 +869,7 @@
                                                 <Separator />
                                                 <MenuItem Header="{translation:Tr Commands}" Click="OpenPalette_Click" InputGesture="{x:Static local:PaletteCommands.PaletteGesture}" />
                                                 <MenuItem Header="{translation:Tr KeyboardShortcuts}" Click="OpenShortcuts_Click" />
-                                                <MenuItem Header="{translation:Tr SettingsAction}" Click="OpenSettings_Click" InputGesture="{x:Static local:PaletteCommands.SettingsGesture}" />
+                                                <MenuItem Header="{translation:Tr SettingsTip}" Click="OpenSettings_Click" InputGesture="{x:Static local:PaletteCommands.SettingsGesture}" />
                                             </MenuFlyout>
                                         </Button.Flyout>
                                     </Button>
@@ -1331,7 +1331,7 @@
 
                                                 <TextBlock Grid.Row="2" Classes="field-label" Text="{translation:Tr ReminderField}" />
                                                 <Button Grid.Row="2" Grid.Column="1" x:Name="EditDeadlinesButton" Classes="field empty" Command="{Binding EditDeadlinesCommand}"
-                                                        IsEnabled="{Binding CanWork}" AutomationProperties.Name="{translation:Tr EditDocumentDeadlines}">
+                                                        IsEnabled="{Binding CanWork}" AutomationProperties.Name="{translation:Tr ReminderField}">
                                                     <StackPanel Orientation="Horizontal" Spacing="8">
                                                         <local:Icon Data="{StaticResource Icon.Bell}" VerticalAlignment="Center" />
                                                         <TextBlock Text="{translation:Tr RemindMe}" VerticalAlignment="Center" />
@@ -1340,7 +1340,7 @@
 
                                                 <TextBlock Grid.Row="3" Classes="field-label" Text="{translation:Tr FieldsField}" />
                                                 <Button Grid.Row="3" Grid.Column="1" x:Name="EditMetadataButton" Classes="field empty" Command="{Binding EditMetadataCommand}"
-                                                        IsEnabled="{Binding CanWork}" AutomationProperties.Name="{translation:Tr EditDocumentMetadata}">
+                                                        IsEnabled="{Binding CanWork}" AutomationProperties.Name="{translation:Tr FieldsField}">
                                                     <StackPanel Orientation="Horizontal" Spacing="8">
                                                         <local:Icon Data="{StaticResource Icon.Plus}" VerticalAlignment="Center" />
                                                         <TextBlock Text="{translation:Tr AddDetails}" VerticalAlignment="Center" />
@@ -1368,7 +1368,7 @@
                                                     <Button.Flyout>
                                                         <MenuFlyout Placement="LeftEdgeAlignedTop">
                                                             <MenuItem x:Name="EditPdfPagesItem" Header="{translation:Tr EditPages}" Command="{Binding EditPdfPagesCommand}" />
-                                                            <MenuItem x:Name="PdfVersionsItem" Header="{translation:Tr VersionHistory}" Command="{Binding ShowPdfVersionsCommand}" />
+                                                            <MenuItem x:Name="PdfVersionsItem" Header="{translation:Tr VersionHistoryHeading}" Command="{Binding ShowPdfVersionsCommand}" />
                                                             <Separator />
                                                             <MenuItem Header="{translation:Tr ExportBinder}" Command="{Binding ExportHouseholdBinderCommand}" />
                                                             <MenuItem Header="{translation:Tr ExportRedactedPDF}" Command="{Binding ExportRedactedPdfCommand}" />

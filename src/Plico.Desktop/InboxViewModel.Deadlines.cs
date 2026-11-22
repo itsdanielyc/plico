@@ -14,7 +14,7 @@ internal sealed partial class InboxViewModel
     [NotifyPropertyChangedFor(nameof(ReminderMenuTitle))]
     private long _dueReminderCount;
 
-    public string ReminderMenuTitle => DueReminderCount == 0 ? DesktopText.Translate("Reminders…") : DesktopText.Format($"Reminders ({DueReminderCount})…");
+    public string ReminderMenuTitle => DueReminderCount == 0 ? DesktopText.Translate("Upcoming") : DesktopText.Format($"Upcoming ({DueReminderCount})");
 
     private void PrepareReminderPolling()
     {
@@ -59,7 +59,7 @@ internal sealed partial class InboxViewModel
         await Task.Run(() => library.SaveDeadlines(document.Id, edited, token), token);
         RetireUndo();
         RefreshDueReminderCount();
-        Status = DesktopText.Translate("Document deadlines saved.");
+        Status = DesktopText.Translate("Reminder saved.");
     });
 
     [RelayCommand]

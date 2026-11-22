@@ -62,7 +62,7 @@ public sealed partial class InboxWindowTests
         try
         {
             var box = Assert.IsType<TextBox>(dialog.FindControl<TextBox>("DocumentDateBox"));
-            Assert.Equal("2024-02-01", box.Text);
+            Assert.Equal("1 Feb 2024", box.Text);
             var save = Assert.IsType<Button>(dialog.FindControl<Button>("ConfirmDocumentDateButton"));
             box.Text = "2023-02-29";
             save.RaiseEvent(new RoutedEventArgs(Button.ClickEvent));

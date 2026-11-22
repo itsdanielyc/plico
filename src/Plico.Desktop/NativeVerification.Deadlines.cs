@@ -21,7 +21,7 @@ internal static partial class NativeVerification
                 await UntilAsync(() => editor.GetVisualDescendants().OfType<TextBox>().Any(box => box.Name == "DeadlineDateDue"),
                     () => "Deadline editor did not open.");
                 var date = editor.GetVisualDescendants().OfType<TextBox>().Single(box => box.Name == "DeadlineDateDue");
-                date.Text = today.ToString("yyyy-MM-dd", CultureInfo.InvariantCulture);
+                date.Text = DisplayDates.Day(today);
                 editor.GetVisualDescendants().OfType<TextBox>()
                     .Single(box => Avalonia.Automation.AutomationProperties.GetName(box) == "Due date reminder").Text = "0";
                 await CaptureAsync(editor, evidence, "document-deadlines.png");

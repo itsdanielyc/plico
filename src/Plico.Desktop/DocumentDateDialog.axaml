@@ -16,8 +16,8 @@
         <StackPanel Classes="dialog-body">
             <TextBlock x:Name="DocumentDatePrompt" Classes="heading" Text="{translation:Tr DocumentDate}" TextWrapping="Wrap" />
             <StackPanel Classes="field">
-                <TextBox x:Name="DocumentDateBox" PlaceholderText="YYYY-MM-DD" AutomationProperties.Name="{translation:Tr DocumentDate}" />
-                <TextBlock x:Name="DocumentDateHint" Classes="hint" Text="{translation:Tr UseYYYYMMDDLeaveBlankToClearTheDate}" />
+                <TextBox x:Name="DocumentDateBox" AutomationProperties.Name="{translation:Tr DocumentDate}" />
+                <TextBlock x:Name="DocumentDateHint" Classes="hint" />
             </StackPanel>
             <TextBlock x:Name="DateValidation" Classes="validation" IsVisible="False" AutomationProperties.LiveSetting="Polite" />
         </StackPanel>

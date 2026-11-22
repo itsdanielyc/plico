@@ -17,7 +17,6 @@ internal sealed record MetadataOption<T>(string Label, T Value)
 
 internal sealed class DocumentMetadataDialog : Window
 {
-    private const string CalendarDateFormat = "yyyy-MM-dd";
     private readonly ComboBox _type;
     private readonly List<(long Id, CheckBox Box)> _contacts = [];
     private readonly TextBox _notes;
@@ -116,7 +115,8 @@ internal sealed class DocumentMetadataDialog : Window
             case CustomFieldKind.Money:
                 return MoneyEditor(field, previous as CustomFieldValue.Money);
             default:
-                var input = CreateTextBox(field.Name, Format(previous), field.Kind == CustomFieldKind.Date ? CalendarDateFormat : null);
+                var input = CreateTextBox(field.Name, Format(previous),
+                    field.Kind == CustomFieldKind.Date ? DisplayDates.Day(DateOnly.FromDateTime(DateTime.Today)) : null);
                 return (input, () => ReadTextField(field, input.Text));
         }
     }
@@ -144,7 +144,7 @@ internal sealed class DocumentMetadataDialog : Window
             CustomFieldKind.Text => new CustomFieldValue.Text(input),
             CustomFieldKind.Url when Uri.TryCreate(value, UriKind.Absolute, out var uri) && uri.Scheme is "http" or "https" =>
                 new CustomFieldValue.Url(value),
-            CustomFieldKind.Date when DateOnly.TryParseExact(value, CalendarDateFormat, CultureInfo.InvariantCulture, DateTimeStyles.None, out var date) =>
+            CustomFieldKind.Date when DisplayDates.TryParseDay(value, out var date) =>
                 new CustomFieldValue.Date(date),
             CustomFieldKind.Integer when long.TryParse(value, CultureInfo.CurrentCulture, out var integer) => new CustomFieldValue.Integer(integer),
             CustomFieldKind.Decimal when decimal.TryParse(value, CultureInfo.CurrentCulture, out var number) => new CustomFieldValue.Decimal(number),
@@ -158,7 +158,7 @@ internal sealed class DocumentMetadataDialog : Window
     {
         CustomFieldValue.Text text => text.Value,
         CustomFieldValue.Url url => url.Value,
-        CustomFieldValue.Date date => date.Value.ToString(CalendarDateFormat, CultureInfo.InvariantCulture),
+        CustomFieldValue.Date date => DisplayDates.Day(date.Value),
         CustomFieldValue.Integer number => number.Value.ToString(CultureInfo.CurrentCulture),
         CustomFieldValue.Decimal number => number.Value.ToString(CultureInfo.CurrentCulture),
         _ => null

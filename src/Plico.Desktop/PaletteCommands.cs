@@ -39,7 +39,7 @@ internal static class PaletteCommands
         }
 
         Add("Choose library folder…", library, "Icon.Folder", "", "switch open library", model.ChooseLibraryCommand, model.IsIdle);
-        Act("Settings…", library, "Icon.Sliders", Mod + " ,", "preferences options", window.OpenSettings);
+        Act("Settings", library, "Icon.Sliders", Mod + " ,", "preferences options", window.OpenSettings);
         Act("Keyboard shortcuts", library, "Icon.Keyboard", "?", "keys help", window.ShowShortcutSheet);
         if (!model.CanWork)
         {
@@ -48,23 +48,23 @@ internal static class PaletteCommands
         }
         if (model.ShowFilingCard)
         {
-            Act(model.SelectedIsReviewed ? "Return to Inbox" : "Mark reviewed", review, "Icon.Check", "R", "done file reviewed", window.ReviewWithMotion);
+            Act(model.SelectedIsReviewed ? "Back to Inbox" : "Mark reviewed", review, "Icon.Check", "R", "done file reviewed", window.ReviewWithMotion);
             Add("Accept all suggestions", review, "Icon.Check", "A", "suggestion accept", model.AcceptSuggestionsCommand, model.HasSuggestions);
             Act("Add a tag", review, "Icon.Tag", "T", "label", window.FocusTagEntry, model.ShowFilingCard);
             Act("Set the document date", review, "Icon.Calendar", "D", "date dated", window.FocusDocumentDate);
             Act("Rename", review, "Icon.Note", "E", "title edit", window.BeginTitleEdit);
             Add("Move to Trash", review, "Icon.Trash", "X", "delete remove bin", model.TrashDocumentCommand);
             Add("Open in your PDF viewer", review, "Icon.Open", "O", "open pdf external", model.OpenPdfCommand);
-            Add("Reminders and deadlines…", review, "Icon.Bell", "", "deadline due renewal expiry", model.EditDeadlinesCommand);
-            Add("Custom fields…", review, "Icon.Sliders", "", "metadata structured", model.EditMetadataCommand);
+            Add("Reminder…", review, "Icon.Bell", "", "deadline due renewal expiry", model.EditDeadlinesCommand);
+            Add("Details…", review, "Icon.Sliders", "", "metadata structured", model.EditMetadataCommand);
         }
         Add("Undo", review, "Icon.History", Mod + " Z", "revert", model.UndoCommand, model.HasUndo);
 
         Add("Inbox", go, "Icon.AllDocuments", "", "queue review", model.ShowInboxCommand);
         Add("All documents", go, "Icon.AllDocuments", "", "library everything", model.ShowAllCommand);
-        Add("Upcoming reminders…", go, "Icon.Upcoming", "", "due deadline", model.RemindersCommand);
+        Add("Upcoming", go, "Icon.Upcoming", "", "due deadline", model.RemindersCommand);
         Add("Without text", go, "Icon.Recognize", "", "ocr missing scan", model.ShowWithoutTextCommand);
-        Add("Trash…", go, "Icon.Trash", "", "restore deleted bin", model.OpenTrashCommand);
+        Add("Trash", go, "Icon.Trash", "", "restore deleted bin", model.OpenTrashCommand);
         Act("Search", go, "Icon.Search", "/", "find query", window.FocusSearchField);
         Add("Search a folder…", go, "Icon.Folder", "", "folder path", model.ChooseSearchFolderCommand);
         Add("Save search…", go, "Icon.Bookmark", "", "saved shortcut", model.SaveSearchCommand, model.ShowSaveSearch);
@@ -97,7 +97,7 @@ internal static class PaletteCommands
             Add("Edit pages…", document, "Icon.Pages", "", "reorder delete pages", model.EditPdfPagesCommand);
             Add("Rotate pages…", document, "Icon.RotateRight", "", "rotate turn", model.RotatePdfPagesCommand);
             Add("Extract pages…", document, "Icon.Split", "", "split", model.ExtractPdfPagesCommand);
-            Add("Version history…", document, "Icon.History", "", "versions restore", model.ShowPdfVersionsCommand);
+            Add("Version history", document, "Icon.History", "", "versions restore", model.ShowPdfVersionsCommand);
             Add("Move to folder…", document, "Icon.Move", "", "file folder", model.MovePdfCommand);
             Add("Export PDF…", document, "Icon.Share", "", "copy save", model.ExportPdfCommand);
             Add("Export a redacted PDF…", document, "Icon.Redact", "", "redact black out", model.ExportRedactedPdfCommand);
@@ -105,7 +105,7 @@ internal static class PaletteCommands
             Add("Export a compressed PDF…", document, "Icon.Compress", "", "smaller compress", model.ExportCompressedPdfCommand);
             Act(model.SearchableCopyAction, document, "Icon.Recognize", "", "ocr searchable copy", () => model.CreateSearchableCopyCommand.Execute(null));
             Add("Filing suggestions…", document, "Icon.Check", "", "suggest tag date", model.SuggestFilingCommand);
-            Add("Related documents…", document, "Icon.Link", "", "similar", model.FindRelatedCommand);
+            Add("Related documents", document, "Icon.Link", "", "similar", model.FindRelatedCommand);
             Add("Ask the local model for filing…", document, "Icon.Chat", "", "ai assistant", model.SuggestLocalFilingCommand, model.HasLocalChat);
             Add("Copy text", document, "Icon.Combine", "", "clipboard", model.CopyDocumentTextCommand, !model.HasNoSearchableText);
             Add(model.PageTextAction, document, "Icon.Text", "", "read text page", model.TogglePageTextCommand, !model.HasNoSearchableText);
@@ -143,8 +143,8 @@ internal static class PaletteCommands
         Add("Back up library…", library, "Icon.Binder", "", "backup copy", model.BackUpLibraryCommand);
         Add("Check library integrity", library, "Icon.Check", "", "verify", model.CheckIntegrityCommand);
         Add("Refresh index", library, "Icon.Refresh", "", "rescan reindex", model.RefreshIndexCommand);
-        Add("Index report…", library, "Icon.Info", "", "unavailable missing", model.ShowIndexReportCommand, model.ShowIndexReport);
-        Add("Import errors…", library, "Icon.Warning", "", "failed retry", model.InspectImportErrorsCommand, model.HasImportFailures);
+        Add("Index report", library, "Icon.Info", "", "unavailable missing", model.ShowIndexReportCommand, model.ShowIndexReport);
+        Add("Import errors", library, "Icon.Warning", "", "failed retry", model.InspectImportErrorsCommand, model.HasImportFailures);
         Add("Open backup", library, "Icon.Folder", "", "recent backup", model.OpenBackupFolderCommand, model.HasLatestBackup);
         Add("Open export", library, "Icon.Folder", "", "recent export", model.OpenExportFolderCommand, model.HasLatestExport);
         Add("OCR results", library, "Icon.Recognize", "", "batch ocr", model.InspectOcrCopyBatchResultsCommand, model.HasOcrCopyBatchResults);

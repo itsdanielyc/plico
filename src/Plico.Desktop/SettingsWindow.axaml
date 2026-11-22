@@ -545,7 +545,7 @@
                                     <Border Classes="row-tile"><local:Icon Data="{StaticResource Icon.Cpu}" /></Border>
                                     <StackPanel Grid.Column="1" VerticalAlignment="Center">
                                         <TextBlock Classes="row-title" Text="{translation:Tr ModelServerTitle}" />
-                                        <TextBlock Classes="row-help" Text="{translation:Tr LocalModelsHelp}" />
+                                        <TextBlock Classes="row-help" Text="{x:Static local:PlatformText.LocalModelsHelp}" />
                                     </StackPanel>
                                     <Button Grid.Column="2" Classes="secondary" Content="{translation:Tr EditAction}" Command="{Binding ConfigureLocalModelsCommand}" IsEnabled="{Binding CanWork}"
                                             AutomationProperties.Name="{translation:Tr LocalModels}" />

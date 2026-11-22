@@ -19,7 +19,7 @@ internal sealed partial class InboxViewModel
     public bool HasTaggedBatchSelection => HasBatchSelection && _batchSelection.Any(document => document.Tags.Count > 0);
     public string BatchCountLabel => DesktopText.Format($"{_batchSelection.Count} selected");
     public string SelectShownAction => HasBatchSelection ? DesktopText.Translate("Clear selection") : DesktopText.Translate("Select shown");
-    public string BatchReviewAction => AllSelectedAreReviewed ? DesktopText.Translate("Return selected to inbox") : DesktopText.Translate("Mark selected reviewed");
+    public string BatchReviewAction => AllSelectedAreReviewed ? DesktopText.Translate("Move selected back to Inbox") : DesktopText.Translate("Mark selected reviewed");
     private bool AllSelectedAreReviewed => _batchSelection.All(document => document.Reviewed);
 
     internal void SetBatchSelection(IReadOnlyList<DocumentSummary> selectedDocuments)
@@ -76,7 +76,7 @@ internal sealed partial class InboxViewModel
             LoadResults(document.Id, retainLoadedResults: true, reviewPosition: position);
             string title = reviewed ? DesktopText.Translate("Marked reviewed") : DesktopText.Translate("Back in the Inbox");
             OfferUndo(ReviewUndo(library, [document.Id], reviewed, title, document.Title),
-                reviewed ? DesktopText.Translate("Marked as reviewed.") : DesktopText.Translate("Returned to inbox."));
+                reviewed ? DesktopText.Translate("Marked reviewed.") : DesktopText.Translate("Back in the Inbox."));
         }
         catch (Exception error)
         {
@@ -99,7 +99,7 @@ internal sealed partial class InboxViewModel
             RefreshInboxCount();
             LoadResults(retainLoadedResults: true, reviewPosition: position);
             var count = DocumentCount(selectedIds.Length);
-            string status = reviewed ? DesktopText.Format($"{count} marked reviewed.") : DesktopText.Format($"{count} returned to inbox.");
+            string status = reviewed ? DesktopText.Format($"{count} marked reviewed.") : DesktopText.Format($"{count} back in the Inbox.");
             // The offer puts back only the documents that changed, so already reviewed members stay reviewed.
             OfferUndo(ReviewUndo(library, changedIds, reviewed, WithoutFullStop(status), null), status);
         });

@@ -6,8 +6,8 @@ using Plico.Core;
 namespace Plico.Desktop;
 
 /// <summary>
-/// One way to write dates everywhere in the interface, in the person's locale: "22 Nov 2026, 12:13" in English and
-/// "22 nov. 2026, 12:13" in French, and in a queue row the day as a person says it ("Today", "Yesterday", "Mon").
+/// One way to write dates everywhere in the interface, in the person's locale: "22 Nov 2026 at 12:13" in English and
+/// "22 nov. 2026 à 12:13" in French, and in a queue row the day as a person says it ("Today", "Yesterday", "Mon").
 /// </summary>
 internal static partial class DisplayDates
 {
@@ -24,8 +24,9 @@ internal static partial class DisplayDates
     /// <summary>"22 Nov 2026" for the local day of a moment.</summary>
     internal static string Day(DateTimeOffset moment) => moment.LocalDateTime.ToString("d MMM yyyy", Culture);
 
-    /// <summary>"22 Nov 2026, 12:13" in local time.</summary>
-    internal static string DayAndTime(DateTimeOffset moment) => moment.LocalDateTime.ToString("d MMM yyyy, HH:mm", Culture);
+    /// <summary>"22 Nov 2026 at 12:13" in local time, "22 nov. 2026 à 12:13" in French.</summary>
+    internal static string DayAndTime(DateTimeOffset moment) =>
+        DesktopText.Format($"{Day(moment)} at {moment.LocalDateTime.ToString("HH:mm", CultureInfo.InvariantCulture)}");
 
     /// <summary>"Today", "Yesterday", a weekday within the last week ("Mon"), then "22 Nov 2026".</summary>
     internal static string Relative(DateOnly day, DateOnly today)

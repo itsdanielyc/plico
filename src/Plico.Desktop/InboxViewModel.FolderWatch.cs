@@ -47,7 +47,7 @@ internal sealed partial class InboxViewModel
     public bool CanSetPhoneCatchUpOnOpen => _watchPreference is not null && _phoneWatch.RememberedFolder is not null;
     public string PhoneCatchUpLabel => _phoneWatch.CatchUpLabel;
     public string? PhoneInboxFolder => _phoneWatch.RememberedFolder;
-    public string PhoneInboxLabel => DesktopText.Translate(IsWatchingPhoneInbox ? "Phone inbox active…" : "Phone inbox…");
+    public string PhoneInboxLabel => DesktopText.Translate(IsWatchingPhoneInbox ? "Phone inbox · watching" : "Phone inbox");
 
     public bool PhoneCatchUpOnOpen
     {
