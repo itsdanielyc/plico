@@ -59,4 +59,38 @@ public sealed partial class InboxWindowTests
             window.Close();
         }
     }
+
+    [AvaloniaFact]
+    public async Task ALibraryWhoseDocumentsAreAllInTrashIsNotNewAgain()
+    {
+        using var temporary = new TemporaryLibrary();
+        using (var library = InboxLibrary.Open(temporary.Path))
+        {
+            BatchFixtures.AddTwoDocuments(library, TestContext.Current.CancellationToken);
+            library.SaveSearch("Leases", "lease", DocumentSort.Automatic);
+        }
+        using var model = new InboxViewModel(new FixtureDialogs());
+        model.InitializeLibrary(() => temporary.Path);
+        var window = new MainWindow { DataContext = model };
+        window.Show();
+        try
+        {
+            await WaitForPreviewAsync(model);
+            await model.TrashDocumentCommand.ExecuteAsync(null);
+            await WaitForPreviewAsync(model);
+            await model.TrashDocumentCommand.ExecuteAsync(null);
+            window.UpdateLayout();
+
+            // Both PDFs are in Trash, not gone: the library keeps its saved searches and its toolbar, and says the Inbox is clear.
+            Assert.False(model.HasDocuments);
+            Assert.False(model.ShowWelcome);
+            Assert.True(model.ShowInboxClear);
+            Assert.True(Assert.IsType<StackPanel>(window.FindControl<StackPanel>("SavedSearchesSection")).IsEffectivelyVisible);
+            Assert.True(Assert.IsType<Button>(window.FindControl<Button>("ScanButton")).IsEffectivelyVisible);
+        }
+        finally
+        {
+            window.Close();
+        }
+    }
 }
