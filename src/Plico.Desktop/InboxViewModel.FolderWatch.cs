@@ -57,10 +57,26 @@ internal sealed partial class InboxViewModel
 
     internal bool HasActiveWatches => IsWatchingFolder || IsWatchingPhoneInbox;
 
-    internal Task CatchUpWhenWindowOpensAsync() =>
-        CanWork && (CatchUpOnOpen || PhoneCatchUpOnOpen)
-            ? RunOperationAsync(DesktopText.Translate("Resuming saved watches…"), CatchUpSavedWatchesAsync)
-            : Task.CompletedTask;
+    /// <summary>
+    /// Catches up the saved watches as the window opens. What opening the library had to say rose as the window opened
+    /// and is still the toast; the catch-up's own message joins it, after it, rather than replacing it within a second.
+    /// </summary>
+    internal Task CatchUpWhenWindowOpensAsync()
+    {
+        if (!CanWork || !(CatchUpOnOpen || PhoneCatchUpOnOpen)) return Task.CompletedTask;
+        string? startupNews = ToastIsQuiet || string.IsNullOrWhiteSpace(ToastStatus) ? null : ToastStatus;
+        bool startupProblem = ToastIsProblem;
+        return RunOperationAsync(DesktopText.Translate("Resuming saved watches…"), async token =>
+        {
+            await CatchUpSavedWatchesAsync(token);
+            // Unless the person has made news of their own meanwhile (an edit), the startup notice leads, or the
+            // catch-up's message when only that one is a problem.
+            if (startupNews is null || !_workHasMessage || ToastStatus != startupNews) return;
+            bool catchUpLeads = _workProblem && !startupProblem;
+            _pendingProblem = startupProblem || _workProblem;
+            Status = catchUpLeads ? $"{_workStatus} {startupNews}" : $"{startupNews} {_workStatus}";
+        });
+    }
 
     [RelayCommand] private Task StartFolderWatchAsync() => ChooseWatchFolderAsync(_scannerWatch);
     [RelayCommand] private Task ResumeFolderWatchAsync() => ResumeWatchAsync(_scannerWatch, queueExistingFiles: false);
@@ -88,7 +104,7 @@ internal sealed partial class InboxViewModel
         }
         catch (Exception error) when (error is IOException or UnauthorizedAccessException)
         {
-            Status = error.Message;
+            Fail(error.Message);
         }
         finally
         {
@@ -198,7 +214,9 @@ internal sealed partial class InboxViewModel
     }
 
     private string? RestoreWatchFolders(string libraryRoot) =>
-        JoinWatchNotices(RestoreWatchFolder(_scannerWatch, libraryRoot), RestoreWatchFolder(_phoneWatch, libraryRoot));
+        JoinWatchNotices(RestoreWatchFolder(_scannerWatch, libraryRoot), RestoreWatchFolder(_phoneWatch, libraryRoot)) is { } reason
+            ? DesktopText.Format($"Couldn't load the saved watches. {reason}")
+            : null;
 
     private string? RestoreWatchFolder(WatchSlot slot, string libraryRoot)
     {
@@ -241,7 +259,7 @@ internal sealed partial class InboxViewModel
         }
         catch (Exception error)
         {
-            Status = error.Message;
+            Fail(error.Message);
         }
     }
 

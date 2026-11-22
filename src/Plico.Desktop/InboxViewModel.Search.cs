@@ -420,7 +420,7 @@ internal sealed partial class InboxViewModel
         OnPropertyChanged(nameof(HasPageMatchAction));
         HasMore = false;
         ResultCount = DesktopText.Translate("Results unavailable");
-        Status = error.Message;
+        Fail(error.Message);
     }
 
     private void UpdatePreviewHighlights()

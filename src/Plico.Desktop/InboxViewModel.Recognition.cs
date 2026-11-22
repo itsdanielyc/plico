@@ -40,7 +40,7 @@ internal sealed partial class InboxViewModel
         }
         catch (Exception error) when (error is IOException or UnauthorizedAccessException)
         {
-            AddStartupNotice(error.Message);
+            AddStartupNotice(DesktopText.Format($"Couldn't load the recognition language. {error.Message}"));
         }
         _rememberRecognitionLanguage = save;
     }
@@ -54,7 +54,7 @@ internal sealed partial class InboxViewModel
         }
         catch (Exception error) when (error is IOException or UnauthorizedAccessException)
         {
-            Status = DesktopText.Format($"Using {value} OCR for this session. {error.Message}");
+            Fail(DesktopText.Format($"Using {value} OCR for this session. {error.Message}"));
         }
     }
 }

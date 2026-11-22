@@ -83,7 +83,7 @@ internal sealed partial class InboxViewModel
         catch (Exception error)
         {
             // A failed revert keeps the offer, so it can be tried again once the cause is fixed.
-            Status = error.Message;
+            Fail(error.Message);
         }
     }
 

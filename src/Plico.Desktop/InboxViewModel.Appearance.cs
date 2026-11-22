@@ -52,7 +52,7 @@ internal sealed partial class InboxViewModel
             }
             catch (Exception error) when (error is IOException or UnauthorizedAccessException or ArgumentException)
             {
-                Status = error.Message;
+                Fail(error.Message);
             }
             finally
             {
@@ -89,7 +89,7 @@ internal sealed partial class InboxViewModel
         }
         catch (Exception error) when (error is IOException or UnauthorizedAccessException or ArgumentException)
         {
-            Status = error.Message;
+            Fail(error.Message);
         }
         finally
         {

@@ -32,7 +32,7 @@ internal sealed partial class InboxViewModel
             }
             catch (Exception error) when (error is IOException or Microsoft.Data.Sqlite.SqliteException)
             {
-                Status = error.Message;
+                Fail(error.Message);
             }
         };
         _reminderTimer.Start();

@@ -110,7 +110,7 @@ internal sealed partial class InboxViewModel : ObservableObject, IDisposable
         catch (Exception error)
         {
             NoteLibraryProblem(error.Message);
-            Status = error.Message;
+            Fail(error.Message);
         }
     }
 
@@ -347,11 +347,13 @@ internal sealed partial class InboxViewModel : ObservableObject, IDisposable
         RefreshUnavailableCount();
         PrepareReminderPolling();
         Navigate(inboxOnly: true);
-        if (watchNotice is null) Note(DesktopText.Translate("Library ready."));
-        else Status = DesktopText.Format($"Library ready. {watchNotice}");
-        if (importNotice is not null) Status += $" {importNotice}";
-        if (intakeNotice is not null) Status += $" {intakeNotice}";
-        if (replacement.MoveRecoveryNotice is { } moveNotice) Status += $" {moveNotice}";
+        // A library that opens as expected is news the window already shows. Anything else opening it had to say is the
+        // message, problems first so the toast's title names one, without "Library ready." in front of it.
+        string[] problems = new[] { watchNotice, importNotice, intakeNotice }.OfType<string>().ToArray();
+        string[] notices = [.. problems, .. new[] { replacement.MoveRecoveryNotice }.OfType<string>()];
+        if (notices.Length == 0) Note(DesktopText.Translate("Library ready."));
+        else if (problems.Length > 0) Fail(string.Join(" ", notices));
+        else Status = string.Join(" ", notices);
         return released;
     }
 
@@ -464,7 +466,7 @@ internal sealed partial class InboxViewModel : ObservableObject, IDisposable
         }
         catch (Exception error)
         {
-            Status = Plainly(error);
+            Fail(Plainly(error));
         }
         finally
         {
@@ -533,7 +535,7 @@ internal sealed partial class InboxViewModel : ObservableObject, IDisposable
         }
         catch (Exception error)
         {
-            Status = error.Message;
+            Fail(error.Message);
             return false;
         }
     }
@@ -546,7 +548,7 @@ internal sealed partial class InboxViewModel : ObservableObject, IDisposable
         }
         catch (Exception error)
         {
-            Status = error.Message;
+            Fail(error.Message);
         }
     }
 

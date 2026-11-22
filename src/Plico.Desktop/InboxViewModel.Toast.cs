@@ -39,13 +39,17 @@ internal sealed partial class InboxViewModel
     private ToastText _toastText;
     private ToastText? _pendingToast;
     private bool _pendingQuiet;
+    private bool _pendingProblem;
     private string _toastStatus = "";
+    private bool _statusIsProblem;
+    private bool _toastIsProblem;
 
     // The latest line of the work in hand and what its toast would say (see RunOperationAsync). A line that ends in "…"
     // says the work is under way; any other is the work's message, which becomes the toast when the work ends.
     private string _workStatus = "";
     private ToastText _workToast;
     private bool _workQuiet;
+    private bool _workProblem;
     private bool _workHasMessage;
     private ToastOffer _workOffer;
 
@@ -65,10 +69,13 @@ internal sealed partial class InboxViewModel
             _status = value;
             var toast = _pendingToast ?? DescribeForToast(value);
             bool quiet = _pendingQuiet;
+            bool problem = _pendingProblem || IsProblem(value);
             _pendingToast = null;
             _pendingQuiet = false;
-            if (IsBusy && _editsInHand == 0) NoteWorkLine(value, toast, quiet);
-            else ShowMessage(value, toast, quiet, foreground: IsBusy);
+            _pendingProblem = false;
+            _statusIsProblem = problem;
+            if (IsBusy && _editsInHand == 0) NoteWorkLine(value, toast, quiet, problem);
+            else ShowMessage(value, toast, quiet, foreground: IsBusy, problem);
             OnPropertyChanged();
         }
     }
@@ -113,13 +120,15 @@ internal sealed partial class InboxViewModel
     public bool ToastOffersOcrResults => ToastOffer == ToastOffer.OcrResults && HasOcrCopyBatchResults && OfferIsCurrent;
 
     /// <summary>
-    /// Whether the message reports a failure, so the toast shows an alert glyph instead of a check. Failures follow the
-    /// family's two shapes ("Couldn't …", "… didn't …") or Plico's older "Could not …" and "… failed" wording.
+    /// Whether the message reports a failure, so the toast shows an alert glyph instead of a check: one raised by
+    /// <see cref="Fail"/> (an error caught from the work, a library that did not open, a setting that could not be
+    /// read), or one worded as a failure in the family's two shapes ("Couldn't …", "… didn't …") or Plico's older
+    /// "Could not …" and "… failed".
     /// </summary>
-    public bool StatusIsProblem => IsProblem(Status);
+    public bool StatusIsProblem => _statusIsProblem;
 
     /// <summary>Whether the toast's message reports a failure; see <see cref="StatusIsProblem"/>.</summary>
-    public bool ToastIsProblem => IsProblem(_toastStatus);
+    public bool ToastIsProblem => _toastIsProblem;
 
     private static bool IsProblem(string? message)
     {
@@ -130,11 +139,12 @@ internal sealed partial class InboxViewModel
     }
 
     /// <summary>Makes <paramref name="message"/> the toast's: the window shows it, unless it is quiet.</summary>
-    private void ShowMessage(string message, ToastText toast, bool quiet, bool foreground)
+    private void ShowMessage(string message, ToastText toast, bool quiet, bool foreground, bool problem)
     {
         _statusSerial++;
         _toastStatus = message;
         _toastText = toast;
+        _toastIsProblem = problem;
         ToastIsQuiet = quiet;
         ToastIsForeground = foreground;
         RaiseDerived(nameof(ToastTitle));
@@ -146,11 +156,12 @@ internal sealed partial class InboxViewModel
     }
 
     /// <summary>Keeps a line of the work in hand for the status card, and as the toast to show when the work ends.</summary>
-    private void NoteWorkLine(string line, ToastText toast, bool quiet)
+    private void NoteWorkLine(string line, ToastText toast, bool quiet, bool problem)
     {
         _workStatus = line;
         _workToast = toast;
         _workQuiet = quiet;
+        _workProblem = problem;
         _workHasMessage = !line.EndsWith('…');
         RaiseDerived(nameof(WorkStatus));
     }
@@ -174,7 +185,7 @@ internal sealed partial class InboxViewModel
         _workOffer = ToastOffer.None;
         if (!_workHasMessage) return;
         _workHasMessage = false;
-        ShowMessage(_workStatus, _workToast, _workQuiet, foreground: false);
+        ShowMessage(_workStatus, _workToast, _workQuiet, foreground: false, _workProblem);
         if (offer != ToastOffer.None) UpdateToastOffer(available: true, offer);
     }
 
@@ -199,11 +210,21 @@ internal sealed partial class InboxViewModel
     });
 
     /// <summary>
-    /// Adds a notice raised while Plico starts, before the window can show it, to what was said already, so the toast
+    /// Adds a problem raised while Plico starts, before the window can show it, to what was said already, so the toast
     /// that rises once the window opens carries every one. A quiet "Library ready." gives way to it.
     /// </summary>
-    private void AddStartupNotice(string notice) =>
-        Status = ToastIsQuiet || string.IsNullOrWhiteSpace(ToastStatus) ? notice : $"{ToastStatus} {notice}";
+    private void AddStartupNotice(string notice)
+    {
+        if (ToastIsQuiet || string.IsNullOrWhiteSpace(ToastStatus)) Fail(notice);
+        else Fail(ToastIsProblem ? $"{ToastStatus} {notice}" : $"{notice} {ToastStatus}");
+    }
+
+    /// <summary>Sets the message of record and marks it a failure, so its toast shows the alert glyph.</summary>
+    private void Fail(string message)
+    {
+        _pendingProblem = true;
+        Status = message;
+    }
 
     /// <summary>Sets the message of record without a toast, for news the window already shows.</summary>
     private void Note(string status)

@@ -218,7 +218,6 @@ LibraryAlreadyOpen	Library already open.	Bibliothèque déjà ouverte.
 LibraryIntegrity	Library integrity	Intégrité de la bibliothèque
 LibraryIntegrityFindings	Library integrity findings	Résultats du contrôle d’intégrité
 LibraryReady	Library ready.	Bibliothèque prête.
-LibraryReady0	Library ready. {0}	Bibliothèque prête. {0}
 LibraryTools	More	Plus
 Light	Light	Clair
 LoadMore	Load more	Afficher plus
@@ -943,6 +942,10 @@ CannotLoadImportErrors	Couldn't load the saved import errors. {0}	Impossible de 
 CannotSaveImportErrors	Couldn't save the import errors. {0}	Impossible d’enregistrer les erreurs d’import. {0}
 CannotSaveWatchedScanChoice	Couldn't save the watched-scan choice. {0}	Impossible d’enregistrer le choix des numérisations surveillées. {0}
 CannotLoadIntakeSettings	Couldn't load the intake settings. {0}	Impossible de charger les réglages d’arrivée. {0}
+CannotLoadSavedWatches	Couldn't load the saved watches. {0}	Impossible de charger les surveillances enregistrées. {0}
+CannotLoadRecognitionSettings	Couldn't load the recognition settings. {0}	Impossible de charger les réglages de reconnaissance. {0}
+CannotLoadRecognitionLanguage	Couldn't load the recognition language. {0}	Impossible de charger la langue de reconnaissance. {0}
+CannotLoadLocalModelSettings	Couldn't load the local model settings. {0}	Impossible de charger les réglages des modèles locaux. {0}
 IntegrityMissing	PDF missing	PDF manquant
 IntegrityUnreadable	Couldn't read the PDF	Impossible de lire le PDF
 IntegrityChanged	PDF changed since indexing	PDF modifié depuis l’indexation

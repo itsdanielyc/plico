@@ -33,7 +33,7 @@ internal sealed partial class InboxViewModel
         _localModelPreference = settings;
         if (open is not null) _openLocalModel = open;
         try { LocalModels = settings.Load(); }
-        catch (Exception error) when (error is IOException or UnauthorizedAccessException) { AddStartupNotice(error.Message); }
+        catch (Exception error) when (error is IOException or UnauthorizedAccessException) { AddStartupNotice(DesktopText.Format($"Couldn't load the local model settings. {error.Message}")); }
     }
 
     [RelayCommand]

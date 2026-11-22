@@ -60,6 +60,36 @@ public sealed partial class InboxWindowTests
     }
 
     [AvaloniaFact]
+    public async Task ASettingsRefusalWearsTheAlertNotTheCheck()
+    {
+        using var temporary = new TemporaryLibrary();
+        using var settingsFolder = new TemporaryLibrary();
+        using (var library = InboxLibrary.Open(temporary.Path)) BatchFixtures.AddTwoDocuments(library, TestContext.Current.CancellationToken);
+        var dialogs = new FixtureDialogs { FolderPath = Path.Combine(temporary.Path, "PDFs") };
+        using var model = new InboxViewModel(dialogs, watchPreference: new WatchFolderPreference(settingsFolder.Path));
+        model.InitializeLibrary(() => temporary.Path);
+        var window = new MainWindow { DataContext = model, Width = 1280, Height = 800 };
+        window.Show();
+        try
+        {
+            await WaitForPreviewAsync(model);
+            var settings = OpenSettingsAt(window, "IntakeGroup");
+            ClickAt(settings, Assert.IsType<Button>(settings.FindControl<Button>("StartFolderWatchButton")));
+            await WaitForAsync(() => !model.IsBusy);
+            Assert.Contains("outside the library's managed folders", Assert.IsType<TextBlock>(settings.FindControl<TextBlock>("SettingsMessage")).Text,
+                StringComparison.Ordinal);
+            var done = Assert.IsAssignableFrom<Control>(settings.FindControl<Control>("SettingsMessageDone"));
+            var problem = Assert.IsAssignableFrom<Control>(settings.FindControl<Control>("SettingsMessageProblem"));
+            Assert.True(problem.IsVisible && !done.IsVisible, "Settings shows its refusal beside the success check.");
+            settings.Close();
+        }
+        finally
+        {
+            window.Close();
+        }
+    }
+
+    [AvaloniaFact]
     public async Task AKeyThatComesUpInTheMainWindowLeavesSettingsWithNothingToSay()
     {
         using var temporary = new TemporaryLibrary();

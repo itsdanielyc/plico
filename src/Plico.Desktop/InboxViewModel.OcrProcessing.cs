@@ -37,7 +37,7 @@ internal sealed partial class InboxViewModel
         }
         catch (Exception error) when (error is IOException or UnauthorizedAccessException or JsonException)
         {
-            AddStartupNotice(error.Message);
+            AddStartupNotice(DesktopText.Format($"Couldn't load the recognition settings. {error.Message}"));
         }
         _saveOcrProcessing = preference.Save;
     }
@@ -62,7 +62,7 @@ internal sealed partial class InboxViewModel
         }
         catch (Exception error) when (error is IOException or UnauthorizedAccessException)
         {
-            Status = $"Using the OCR settings for this session. {error.Message}";
+            Fail($"Using the OCR settings for this session. {error.Message}");
         }
     }
 }

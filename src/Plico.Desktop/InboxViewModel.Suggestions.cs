@@ -90,7 +90,7 @@ internal sealed partial class InboxViewModel
         }
         catch (Exception error)
         {
-            Status = error.Message;
+            Fail(error.Message);
         }
     }
 

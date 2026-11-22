@@ -102,6 +102,100 @@ public sealed partial class InboxWindowTests
         }
     }
 
+    [AvaloniaFact]
+    public async Task AStartupNoticeOutlastsTheCatchUpThatOpeningStarts()
+    {
+        using var temporary = new TemporaryLibrary();
+        using var settings = new TemporaryLibrary();
+        using var watched = new TemporaryLibrary();
+        using (var library = InboxLibrary.Open(temporary.Path)) BatchFixtures.AddTwoDocuments(library, TestContext.Current.CancellationToken);
+        string settingsDirectory = Path.Combine(settings.Path, "Settings");
+        var store = new ImportFailureStore(settingsDirectory);
+        store.Save(temporary.Path, [new ImportFailure(Path.Combine(temporary.Path, "Damaged.pdf"), "Unreadable")]);
+        foreach (string file in Directory.GetFiles(settingsDirectory, "import-errors-*.json")) File.WriteAllText(file, "{ not json");
+        // The library's saved watch catches up whenever it opens.
+        var watchPreference = new WatchFolderPreference(settingsDirectory);
+        string watchFolder = Path.Combine(watched.Path, "Scans");
+        Directory.CreateDirectory(watchFolder);
+        watchPreference.Save(Path.GetFullPath(temporary.Path), watchFolder);
+        watchPreference.SaveCatchUpOnOpen(Path.GetFullPath(temporary.Path), true);
+
+        using var model = new InboxViewModel(new FixtureDialogs(), watchPreference: watchPreference, importFailureStore: store);
+        model.InitializeLibrary(() => temporary.Path);
+        var window = new MainWindow { DataContext = model, Width = 1280, Height = 800 };
+        window.Show();
+        try
+        {
+            await WaitForAsync(() => !model.IsBusy && model.IsWatchingFolder);
+            await WaitForPreviewAsync(model);
+            Dispatcher.UIThread.RunJobs();
+
+            // The catch-up has said its piece, and what opening the library had to say is still there to read.
+            var toast = Assert.IsType<Border>(window.FindControl<Border>("Toast"));
+            Assert.True(toast.IsVisible);
+            Assert.True(model.ToastStatus.Contains("Couldn't load the saved import errors.", StringComparison.Ordinal),
+                $"Once the catch-up ended the toast says only “{model.ToastStatus}”; the startup notice is gone.");
+            Assert.Contains("Scans", model.ToastStatus, StringComparison.Ordinal);
+            Assert.Equal("Couldn't load the saved import errors", model.ToastTitle);
+            AssertToastWearsTheAlert(toast);
+        }
+        finally
+        {
+            await model.PrepareCloseAsync();
+            window.Close();
+        }
+    }
+
+    [AvaloniaTheory]
+    [InlineData(false)]
+    [InlineData(true)]
+    public async Task AProblemWhilePlicoStartsWearsTheAlertAndLeadsWithTheProblem(bool locked)
+    {
+        using var temporary = new TemporaryLibrary();
+        using var settings = new TemporaryLibrary();
+        using (var library = InboxLibrary.Open(temporary.Path)) BatchFixtures.AddTwoDocuments(library, TestContext.Current.CancellationToken);
+        string settingsDirectory = Path.Combine(settings.Path, "Settings");
+        var store = new ImportFailureStore(settingsDirectory);
+        store.Save(temporary.Path, [new ImportFailure(Path.Combine(temporary.Path, "Damaged.pdf"), "Unreadable")]);
+        foreach (string file in Directory.GetFiles(settingsDirectory, "import-errors-*.json")) File.WriteAllText(file, "{ not json");
+        using var model = new InboxViewModel(new FixtureDialogs(), importFailureStore: store);
+        var window = new MainWindow { Width = 1280, Height = 800 };
+        if (locked)
+        {
+            // Another copy of Plico has this library open.
+            using (InboxLibrary.Open(temporary.Path)) model.InitializeLibrary(() => temporary.Path);
+        }
+        else
+        {
+            // The library opens, but its saved import errors cannot be read.
+            model.InitializeLibrary(() => temporary.Path);
+        }
+        window.DataContext = model;
+        window.Show();
+        try
+        {
+            Dispatcher.UIThread.RunJobs();
+            if (!locked) await WaitForPreviewAsync(model);
+            var toast = Assert.IsType<Border>(window.FindControl<Border>("Toast"));
+            Assert.True(toast.IsVisible);
+            Assert.NotEqual("Library ready", model.ToastTitle);
+            Assert.Equal(locked ? "Plico could not lock this library" : "Couldn't load the saved import errors", model.ToastTitle);
+            AssertToastWearsTheAlert(toast);
+        }
+        finally
+        {
+            window.Close();
+        }
+    }
+
+    /// <summary>The toast shows its alert glyph and not the check: the message says something went wrong.</summary>
+    private static void AssertToastWearsTheAlert(Border toast)
+    {
+        var glyphs = toast.GetVisualDescendants().OfType<Icon>().Take(2).ToArray();
+        Assert.True(glyphs.Length == 2 && !glyphs[0].IsVisible && glyphs[1].IsVisible,
+            "The toast reports a failure beside the success check.");
+    }
+
     /// <summary>The words of every visible text inside <paramref name="root"/>, in layout order.</summary>
     private static string[] VisibleTexts(Control root) => root.GetVisualDescendants().OfType<TextBlock>()
         .Where(text => text.IsEffectivelyVisible && !string.IsNullOrWhiteSpace(text.Text)).Select(text => text.Text!).ToArray();
