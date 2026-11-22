@@ -210,7 +210,8 @@ internal sealed partial class InboxViewModel
         bool retainLoadedResults = false, ReviewPosition? reviewPosition = null)
     {
         CancelTypedSearch();
-        var filter = CurrentFilter(append ? Documents.Count : 0);
+        int offset = append ? Documents.Count : 0;
+        var filter = CurrentFilter(offset);
         if (_library is not { } library)
         {
             UpdateResultHeading(filter);
@@ -219,19 +220,25 @@ internal sealed partial class InboxViewModel
 
         try
         {
-            bool reloadExpandedResults = retainLoadedResults && !append && HasExpandedResults && _appliedQuery == filter.Query;
-            var page = reloadExpandedResults ? library.Find(filter, Documents.Count, CancellationToken.None) : library.Find(filter);
-            if (page.QueryIssue is { } issue)
+            var page = ReadResults(library, filter, retainLoadedResults && !append);
+            var issue = page.QueryIssue;
+            if (issue is { } typedIssue)
             {
-                ShowQueryIssue(issue);
-                return;
+                ShowQueryIssue(typedIssue);
+                // The queue still shows the results of the last search that could run, and the card one of them. A
+                // change to a document reloads those results from the filter that found them, so neither keeps showing
+                // what is no longer true (a reviewed document in the Inbox, a trashed one on the card).
+                if (_shownFilter is not { } shown) return;
+                filter = shown with { Offset = offset };
+                page = ReadResults(library, filter, retainLoadedResults && !append);
+                if (page.QueryIssue is not null) return;
             }
             UpdateResultHeading(filter);
             if (reviewPosition is { } position && position.Filter == filter)
             {
                 preferredId = ChooseReviewResult(page.Items, position);
             }
-            ApplyResultPage(filter, page, preferredId, reloadPreview);
+            ApplyResultPage(filter, page, preferredId, reloadPreview, keepQueryHint: issue is not null);
         }
         catch (Exception error)
         {
@@ -239,6 +246,25 @@ internal sealed partial class InboxViewModel
             ReportResultFailure(error);
         }
     }
+
+    /// <summary>Reads a page of results, or as many rows as are loaded when an expanded list reloads in place.</summary>
+    private DocumentPage ReadResults(InboxLibrary library, DocumentFilter filter, bool retainLoadedResults)
+    {
+        bool reloadExpandedResults = retainLoadedResults && HasExpandedResults && _appliedQuery == filter.Query;
+        return reloadExpandedResults ? library.Find(filter, Documents.Count, CancellationToken.None) : library.Find(filter);
+    }
+
+    /// <summary>
+    /// The filter that found the results on screen, from the first row. While the typed search cannot run it is the
+    /// last search that could, and reloads after a change read it again.
+    /// </summary>
+    private DocumentFilter? _shownFilter;
+
+    // The typed query that could not run, while it is still the one in the field.
+    private string? _unrunnableQuery;
+
+    /// <summary>True while the search field holds a query that cannot run, so the results on screen belong to an earlier one.</summary>
+    private bool QueryCannotRun => _unrunnableQuery is not null && _unrunnableQuery == Query;
 
     private DocumentFilter CurrentFilter(int offset = 0) => new(Query, _activeTag,
         _inboxOnly && string.IsNullOrWhiteSpace(Query), offset, SortOption?.Order ?? DocumentSort.Automatic);
@@ -268,15 +294,21 @@ internal sealed partial class InboxViewModel
         NotifyZeroState();
     }
 
-    private void ApplyResultPage(DocumentFilter filter, DocumentPage page, long? preferredId = null, bool reloadPreview = false)
+    private void ApplyResultPage(DocumentFilter filter, DocumentPage page, long? preferredId = null, bool reloadPreview = false,
+        bool keepQueryHint = false)
     {
         long? selection = preferredId ?? SelectedDocument?.Id;
         bool queryChanged = _appliedQuery != filter.Query;
         _appliedQuery = filter.Query;
+        _shownFilter = filter with { Offset = 0 };
         ReplaceResults(filter.Offset > 0 ? [.. Documents, .. page.Items] : page.Items, selection, reloadPreview);
         if (queryChanged && Preview is not null) UpdatePreviewHighlights();
         HasMore = page.HasMore;
-        SearchQueryHint = "";
+        if (!keepQueryHint)
+        {
+            _unrunnableQuery = null;
+            SearchQueryHint = "";
+        }
 
         ResultCount = HasMore ? $"Showing {DocumentCount(Documents.Count)}" : DocumentCount(Documents.Count);
         if (filter.Tag is not null && !string.IsNullOrWhiteSpace(filter.Query)) ResultCount += $" in {filter.Tag}";
@@ -303,6 +335,7 @@ internal sealed partial class InboxViewModel
     /// </summary>
     private void ShowQueryIssue(SearchQueryIssue issue)
     {
+        _unrunnableQuery = Query;
         HasMore = false;
         ResultCount = _shownResults.Count;
         SetEmptyState(_shownResults.EmptyTitle, _shownResults.EmptyMessage);

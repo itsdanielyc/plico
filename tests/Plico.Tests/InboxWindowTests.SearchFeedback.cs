@@ -2,6 +2,7 @@ using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Controls.Shapes;
 using Avalonia.Headless.XUnit;
+using Avalonia.Input;
 using Avalonia.LogicalTree;
 using Avalonia.VisualTree;
 using Plico.Core;
@@ -85,6 +86,64 @@ public sealed partial class InboxWindowTests
             Assert.Equal("2 documents", model.ResultCount);
             Assert.False(message.IsVisible);
             Assert.All(model.Documents, document => Assert.False(document.Reviewed));
+        }
+        finally
+        {
+            if (model.SelectedDocument is not null) await WaitForPreviewAsync(model);
+            window.Close();
+        }
+    }
+
+    [AvaloniaFact]
+    public async Task WhileASearchCannotRunEveryChangeToTheOpenDocumentStillShows()
+    {
+        using var temporary = new TemporaryLibrary();
+        using (var library = InboxLibrary.Open(temporary.Path)) BatchFixtures.AddTwoDocuments(library, TestContext.Current.CancellationToken);
+        using var model = new InboxViewModel(new FixtureDialogs());
+        model.InitializeLibrary(() => temporary.Path);
+        var window = new MainWindow { DataContext = model, Width = 1280, Height = 800 };
+        window.Show();
+        try
+        {
+            await WaitForPreviewAsync(model);
+            var search = Assert.IsType<TextBox>(window.FindControl<TextBox>("SearchBox"));
+            Assert.True(search.Focus());
+            TypeText(window, "status:pending");
+            await WaitForAsync(() => model.HasSearchQueryHint);
+            var first = model.SelectedDocument!;
+
+            // A tag typed with one Enter shows as a chip on the card at once.
+            var tagField = Assert.IsType<AutoCompleteBox>(window.FindControl<AutoCompleteBox>("TagBox"));
+            ClickAt(window, tagField);
+            TypeText(window, "Housing");
+            PressKey(window, Key.Enter, PhysicalKey.Enter);
+            Assert.Contains(model.SelectedTagChips, chip => chip.Label == "Housing");
+
+            // A date typed and entered stays in the field and on the document.
+            var dateField = Assert.IsType<TextBox>(window.FindControl<TextBox>("DocumentDateField"));
+            ClickAt(window, dateField);
+            TypeText(window, "29 Feb 2024");
+            PressKey(window, Key.Enter, PhysicalKey.Enter);
+            Assert.Equal(new DateOnly(2024, 2, 29), model.SelectedDocument!.DocumentDate);
+            Assert.Equal("29 Feb 2024", dateField.Text);
+
+            // Mark reviewed takes the document out of the Inbox the queue shows and opens the next one.
+            ClickAt(window, Assert.IsType<Button>(window.FindControl<Button>("ReviewButton")));
+            await WaitForPreviewAsync(model);
+            Assert.DoesNotContain(model.Documents, document => document.Id == first.Id);
+            var second = Assert.IsType<DocumentSummary>(model.SelectedDocument);
+            Assert.NotEqual(first.Id, second.Id);
+            Assert.Equal(1, model.InboxCount);
+
+            // Trash takes it out of the queue and off the card.
+            ClickAt(window, Assert.IsType<Button>(window.FindControl<Button>("TrashDocumentButton")));
+            await WaitForAsync(() => !model.IsBusy);
+            Assert.DoesNotContain(model.Documents, document => document.Id == second.Id);
+            Assert.NotEqual(second.Id, model.SelectedDocument?.Id);
+
+            // The search still says how to repair it, with what was typed.
+            Assert.Equal("status:pending", search.Text);
+            Assert.True(model.HasSearchQueryHint);
         }
         finally
         {

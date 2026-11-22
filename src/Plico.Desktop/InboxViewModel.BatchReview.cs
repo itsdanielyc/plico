@@ -107,12 +107,17 @@ internal sealed partial class InboxViewModel
 
     private sealed record ReviewPosition(DocumentFilter Filter, IReadOnlyList<DocumentSummary> PreviousResults, int Index);
 
+    /// <summary>
+    /// Where a document sits in the results on screen. While the typed search cannot run, those are the results of the
+    /// last search that could, so J, K and the next document after a review still follow them.
+    /// </summary>
     private ReviewPosition? CaptureReviewPosition(long documentId)
     {
-        if (_appliedQuery != Query) return null;
+        if (_appliedQuery != Query && !QueryCannotRun) return null;
+        var filter = QueryCannotRun && _shownFilter is { } shown ? shown : CurrentFilter();
         for (int index = 0; index < Documents.Count; index++)
         {
-            if (Documents[index].Id == documentId) return new ReviewPosition(CurrentFilter(), Documents, index);
+            if (Documents[index].Id == documentId) return new ReviewPosition(filter, Documents, index);
         }
         return null;
     }
