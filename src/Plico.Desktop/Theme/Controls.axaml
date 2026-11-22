@@ -521,6 +521,11 @@
         <Setter Property="Padding" Value="10,0" />
         <Setter Property="CornerRadius" Value="8" />
     </Style>
+    <!-- Fluent draws a menu shortcut as text; it takes the keycap's type, 13 SemiBold, in Fg3. -->
+    <Style Selector="MenuItem /template/ TextBlock#PART_InputGestureText">
+        <Setter Property="FontSize" Value="13" />
+        <Setter Property="FontWeight" Value="SemiBold" />
+    </Style>
     <Style Selector="MenuFlyoutPresenter Separator, ContextMenu Separator, MenuItem Separator">
         <Setter Property="Background" Value="{DynamicResource Line}" />
         <Setter Property="Margin" Value="6,4" />

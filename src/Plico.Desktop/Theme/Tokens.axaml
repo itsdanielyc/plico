@@ -94,6 +94,7 @@
             <Color x:Key="SystemErrorTextColor">#B42318</Color>
             <Color x:Key="ScrollBarThumbBackgroundColor">#CDCDD2</Color>
             <Color x:Key="ScrollBarPanningThumbBackgroundColor">#CDCDD2</Color>
+            <Color x:Key="HyperlinkVisitedColor">#0F0F10</Color>
             <!-- Accent and system brushes. -->
             <StaticResource x:Key="SystemControlHighlightAccentBrush" ResourceKey="Fg" />
             <StaticResource x:Key="SystemControlBackgroundAccentBrush" ResourceKey="Fg" />
@@ -584,6 +585,27 @@
             <StaticResource x:Key="SliderTickBarFill" ResourceKey="Fg3" />
             <StaticResource x:Key="SliderTickBarFillDisabled" ResourceKey="FgDisabled" />
             <StaticResource x:Key="SliderInlineTickBarFill" ResourceKey="Panel" />
+            <!-- Every other key that still carried the system accent. -->
+            <StaticResource x:Key="HyperlinkButtonForeground" ResourceKey="Fg" />
+            <StaticResource x:Key="HyperlinkButtonForegroundPointerOver" ResourceKey="Fg" />
+            <StaticResource x:Key="HyperlinkButtonForegroundPressed" ResourceKey="Fg2" />
+            <StaticResource x:Key="HyperlinkButtonForegroundVisited" ResourceKey="Fg" />
+            <StaticResource x:Key="HyperlinkButtonForegroundVisitedPointerOver" ResourceKey="Fg" />
+            <StaticResource x:Key="HyperlinkButtonForegroundVisitedPressed" ResourceKey="Fg2" />
+            <StaticResource x:Key="HyperlinkVisitedBrush" ResourceKey="Fg" />
+            <StaticResource x:Key="SystemControlHighlightAccentRevealBackgroundBrush" ResourceKey="Fg" />
+            <StaticResource x:Key="SystemControlHighlightAccent2RevealBackgroundBrush" ResourceKey="Fg" />
+            <StaticResource x:Key="SystemControlHighlightAccent3RevealBackgroundBrush" ResourceKey="Fg" />
+            <StaticResource x:Key="SystemControlRevealFocusVisualBrush" ResourceKey="Fg" />
+            <StaticResource x:Key="TabItemHeaderSelectedPipeFill" ResourceKey="Fg" />
+            <StaticResource x:Key="TimePickerFlyoutPresenterHighlightFill" ResourceKey="Sunken" />
+            <StaticResource x:Key="TableViewRowBackgroundSelected" ResourceKey="Sunken" />
+            <StaticResource x:Key="TableViewRowBackgroundSelectedPointerOver" ResourceKey="Sunken" />
+            <StaticResource x:Key="TableViewRowBackgroundSelectedPressed" ResourceKey="Sunken" />
+            <StaticResource x:Key="NotificationCardInformationBackgroundBrush" ResourceKey="Fg" />
+            <StaticResource x:Key="NotificationCardSuccessBackgroundBrush" ResourceKey="Ok" />
+            <StaticResource x:Key="NotificationCardWarningBackgroundBrush" ResourceKey="Warn" />
+            <StaticResource x:Key="NotificationCardErrorBackgroundBrush" ResourceKey="Err" />
             <!-- Tree views. -->
             <SolidColorBrush x:Key="TreeViewItemBackground" Color="Transparent" />
             <StaticResource x:Key="TreeViewItemBackgroundPointerOver" ResourceKey="Hover" />
@@ -698,6 +720,7 @@
             <Color x:Key="SystemErrorTextColor">#FF7B6E</Color>
             <Color x:Key="ScrollBarThumbBackgroundColor">#3B3B41</Color>
             <Color x:Key="ScrollBarPanningThumbBackgroundColor">#3B3B41</Color>
+            <Color x:Key="HyperlinkVisitedColor">#F4F4F5</Color>
             <!-- Accent and system brushes. -->
             <StaticResource x:Key="SystemControlHighlightAccentBrush" ResourceKey="Fg" />
             <StaticResource x:Key="SystemControlBackgroundAccentBrush" ResourceKey="Fg" />
@@ -1188,6 +1211,27 @@
             <StaticResource x:Key="SliderTickBarFill" ResourceKey="Fg3" />
             <StaticResource x:Key="SliderTickBarFillDisabled" ResourceKey="FgDisabled" />
             <StaticResource x:Key="SliderInlineTickBarFill" ResourceKey="Panel" />
+            <!-- Every other key that still carried the system accent. -->
+            <StaticResource x:Key="HyperlinkButtonForeground" ResourceKey="Fg" />
+            <StaticResource x:Key="HyperlinkButtonForegroundPointerOver" ResourceKey="Fg" />
+            <StaticResource x:Key="HyperlinkButtonForegroundPressed" ResourceKey="Fg2" />
+            <StaticResource x:Key="HyperlinkButtonForegroundVisited" ResourceKey="Fg" />
+            <StaticResource x:Key="HyperlinkButtonForegroundVisitedPointerOver" ResourceKey="Fg" />
+            <StaticResource x:Key="HyperlinkButtonForegroundVisitedPressed" ResourceKey="Fg2" />
+            <StaticResource x:Key="HyperlinkVisitedBrush" ResourceKey="Fg" />
+            <StaticResource x:Key="SystemControlHighlightAccentRevealBackgroundBrush" ResourceKey="Fg" />
+            <StaticResource x:Key="SystemControlHighlightAccent2RevealBackgroundBrush" ResourceKey="Fg" />
+            <StaticResource x:Key="SystemControlHighlightAccent3RevealBackgroundBrush" ResourceKey="Fg" />
+            <StaticResource x:Key="SystemControlRevealFocusVisualBrush" ResourceKey="Fg" />
+            <StaticResource x:Key="TabItemHeaderSelectedPipeFill" ResourceKey="Fg" />
+            <StaticResource x:Key="TimePickerFlyoutPresenterHighlightFill" ResourceKey="Sunken" />
+            <StaticResource x:Key="TableViewRowBackgroundSelected" ResourceKey="Sunken" />
+            <StaticResource x:Key="TableViewRowBackgroundSelectedPointerOver" ResourceKey="Sunken" />
+            <StaticResource x:Key="TableViewRowBackgroundSelectedPressed" ResourceKey="Sunken" />
+            <StaticResource x:Key="NotificationCardInformationBackgroundBrush" ResourceKey="Fg" />
+            <StaticResource x:Key="NotificationCardSuccessBackgroundBrush" ResourceKey="Ok" />
+            <StaticResource x:Key="NotificationCardWarningBackgroundBrush" ResourceKey="Warn" />
+            <StaticResource x:Key="NotificationCardErrorBackgroundBrush" ResourceKey="Err" />
             <!-- Tree views. -->
             <SolidColorBrush x:Key="TreeViewItemBackground" Color="Transparent" />
             <StaticResource x:Key="TreeViewItemBackgroundPointerOver" ResourceKey="Hover" />
