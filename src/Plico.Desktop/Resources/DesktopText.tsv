@@ -527,7 +527,7 @@ DeadlineRetention	Keep until	Conserver jusqu’au
 DeadlineDaysBefore	Days before	Jours avant
 RemindersWindow	Reminders	Rappels
 ReminderCount	Upcoming ({0})	À venir ({0})
-ReminderNotification	{0} document reminders are due.	Rappels de documents arrivés à échéance : {0}.
+ReminderNotification	{0} document reminders are due.	Rappels de documents arrivés à échéance : {0}.
 ReminderDismiss	Dismiss	Ignorer
 ReminderCalendar	Export calendar…	Exporter le calendrier…
 NoReminders	No reminders are due.	Aucun rappel n’est dû.
@@ -610,7 +610,7 @@ CannotResumeNamedWatch	Couldn't resume the {0} watch. {1}	Impossible de reprendr
 NamedCalendarReminder	{0} reminder	Rappel · {0}
 NamedCurrency	{0} currency	Devise · {0}
 LeadTimeError	Enter a lead time from 0 to {0}.	Saisissez un délai de 0 à {0} jours.
-MetaNamedValueError	Enter a valid value for “{0}”.	Saisissez une valeur valide pour « {0} ».
+MetaNamedValueError	Enter a valid value for “{0}”.	Saisissez une valeur valide pour « {0} ».
 NamedOpenedItem	Opened {0}.	Ouverture de {0}.
 NamedPhoneQueue	{0} queued for the folder watch.	{0} en attente de la surveillance du dossier.
 ArchiveSerialMenu	Archive serial numbers	Numéros d’archives
@@ -707,7 +707,7 @@ RedesignLearnedReason	Like documents you have reviewed	Comme des documents que v
 RedesignSuggestionAccepted	Suggestion accepted.	Suggestion acceptée.
 RedesignSuggestionsAccepted	{0} suggestions accepted.	{0} suggestions acceptées.
 RedesignUndoing	Undoing…	Annulation…
-RedesignUndone	Undone: {0}.	Annulé : {0}.
+RedesignUndone	Undone: {0}.	Annulé : {0}.
 RedesignMarkedReviewed	Marked reviewed	Marqué comme vérifié
 RedesignMovedToTrash	Moved {0} to Trash	{0} placé dans la corbeille
 RedesignZeroNone	Everything you have added is filed. New scans and files will wait here.	Tout ce que vous avez ajouté est classé. Les nouveaux fichiers et numérisations attendront ici.
@@ -850,9 +850,9 @@ EmptyAllSearchable	Everything is searchable	Tout est indexable
 EmptyNothingYet	Nothing here yet	Rien pour l’instant
 EmptyNoDocumentsYet	No documents yet	Aucun document pour l’instant
 PhoneInboxOptions	Options	Options
-MetadataHeading	Details for “{0}”	Détails de « {0} »
+MetadataHeading	Details for “{0}”	Détails de « {0} »
 MetadataDescription	What kind of document this is, who it is from, and anything else to keep with it.	Le type de document, son expéditeur et tout ce qu’il faut garder avec lui.
-DeadlinesHeading	Reminder for “{0}”	Rappel pour « {0} »
+DeadlinesHeading	Reminder for “{0}”	Rappel pour « {0} »
 DeadlinesDescription	Plico reminds you the chosen number of days before each date. Write dates like {0}.	Plico vous le rappelle le nombre de jours choisi avant chaque date. Écrivez les dates comme {0}.
 RemoveTagHeading	Remove a tag	Retirer une étiquette
 ScanBackSidesHeading	Scan the back sides	Numériser les versos
@@ -869,8 +869,8 @@ ToastDateSet	Date set	Date définie
 ToastDateCleared	Date cleared	Date effacée
 DateFieldInvalid	Use a date like {0}.	Saisissez une date comme {0}.
 DocumentDateFieldTip	Type a date like 21 Nov 2026, or choose one.	Saisissez une date comme 21 nov. 2026, ou choisissez-en une.
-SuggestedDateFieldHelpEnter	Suggested from the page: {0}. Press Enter to file it, or type a date.	Suggérée par la page : {0}. Appuyez sur Entrée pour la classer, ou saisissez une date.
-SuggestedDateFieldHelpReturn	Suggested from the page: {0}. Press Return to file it, or type a date.	Suggérée par la page : {0}. Appuyez sur Retour pour la classer, ou saisissez une date.
+SuggestedDateFieldHelpEnter	Suggested from the page: {0}. Press Enter to file it, or type a date.	Suggérée par la page : {0}. Appuyez sur Entrée pour la classer, ou saisissez une date.
+SuggestedDateFieldHelpReturn	Suggested from the page: {0}. Press Return to file it, or type a date.	Suggérée par la page : {0}. Appuyez sur Retour pour la classer, ou saisissez une date.
 SearchTips	Search tips	Astuces de recherche
 SearchTipsLede	Type words from the paper, or narrow the search with these.	Tapez des mots du papier, ou affinez la recherche avec ceux-ci.
 SearchTipEither	Either word	L’un ou l’autre mot
@@ -917,7 +917,7 @@ DayAtTime	{0} at {1}	{0} à {1}
 DateHintClearable	Use a date like {0}. Leave it empty to clear the date.	Saisissez une date comme {0}. Laissez le champ vide pour effacer la date.
 DocumentDateForCount	Document date for {0} documents	Date du document pour {0} documents
 AlreadyTagged	Already tagged	Déjà étiqueté
-AlreadyTaggedFormat	Already tagged “{0}”.	Déjà étiqueté « {0} ».
+AlreadyTaggedFormat	Already tagged “{0}”.	Déjà étiqueté « {0} ».
 SearchingResults	Searching…	Recherche…
 ShowingCount	Showing {0}	{0} affichés
 CountInTag	{0} in {1}	{0} dans {1}

@@ -196,7 +196,7 @@ public sealed partial class InboxWindowTests
 
     [AvaloniaTheory]
     [InlineData(false, "Tag added", "“Verification” · 2 documents")]
-    [InlineData(true, "Étiquette ajoutée", "«\u202FVerification\u202F» · 2 documents")]
+    [InlineData(true, "Étiquette ajoutée", "«\u00A0Verification\u00A0» · 2 documents")]
     public async Task ABatchTagsToastHasAShortTitleOverTheTagAndTheCount(bool useFrench, string title, string body)
     {
         using var temporary = new TemporaryLibrary();

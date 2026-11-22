@@ -31,21 +31,50 @@ public sealed partial class InboxWindowTests
             ClickAt(window, Assert.IsType<AutoCompleteBox>(window.FindControl<AutoCompleteBox>("TagBox")));
             TypeText(window, "Impôts");
             PressKey(window, Key.Enter, PhysicalKey.Enter);
-            Assert.Equal(("Étiquette ajoutée", "«\u202FImpôts\u202F»"), (model.ToastTitle, model.ToastBody));
+            Assert.Equal(("Étiquette ajoutée", "«\u00A0Impôts\u00A0»"), (model.ToastTitle, model.ToastBody));
 
             TypeText(window, "impôts");
             PressKey(window, Key.Enter, PhysicalKey.Enter);
-            Assert.Equal("«\u202FImpôts\u202F»", model.ToastBody);
+            Assert.Equal("«\u00A0Impôts\u00A0»", model.ToastBody);
 
             // A click on the heading opens the title, which typing replaces.
             ClickAt(window, Assert.IsType<Button>(window.FindControl<Button>("EditTitleButton")));
             TypeText(window, "Bail d’avril");
             PressKey(window, Key.Enter, PhysicalKey.Enter);
-            Assert.Equal("«\u202FBail d’avril\u202F»", model.ToastBody);
+            Assert.Equal("«\u00A0Bail d’avril\u00A0»", model.ToastBody);
         }
         finally
         {
             window.Close();
+            DesktopText.SetLanguage(InterfaceLanguage.English);
+        }
+    }
+
+    [AvaloniaFact]
+    public void FrenchPunctuationHoldsOnToItsWordsWithOneNoBreakSpace()
+    {
+        // French puts a space before : ; ! ? and inside « », and it must never break, or a wrapped line starts with a
+        // colon or leaves a guillemet alone. Every row uses the same no-break space, and so do names quoted in code.
+        var loose = new List<string>();
+        foreach (var (key, _, french) in ReadCatalog())
+        {
+            for (int index = 0; index < french.Length; index++)
+            {
+                bool before = ":;!?»".Contains(french[index]) && index > 0 && char.IsWhiteSpace(french[index - 1]);
+                bool after = french[index] == '«' && index + 1 < french.Length && char.IsWhiteSpace(french[index + 1]);
+                char space = before ? french[index - 1] : after ? french[index + 1] : '\u00A0';
+                if (space != '\u00A0') loose.Add($"{key}: U+{(int)space:X4} beside “{french[index]}” in “{french}”");
+            }
+        }
+        Assert.Empty(loose);
+
+        DesktopText.SetLanguage(InterfaceLanguage.French);
+        try
+        {
+            Assert.Equal("«\u00A0Impôts\u00A0»", DesktopText.Quote("Impôts"));
+        }
+        finally
+        {
             DesktopText.SetLanguage(InterfaceLanguage.English);
         }
     }

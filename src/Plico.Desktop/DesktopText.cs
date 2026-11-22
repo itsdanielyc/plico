@@ -38,9 +38,9 @@ internal static class DesktopText
 
     /// <summary>
     /// A name the person gave (a tag, a title) in the interface's quotation marks: “Tax” in English, « Impôts » in French,
-    /// with narrow no-break spaces inside the guillemets so they never part from the name.
+    /// with the no-break space every French row of the catalog uses inside them, so they never part from the name.
     /// </summary>
-    internal static string Quote(string name) => _useFrench ? $"«\u202F{name}\u202F»" : $"“{name}”";
+    internal static string Quote(string name) => _useFrench ? $"«\u00A0{name}\u00A0»" : $"“{name}”";
 
     internal static string Format(FormattableString message) =>
         string.Format(_useFrench ? CultureInfo.GetCultureInfo(FrenchCultureName) : CultureInfo.CurrentCulture,
