@@ -845,13 +845,125 @@
     <Style Selector="TextBox:error /template/ Border#PART_BorderElement, ComboBox:error /template/ Border#Background">
         <Setter Property="BorderBrush" Value="{DynamicResource Err}" />
     </Style>
-    <!-- A number field focuses as one control: the text part inside the spinner draws no ring of its own. -->
-    <Style Selector="NumericUpDown TextBox:focus /template/ Border#PART_BorderElement">
+    <!--
+        A number field is one control: a single frame with a 10 px corner and a strong hairline, the value centred
+        on its line, and the two steppers as quiet Fg2 chevrons inside the same frame. Fluent's spinner draws the
+        text part with its own border and sets the steppers outside it, so both templates are replaced here.
+    -->
+    <Style Selector="NumericUpDown">
+        <Setter Property="Background" Value="{DynamicResource Panel}" />
+        <Setter Property="Foreground" Value="{DynamicResource Fg}" />
+        <Setter Property="BorderBrush" Value="{DynamicResource LineStrong}" />
+        <Setter Property="BorderThickness" Value="1" />
+        <Setter Property="Padding" Value="12,0,4,0" />
+        <Setter Property="MinWidth" Value="0" />
+        <Setter Property="HorizontalAlignment" Value="Stretch" />
+        <Setter Property="VerticalContentAlignment" Value="Center" />
+        <Setter Property="Template">
+            <ControlTemplate>
+                <DataValidationErrors>
+                    <ButtonSpinner Name="PART_Spinner" Background="{TemplateBinding Background}" BorderBrush="{TemplateBinding BorderBrush}"
+                                   BorderThickness="{TemplateBinding BorderThickness}" CornerRadius="{TemplateBinding CornerRadius}"
+                                   MinHeight="{TemplateBinding MinHeight}" MinWidth="0" Padding="0"
+                                   HorizontalContentAlignment="Stretch" VerticalContentAlignment="Stretch"
+                                   AllowSpin="{TemplateBinding AllowSpin}" ShowButtonSpinner="{TemplateBinding ShowButtonSpinner}"
+                                   ButtonSpinnerLocation="{TemplateBinding ButtonSpinnerLocation}">
+                        <TextBox Name="PART_TextBox" Classes="spin-text" Padding="{TemplateBinding Padding}" Foreground="{TemplateBinding Foreground}"
+                                 FontSize="{TemplateBinding FontSize}" PlaceholderText="{TemplateBinding PlaceholderText}"
+                                 IsReadOnly="{TemplateBinding IsReadOnly}" Text="{TemplateBinding Text, Mode=TwoWay}"
+                                 TextAlignment="{TemplateBinding TextAlignment}" HorizontalContentAlignment="{TemplateBinding HorizontalContentAlignment}"
+                                 AcceptsReturn="False" TextWrapping="NoWrap" />
+                    </ButtonSpinner>
+                </DataValidationErrors>
+            </ControlTemplate>
+        </Setter>
+    </Style>
+    <Style Selector="NumericUpDown:pointerover /template/ ButtonSpinner#PART_Spinner">
+        <Setter Property="BorderBrush" Value="{DynamicResource ControlBorderHover}" />
+    </Style>
+    <Style Selector="NumericUpDown:focus-within /template/ ButtonSpinner#PART_Spinner">
+        <Setter Property="BorderBrush" Value="{DynamicResource Fg}" />
+    </Style>
+    <Style Selector="NumericUpDown:focus-within /template/ ButtonSpinner#PART_Spinner /template/ Border#PART_Frame">
+        <Setter Property="BoxShadow" Value="{DynamicResource ShadowFieldFocus}" />
+    </Style>
+    <Style Selector="NumericUpDown:disabled /template/ ButtonSpinner#PART_Spinner">
+        <Setter Property="Background" Value="{DynamicResource Sunken}" />
+        <Setter Property="BorderBrush" Value="{DynamicResource Line}" />
+    </Style>
+    <Style Selector="NumericUpDown:error /template/ ButtonSpinner#PART_Spinner">
+        <Setter Property="BorderBrush" Value="{DynamicResource Err}" />
+    </Style>
+    <!-- The text part has no frame of its own in any state: the spinner's frame is the field's edge. -->
+    <Style Selector="TextBox.spin-text, TextBox.spin-text:pointerover, TextBox.spin-text:focus">
+        <Setter Property="Background" Value="Transparent" />
+        <Setter Property="BorderThickness" Value="0" />
+        <Setter Property="CornerRadius" Value="0" />
+        <Setter Property="MinHeight" Value="0" />
+        <Setter Property="MinWidth" Value="0" />
+        <Setter Property="Margin" Value="0" />
+        <Setter Property="VerticalAlignment" Value="Stretch" />
+        <Setter Property="VerticalContentAlignment" Value="Center" />
+    </Style>
+    <Style Selector="TextBox.spin-text /template/ Border#PART_BorderElement, TextBox.spin-text:pointerover /template/ Border#PART_BorderElement, TextBox.spin-text:focus /template/ Border#PART_BorderElement, TextBox.spin-text:disabled /template/ Border#PART_BorderElement">
+        <Setter Property="Background" Value="Transparent" />
         <Setter Property="BorderBrush" Value="Transparent" />
+        <Setter Property="BorderThickness" Value="0" />
         <Setter Property="BoxShadow" Value="0 0 0 0 Transparent" />
     </Style>
-    <Style Selector="NumericUpDown:focus-within /template/ ButtonSpinner">
-        <Setter Property="BorderBrush" Value="{DynamicResource Fg}" />
+    <Style Selector="ButtonSpinner">
+        <Setter Property="Focusable" Value="False" />
+        <Setter Property="Template">
+            <ControlTemplate>
+                <Border Name="PART_Frame" Background="{TemplateBinding Background}" BorderBrush="{TemplateBinding BorderBrush}"
+                        BorderThickness="{TemplateBinding BorderThickness}" CornerRadius="{TemplateBinding CornerRadius}"
+                        MinHeight="{TemplateBinding MinHeight}">
+                    <Grid ColumnDefinitions="*,Auto">
+                        <ContentPresenter Name="PART_ContentPresenter" Content="{TemplateBinding Content}" ContentTemplate="{TemplateBinding ContentTemplate}"
+                                          Padding="{TemplateBinding Padding}" HorizontalContentAlignment="Stretch" VerticalContentAlignment="Stretch" />
+                        <StackPanel Name="PART_SpinnerPanel" Grid.Column="1" Orientation="Horizontal" Spacing="2" Margin="0,0,4,0"
+                                    VerticalAlignment="Center" IsVisible="{TemplateBinding ShowButtonSpinner}">
+                            <RepeatButton Name="PART_IncreaseButton" Classes="spin" IsTabStop="False"
+                                          AutomationProperties.Name="{local:Tr IncreaseValue}">
+                                <local:Icon Data="{StaticResource Icon.ChevronUp}" Width="16" Height="16" StrokeWidth="1.8" />
+                            </RepeatButton>
+                            <RepeatButton Name="PART_DecreaseButton" Classes="spin" IsTabStop="False"
+                                          AutomationProperties.Name="{local:Tr DecreaseValue}">
+                                <local:Icon Data="{StaticResource Icon.ChevronDown}" Width="16" Height="16" StrokeWidth="1.8" />
+                            </RepeatButton>
+                        </StackPanel>
+                    </Grid>
+                </Border>
+            </ControlTemplate>
+        </Setter>
+    </Style>
+    <Style Selector="RepeatButton.spin">
+        <Setter Property="Width" Value="26" />
+        <Setter Property="Height" Value="26" />
+        <Setter Property="MinHeight" Value="0" />
+        <Setter Property="MinWidth" Value="0" />
+        <Setter Property="Padding" Value="0" />
+        <Setter Property="CornerRadius" Value="{DynamicResource RadiusSmall}" />
+        <Setter Property="Background" Value="Transparent" />
+        <Setter Property="BorderThickness" Value="0" />
+        <Setter Property="Foreground" Value="{DynamicResource Fg2}" />
+        <Setter Property="HorizontalContentAlignment" Value="Center" />
+        <Setter Property="VerticalContentAlignment" Value="Center" />
+    </Style>
+    <Style Selector="RepeatButton.spin:pointerover /template/ ContentPresenter#PART_ContentPresenter">
+        <Setter Property="Background" Value="{DynamicResource Hover}" />
+        <Setter Property="BorderBrush" Value="Transparent" />
+        <Setter Property="Foreground" Value="{DynamicResource Fg}" />
+    </Style>
+    <Style Selector="RepeatButton.spin:pressed /template/ ContentPresenter#PART_ContentPresenter">
+        <Setter Property="Background" Value="{DynamicResource Pressed}" />
+        <Setter Property="BorderBrush" Value="Transparent" />
+        <Setter Property="Foreground" Value="{DynamicResource Fg}" />
+    </Style>
+    <Style Selector="RepeatButton.spin:disabled /template/ ContentPresenter#PART_ContentPresenter">
+        <Setter Property="Background" Value="Transparent" />
+        <Setter Property="BorderBrush" Value="Transparent" />
+        <Setter Property="Foreground" Value="{DynamicResource FgDisabled}" />
     </Style>
     <Style Selector="Window.dialog TextBox, Window.dialog AutoCompleteBox, Window.dialog ComboBox, Window.dialog NumericUpDown, Window.dialog CalendarDatePicker, Window.settings ComboBox, Window.settings TextBox">
         <Setter Property="MinHeight" Value="38" />
@@ -913,6 +1025,42 @@
         <Setter Property="Background" Value="{DynamicResource Line}" />
         <Setter Property="Margin" Value="6,4" />
         <Setter Property="Height" Value="1" />
+    </Style>
+    <!--
+        Suggestions under a text field (the tag field behind T) are a popover like the menus: Raised, 12 px corners,
+        the pop shadow, 4 px inside, 34 px items with 8 px corners, and the active item in Hover. Never Fluent grey.
+    -->
+    <!-- The popup's parts are styled by name: their colours, frame and padding come from the Fluent keys in Tokens. -->
+    <!--
+        A popup clips to its own bounds, so the popover keeps a transparent margin for its shadow to fall in (the popup
+        places the popover itself, margin aside, under the field) and stays as wide as the field.
+    -->
+    <Style Selector="AutoCompleteBox /template/ Popup#PART_Popup">
+        <Setter Property="VerticalOffset" Value="4" />
+    </Style>
+    <Style Selector="Border#PART_SuggestionsContainer">
+        <Setter Property="BoxShadow" Value="{DynamicResource ShadowPop}" />
+        <Setter Property="Margin" Value="16,0,16,30" />
+        <Setter Property="MinWidth" Value="{Binding $self.((AutoCompleteBox)TemplatedParent).Bounds.Width}" />
+    </Style>
+    <Style Selector="ListBox#PART_SelectingItemsControl ListBoxItem">
+        <Setter Property="MinHeight" Value="34" />
+        <Setter Property="Padding" Value="10,0" />
+        <Setter Property="Margin" Value="0" />
+        <Setter Property="CornerRadius" Value="8" />
+        <Setter Property="FontSize" Value="14" />
+        <Setter Property="FontWeight" Value="Medium" />
+        <Setter Property="Background" Value="Transparent" />
+        <Setter Property="Foreground" Value="{DynamicResource Fg}" />
+        <Setter Property="VerticalContentAlignment" Value="Center" />
+    </Style>
+    <Style Selector="ListBox#PART_SelectingItemsControl ListBoxItem:pointerover /template/ ContentPresenter#PART_ContentPresenter, ListBox#PART_SelectingItemsControl ListBoxItem:selected /template/ ContentPresenter#PART_ContentPresenter, ListBox#PART_SelectingItemsControl ListBoxItem:selected:pointerover /template/ ContentPresenter#PART_ContentPresenter, ListBox#PART_SelectingItemsControl ListBoxItem:selected:focus /template/ ContentPresenter#PART_ContentPresenter">
+        <Setter Property="Background" Value="{DynamicResource Hover}" />
+        <Setter Property="Foreground" Value="{DynamicResource Fg}" />
+    </Style>
+    <Style Selector="ListBox#PART_SelectingItemsControl ListBoxItem:pressed /template/ ContentPresenter#PART_ContentPresenter">
+        <Setter Property="Background" Value="{DynamicResource Pressed}" />
+        <Setter Property="Foreground" Value="{DynamicResource Fg}" />
     </Style>
     <Style Selector="ToolTip">
         <Setter Property="FontSize" Value="13" />

@@ -10,6 +10,7 @@
     <StreamGeometry x:Key="Icon.Folder">M 3 6.5 V 15 a 1 1 0 0 0 1 1 h 12 a 1 1 0 0 0 1 -1 V 8 a 1 1 0 0 0 -1 -1 h -6 L 8.5 5 H 4 a 1 1 0 0 0 -1 1.5 z</StreamGeometry>
     <StreamGeometry x:Key="Icon.Tag">M 3.5 10.5 V 4 a 0.5 0.5 0 0 1 0.5 -0.5 h 6.5 l 6 6 -7 7 z M 6 7 A 1 1 0 1 1 8 7 A 1 1 0 1 1 6 7 Z</StreamGeometry>
     <StreamGeometry x:Key="Icon.ChevronDown">M 6 8 l 4 4 4 -4</StreamGeometry>
+    <StreamGeometry x:Key="Icon.ChevronUp">M 6 12 l 4 -4 4 4</StreamGeometry>
     <StreamGeometry x:Key="Icon.ChevronRight">M 8 5 l 5 5 -5 5</StreamGeometry>
     <StreamGeometry x:Key="Icon.ChevronLeft">M 12 5 l -5 5 5 5</StreamGeometry>
     <StreamGeometry x:Key="Icon.More">M 4.55 10 A 0.45 0.45 0 1 1 5.45 10 A 0.45 0.45 0 1 1 4.55 10 Z M 9.55 10 A 0.45 0.45 0 1 1 10.45 10 A 0.45 0.45 0 1 1 9.55 10 Z M 14.55 10 A 0.45 0.45 0 1 1 15.45 10 A 0.45 0.45 0 1 1 14.55 10 Z</StreamGeometry>

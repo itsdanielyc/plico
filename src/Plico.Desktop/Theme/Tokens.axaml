@@ -434,6 +434,9 @@
             <StaticResource x:Key="ComboBoxPlaceHolderForegroundFocusedPressed" ResourceKey="Fg3" />
             <StaticResource x:Key="ComboBoxDropDownBackground" ResourceKey="Raised" />
             <StaticResource x:Key="ComboBoxDropDownBorderBrush" ResourceKey="Line" />
+            <!-- Suggestions under a text field are a popover: Raised, with no Fluent grey or frame. -->
+            <StaticResource x:Key="AutoCompleteBoxSuggestionsListBackground" ResourceKey="Raised" />
+            <SolidColorBrush x:Key="AutoCompleteBoxSuggestionsListBorderBrush" Color="Transparent" />
             <SolidColorBrush x:Key="ComboBoxItemBackground" Color="Transparent" />
             <StaticResource x:Key="ComboBoxItemBackgroundPointerOver" ResourceKey="Hover" />
             <StaticResource x:Key="ComboBoxItemBackgroundPressed" ResourceKey="Pressed" />
@@ -1069,6 +1072,9 @@
             <StaticResource x:Key="ComboBoxPlaceHolderForegroundFocusedPressed" ResourceKey="Fg3" />
             <StaticResource x:Key="ComboBoxDropDownBackground" ResourceKey="Raised" />
             <StaticResource x:Key="ComboBoxDropDownBorderBrush" ResourceKey="LineStrong" />
+            <!-- Suggestions under a text field are a popover: Raised, with no Fluent grey or frame. -->
+            <StaticResource x:Key="AutoCompleteBoxSuggestionsListBackground" ResourceKey="Raised" />
+            <SolidColorBrush x:Key="AutoCompleteBoxSuggestionsListBorderBrush" Color="Transparent" />
             <SolidColorBrush x:Key="ComboBoxItemBackground" Color="Transparent" />
             <StaticResource x:Key="ComboBoxItemBackgroundPointerOver" ResourceKey="Hover" />
             <StaticResource x:Key="ComboBoxItemBackgroundPressed" ResourceKey="Pressed" />
@@ -1325,6 +1331,9 @@
     <Thickness x:Key="TextControlBorderThemeThickness">1</Thickness>
     <Thickness x:Key="TextControlBorderThemeThicknessFocused">1</Thickness>
     <Thickness x:Key="MenuFlyoutPresenterThemePadding">4</Thickness>
+    <Thickness x:Key="AutoCompleteListMargin">4</Thickness>
+    <Thickness x:Key="AutoCompleteListPadding">0</Thickness>
+    <Thickness x:Key="AutoCompleteListBorderThemeThickness">0</Thickness>
     <!-- Focus is an ink ring with a 2 px gap: 2 px of Panel, then 2 px of Fg (FocusRing draws it with rounded corners). -->
     <Thickness x:Key="SystemControlFocusVisualPrimaryThickness">2</Thickness>
     <Thickness x:Key="SystemControlFocusVisualSecondaryThickness">2</Thickness>
