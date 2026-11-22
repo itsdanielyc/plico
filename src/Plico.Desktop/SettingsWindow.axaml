@@ -4,7 +4,7 @@
         xmlns:local="using:Plico.Desktop"
         x:Class="Plico.Desktop.SettingsWindow" x:DataType="local:InboxViewModel"
         Title="{translation:Tr SettingsTitle}" Width="760" Height="640" MinWidth="560" MinHeight="420"
-        WindowStartupLocation="CenterOwner">
+        WindowStartupLocation="CenterOwner" Classes="settings">
     <Window.Styles>
         <Style Selector="Border.group">
             <Setter Property="Background" Value="{DynamicResource RaisedSurface}" />

@@ -1120,64 +1120,65 @@
             </Border>
         </Border>
 
-        <!-- Command palette -->
+        <!-- Command palette: a raised sheet 12 % from the top, with the query, the matching commands and keycap hints. -->
         <Border x:Name="PaletteOverlay" IsVisible="False" Classes="overlay-scrim" KeyboardNavigation.TabNavigation="Cycle" PointerPressed="Overlay_PointerPressed">
-            <Border Classes="popover" HorizontalAlignment="Center" VerticalAlignment="Top" Margin="0,72,0,0" Width="580" MaxHeight="460"
-                    PointerPressed="OverlayContent_PointerPressed">
-                <Grid RowDefinitions="Auto,*,Auto">
-                    <TextBox x:Name="PaletteQuery" BorderThickness="0" Background="Transparent" FontSize="16" MinHeight="48" Padding="6,0"
-                             PlaceholderText="{translation:Tr PalettePlaceholder}" KeyDown="PaletteQuery_KeyDown"
-                             AutomationProperties.Name="{translation:Tr Commands}">
-                        <TextBox.InnerLeftContent>
-                            <local:Icon Data="{StaticResource Icon.Search}" Margin="14,0,4,0" Foreground="{DynamicResource MutedInk}" />
-                        </TextBox.InnerLeftContent>
-                    </TextBox>
-                    <ListBox Grid.Row="1" x:Name="PaletteList" Classes="plain" BorderBrush="{DynamicResource LineBrush}" BorderThickness="0,1,0,0"
-                             Padding="0,4" DoubleTapped="PaletteList_DoubleTapped" KeyDown="PaletteList_KeyDown">
-                        <ListBox.ItemTemplate>
-                            <DataTemplate x:DataType="local:PaletteCommand">
-                                <Grid ColumnDefinitions="Auto,*,Auto" ColumnSpacing="11" MinHeight="22">
-                                    <local:Icon Data="{Binding Icon}" Foreground="{DynamicResource SecondaryInk}" VerticalAlignment="Center" />
-                                    <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="8" VerticalAlignment="Center">
-                                        <TextBlock Text="{Binding Title}" TextTrimming="CharacterEllipsis" />
-                                        <TextBlock Text="{Binding Group}" Classes="caption" VerticalAlignment="Center" />
-                                    </StackPanel>
-                                    <ItemsControl Grid.Column="2" ItemsSource="{Binding Keys}" VerticalAlignment="Center">
-                                        <ItemsControl.ItemsPanel><ItemsPanelTemplate><StackPanel Orientation="Horizontal" Spacing="3" /></ItemsPanelTemplate></ItemsControl.ItemsPanel>
-                                        <ItemsControl.ItemTemplate>
-                                            <DataTemplate x:DataType="x:String"><Border Classes="key"><TextBlock Text="{Binding}" /></Border></DataTemplate>
-                                        </ItemsControl.ItemTemplate>
-                                    </ItemsControl>
-                                </Grid>
-                            </DataTemplate>
-                        </ListBox.ItemTemplate>
-                    </ListBox>
-                    <TextBlock Grid.Row="1" x:Name="PaletteEmpty" Text="{translation:Tr PaletteEmpty}" Classes="label" IsVisible="False"
-                               HorizontalAlignment="Center" Margin="0,24" />
-                    <Border Grid.Row="2" BorderBrush="{DynamicResource LineBrush}" BorderThickness="0,1,0,0" Padding="14,8">
-                        <StackPanel Orientation="Horizontal" Spacing="14">
-                            <StackPanel Orientation="Horizontal" Spacing="5"><Border Classes="key"><TextBlock Text="↑↓" /></Border><TextBlock Classes="caption" Text="{translation:Tr PaletteMove}" VerticalAlignment="Center" /></StackPanel>
-                            <StackPanel Orientation="Horizontal" Spacing="5"><Border Classes="key"><TextBlock Text="Enter" /></Border><TextBlock Classes="caption" Text="{translation:Tr PaletteRun}" VerticalAlignment="Center" /></StackPanel>
-                            <StackPanel Orientation="Horizontal" Spacing="5"><Border Classes="key"><TextBlock Text="Esc" /></Border><TextBlock Classes="caption" Text="{translation:Tr Close}" VerticalAlignment="Center" /></StackPanel>
-                        </StackPanel>
-                    </Border>
-                </Grid>
-            </Border>
+            <Grid RowDefinitions="12*,88*">
+                <Border Grid.Row="1" Classes="palette" HorizontalAlignment="Center" VerticalAlignment="Top" Width="560" MaxHeight="480"
+                        PointerPressed="OverlayContent_PointerPressed">
+                    <Grid RowDefinitions="Auto,*,Auto">
+                        <TextBox x:Name="PaletteQuery" Classes="palette-query" PlaceholderText="{translation:Tr PalettePlaceholder}" KeyDown="PaletteQuery_KeyDown"
+                                 AutomationProperties.Name="{translation:Tr Commands}">
+                            <TextBox.InnerLeftContent>
+                                <local:Icon Data="{StaticResource Icon.Search}" Width="18" Height="18" Margin="16,0,6,0" Foreground="{DynamicResource Fg3}" />
+                            </TextBox.InnerLeftContent>
+                        </TextBox>
+                        <ListBox Grid.Row="1" x:Name="PaletteList" Classes="plain palette-list" BorderBrush="{DynamicResource Line}" BorderThickness="0,1,0,0"
+                                 Padding="6" DoubleTapped="PaletteList_DoubleTapped" KeyDown="PaletteList_KeyDown">
+                            <ListBox.ItemTemplate>
+                                <DataTemplate x:DataType="local:PaletteCommand">
+                                    <Grid ColumnDefinitions="Auto,*,Auto" ColumnSpacing="12">
+                                        <local:Icon Data="{Binding Icon}" Foreground="{DynamicResource Fg2}" VerticalAlignment="Center" />
+                                        <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="8" VerticalAlignment="Center">
+                                            <TextBlock Text="{Binding Title}" FontSize="15" TextTrimming="CharacterEllipsis" VerticalAlignment="Center" />
+                                            <TextBlock Text="{Binding Group}" Classes="meta" VerticalAlignment="Center" />
+                                        </StackPanel>
+                                        <ItemsControl Grid.Column="2" ItemsSource="{Binding Keys}" VerticalAlignment="Center">
+                                            <ItemsControl.ItemsPanel><ItemsPanelTemplate><StackPanel Orientation="Horizontal" Spacing="4" /></ItemsPanelTemplate></ItemsControl.ItemsPanel>
+                                            <ItemsControl.ItemTemplate>
+                                                <DataTemplate x:DataType="x:String"><Border Classes="key"><TextBlock Text="{Binding}" /></Border></DataTemplate>
+                                            </ItemsControl.ItemTemplate>
+                                        </ItemsControl>
+                                    </Grid>
+                                </DataTemplate>
+                            </ListBox.ItemTemplate>
+                        </ListBox>
+                        <TextBlock Grid.Row="1" x:Name="PaletteEmpty" Text="{translation:Tr PaletteEmpty}" Foreground="{DynamicResource Fg2}" IsVisible="False"
+                                   HorizontalAlignment="Center" Margin="0,24" />
+                        <Border Grid.Row="2" BorderBrush="{DynamicResource Line}" BorderThickness="0,1,0,0" Padding="16,10">
+                            <StackPanel Orientation="Horizontal" Spacing="16">
+                                <StackPanel Orientation="Horizontal" Spacing="6"><Border Classes="key"><TextBlock Text="↑↓" /></Border><TextBlock Classes="caption" Text="{translation:Tr PaletteMove}" VerticalAlignment="Center" /></StackPanel>
+                                <StackPanel Orientation="Horizontal" Spacing="6"><Border Classes="key"><TextBlock Text="Enter" /></Border><TextBlock Classes="caption" Text="{translation:Tr PaletteRun}" VerticalAlignment="Center" /></StackPanel>
+                                <StackPanel Orientation="Horizontal" Spacing="6"><Border Classes="key"><TextBlock Text="Esc" /></Border><TextBlock Classes="caption" Text="{translation:Tr Close}" VerticalAlignment="Center" /></StackPanel>
+                            </StackPanel>
+                        </Border>
+                    </Grid>
+                </Border>
+            </Grid>
         </Border>
 
-        <!-- Keyboard shortcuts sheet -->
+        <!-- Keyboard shortcuts sheet: the palette's surface, every shortcut drawn as keycaps. -->
         <Border x:Name="ShortcutsOverlay" IsVisible="False" Classes="overlay-scrim" KeyboardNavigation.TabNavigation="Cycle" PointerPressed="Overlay_PointerPressed">
-            <Border Classes="popover" HorizontalAlignment="Center" VerticalAlignment="Center" Width="640" MaxHeight="560"
+            <Border Classes="palette" HorizontalAlignment="Center" VerticalAlignment="Center" Width="660" MaxHeight="580"
                     PointerPressed="OverlayContent_PointerPressed">
                 <Grid RowDefinitions="Auto,*">
-                    <Grid ColumnDefinitions="*,Auto" Margin="22,16,12,6">
+                    <Grid ColumnDefinitions="*,Auto" Margin="24,18,14,8">
                         <TextBlock Classes="heading" Text="{translation:Tr KeyboardShortcuts}" VerticalAlignment="Center" />
                         <Button Grid.Column="1" x:Name="CloseShortcutsButton" Classes="icon" Click="CloseOverlays_Click" AutomationProperties.Name="{translation:Tr Close}">
-                            <local:Icon Data="{StaticResource Icon.Close}" />
+                            <local:Icon Data="{StaticResource Icon.Close}" Width="18" Height="18" />
                         </Button>
                     </Grid>
                     <ScrollViewer Grid.Row="1" HorizontalScrollBarVisibility="Disabled">
-                        <Grid x:Name="ShortcutsGrid" ColumnDefinitions="*,*" ColumnSpacing="28" Margin="22,4,22,22" />
+                        <Grid x:Name="ShortcutsGrid" ColumnDefinitions="*,*" ColumnSpacing="32" Margin="24,4,24,24" />
                     </ScrollViewer>
                 </Grid>
             </Border>

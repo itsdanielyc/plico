@@ -18,6 +18,39 @@
         <Setter Property="Icon" Value="/Assets/plico.ico" />
     </Style>
 
+    <!--
+        Dialogs: a raised window with a 20 px heading and 15 px body text, then a footer under a hairline with the
+        actions on the right, secondary first and the primary last. Every dialog window carries the "dialog" class.
+    -->
+    <Style Selector="Window.dialog">
+        <Setter Property="Background" Value="{DynamicResource Raised}" />
+        <Setter Property="FontSize" Value="15" />
+    </Style>
+    <Style Selector="Window.dialog :is(Panel).dialog-body">
+        <Setter Property="Margin" Value="24,22,24,20" />
+    </Style>
+    <Style Selector="Window.dialog StackPanel.dialog-body">
+        <Setter Property="Spacing" Value="14" />
+    </Style>
+    <Style Selector="Border.dialog-footer">
+        <Setter Property="BorderBrush" Value="{DynamicResource Line}" />
+        <Setter Property="BorderThickness" Value="0,1,0,0" />
+        <Setter Property="Padding" Value="24,16" />
+    </Style>
+    <Style Selector="Border.dialog-footer Button">
+        <Setter Property="MinHeight" Value="38" />
+        <Setter Property="Padding" Value="14,0" />
+    </Style>
+    <Style Selector="StackPanel.dialog-actions">
+        <Setter Property="Orientation" Value="Horizontal" />
+        <Setter Property="Spacing" Value="8" />
+        <Setter Property="HorizontalAlignment" Value="Right" />
+    </Style>
+    <!-- A field: its label, the control and an optional hint, stacked. -->
+    <Style Selector="StackPanel.field">
+        <Setter Property="Spacing" Value="6" />
+    </Style>
+
     <!-- Keyboard focus: an ink ring with a 2 px gap, never the system accent. -->
     <Style Selector="AdornerLayer">
         <Setter Property="DefaultFocusAdorner">
@@ -531,6 +564,32 @@
         <Setter Property="Background" Value="{DynamicResource Sunken}" />
         <Setter Property="BorderBrush" Value="{DynamicResource Line}" />
         <Setter Property="Foreground" Value="{DynamicResource Fg}" />
+    </Style>
+
+    <!-- The command palette: a 54 px query on the raised sheet, 40 px rows with the active one in Hover. -->
+    <Style Selector="TextBox.palette-query">
+        <Setter Property="Background" Value="Transparent" />
+        <Setter Property="BorderThickness" Value="0" />
+        <Setter Property="CornerRadius" Value="0" />
+        <Setter Property="FontSize" Value="17" />
+        <Setter Property="MinHeight" Value="54" />
+        <Setter Property="Padding" Value="0,0,16,0" />
+    </Style>
+    <Style Selector="TextBox.palette-query:pointerover /template/ Border#PART_BorderElement, TextBox.palette-query:focus /template/ Border#PART_BorderElement">
+        <Setter Property="Background" Value="Transparent" />
+        <Setter Property="BorderBrush" Value="Transparent" />
+        <Setter Property="BoxShadow" Value="0 0 0 0 Transparent" />
+    </Style>
+    <Style Selector="ListBox.palette-list ListBoxItem">
+        <Setter Property="MinHeight" Value="40" />
+        <Setter Property="CornerRadius" Value="9" />
+        <Setter Property="Margin" Value="0" />
+        <Setter Property="Padding" Value="10,0" />
+        <Setter Property="BorderThickness" Value="0" />
+        <Setter Property="VerticalContentAlignment" Value="Center" />
+    </Style>
+    <Style Selector="ListBox.palette-list ListBoxItem:selected /template/ ContentPresenter#PART_ContentPresenter, ListBox.palette-list ListBoxItem:selected:pointerover /template/ ContentPresenter#PART_ContentPresenter, ListBox.palette-list ListBoxItem:selected:focus /template/ ContentPresenter#PART_ContentPresenter">
+        <Setter Property="Background" Value="{DynamicResource Hover}" />
     </Style>
 
     <Style Selector="Separator.hairline">

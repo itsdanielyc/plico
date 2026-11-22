@@ -22,7 +22,7 @@ internal sealed class DocumentMetadataDialog : Window
     private readonly List<(long Id, CheckBox Box)> _contacts = [];
     private readonly TextBox _notes;
     private readonly List<(long Id, Func<CustomFieldValue?> Read)> _fields = [];
-    private readonly TextBlock _error = new() { TextWrapping = TextWrapping.Wrap };
+    private readonly TextBlock _error = DialogLayout.Message();
 
     internal DocumentMetadataDialog(MetadataEditInput input)
     {
@@ -33,14 +33,16 @@ internal sealed class DocumentMetadataDialog : Window
         MinHeight = 360;
         WindowStartupLocation = WindowStartupLocation.CenterOwner;
 
-        var body = new StackPanel { Spacing = 9 };
+        var body = new StackPanel { Spacing = 14 };
         var definitions = input.Definitions;
         _type = Options(DesktopText.Translate("Document type"), [new(DesktopText.Translate("Unclassified"), null), .. definitions.DocumentTypes.Select(type =>
             new MetadataOption<long?>(type.Name, type.Id))], input.Metadata.DocumentTypeId);
         AddField(body, DesktopText.Translate("Document type"), _type);
         if (definitions.Correspondents.Count > 0)
         {
-            body.Children.Add(new TextBlock { Text = DesktopText.Translate("Correspondents"), FontWeight = FontWeight.SemiBold });
+            var people = new StackPanel { Classes = { "field" } };
+            people.Children.Add(new TextBlock { Text = DesktopText.Translate("Correspondents"), Classes = { "form-label" } });
+            body.Children.Add(people);
             var selected = input.Metadata.CorrespondentIds.ToHashSet();
             var suggestions = input.Suggestions.Select(contact => contact.Id).ToHashSet();
             foreach (var contact in definitions.Correspondents.OrderByDescending(contact => selected.Contains(contact.Id))
@@ -53,7 +55,7 @@ internal sealed class DocumentMetadataDialog : Window
                     IsChecked = selected.Contains(contact.Id)
                 };
                 _contacts.Add((contact.Id, box));
-                body.Children.Add(box);
+                people.Children.Add(box);
             }
         }
         _notes = CreateTextBox(DesktopText.Translate("Notes"), input.Metadata.Notes);
@@ -71,23 +73,12 @@ internal sealed class DocumentMetadataDialog : Window
             _fields.Add((field.Id, editor.Read));
         }
 
-        var save = new Button { Name = "SaveDocumentMetadataButton", Content = DesktopText.Translate("Save"), IsDefault = true };
+        var save = DialogLayout.Primary(DesktopText.Translate("Save"), isDefault: true);
+        save.Name = "SaveDocumentMetadataButton";
         save.Click += (_, _) => Save();
-        var cancel = new Button { Content = DesktopText.Translate("Cancel"), IsCancel = true };
+        var cancel = DialogLayout.Secondary(DesktopText.Translate("Cancel"), isCancel: true);
         cancel.Click += (_, _) => Close();
-        var footer = new StackPanel { Spacing = 8 };
-        footer.Children.Add(_error);
-        footer.Children.Add(new StackPanel
-        {
-            HorizontalAlignment = HorizontalAlignment.Right, Orientation = Orientation.Horizontal,
-            Spacing = 10, Children = { cancel, save }
-        });
-
-        var panel = new Grid { RowDefinitions = new("Auto,*,Auto"), RowSpacing = 12, Margin = new Thickness(20) };
-        AddRow(panel, 0, new TextBlock { Text = input.Document.Title, FontSize = 17, FontWeight = FontWeight.SemiBold, TextWrapping = TextWrapping.Wrap });
-        AddRow(panel, 1, new ScrollViewer { Content = body });
-        AddRow(panel, 2, footer);
-        Content = panel;
+        DialogLayout.Compose(this, input.Document.Title, new ScrollViewer { Content = body }, _error, cancel, save);
     }
 
     private void Save()
@@ -187,11 +178,9 @@ internal sealed class DocumentMetadataDialog : Window
         return box;
     }
 
-    internal static void AddField(StackPanel body, string text, Control control)
-    {
-        body.Children.Add(new TextBlock { Text = text, FontWeight = FontWeight.SemiBold });
-        body.Children.Add(control);
-    }
+    /// <summary>Adds a labelled field: a 14 px label above its control.</summary>
+    internal static void AddField(StackPanel body, string text, Control control) =>
+        body.Children.Add(new StackPanel { Classes = { "field" }, Children = { new TextBlock { Text = text, Classes = { "form-label" } }, control } });
 
     internal static void AddRow(Grid panel, int row, Control content)
     {

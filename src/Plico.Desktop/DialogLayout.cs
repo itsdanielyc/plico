@@ -1,0 +1,53 @@
+using Avalonia.Controls;
+using Avalonia.Layout;
+using Avalonia.Media;
+
+namespace Plico.Desktop;
+
+/// <summary>
+/// Lays out a dialog built in code like the XAML dialogs: a raised window with a 20 px heading, the body, and a
+/// footer under a hairline with the actions on the right, the primary last. Styles live in Theme/Controls.axaml.
+/// </summary>
+internal static class DialogLayout
+{
+    /// <summary>Marks <paramref name="dialog"/> as a dialog and sets its content.</summary>
+    /// <param name="dialog">The dialog window.</param>
+    /// <param name="heading">The heading text, or null when the body carries its own.</param>
+    /// <param name="body">The dialog's content between the heading and the footer.</param>
+    /// <param name="footerStart">A status line or a lone action on the left of the footer, or null.</param>
+    /// <param name="actions">The footer actions, secondary first and the primary last.</param>
+    internal static void Compose(Window dialog, string? heading, Control body, Control? footerStart, params Button[] actions)
+    {
+        dialog.Classes.Add("dialog");
+        var buttons = new StackPanel { Classes = { "dialog-actions" } };
+        foreach (var action in actions) buttons.Children.Add(action);
+        Grid.SetColumn(buttons, 1);
+        var footerRow = new Grid { ColumnDefinitions = new("*,Auto"), ColumnSpacing = 12 };
+        if (footerStart is not null)
+        {
+            footerStart.VerticalAlignment = VerticalAlignment.Center;
+            footerRow.Children.Add(footerStart);
+        }
+        footerRow.Children.Add(buttons);
+        var footer = new Border { Classes = { "dialog-footer" }, Child = footerRow };
+        DockPanel.SetDock(footer, Dock.Bottom);
+
+        var content = new Grid { Classes = { "dialog-body" }, RowDefinitions = new("Auto,*"), RowSpacing = 14 };
+        if (heading is not null)
+            content.Children.Add(new TextBlock { Text = heading, Classes = { "heading" }, TextWrapping = TextWrapping.Wrap });
+        Grid.SetRow(body, 1);
+        content.Children.Add(body);
+        dialog.Content = new DockPanel { Children = { footer, content } };
+    }
+
+    /// <summary>The dialog's main action: an ink button.</summary>
+    internal static Button Primary(string label, bool isDefault = false) =>
+        new() { Content = label, Classes = { "primary" }, IsDefault = isDefault };
+
+    /// <summary>Any other action: an outlined button.</summary>
+    internal static Button Secondary(string label, bool isCancel = false) =>
+        new() { Content = label, Classes = { "secondary" }, IsCancel = isCancel };
+
+    /// <summary>A line of status or validation text for the footer or the body.</summary>
+    internal static TextBlock Message(string style = "validation") => new() { Classes = { style }, TextWrapping = TextWrapping.Wrap };
+}

@@ -14,13 +14,13 @@ internal sealed class DeadlineEditor : Window
 {
     private const string DateFormat = "yyyy-MM-dd";
     private readonly List<(DeadlineKind Kind, TextBox Date, TextBox Lead)> _editors = [];
-    private readonly TextBlock _status = new() { TextWrapping = TextWrapping.Wrap };
+    private readonly TextBlock _status = DialogLayout.Message();
 
     internal DeadlineEditor(DeadlineEditInput input)
     {
         Title = DesktopText.Translate("Document deadlines");
-        Width = 530;
-        Height = 460;
+        Width = 560;
+        Height = 520;
         WindowStartupLocation = WindowStartupLocation.CenterOwner;
         var fields = new StackPanel { Spacing = 12 };
         var dates = input.Dates.ToDictionary(item => item.Kind);
@@ -44,25 +44,17 @@ internal sealed class DeadlineEditor : Window
         if (input.SuggestedDueDates.Count > 0 && !dates.ContainsKey(DeadlineKind.Due))
         {
             var suggested = input.SuggestedDueDates[0];
-            var button = new Button { Content = DesktopText.Format($"Use suggested due date {suggested:d}") };
+            var button = DialogLayout.Secondary(DesktopText.Format($"Use suggested due date {suggested:d}"));
             button.Click += (_, _) => _editors.First(item => item.Kind == DeadlineKind.Due).Date.Text =
                 suggested.ToString(DateFormat, CultureInfo.InvariantCulture);
             fields.Children.Add(button);
         }
-        var save = new Button { Name = "SaveDeadlinesButton", Content = DesktopText.Translate("Save"), IsDefault = true };
+        var save = DialogLayout.Primary(DesktopText.Translate("Save"), isDefault: true);
+        save.Name = "SaveDeadlinesButton";
         save.Click += (_, _) => Save();
-        var cancel = new Button { Content = DesktopText.Translate("Cancel"), IsCancel = true };
+        var cancel = DialogLayout.Secondary(DesktopText.Translate("Cancel"), isCancel: true);
         cancel.Click += (_, _) => Close();
-        var panel = new Grid { RowDefinitions = new("Auto,*,Auto,Auto"), Margin = new Thickness(20), RowSpacing = 12 };
-        AddRow(panel, 0, new TextBlock { Text = input.Document.Title, FontWeight = FontWeight.SemiBold, FontSize = 17, TextWrapping = TextWrapping.Wrap });
-        AddRow(panel, 1, new ScrollViewer { Content = fields });
-        AddRow(panel, 2, _status);
-        AddRow(panel, 3, new StackPanel
-        {
-            HorizontalAlignment = HorizontalAlignment.Right, Orientation = Orientation.Horizontal,
-            Spacing = 10, Children = { cancel, save }
-        });
-        Content = panel;
+        DialogLayout.Compose(this, input.Document.Title, new ScrollViewer { Content = fields }, _status, cancel, save);
     }
 
     private void Save()
@@ -111,32 +103,31 @@ internal sealed class RemindersDialog : Window
     internal RemindersDialog(IReadOnlyList<DueReminder> reminders)
     {
         Title = DesktopText.Translate("Reminders");
-        Width = 600;
-        Height = 430;
+        Width = 620;
+        Height = 470;
         WindowStartupLocation = WindowStartupLocation.CenterOwner;
         var list = new ListBox
         {
+            Classes = { "plain", "framed" },
             ItemsSource = reminders.Select(reminder => new MetadataOption<DueReminder>(
                 $"{reminder.Deadline.Date:d} · {DeadlineEditor.Label(reminder.Deadline.Kind)} · {reminder.Title}", reminder)).ToArray(),
             SelectedIndex = reminders.Count > 0 ? 0 : -1
         };
-        var close = new Button { Content = DesktopText.Translate("Close"), IsCancel = true };
+        var close = DialogLayout.Secondary(DesktopText.Translate("Close"), isCancel: true);
         close.Click += (_, _) => Close();
-        var open = new Button { Content = DesktopText.Translate("Open PDF"), IsEnabled = reminders.Count > 0 };
-        var dismiss = new Button { Content = DesktopText.Translate("Dismiss"), IsEnabled = reminders.Count > 0 };
-        var calendar = new Button { Content = DesktopText.Translate("Export calendar…") };
+        var open = DialogLayout.Secondary(DesktopText.Translate("Open PDF"));
+        open.IsEnabled = reminders.Count > 0;
+        var dismiss = DialogLayout.Secondary(DesktopText.Translate("Dismiss"));
+        dismiss.IsEnabled = reminders.Count > 0;
+        var calendar = DialogLayout.Secondary(DesktopText.Translate("Export calendar…"));
         open.Click += (_, _) => Choose(ReminderAction.Open);
         dismiss.Click += (_, _) => Choose(ReminderAction.Dismiss);
         calendar.Click += (_, _) => Close(new ReminderChoice(ReminderAction.Export, null));
         list.SelectionChanged += (_, _) => open.IsEnabled = dismiss.IsEnabled = list.SelectedIndex >= 0;
-        var grid = new Grid { RowDefinitions = new("*,Auto"), RowSpacing = 12, Margin = new Thickness(20) };
-        AddRow(grid, 0, reminders.Count == 0 ? new TextBlock { Text = DesktopText.Translate("No reminders are due.") } : list);
-        AddRow(grid, 1, new StackPanel
-        {
-            Orientation = Orientation.Horizontal, Spacing = 8, HorizontalAlignment = HorizontalAlignment.Right,
-            Children = { open, dismiss, calendar, close }
-        });
-        Content = grid;
+        Control body = reminders.Count == 0
+            ? new TextBlock { Text = DesktopText.Translate("No reminders are due."), Classes = { "description" } }
+            : list;
+        DialogLayout.Compose(this, Title, body, null, open, dismiss, calendar, close);
         void Choose(ReminderAction action)
         {
             if (list.SelectedItem is MetadataOption<DueReminder> item) Close(new ReminderChoice(action, item.Value));

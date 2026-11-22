@@ -1,26 +1,34 @@
 <Window xmlns="https://github.com/avaloniaui"
         xmlns:translation="using:Plico.Desktop" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:core="using:Plico.Core" x:Class="Plico.Desktop.TrashDialog"
-        Title="{translation:Tr Trash}" Width="500" SizeToContent="Height" CanResize="False" WindowStartupLocation="CenterOwner"
-        FontFamily="{StaticResource InterFont}" Background="{DynamicResource WorkspaceSurface}">
-    <StackPanel Margin="24" Spacing="12">
-        <TextBlock Text="{translation:Tr Trash}" FontSize="19" FontWeight="SemiBold" />
-        <TextBlock x:Name="TrashMessage" TextWrapping="Wrap" />
-        <ListBox x:Name="TrashedFiles" AutomationProperties.Name="{translation:Tr PDFsInTrash}" MaxHeight="260"
-                 ScrollViewer.HorizontalScrollBarVisibility="Disabled" SelectionChanged="Selection_Changed">
-            <ListBox.ItemTemplate>
-                <DataTemplate x:DataType="core:TrashedDocument">
-                    <StackPanel Margin="6,3">
-                        <TextBlock Text="{Binding Title}" TextTrimming="CharacterEllipsis" FontWeight="SemiBold" />
-                        <TextBlock Text="{Binding OriginalPath}" TextTrimming="CharacterEllipsis" FontSize="12" />
-                    </StackPanel>
-                </DataTemplate>
-            </ListBox.ItemTemplate>
-        </ListBox>
-        <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" Spacing="8">
-            <Button x:Name="CloseTrashButton" Content="{translation:Tr Close}" IsCancel="True" IsDefault="True" Click="Close_Click" />
-            <Button x:Name="RestoreTrashButton" Content="{translation:Tr Restore}" IsEnabled="False" Click="Restore_Click" />
-            <Button x:Name="PurgeTrashButton" Content="{translation:Tr DeletePermanently}" IsEnabled="False" Click="Purge_Click" />
+        Title="{translation:Tr Trash}" Width="520" SizeToContent="Height" CanResize="False" WindowStartupLocation="CenterOwner"
+        Classes="dialog">
+    <DockPanel>
+        <Border DockPanel.Dock="Bottom" Classes="dialog-footer">
+            <Grid ColumnDefinitions="Auto,*,Auto" ColumnSpacing="8">
+                <Button x:Name="PurgeTrashButton" Classes="danger" Content="{translation:Tr DeletePermanently}" IsEnabled="False" Click="Purge_Click" />
+                <StackPanel Grid.Column="2" Classes="dialog-actions">
+                    <Button x:Name="RestoreTrashButton" Classes="secondary" Content="{translation:Tr Restore}" IsEnabled="False" Click="Restore_Click" />
+                    <Button x:Name="CloseTrashButton" Classes="primary" Content="{translation:Tr Close}" IsCancel="True" IsDefault="True" Click="Close_Click" />
+                </StackPanel>
+            </Grid>
+        </Border>
+        <StackPanel Classes="dialog-body">
+            <StackPanel Spacing="4">
+                <TextBlock Classes="heading" Text="{translation:Tr Trash}" />
+                <TextBlock x:Name="TrashMessage" Classes="description" />
+            </StackPanel>
+            <ListBox x:Name="TrashedFiles" Classes="plain framed" AutomationProperties.Name="{translation:Tr PDFsInTrash}" MaxHeight="280"
+                     ScrollViewer.HorizontalScrollBarVisibility="Disabled" SelectionChanged="Selection_Changed">
+                <ListBox.ItemTemplate>
+                    <DataTemplate x:DataType="core:TrashedDocument">
+                        <StackPanel Spacing="2">
+                            <TextBlock Text="{Binding Title}" TextTrimming="CharacterEllipsis" FontWeight="SemiBold" />
+                            <TextBlock Classes="caption" Text="{Binding OriginalPath}" TextTrimming="CharacterEllipsis" />
+                        </StackPanel>
+                    </DataTemplate>
+                </ListBox.ItemTemplate>
+            </ListBox>
         </StackPanel>
-    </StackPanel>
+    </DockPanel>
 </Window>

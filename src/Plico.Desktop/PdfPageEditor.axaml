@@ -1,38 +1,40 @@
 <Window xmlns="https://github.com/avaloniaui"
         xmlns:translation="using:Plico.Desktop" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         x:Class="Plico.Desktop.PdfPageEditor" Title="{translation:Tr EditPDFPages}"
-        Width="520" SizeToContent="Height" CanResize="False" WindowStartupLocation="CenterOwner"
-        FontFamily="{StaticResource InterFont}" Background="{DynamicResource WorkspaceSurface}">
-    <StackPanel Margin="24" Spacing="12">
-        <ComboBox x:Name="ActionBox" HorizontalAlignment="Stretch" AutomationProperties.Name="{translation:Tr PageEditingAction}">
-            <ComboBoxItem Content="{translation:Tr ReorderPages}" />
-            <ComboBoxItem Content="{translation:Tr DeletePages}" />
-            <ComboBoxItem Content="{translation:Tr SplitIntoDocuments}" />
-            <ComboBoxItem Content="{translation:Tr RotatePages}" />
-        </ComboBox>
-        <Grid x:Name="OrderPanel" ColumnDefinitions="*,Auto" ColumnSpacing="8">
-            <ListBox x:Name="PageOrder" MaxHeight="240" AutomationProperties.Name="{translation:Tr PagesInOutputOrder}" />
-            <StackPanel Grid.Column="1" Spacing="8">
-                <Button x:Name="MoveEarlier" Content="{translation:Tr MoveUp}" HorizontalAlignment="Stretch" Click="MoveEarlier_Click" />
-                <Button x:Name="MoveLater" Content="{translation:Tr MoveDown}" HorizontalAlignment="Stretch" Click="MoveLater_Click" />
+        Width="540" SizeToContent="Height" CanResize="False" WindowStartupLocation="CenterOwner" Classes="dialog">
+    <DockPanel>
+        <Border DockPanel.Dock="Bottom" Classes="dialog-footer">
+            <StackPanel Classes="dialog-actions">
+                <Button Classes="secondary" Content="{translation:Tr Cancel}" IsCancel="True" Click="Cancel_Click" />
+                <Button x:Name="ApplyPageEdit" Classes="primary" Content="{translation:Tr Apply}" IsDefault="True" Click="Apply_Click" />
             </StackPanel>
-        </Grid>
-        <StackPanel x:Name="RangePanel" Spacing="5" IsVisible="False">
-            <TextBlock x:Name="RangeHint" TextWrapping="Wrap" />
-            <TextBox x:Name="PagesBox" AutomationProperties.Name="{translation:Tr Pages}" />
+        </Border>
+        <StackPanel Classes="dialog-body">
+            <TextBlock Classes="heading" Text="{translation:Tr EditPDFPages}" />
+            <ComboBox x:Name="ActionBox" HorizontalAlignment="Stretch" AutomationProperties.Name="{translation:Tr PageEditingAction}">
+                <ComboBoxItem Content="{translation:Tr ReorderPages}" />
+                <ComboBoxItem Content="{translation:Tr DeletePages}" />
+                <ComboBoxItem Content="{translation:Tr SplitIntoDocuments}" />
+                <ComboBoxItem Content="{translation:Tr RotatePages}" />
+            </ComboBox>
+            <Grid x:Name="OrderPanel" ColumnDefinitions="*,Auto" ColumnSpacing="8">
+                <ListBox x:Name="PageOrder" Classes="plain framed" MaxHeight="240" AutomationProperties.Name="{translation:Tr PagesInOutputOrder}" />
+                <StackPanel Grid.Column="1" Spacing="8">
+                    <Button x:Name="MoveEarlier" Classes="secondary" Content="{translation:Tr MoveUp}" HorizontalAlignment="Stretch" Click="MoveEarlier_Click" />
+                    <Button x:Name="MoveLater" Classes="secondary" Content="{translation:Tr MoveDown}" HorizontalAlignment="Stretch" Click="MoveLater_Click" />
+                </StackPanel>
+            </Grid>
+            <StackPanel x:Name="RangePanel" Classes="field" IsVisible="False">
+                <TextBlock x:Name="RangeHint" TextWrapping="Wrap" />
+                <TextBox x:Name="PagesBox" AutomationProperties.Name="{translation:Tr Pages}" />
+            </StackPanel>
+            <ComboBox x:Name="TurnBox" HorizontalAlignment="Stretch" IsVisible="False" AutomationProperties.Name="{translation:Tr Rotation}">
+                <ComboBoxItem Content="{translation:Tr Text90Clockwise}" />
+                <ComboBoxItem Content="180°" />
+                <ComboBoxItem Content="{translation:Tr Text90Counterclockwise}" />
+            </ComboBox>
+            <TextBlock x:Name="ResultHint" Classes="hint" />
+            <TextBlock x:Name="ValidationMessage" Classes="validation" IsVisible="False" AutomationProperties.LiveSetting="Polite" />
         </StackPanel>
-        <ComboBox x:Name="TurnBox" HorizontalAlignment="Stretch" IsVisible="False" AutomationProperties.Name="{translation:Tr Rotation}">
-            <ComboBoxItem Content="{translation:Tr Text90Clockwise}" />
-            <ComboBoxItem Content="180°" />
-            <ComboBoxItem Content="{translation:Tr Text90Counterclockwise}" />
-        </ComboBox>
-        <TextBlock x:Name="ResultHint" Foreground="{DynamicResource MutedInk}" TextWrapping="Wrap" />
-        <TextBlock x:Name="ValidationMessage" IsVisible="False" Foreground="{DynamicResource ValidationInk}" TextWrapping="Wrap"
-                   AutomationProperties.LiveSetting="Polite" />
-        <StackPanel Orientation="Horizontal" Spacing="8" HorizontalAlignment="Right">
-            <Button Content="{translation:Tr Cancel}" IsCancel="True" Click="Cancel_Click" />
-            <Button x:Name="ApplyPageEdit" Content="{translation:Tr Apply}" IsDefault="True" Click="Apply_Click"
-                    Background="{DynamicResource PrimarySurface}" Foreground="White" />
-        </StackPanel>
-    </StackPanel>
+    </DockPanel>
 </Window>

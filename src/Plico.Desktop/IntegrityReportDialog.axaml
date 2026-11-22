@@ -1,22 +1,28 @@
 <Window xmlns="https://github.com/avaloniaui"
         xmlns:translation="using:Plico.Desktop" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:local="using:Plico.Desktop" x:Class="Plico.Desktop.IntegrityReportDialog"
-        Title="{translation:Tr LibraryIntegrity}" Width="560" SizeToContent="Height" CanResize="False"
-        WindowStartupLocation="CenterOwner" FontFamily="{StaticResource InterFont}" Background="{DynamicResource WorkspaceSurface}">
-    <StackPanel Margin="24" Spacing="10">
-        <TextBlock Text="{translation:Tr LibraryIntegrity}" FontSize="19" FontWeight="SemiBold" />
-        <TextBlock x:Name="IntegritySummary" TextWrapping="Wrap" />
-        <ListBox x:Name="IntegrityIssues" MaxHeight="280" ScrollViewer.HorizontalScrollBarVisibility="Disabled"
-                 AutomationProperties.Name="{translation:Tr LibraryIntegrityFindings}">
-            <ListBox.ItemTemplate>
-                <DataTemplate x:DataType="local:IntegrityFinding">
-                    <StackPanel Spacing="3">
-                        <TextBlock Text="{Binding Issue}" FontWeight="SemiBold" />
-                        <SelectableTextBlock Text="{Binding Path}" TextWrapping="Wrap" />
-                    </StackPanel>
-                </DataTemplate>
-            </ListBox.ItemTemplate>
-        </ListBox>
-        <Button Content="{translation:Tr Close}" IsCancel="True" IsDefault="True" Click="Close_Click" HorizontalAlignment="Right" />
-    </StackPanel>
+        Title="{translation:Tr LibraryIntegrity}" Width="580" SizeToContent="Height" CanResize="False"
+        WindowStartupLocation="CenterOwner" Classes="dialog">
+    <DockPanel>
+        <Border DockPanel.Dock="Bottom" Classes="dialog-footer">
+            <StackPanel Classes="dialog-actions">
+                <Button Classes="primary" Content="{translation:Tr Close}" IsCancel="True" IsDefault="True" Click="Close_Click" />
+            </StackPanel>
+        </Border>
+        <StackPanel Classes="dialog-body">
+            <TextBlock Classes="heading" Text="{translation:Tr LibraryIntegrity}" />
+            <TextBlock x:Name="IntegritySummary" TextWrapping="Wrap" />
+            <ListBox x:Name="IntegrityIssues" Classes="plain framed" MaxHeight="300" ScrollViewer.HorizontalScrollBarVisibility="Disabled"
+                     AutomationProperties.Name="{translation:Tr LibraryIntegrityFindings}">
+                <ListBox.ItemTemplate>
+                    <DataTemplate x:DataType="local:IntegrityFinding">
+                        <StackPanel Spacing="2">
+                            <TextBlock Text="{Binding Issue}" FontWeight="SemiBold" />
+                            <SelectableTextBlock Classes="mono" Text="{Binding Path}" Foreground="{DynamicResource Fg2}" TextWrapping="Wrap" />
+                        </StackPanel>
+                    </DataTemplate>
+                </ListBox.ItemTemplate>
+            </ListBox>
+        </StackPanel>
+    </DockPanel>
 </Window>

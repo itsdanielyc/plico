@@ -63,7 +63,6 @@
 
             <!-- Earlier names, pointed at the family so existing windows follow it. New code uses the family names. -->
             <StaticResource x:Key="WorkspaceSurface" ResourceKey="Panel" />
-            <StaticResource x:Key="CardSurface" ResourceKey="Panel" />
             <StaticResource x:Key="SidebarSurface" ResourceKey="Base" />
             <StaticResource x:Key="DeskSurface" ResourceKey="Desk" />
             <StaticResource x:Key="RaisedSurface" ResourceKey="Panel" />
@@ -77,25 +76,10 @@
             <StaticResource x:Key="LineBrush" ResourceKey="Line" />
             <StaticResource x:Key="StrongLineBrush" ResourceKey="LineStrong" />
             <StaticResource x:Key="HoverFill" ResourceKey="Hover" />
-            <StaticResource x:Key="PressedFill" ResourceKey="Pressed" />
             <StaticResource x:Key="SelectionSurface" ResourceKey="Sunken" />
-            <StaticResource x:Key="ChipSurface" ResourceKey="Sunken" />
-            <StaticResource x:Key="KeySurface" ResourceKey="Panel" />
-            <StaticResource x:Key="KeyInk" ResourceKey="Fg" />
             <StaticResource x:Key="PrimarySurface" ResourceKey="Fg" />
-            <StaticResource x:Key="PrimaryHoverSurface" ResourceKey="PrimaryHover" />
             <StaticResource x:Key="PrimaryInk" ResourceKey="OnFg" />
             <StaticResource x:Key="ErrorInk" ResourceKey="Err" />
-            <StaticResource x:Key="ValidationInk" ResourceKey="Err" />
-            <StaticResource x:Key="MessageSurface" ResourceKey="Fg" />
-            <StaticResource x:Key="MessageInk" ResourceKey="OnFg" />
-            <StaticResource x:Key="ControlSurface" ResourceKey="Panel" />
-            <StaticResource x:Key="ControlInk" ResourceKey="Fg" />
-            <StaticResource x:Key="ControlOutline" ResourceKey="LineStrong" />
-            <StaticResource x:Key="ControlHoverSurface" ResourceKey="SecondaryHover" />
-            <StaticResource x:Key="ControlHoverInk" ResourceKey="Fg" />
-            <StaticResource x:Key="PanelOutline" ResourceKey="Line" />
-            <StaticResource x:Key="InsetSurface" ResourceKey="Sunken" />
 
             <!-- Fluent: ink replaces the system accent, and no Fluent grey or blue shows anywhere. -->
             <Color x:Key="SystemAccentColor">#0F0F10</Color>
@@ -681,7 +665,6 @@
 
             <!-- Earlier names, pointed at the family so existing windows follow it. New code uses the family names. -->
             <StaticResource x:Key="WorkspaceSurface" ResourceKey="Panel" />
-            <StaticResource x:Key="CardSurface" ResourceKey="Panel" />
             <StaticResource x:Key="SidebarSurface" ResourceKey="Base" />
             <StaticResource x:Key="DeskSurface" ResourceKey="Desk" />
             <StaticResource x:Key="RaisedSurface" ResourceKey="Panel" />
@@ -695,25 +678,10 @@
             <StaticResource x:Key="LineBrush" ResourceKey="Line" />
             <StaticResource x:Key="StrongLineBrush" ResourceKey="LineStrong" />
             <StaticResource x:Key="HoverFill" ResourceKey="Hover" />
-            <StaticResource x:Key="PressedFill" ResourceKey="Pressed" />
             <StaticResource x:Key="SelectionSurface" ResourceKey="Sunken" />
-            <StaticResource x:Key="ChipSurface" ResourceKey="Sunken" />
-            <StaticResource x:Key="KeySurface" ResourceKey="Panel" />
-            <StaticResource x:Key="KeyInk" ResourceKey="Fg" />
             <StaticResource x:Key="PrimarySurface" ResourceKey="Fg" />
-            <StaticResource x:Key="PrimaryHoverSurface" ResourceKey="PrimaryHover" />
             <StaticResource x:Key="PrimaryInk" ResourceKey="OnFg" />
             <StaticResource x:Key="ErrorInk" ResourceKey="Err" />
-            <StaticResource x:Key="ValidationInk" ResourceKey="Err" />
-            <StaticResource x:Key="MessageSurface" ResourceKey="Fg" />
-            <StaticResource x:Key="MessageInk" ResourceKey="OnFg" />
-            <StaticResource x:Key="ControlSurface" ResourceKey="Panel" />
-            <StaticResource x:Key="ControlInk" ResourceKey="Fg" />
-            <StaticResource x:Key="ControlOutline" ResourceKey="LineStrong" />
-            <StaticResource x:Key="ControlHoverSurface" ResourceKey="SecondaryHover" />
-            <StaticResource x:Key="ControlHoverInk" ResourceKey="Fg" />
-            <StaticResource x:Key="PanelOutline" ResourceKey="Line" />
-            <StaticResource x:Key="InsetSurface" ResourceKey="Sunken" />
 
             <!-- Fluent: ink replaces the system accent, and no Fluent grey or blue shows anywhere. -->
             <Color x:Key="SystemAccentColor">#F4F4F5</Color>

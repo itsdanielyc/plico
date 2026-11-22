@@ -1,36 +1,39 @@
 <Window xmlns="https://github.com/avaloniaui"
         xmlns:translation="using:Plico.Desktop" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:local="using:Plico.Desktop" x:Class="Plico.Desktop.FilingSuggestionsDialog"
-        Title="{translation:Tr FilingSuggestions}" Width="510" SizeToContent="Height" CanResize="False"
-        WindowStartupLocation="CenterOwner" FontFamily="{StaticResource InterFont}" Background="{DynamicResource WorkspaceSurface}">
-    <StackPanel Margin="24" Spacing="10">
-        <TextBlock Text="{translation:Tr FilingSuggestions}" FontSize="19" FontWeight="SemiBold" />
-        <ComboBox x:Name="SuggestionDocumentBox" HorizontalAlignment="Stretch" AutomationProperties.Name="{translation:Tr DocumentToReview}"
-                  SelectionChanged="Document_Changed" />
-        <TextBlock x:Name="SuggestionTitle" FontWeight="SemiBold" TextTrimming="CharacterEllipsis" />
-        <StackPanel x:Name="SuggestedDates" Spacing="4">
-            <TextBlock Text="{translation:Tr DocumentDate}" />
-            <ComboBox x:Name="SuggestedDateBox" HorizontalAlignment="Stretch" AutomationProperties.Name="{translation:Tr SuggestedDocumentDate}"
-                      SelectionChanged="Date_Changed" />
+        Title="{translation:Tr FilingSuggestions}" Width="520" SizeToContent="Height" CanResize="False"
+        WindowStartupLocation="CenterOwner" Classes="dialog">
+    <DockPanel>
+        <Border DockPanel.Dock="Bottom" Classes="dialog-footer">
+            <StackPanel Classes="dialog-actions">
+                <Button Classes="secondary" Content="{translation:Tr Close}" IsCancel="True" Click="Cancel_Click" />
+                <Button x:Name="ApplyFilingSuggestionsButton" Classes="primary" Content="{translation:Tr ApplyChosenFields}" Click="Apply_Click" />
+            </StackPanel>
+        </Border>
+        <StackPanel Classes="dialog-body">
+            <TextBlock Classes="heading" Text="{translation:Tr FilingSuggestions}" />
+            <ComboBox x:Name="SuggestionDocumentBox" HorizontalAlignment="Stretch" AutomationProperties.Name="{translation:Tr DocumentToReview}"
+                      SelectionChanged="Document_Changed" />
+            <TextBlock x:Name="SuggestionTitle" FontWeight="SemiBold" TextTrimming="CharacterEllipsis" />
+            <StackPanel x:Name="SuggestedDates" Classes="field">
+                <TextBlock Classes="form-label" Text="{translation:Tr DocumentDate}" />
+                <ComboBox x:Name="SuggestedDateBox" HorizontalAlignment="Stretch" AutomationProperties.Name="{translation:Tr SuggestedDocumentDate}"
+                          SelectionChanged="Date_Changed" />
+            </StackPanel>
+            <SelectableTextBlock x:Name="RecognizedFields" TextWrapping="Wrap" AutomationProperties.Name="{translation:Tr DetectedPaymentDetails}" />
+            <StackPanel x:Name="SuggestedTags" Classes="field">
+                <TextBlock Classes="form-label" Text="{translation:Tr Tags}" />
+                <ScrollViewer MaxHeight="152" HorizontalScrollBarVisibility="Disabled">
+                    <ItemsControl x:Name="SuggestedTagList">
+                        <ItemsControl.ItemTemplate>
+                            <DataTemplate x:DataType="local:FilingTagChoice">
+                                <CheckBox Content="{Binding Label}" IsChecked="{Binding Selected, Mode=TwoWay}" />
+                            </DataTemplate>
+                        </ItemsControl.ItemTemplate>
+                    </ItemsControl>
+                </ScrollViewer>
+            </StackPanel>
+            <TextBlock x:Name="NoFilingSuggestions" Classes="description" Text="{translation:Tr NoFilingSuggestionsForThisDocument}" />
         </StackPanel>
-        <SelectableTextBlock x:Name="RecognizedFields" TextWrapping="Wrap" AutomationProperties.Name="{translation:Tr DetectedPaymentDetails}" />
-        <StackPanel x:Name="SuggestedTags" Spacing="4">
-            <TextBlock Text="{translation:Tr Tags}" />
-            <ScrollViewer MaxHeight="152" HorizontalScrollBarVisibility="Disabled">
-                <ItemsControl x:Name="SuggestedTagList">
-                    <ItemsControl.ItemTemplate>
-                        <DataTemplate x:DataType="local:FilingTagChoice">
-                            <CheckBox Content="{Binding Label}" IsChecked="{Binding Selected, Mode=TwoWay}" />
-                        </DataTemplate>
-                    </ItemsControl.ItemTemplate>
-                </ItemsControl>
-            </ScrollViewer>
-        </StackPanel>
-        <TextBlock x:Name="NoFilingSuggestions" Text="{translation:Tr NoFilingSuggestionsForThisDocument}" TextWrapping="Wrap" />
-        <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" Spacing="8">
-            <Button Content="{translation:Tr Close}" IsCancel="True" Click="Cancel_Click" />
-            <Button x:Name="ApplyFilingSuggestionsButton" Content="{translation:Tr ApplyChosenFields}" Click="Apply_Click"
-                    Background="{DynamicResource PrimarySurface}" Foreground="White" />
-        </StackPanel>
-    </StackPanel>
+    </DockPanel>
 </Window>

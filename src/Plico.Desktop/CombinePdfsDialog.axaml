@@ -1,42 +1,42 @@
 <Window xmlns="https://github.com/avaloniaui"
         xmlns:translation="using:Plico.Desktop" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:core="using:Plico.Core" x:Class="Plico.Desktop.CombinePdfsDialog" Title="{translation:Tr CombinePDFs}"
-        Width="530" Height="430" MinWidth="460" MinHeight="360" WindowStartupLocation="CenterOwner"
-        FontFamily="{StaticResource InterFont}" Background="{DynamicResource WorkspaceSurface}">
-    <Grid Margin="24" RowDefinitions="Auto,*,Auto" RowSpacing="14">
-        <StackPanel Spacing="6">
-            <TextBlock Text="{translation:Tr DocumentTitle}" FontWeight="SemiBold" />
-            <TextBox x:Name="TitleBox" AutomationProperties.Name="{translation:Tr CombinedDocumentTitle}" />
-        </StackPanel>
-        <Grid Grid.Row="1" RowDefinitions="Auto,*" RowSpacing="6">
-            <TextBlock Text="{translation:Tr DocumentOrder}" FontWeight="SemiBold" />
-            <Grid Grid.Row="1" ColumnDefinitions="*,Auto" ColumnSpacing="8">
-                <ListBox x:Name="SourceList" AutomationProperties.Name="{translation:Tr DocumentsInOutputOrder}"
-                         Background="{DynamicResource CardSurface}" BorderBrush="{DynamicResource PanelOutline}" BorderThickness="1" CornerRadius="8">
-                    <ListBox.ItemTemplate>
-                        <DataTemplate x:DataType="core:DocumentSummary">
-                            <StackPanel Spacing="3" Margin="3,4">
-                                <TextBlock Text="{Binding Title}" FontWeight="SemiBold" TextTrimming="CharacterEllipsis" />
-                                <TextBlock Text="{Binding RelativePath}" Foreground="{DynamicResource MutedInk}" FontSize="12"
-                                           TextTrimming="CharacterEllipsis" />
-                            </StackPanel>
-                        </DataTemplate>
-                    </ListBox.ItemTemplate>
-                </ListBox>
-                <StackPanel Grid.Column="1" Spacing="6">
-                    <Button x:Name="MoveUpButton" Content="{translation:Tr MoveUp}" Click="MoveUp_Click" HorizontalAlignment="Stretch" />
-                    <Button x:Name="MoveDownButton" Content="{translation:Tr MoveDown}" Click="MoveDown_Click" HorizontalAlignment="Stretch" />
-                </StackPanel>
-            </Grid>
-        </Grid>
-        <StackPanel Grid.Row="2" Spacing="8">
-            <TextBlock x:Name="ValidationMessage" IsVisible="False" Foreground="{DynamicResource ValidationInk}" FontSize="12"
-                       TextWrapping="Wrap" AutomationProperties.LiveSetting="Polite" />
-            <StackPanel Orientation="Horizontal" Spacing="8" HorizontalAlignment="Right">
-                <Button Content="{translation:Tr Cancel}" IsCancel="True" Click="Cancel_Click" Padding="14,7" />
-                <Button x:Name="ConfirmCombineButton" Content="{translation:Tr CombinePDFs}" IsDefault="True" Click="Combine_Click"
-                        Background="{DynamicResource PrimarySurface}" Foreground="White" Padding="14,7" />
+        Width="560" Height="540" MinWidth="460" MinHeight="420" WindowStartupLocation="CenterOwner" Classes="dialog">
+    <DockPanel>
+        <Border DockPanel.Dock="Bottom" Classes="dialog-footer">
+            <StackPanel Classes="dialog-actions">
+                <Button Classes="secondary" Content="{translation:Tr Cancel}" IsCancel="True" Click="Cancel_Click" />
+                <Button x:Name="ConfirmCombineButton" Classes="primary" Content="{translation:Tr CombinePDFs}" IsDefault="True" Click="Combine_Click" />
             </StackPanel>
-        </StackPanel>
-    </Grid>
+        </Border>
+        <Grid Classes="dialog-body" RowDefinitions="Auto,Auto,*,Auto" RowSpacing="14">
+            <TextBlock Classes="heading" Text="{Binding $parent[Window].Title}" />
+            <StackPanel Grid.Row="1" Classes="field">
+                <TextBlock Classes="form-label" Text="{translation:Tr DocumentTitle}" />
+                <TextBox x:Name="TitleBox" AutomationProperties.Name="{translation:Tr CombinedDocumentTitle}" />
+            </StackPanel>
+            <Grid Grid.Row="2" RowDefinitions="Auto,*" RowSpacing="6">
+                <TextBlock Classes="form-label" Text="{translation:Tr DocumentOrder}" />
+                <Grid Grid.Row="1" ColumnDefinitions="*,Auto" ColumnSpacing="8">
+                    <ListBox x:Name="SourceList" Classes="plain framed" AutomationProperties.Name="{translation:Tr DocumentsInOutputOrder}"
+                             ScrollViewer.HorizontalScrollBarVisibility="Disabled">
+                        <ListBox.ItemTemplate>
+                            <DataTemplate x:DataType="core:DocumentSummary">
+                                <StackPanel Spacing="2">
+                                    <TextBlock Text="{Binding Title}" FontWeight="SemiBold" TextTrimming="CharacterEllipsis" />
+                                    <TextBlock Classes="caption" Text="{Binding RelativePath}" TextTrimming="CharacterEllipsis" />
+                                </StackPanel>
+                            </DataTemplate>
+                        </ListBox.ItemTemplate>
+                    </ListBox>
+                    <StackPanel Grid.Column="1" Spacing="8">
+                        <Button x:Name="MoveUpButton" Classes="secondary" Content="{translation:Tr MoveUp}" Click="MoveUp_Click" HorizontalAlignment="Stretch" />
+                        <Button x:Name="MoveDownButton" Classes="secondary" Content="{translation:Tr MoveDown}" Click="MoveDown_Click" HorizontalAlignment="Stretch" />
+                    </StackPanel>
+                </Grid>
+            </Grid>
+            <TextBlock Grid.Row="3" x:Name="ValidationMessage" Classes="validation" IsVisible="False"
+                       AutomationProperties.LiveSetting="Polite" />
+        </Grid>
+    </DockPanel>
 </Window>

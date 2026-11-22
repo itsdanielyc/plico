@@ -22,19 +22,19 @@ internal sealed class LocalChatDialog : Window
     private readonly TextBox _transcript = new() { IsReadOnly = true, AcceptsReturn = true, TextWrapping = TextWrapping.Wrap };
     private readonly CheckBox _searchLibrary = new() { Content = DesktopText.Translate("Use library search for context") };
     private readonly StackPanel _sources = new() { Spacing = 5 };
-    private readonly TextBlock _status = new() { TextWrapping = TextWrapping.Wrap };
-    private readonly Button _send = new() { Content = DesktopText.Translate("Ask"), IsDefault = true };
-    private readonly Button _stop = new() { Content = DesktopText.Translate("Stop"), IsEnabled = false };
+    private readonly TextBlock _status = DialogLayout.Message("description");
+    private readonly Button _send = DialogLayout.Primary(DesktopText.Translate("Ask"), isDefault: true);
+    private readonly Button _stop = new() { Content = DesktopText.Translate("Stop"), Classes = { "secondary" }, IsEnabled = false };
     private CancellationTokenSource? _request;
 
     internal LocalChatDialog(LocalChatInput input)
     {
         _input = input;
         Title = DesktopText.Translate("Ask a local model");
-        Width = 680;
-        Height = 590;
-        MinWidth = 480;
-        MinHeight = 450;
+        Width = 700;
+        Height = 640;
+        MinWidth = 500;
+        MinHeight = 480;
         WindowStartupLocation = WindowStartupLocation.CenterOwner;
         _question.MaxLength = 1_200;
         _question.AcceptsReturn = true;
@@ -49,27 +49,19 @@ internal sealed class LocalChatDialog : Window
         };
         var heading = new StackPanel { Spacing = 4 };
         if (input.DocumentTitle is { } title)
-            heading.Children.Add(new TextBlock { Text = title, FontWeight = FontWeight.SemiBold, TextTrimming = TextTrimming.CharacterEllipsis });
+            heading.Children.Add(new TextBlock { Text = title, Classes = { "form-label" }, TextTrimming = TextTrimming.CharacterEllipsis });
         heading.Children.Add(_searchLibrary);
         _send.Click += async (_, _) => await AskAsync();
         _stop.Click += (_, _) => _request?.Cancel();
-        var close = new Button { Content = DesktopText.Translate("Close"), IsCancel = true };
+        var close = DialogLayout.Secondary(DesktopText.Translate("Close"), isCancel: true);
         close.Click += (_, _) => Close();
         Closed += (_, _) => _request?.Cancel();
-        var panel = new Grid { RowDefinitions = new("Auto,*,Auto,Auto,Auto"), RowSpacing = 8, Margin = new Thickness(20) };
+        var panel = new Grid { RowDefinitions = new("Auto,*,Auto,Auto"), RowSpacing = 10 };
         AddRow(panel, 0, heading);
         AddRow(panel, 1, _transcript);
         AddRow(panel, 2, new ScrollViewer { Content = _sources, MaxHeight = 104 });
         AddRow(panel, 3, _question);
-        var footer = new Grid { ColumnDefinitions = new("*,Auto"), ColumnSpacing = 8, Children = { _status } };
-        var buttons = new StackPanel
-        {
-            Orientation = Orientation.Horizontal, Spacing = 8, Children = { close, _stop, _send }
-        };
-        Grid.SetColumn(buttons, 1);
-        footer.Children.Add(buttons);
-        AddRow(panel, 4, footer);
-        Content = panel;
+        DialogLayout.Compose(this, Title, panel, _status, close, _stop, _send);
     }
 
     private async Task AskAsync()
@@ -95,7 +87,7 @@ internal sealed class LocalChatDialog : Window
             _sources.Children.Clear();
             foreach (var (source, index) in answer.Sources.Select((value, index) => (value, index)))
             {
-                var open = new Button { Content = $"[{index + 1}] {source.Title}" };
+                var open = new Button { Content = $"[{index + 1}] {source.Title}", Classes = { "link" } };
                 open.Click += (_, _) =>
                 {
                     try { _input.OpenSource(source.Id); }

@@ -14,52 +14,47 @@ internal sealed class MetadataDefinitionsDialog : Window
     private readonly ComboBox _section = Options(DesktopText.Translate("Metadata category"),
         [new(DesktopText.Translate("Correspondents"), Section.Correspondents), new(DesktopText.Translate("Document types"), Section.Types),
             new(DesktopText.Translate("Custom fields"), Section.Fields), new(DesktopText.Translate("Tag appearance"), Section.Tags)], Section.Correspondents);
-    private readonly ListBox _definitions = new() { MinHeight = 136, MaxHeight = 190 };
-    private readonly TextBox _name = CreateTextBox("Name");
+    private readonly ListBox _definitions = new() { MinHeight = 136, MaxHeight = 190, Classes = { "plain", "framed" } };
+    private readonly TextBox _name = CreateTextBox(DesktopText.Translate("Name"));
     private readonly TextBox _options = CreateTextBox(DesktopText.Translate("Aliases or choices"));
     private readonly ComboBox _kind = Options(DesktopText.Translate("Field type"), Enum.GetValues<CustomFieldKind>()
         .Select(kind => new MetadataOption<CustomFieldKind>(FieldLabel(kind), kind)).ToArray(), CustomFieldKind.Text);
     private readonly ComboBox _parent = new() { HorizontalAlignment = HorizontalAlignment.Stretch };
     private readonly TextBox _color = CreateTextBox(DesktopText.Translate("Tag colour"), placeholder: "#RRGGBB");
-    private readonly TextBlock _kindLabel = new() { Text = DesktopText.Translate("Field type") };
-    private readonly TextBlock _optionsLabel = new();
-    private readonly TextBlock _parentLabel = new() { Text = DesktopText.Translate("Parent tag") };
-    private readonly TextBlock _colorLabel = new() { Text = DesktopText.Translate("Tag colour") };
-    private readonly TextBlock _status = new() { TextWrapping = TextWrapping.Wrap };
+    private readonly TextBlock _kindLabel = new() { Text = DesktopText.Translate("Field type"), Classes = { "form-label" } };
+    private readonly TextBlock _optionsLabel = new() { Classes = { "form-label" } };
+    private readonly TextBlock _parentLabel = new() { Text = DesktopText.Translate("Parent tag"), Classes = { "form-label" } };
+    private readonly TextBlock _colorLabel = new() { Text = DesktopText.Translate("Tag colour"), Classes = { "form-label" } };
+    private readonly TextBlock _status = DialogLayout.Message("description");
 
     internal MetadataDefinitionsDialog(InboxLibrary library)
     {
         _library = library;
         Title = DesktopText.Translate("Metadata definitions");
-        Width = 510;
-        Height = 570;
-        MinHeight = 360;
+        Width = 540;
+        Height = 640;
+        MinHeight = 420;
         WindowStartupLocation = WindowStartupLocation.CenterOwner;
         _options.AcceptsReturn = true;
         _options.MinHeight = 64;
         Avalonia.Automation.AutomationProperties.SetName(_parent, DesktopText.Translate("Parent tag"));
-        var add = new Button { Content = DesktopText.Translate("New") };
+        var add = DialogLayout.Secondary(DesktopText.Translate("New"));
         add.Click += (_, _) => { _definitions.SelectedItem = null; RefreshEditor(); _name.Focus(); };
-        var save = new Button { Content = DesktopText.Translate("Save definition") };
+        var save = DialogLayout.Secondary(DesktopText.Translate("Save definition"));
         save.Click += (_, _) => Save();
-        var close = new Button { Content = DesktopText.Translate("Close"), IsCancel = true };
+        var close = DialogLayout.Secondary(DesktopText.Translate("Close"), isCancel: true);
         close.Click += (_, _) => Close();
         var fields = new StackPanel
         {
-            Spacing = 7,
-            Children = { new TextBlock { Text = "Name", FontWeight = FontWeight.SemiBold }, _name, _kindLabel, _kind,
-                _optionsLabel, _options, _parentLabel, _parent, _colorLabel, _color, _status }
+            Spacing = 6,
+            Children = { new TextBlock { Text = DesktopText.Translate("Name"), Classes = { "form-label" } }, _name, _kindLabel, _kind,
+                _optionsLabel, _options, _parentLabel, _parent, _colorLabel, _color }
         };
-        var panel = new Grid { RowDefinitions = new("Auto,Auto,*,Auto"), RowSpacing = 12, Margin = new Thickness(20) };
+        var panel = new Grid { RowDefinitions = new("Auto,Auto,*"), RowSpacing = 12 };
         AddRow(panel, 0, _section);
         AddRow(panel, 1, _definitions);
         AddRow(panel, 2, new ScrollViewer { Content = fields });
-        AddRow(panel, 3, new StackPanel
-        {
-            HorizontalAlignment = HorizontalAlignment.Right, Orientation = Orientation.Horizontal,
-            Spacing = 10, Children = { add, close, save }
-        });
-        Content = panel;
+        DialogLayout.Compose(this, Title, panel, _status, add, close, save);
         _section.SelectionChanged += (_, _) => RefreshList();
         _definitions.SelectionChanged += (_, _) => RefreshEditor();
         _kind.SelectionChanged += (_, _) => RefreshVisibility();

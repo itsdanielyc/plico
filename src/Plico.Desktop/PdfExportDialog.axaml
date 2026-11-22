@@ -1,22 +1,29 @@
 <Window xmlns="https://github.com/avaloniaui"
         xmlns:translation="using:Plico.Desktop" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-        x:Class="Plico.Desktop.PdfExportDialog" Title="{translation:Tr ExportPDF}" Width="460" SizeToContent="Height"
-        CanResize="False" WindowStartupLocation="CenterOwner" FontFamily="{StaticResource InterFont}" Background="{DynamicResource WorkspaceSurface}">
-    <StackPanel Margin="24" Spacing="10">
-        <TextBlock Text="{translation:Tr ExportPDF}" FontSize="19" FontWeight="SemiBold" />
-        <ComboBox x:Name="PdfExportFormatBox" HorizontalAlignment="Stretch" AutomationProperties.Name="{translation:Tr PDFExportFormat}"
-                  SelectionChanged="Format_Changed" />
-        <TextBlock x:Name="PdfExportHint" TextWrapping="Wrap" />
-        <StackPanel x:Name="PdfPasswordFields" Spacing="6" IsVisible="False">
-            <TextBox x:Name="PdfPassword" PlaceholderText="{translation:Tr Password}" PasswordChar="●" MaxLength="127"
-                     TextChanged="Password_Changed" AutomationProperties.Name="{translation:Tr PDFPassword}" />
-            <TextBox x:Name="ConfirmPdfPassword" PlaceholderText="{translation:Tr RepeatPassword}" PasswordChar="●" MaxLength="127"
-                     TextChanged="Password_Changed" AutomationProperties.Name="{translation:Tr RepeatPDFPassword}" />
+        x:Class="Plico.Desktop.PdfExportDialog" Title="{translation:Tr ExportPDF}" Width="480" SizeToContent="Height"
+        CanResize="False" WindowStartupLocation="CenterOwner" Classes="dialog">
+    <DockPanel>
+        <Border DockPanel.Dock="Bottom" Classes="dialog-footer">
+            <StackPanel Classes="dialog-actions">
+                <Button Classes="secondary" Content="{translation:Tr Cancel}" IsCancel="True" Click="Cancel_Click" />
+                <Button x:Name="ConfirmPdfExportButton" Classes="primary" Content="{translation:Tr ChooseFolder}" IsDefault="True" Click="Export_Click" />
+            </StackPanel>
+        </Border>
+        <StackPanel Classes="dialog-body">
+            <TextBlock Classes="heading" Text="{translation:Tr ExportPDF}" />
+            <StackPanel Classes="field">
+                <ComboBox x:Name="PdfExportFormatBox" HorizontalAlignment="Stretch" AutomationProperties.Name="{translation:Tr PDFExportFormat}"
+                          SelectionChanged="Format_Changed" />
+                <TextBlock x:Name="PdfExportHint" Classes="hint" />
+            </StackPanel>
+            <StackPanel x:Name="PdfPasswordFields" Spacing="8" IsVisible="False">
+                <TextBox x:Name="PdfPassword" PlaceholderText="{translation:Tr Password}" PasswordChar="●" MaxLength="127"
+                         TextChanged="Password_Changed" AutomationProperties.Name="{translation:Tr PDFPassword}" />
+                <TextBox x:Name="ConfirmPdfPassword" PlaceholderText="{translation:Tr RepeatPassword}" PasswordChar="●" MaxLength="127"
+                         TextChanged="Password_Changed" AutomationProperties.Name="{translation:Tr RepeatPDFPassword}" />
+            </StackPanel>
+            <TextBlock x:Name="PdfExportError" Classes="validation" AutomationProperties.LiveSetting="Polite"
+                       IsVisible="{Binding $self.Text, Converter={x:Static StringConverters.IsNotNullOrEmpty}}" />
         </StackPanel>
-        <TextBlock x:Name="PdfExportError" TextWrapping="Wrap" Foreground="{DynamicResource ErrorInk}" AutomationProperties.LiveSetting="Polite" />
-        <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" Spacing="8">
-            <Button Content="{translation:Tr Cancel}" IsCancel="True" Click="Cancel_Click" />
-            <Button x:Name="ConfirmPdfExportButton" Content="{translation:Tr ChooseFolder}" IsDefault="True" Click="Export_Click" />
-        </StackPanel>
-    </StackPanel>
+    </DockPanel>
 </Window>

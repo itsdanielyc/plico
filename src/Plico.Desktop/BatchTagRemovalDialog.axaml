@@ -1,32 +1,30 @@
 <Window xmlns="https://github.com/avaloniaui"
         xmlns:translation="using:Plico.Desktop" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:local="using:Plico.Desktop" x:Class="Plico.Desktop.BatchTagRemovalDialog"
-        Title="{translation:Tr RemoveTag}" Width="424" SizeToContent="Height" CanResize="False" WindowStartupLocation="CenterOwner"
-        FontFamily="{StaticResource InterFont}" Background="{DynamicResource WorkspaceSurface}">
-    <StackPanel Margin="24" Spacing="12">
-        <TextBlock Text="{translation:Tr ChooseATagFromTheSelectedPDFs}" FontSize="15" FontWeight="SemiBold" TextWrapping="Wrap" />
-        <ListBox x:Name="BatchTagChoices" MaxHeight="210" Background="{DynamicResource CardSurface}" BorderBrush="{DynamicResource PanelOutline}" BorderThickness="1"
-                 ScrollViewer.HorizontalScrollBarVisibility="Disabled" AutomationProperties.Name="{translation:Tr TagsOnTheSelectedPDFs}"
-                 SelectionChanged="TagChoice_Changed">
-            <ListBox.Styles>
-                <Style Selector="ListBoxItem">
-                    <Setter Property="Padding" Value="10,8" />
-                    <Setter Property="HorizontalContentAlignment" Value="Stretch" />
-                </Style>
-            </ListBox.Styles>
-            <ListBox.ItemTemplate>
-                <DataTemplate x:DataType="local:BatchTagOption">
-                    <Grid ColumnDefinitions="*,Auto" ColumnSpacing="12">
-                        <TextBlock Text="{Binding Label}" TextTrimming="CharacterEllipsis" ToolTip.Tip="{Binding Label}" />
-                        <TextBlock Grid.Column="1" Text="{Binding CountLabel}" Foreground="{DynamicResource MutedInk}" />
-                    </Grid>
-                </DataTemplate>
-            </ListBox.ItemTemplate>
-        </ListBox>
-        <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" Spacing="8">
-            <Button x:Name="CancelTagRemovalButton" Content="{translation:Tr Cancel}" IsCancel="True" Click="Cancel_Click" Padding="13,7" />
-            <Button x:Name="ConfirmTagRemovalButton" Content="{translation:Tr RemoveTag}" IsEnabled="False" IsDefault="True"
-                    Click="Remove_Click" Padding="13,7" Background="{DynamicResource PrimarySurface}" Foreground="White" />
+        Title="{translation:Tr RemoveTag}" Width="440" SizeToContent="Height" CanResize="False" WindowStartupLocation="CenterOwner"
+        Classes="dialog">
+    <DockPanel>
+        <Border DockPanel.Dock="Bottom" Classes="dialog-footer">
+            <StackPanel Classes="dialog-actions">
+                <Button x:Name="CancelTagRemovalButton" Classes="secondary" Content="{translation:Tr Cancel}" IsCancel="True" Click="Cancel_Click" />
+                <Button x:Name="ConfirmTagRemovalButton" Classes="primary" Content="{translation:Tr RemoveTag}" IsEnabled="False" IsDefault="True"
+                        Click="Remove_Click" />
+            </StackPanel>
+        </Border>
+        <StackPanel Classes="dialog-body">
+            <TextBlock Classes="heading" Text="{translation:Tr ChooseATagFromTheSelectedPDFs}" TextWrapping="Wrap" />
+            <ListBox x:Name="BatchTagChoices" Classes="plain framed" MaxHeight="230"
+                     ScrollViewer.HorizontalScrollBarVisibility="Disabled" AutomationProperties.Name="{translation:Tr TagsOnTheSelectedPDFs}"
+                     SelectionChanged="TagChoice_Changed">
+                <ListBox.ItemTemplate>
+                    <DataTemplate x:DataType="local:BatchTagOption">
+                        <Grid ColumnDefinitions="*,Auto" ColumnSpacing="12">
+                            <TextBlock Text="{Binding Label}" TextTrimming="CharacterEllipsis" ToolTip.Tip="{Binding Label}" />
+                            <TextBlock Grid.Column="1" Text="{Binding CountLabel}" Foreground="{DynamicResource Fg3}" FontFeatures="+tnum" />
+                        </Grid>
+                    </DataTemplate>
+                </ListBox.ItemTemplate>
+            </ListBox>
         </StackPanel>
-    </StackPanel>
+    </DockPanel>
 </Window>

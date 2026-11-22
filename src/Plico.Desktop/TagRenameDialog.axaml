@@ -1,17 +1,18 @@
 <Window xmlns="https://github.com/avaloniaui"
         xmlns:translation="using:Plico.Desktop" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-        x:Class="Plico.Desktop.TagRenameDialog" Title="{translation:Tr RenameTag}" Width="450" SizeToContent="Height"
-        CanResize="False" WindowStartupLocation="CenterOwner"
-        FontFamily="{StaticResource InterFont}" Background="{DynamicResource WorkspaceSurface}">
-    <StackPanel Margin="24" Spacing="11">
-        <TextBlock x:Name="TagPrompt" FontSize="17" FontWeight="SemiBold" TextWrapping="Wrap" />
-        <TextBox x:Name="TagNameBox" AutomationProperties.Name="{translation:Tr NewTagName}" />
-        <TextBlock x:Name="TagRenameNotice" IsVisible="False" TextWrapping="Wrap" Foreground="{DynamicResource MutedInk}"
-                   FontSize="12" AutomationProperties.LiveSetting="Polite" />
-        <StackPanel Orientation="Horizontal" Spacing="8" HorizontalAlignment="Right">
-            <Button Content="{translation:Tr Cancel}" IsCancel="True" Click="Cancel_Click" Padding="14,7" />
-            <Button x:Name="SaveTagButton" Content="{translation:Tr RenameTag}" IsDefault="True" Click="Save_Click"
-                    Background="{DynamicResource PrimarySurface}" Foreground="White" Padding="14,7" />
+        x:Class="Plico.Desktop.TagRenameDialog" Title="{translation:Tr RenameTag}" Width="460" SizeToContent="Height"
+        CanResize="False" WindowStartupLocation="CenterOwner" Classes="dialog">
+    <DockPanel>
+        <Border DockPanel.Dock="Bottom" Classes="dialog-footer">
+            <StackPanel Classes="dialog-actions">
+                <Button Classes="secondary" Content="{translation:Tr Cancel}" IsCancel="True" Click="Cancel_Click" />
+                <Button x:Name="SaveTagButton" Classes="primary" Content="{translation:Tr RenameTag}" IsDefault="True" Click="Save_Click" />
+            </StackPanel>
+        </Border>
+        <StackPanel Classes="dialog-body">
+            <TextBlock x:Name="TagPrompt" Classes="heading" TextWrapping="Wrap" />
+            <TextBox x:Name="TagNameBox" AutomationProperties.Name="{translation:Tr NewTagName}" />
+            <TextBlock x:Name="TagRenameNotice" Classes="description" IsVisible="False" AutomationProperties.LiveSetting="Polite" />
         </StackPanel>
-    </StackPanel>
+    </DockPanel>
 </Window>

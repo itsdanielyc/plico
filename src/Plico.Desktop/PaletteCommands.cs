@@ -227,13 +227,13 @@ internal static class ShortcutSheet
         panel.Children.Add(new TextBlock { Text = title, Classes = { "meta" }, Margin = new(0, 6, 0, 8) });
         foreach (var (keys, label) in rows)
         {
-            var row = new Grid { ColumnDefinitions = new("*,Auto"), MinHeight = 34 };
+            var row = new Grid { ColumnDefinitions = new("*,Auto"), ColumnSpacing = 12, MinHeight = 38 };
             var rule = new Border { BorderThickness = new(0, 1, 0, 0) };
-            rule.Bind(Border.BorderBrushProperty, rule.GetResourceObservable("LineBrush"));
+            rule.Bind(Border.BorderBrushProperty, rule.GetResourceObservable("Line"));
             Grid.SetColumnSpan(rule, 2);
             row.Children.Add(rule);
             row.Children.Add(new TextBlock { Text = DesktopText.Translate(label), VerticalAlignment = VerticalAlignment.Center, FontSize = 14 });
-            var caps = new StackPanel { Orientation = Orientation.Horizontal, Spacing = 3, VerticalAlignment = VerticalAlignment.Center, [Grid.ColumnProperty] = 1 };
+            var caps = new StackPanel { Orientation = Orientation.Horizontal, Spacing = 4, VerticalAlignment = VerticalAlignment.Center, [Grid.ColumnProperty] = 1 };
             foreach (string key in keys.Split(' ', StringSplitOptions.RemoveEmptyEntries))
                 caps.Children.Add(new Border { Classes = { "key" }, Child = new TextBlock { Text = key } });
             row.Children.Add(caps);
