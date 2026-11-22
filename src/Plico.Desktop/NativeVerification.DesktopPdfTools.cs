@@ -82,8 +82,10 @@ internal static partial class NativeVerification
         try
         {
             await model.ShowAppearanceCommand.ExecuteAsync(null);
+            // The window is the desk, so dark mode shows the family's dark Base, #0B0B0C (it was the old
+            // workspace grey, #1C1C1F, before the miille tokens).
             await UntilAsync(() => model.Preview is not null && window.ActualThemeVariant == ThemeVariant.Dark &&
-                window.Background is ISolidColorBrush { Color: { R: 28, G: 28, B: 31 } }, () => model.Status);
+                window.Background is ISolidColorBrush { Color: { R: 11, G: 11, B: 12 } }, () => model.Status);
             await CaptureAsync(window, evidence, "desktop-dark.png");
 
             DesktopText.SetLanguage(InterfaceLanguage.French);

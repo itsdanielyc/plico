@@ -5,7 +5,7 @@
         xmlns:core="using:Plico.Core"
         x:Class="Plico.Desktop.MainWindow" x:DataType="local:InboxViewModel"
         Title="Plico" Width="1280" Height="800" MinWidth="900" MinHeight="590"
-        FontFamily="{StaticResource InterFont}" Foreground="{DynamicResource WorkspaceInk}" Background="{DynamicResource WorkspaceSurface}"
+        Foreground="{DynamicResource Fg}" Background="{DynamicResource Base}"
         DragDrop.AllowDrop="True" DragDrop.DragEnter="Files_DragOver" DragDrop.DragOver="Files_DragOver"
         DragDrop.DragLeave="Files_DragLeave" DragDrop.Drop="Files_Dropped"
         WindowStartupLocation="CenterScreen">
@@ -456,7 +456,7 @@
             </Border>
 
             <!-- ─────────── Main column ─────────── -->
-            <Grid Grid.Column="1" RowDefinitions="Auto,*,Auto">
+            <Grid Grid.Column="1" RowDefinitions="Auto,*,Auto" Background="{DynamicResource Panel}">
                 <!-- Toolbar: search and the two ways in. -->
                 <Border BorderBrush="{DynamicResource LineBrush}" BorderThickness="0,0,0,1" Padding="14,9">
                     <Grid ColumnDefinitions="*,Auto,Auto" ColumnSpacing="8">
