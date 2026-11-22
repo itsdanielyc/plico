@@ -33,6 +33,12 @@ internal static partial class DisplayDates
         return CultureInfo.ReadOnly(culture);
     });
 
+    /// <summary>The clock the queue's days are read from: the system's, or a test's.</summary>
+    internal static TimeProvider Clock { get; set; } = TimeProvider.System;
+
+    /// <summary>Today in the person's time zone, by <see cref="Clock"/>.</summary>
+    internal static DateOnly Today => DateOnly.FromDateTime(Clock.GetLocalNow().DateTime);
+
     /// <summary>"22 Nov 2026".</summary>
     internal static string Day(DateOnly date) => date.ToString("d MMM yyyy", Culture);
 
@@ -151,7 +157,7 @@ internal sealed class QueueMetaConverter : IValueConverter
     public static readonly QueueMetaConverter Instance = new();
 
     public object? Convert(object? value, Type targetType, object? parameter, CultureInfo culture) =>
-        value is DocumentSummary document ? DisplayDates.QueueMeta(document, DateOnly.FromDateTime(DateTime.Today)) : "";
+        value is DocumentSummary document ? DisplayDates.QueueMeta(document, DisplayDates.Today) : "";
 
     public object? ConvertBack(object? value, Type targetType, object? parameter, CultureInfo culture) => throw new NotSupportedException();
 }
