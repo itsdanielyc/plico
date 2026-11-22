@@ -2,152 +2,212 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:local="using:Plico.Desktop">
     <!--
-        Shared control language. Type: 28 display, 22 view title, 18 card title, 14 body, 13 label, 12 meta,
-        never smaller. Controls are 32 px tall (28 small, 36 for the one primary action in a panel).
-        Radii: 7 controls, 10 panels and popovers, 12 dialogs, 1.5 paper.
+        The control language, after Onda. Type: 30 display, 24 title, 20 heading, 15 body, 14 labels and
+        controls, 13 meta and captions, never smaller. Inter here is static, so Onda's variable weights map to
+        Medium (520 to 560), SemiBold (600 to 680) and Bold (700 to 720). Controls are 32 px tall, 38 large and in
+        dialogs. Radii: 10 controls, 12 popovers, 14 callouts, 16 cards, 18 dialogs, 1.5 paper. Ink is the only
+        accent: primary buttons, focus, checked boxes and switches. Values come from Theme/Tokens.axaml.
     -->
 
-    <!-- Every window uses Inter and the workspace palette. -->
+    <!-- Every window uses Inter on the sheet. The main window sets its own desk background. -->
     <Style Selector="Window">
         <Setter Property="FontFamily" Value="{DynamicResource InterFont}" />
-        <Setter Property="Background" Value="{DynamicResource WorkspaceSurface}" />
-        <Setter Property="Foreground" Value="{DynamicResource WorkspaceInk}" />
+        <Setter Property="Background" Value="{DynamicResource Panel}" />
+        <Setter Property="Foreground" Value="{DynamicResource Fg}" />
         <Setter Property="FontSize" Value="14" />
     </Style>
 
-    <!-- Type roles -->
+    <!-- Keyboard focus: an ink ring with a 2 px gap, never the system accent. -->
+    <Style Selector="AdornerLayer">
+        <Setter Property="DefaultFocusAdorner">
+            <FocusAdornerTemplate>
+                <local:FocusRing Ring="{DynamicResource Fg}" GapBrush="{DynamicResource Panel}" Margin="-4" AdornerLayer.IsClipEnabled="False" />
+            </FocusAdornerTemplate>
+        </Setter>
+    </Style>
+
+    <!-- ───────── Type roles ───────── -->
     <Style Selector="TextBlock.display">
-        <Setter Property="FontSize" Value="28" />
-        <Setter Property="FontWeight" Value="SemiBold" />
-        <Setter Property="LetterSpacing" Value="-0.6" />
+        <Setter Property="FontSize" Value="30" />
+        <Setter Property="FontWeight" Value="Bold" />
+        <Setter Property="LetterSpacing" Value="-0.54" />
     </Style>
     <Style Selector="TextBlock.title">
-        <Setter Property="FontSize" Value="22" />
-        <Setter Property="FontWeight" Value="SemiBold" />
-        <Setter Property="LetterSpacing" Value="-0.4" />
+        <Setter Property="FontSize" Value="24" />
+        <Setter Property="FontWeight" Value="Bold" />
+        <Setter Property="LetterSpacing" Value="-0.43" />
     </Style>
     <Style Selector="TextBlock.heading">
-        <Setter Property="FontSize" Value="18" />
+        <Setter Property="FontSize" Value="20" />
         <Setter Property="FontWeight" Value="SemiBold" />
         <Setter Property="LetterSpacing" Value="-0.2" />
+    </Style>
+    <Style Selector="TextBlock.body">
+        <Setter Property="FontSize" Value="15" />
     </Style>
     <Style Selector="TextBlock.strong">
         <Setter Property="FontWeight" Value="SemiBold" />
     </Style>
     <Style Selector="TextBlock.secondary">
-        <Setter Property="Foreground" Value="{DynamicResource SecondaryInk}" />
+        <Setter Property="Foreground" Value="{DynamicResource Fg2}" />
     </Style>
     <Style Selector="TextBlock.muted, SelectableTextBlock.muted">
-        <Setter Property="Foreground" Value="{DynamicResource MutedInk}" />
+        <Setter Property="Foreground" Value="{DynamicResource Fg3}" />
         <Setter Property="FontSize" Value="13" />
     </Style>
     <Style Selector="TextBlock.label">
-        <Setter Property="Foreground" Value="{DynamicResource MutedInk}" />
-        <Setter Property="FontSize" Value="13" />
+        <Setter Property="Foreground" Value="{DynamicResource Fg3}" />
+        <Setter Property="FontSize" Value="14" />
     </Style>
     <Style Selector="TextBlock.meta">
-        <Setter Property="Foreground" Value="{DynamicResource MutedInk}" />
-        <Setter Property="FontSize" Value="12" />
+        <Setter Property="Foreground" Value="{DynamicResource Fg3}" />
+        <Setter Property="FontSize" Value="13" />
         <Setter Property="FontWeight" Value="SemiBold" />
     </Style>
     <Style Selector="TextBlock.caption">
-        <Setter Property="Foreground" Value="{DynamicResource MutedInk}" />
-        <Setter Property="FontSize" Value="12" />
+        <Setter Property="Foreground" Value="{DynamicResource Fg3}" />
+        <Setter Property="FontSize" Value="13" />
     </Style>
-    <Style Selector="TextBlock.mono">
-        <Setter Property="FontFamily" Value="Cascadia Mono, SF Mono, Menlo, DejaVu Sans Mono, Consolas, monospace" />
-        <Setter Property="FontSize" Value="12" />
+    <Style Selector="TextBlock.mono, SelectableTextBlock.mono">
+        <Setter Property="FontFamily" Value="{DynamicResource MonoFont}" />
+        <Setter Property="FontSize" Value="13" />
     </Style>
     <Style Selector="TextBlock.warning">
-        <Setter Property="Foreground" Value="{DynamicResource WarningInk}" />
+        <Setter Property="Foreground" Value="{DynamicResource Warn}" />
     </Style>
     <Style Selector="TextBlock.error">
-        <Setter Property="Foreground" Value="{DynamicResource ErrorInk}" />
+        <Setter Property="Foreground" Value="{DynamicResource Err}" />
+    </Style>
+    <!-- Forms: a 14 px label above the field, a 13 px hint below it, and a 13 px message when it is invalid. -->
+    <Style Selector="TextBlock.form-label">
+        <Setter Property="FontSize" Value="14" />
+        <Setter Property="FontWeight" Value="SemiBold" />
+        <Setter Property="Foreground" Value="{DynamicResource Fg}" />
+    </Style>
+    <Style Selector="TextBlock.hint">
+        <Setter Property="FontSize" Value="13" />
+        <Setter Property="Foreground" Value="{DynamicResource Fg3}" />
+        <Setter Property="TextWrapping" Value="Wrap" />
+    </Style>
+    <Style Selector="TextBlock.validation">
+        <Setter Property="FontSize" Value="13" />
+        <Setter Property="FontWeight" Value="Medium" />
+        <Setter Property="Foreground" Value="{DynamicResource Err}" />
+        <Setter Property="TextWrapping" Value="Wrap" />
+    </Style>
+    <Style Selector="TextBlock.description">
+        <Setter Property="FontSize" Value="14" />
+        <Setter Property="Foreground" Value="{DynamicResource Fg2}" />
+        <Setter Property="TextWrapping" Value="Wrap" />
     </Style>
 
-    <!-- Buttons -->
+    <!-- ───────── Buttons ───────── -->
+    <!-- One shape for every button. No hand cursor: buttons are not links. -->
     <Style Selector="Button">
-        <Setter Property="CornerRadius" Value="7" />
+        <Setter Property="CornerRadius" Value="{DynamicResource RadiusControl}" />
         <Setter Property="FontSize" Value="14" />
+        <Setter Property="FontWeight" Value="Medium" />
         <Setter Property="MinHeight" Value="32" />
-        <Setter Property="Padding" Value="12,5" />
+        <Setter Property="Padding" Value="12,0" />
         <Setter Property="VerticalContentAlignment" Value="Center" />
     </Style>
     <Style Selector="Button.small">
         <Setter Property="MinHeight" Value="28" />
-        <Setter Property="Padding" Value="9,3" />
+        <Setter Property="Padding" Value="10,0" />
         <Setter Property="FontSize" Value="13" />
     </Style>
     <Style Selector="Button.large">
-        <Setter Property="MinHeight" Value="36" />
-        <Setter Property="Padding" Value="14,7" />
+        <Setter Property="MinHeight" Value="38" />
+        <Setter Property="Padding" Value="14,0" />
     </Style>
 
+    <!-- Primary: an ink fill. Disabled is a sunken well, never a faded slab. -->
     <Style Selector="Button.primary">
-        <Setter Property="Background" Value="{DynamicResource PrimarySurface}" />
-        <Setter Property="Foreground" Value="{DynamicResource PrimaryInk}" />
+        <Setter Property="Background" Value="{DynamicResource Fg}" />
+        <Setter Property="Foreground" Value="{DynamicResource OnFg}" />
+        <Setter Property="BorderBrush" Value="{DynamicResource Fg}" />
+        <Setter Property="BorderThickness" Value="1" />
         <Setter Property="FontWeight" Value="SemiBold" />
-        <Setter Property="BorderThickness" Value="0" />
     </Style>
     <Style Selector="Button.primary:pointerover /template/ ContentPresenter#PART_ContentPresenter">
-        <Setter Property="Background" Value="{DynamicResource PrimaryHoverSurface}" />
-        <Setter Property="Foreground" Value="{DynamicResource PrimaryInk}" />
+        <Setter Property="Background" Value="{DynamicResource PrimaryHover}" />
+        <Setter Property="BorderBrush" Value="{DynamicResource PrimaryHover}" />
+        <Setter Property="Foreground" Value="{DynamicResource OnFg}" />
     </Style>
     <Style Selector="Button.primary:pressed /template/ ContentPresenter#PART_ContentPresenter">
-        <Setter Property="Background" Value="{DynamicResource PrimarySurface}" />
-        <Setter Property="Foreground" Value="{DynamicResource PrimaryInk}" />
+        <Setter Property="Background" Value="{DynamicResource PrimaryPressed}" />
+        <Setter Property="BorderBrush" Value="{DynamicResource PrimaryPressed}" />
+        <Setter Property="Foreground" Value="{DynamicResource OnFg}" />
     </Style>
     <Style Selector="Button.primary:disabled /template/ ContentPresenter#PART_ContentPresenter">
-        <Setter Property="Background" Value="{DynamicResource PrimarySurface}" />
-        <Setter Property="Foreground" Value="{DynamicResource PrimaryInk}" />
-    </Style>
-    <Style Selector="Button.primary:disabled">
-        <Setter Property="Opacity" Value="0.42" />
+        <Setter Property="Background" Value="{DynamicResource Sunken}" />
+        <Setter Property="BorderBrush" Value="{DynamicResource Line}" />
+        <Setter Property="Foreground" Value="{DynamicResource FgDisabled}" />
     </Style>
 
-    <Style Selector="Button.secondary">
-        <Setter Property="Background" Value="{DynamicResource ControlSurface}" />
-        <Setter Property="Foreground" Value="{DynamicResource ControlInk}" />
-        <Setter Property="BorderBrush" Value="{DynamicResource ControlOutline}" />
+    <!-- Secondary: the sheet with a strong hairline. Danger is a secondary button that says so in red. -->
+    <Style Selector="Button.secondary, Button.danger">
+        <Setter Property="Background" Value="{DynamicResource Panel}" />
+        <Setter Property="Foreground" Value="{DynamicResource Fg}" />
+        <Setter Property="BorderBrush" Value="{DynamicResource LineStrong}" />
         <Setter Property="BorderThickness" Value="1" />
     </Style>
-    <Style Selector="Button.secondary:pointerover /template/ ContentPresenter#PART_ContentPresenter">
-        <Setter Property="Background" Value="{DynamicResource ControlHoverSurface}" />
-        <Setter Property="Foreground" Value="{DynamicResource ControlHoverInk}" />
-        <Setter Property="BorderBrush" Value="{DynamicResource ControlOutline}" />
+    <Style Selector="Button.secondary:pointerover /template/ ContentPresenter#PART_ContentPresenter, Button.danger:pointerover /template/ ContentPresenter#PART_ContentPresenter">
+        <Setter Property="Background" Value="{DynamicResource SecondaryHover}" />
+        <Setter Property="BorderBrush" Value="{DynamicResource ControlBorderHover}" />
+        <Setter Property="Foreground" Value="{DynamicResource Fg}" />
     </Style>
-    <Style Selector="Button.secondary:pressed /template/ ContentPresenter#PART_ContentPresenter">
-        <Setter Property="Background" Value="{DynamicResource SelectionSurface}" />
-        <Setter Property="Foreground" Value="{DynamicResource ControlHoverInk}" />
+    <Style Selector="Button.secondary:pressed /template/ ContentPresenter#PART_ContentPresenter, Button.danger:pressed /template/ ContentPresenter#PART_ContentPresenter">
+        <Setter Property="Background" Value="{DynamicResource Sunken}" />
+        <Setter Property="BorderBrush" Value="{DynamicResource ControlBorderHover}" />
+        <Setter Property="Foreground" Value="{DynamicResource Fg}" />
+    </Style>
+    <Style Selector="Button.secondary:disabled /template/ ContentPresenter#PART_ContentPresenter, Button.danger:disabled /template/ ContentPresenter#PART_ContentPresenter">
+        <Setter Property="Background" Value="{DynamicResource Panel}" />
+        <Setter Property="BorderBrush" Value="{DynamicResource Line}" />
+        <Setter Property="Foreground" Value="{DynamicResource FgDisabled}" />
+    </Style>
+    <Style Selector="Button.danger">
+        <Setter Property="Foreground" Value="{DynamicResource Err}" />
+    </Style>
+    <Style Selector="Button.danger:pointerover /template/ ContentPresenter#PART_ContentPresenter, Button.danger:pressed /template/ ContentPresenter#PART_ContentPresenter">
+        <Setter Property="Foreground" Value="{DynamicResource Err}" />
     </Style>
 
+    <!-- Quiet buttons: ghost, icon, nav and row are transparent until the pointer arrives. -->
     <Style Selector="Button.ghost, Button.icon, Button.nav, Button.link, Button.row">
         <Setter Property="Background" Value="Transparent" />
         <Setter Property="BorderThickness" Value="0" />
-        <Setter Property="Foreground" Value="{DynamicResource WorkspaceInk}" />
+    </Style>
+    <Style Selector="Button.ghost, Button.icon">
+        <Setter Property="Foreground" Value="{DynamicResource Fg2}" />
+    </Style>
+    <Style Selector="Button.nav, Button.row">
+        <Setter Property="Foreground" Value="{DynamicResource Fg}" />
     </Style>
     <Style Selector="Button.ghost:pointerover /template/ ContentPresenter#PART_ContentPresenter, Button.icon:pointerover /template/ ContentPresenter#PART_ContentPresenter, Button.nav:pointerover /template/ ContentPresenter#PART_ContentPresenter, Button.row:pointerover /template/ ContentPresenter#PART_ContentPresenter">
-        <Setter Property="Background" Value="{DynamicResource HoverFill}" />
-        <Setter Property="Foreground" Value="{DynamicResource WorkspaceInk}" />
+        <Setter Property="Background" Value="{DynamicResource Hover}" />
+        <Setter Property="Foreground" Value="{DynamicResource Fg}" />
     </Style>
     <Style Selector="Button.ghost:pressed /template/ ContentPresenter#PART_ContentPresenter, Button.icon:pressed /template/ ContentPresenter#PART_ContentPresenter, Button.nav:pressed /template/ ContentPresenter#PART_ContentPresenter, Button.row:pressed /template/ ContentPresenter#PART_ContentPresenter">
-        <Setter Property="Background" Value="{DynamicResource PressedFill}" />
-        <Setter Property="Foreground" Value="{DynamicResource WorkspaceInk}" />
+        <Setter Property="Background" Value="{DynamicResource Pressed}" />
+        <Setter Property="Foreground" Value="{DynamicResource Fg}" />
     </Style>
     <Style Selector="Button.ghost:disabled /template/ ContentPresenter#PART_ContentPresenter, Button.icon:disabled /template/ ContentPresenter#PART_ContentPresenter, Button.nav:disabled /template/ ContentPresenter#PART_ContentPresenter, Button.row:disabled /template/ ContentPresenter#PART_ContentPresenter">
         <Setter Property="Background" Value="Transparent" />
+        <Setter Property="Foreground" Value="{DynamicResource FgDisabled}" />
     </Style>
     <Style Selector="Button.icon">
-        <Setter Property="Width" Value="32" />
-        <Setter Property="Height" Value="32" />
+        <Setter Property="Width" Value="34" />
+        <Setter Property="Height" Value="34" />
         <Setter Property="MinHeight" Value="0" />
         <Setter Property="Padding" Value="0" />
         <Setter Property="HorizontalContentAlignment" Value="Center" />
-        <Setter Property="Foreground" Value="{DynamicResource SecondaryInk}" />
     </Style>
     <Style Selector="Button.icon.small">
         <Setter Property="Width" Value="28" />
         <Setter Property="Height" Value="28" />
+        <Setter Property="CornerRadius" Value="8" />
     </Style>
 
     <!-- Sidebar places: one row per place, the current one filled. -->
@@ -159,11 +219,11 @@
         <Setter Property="FontSize" Value="14" />
     </Style>
     <Style Selector="Button.nav.current /template/ ContentPresenter#PART_ContentPresenter, Button.nav.current:pointerover /template/ ContentPresenter#PART_ContentPresenter">
-        <Setter Property="Background" Value="{DynamicResource SelectionSurface}" />
+        <Setter Property="Background" Value="{DynamicResource Sunken}" />
         <Setter Property="FontWeight" Value="SemiBold" />
     </Style>
     <Style Selector="Button.nav local|Icon">
-        <Setter Property="Foreground" Value="{DynamicResource SecondaryInk}" />
+        <Setter Property="Foreground" Value="{DynamicResource Fg2}" />
     </Style>
 
     <!-- A full-width row in a settings list or an activity list. -->
@@ -173,194 +233,314 @@
         <Setter Property="Padding" Value="10,6" />
     </Style>
 
+    <!-- Links: ink, Medium, underlined in LineStrong; the underline turns solid ink on hover. -->
     <Style Selector="Button.link">
         <Setter Property="Padding" Value="0" />
         <Setter Property="MinHeight" Value="0" />
-        <Setter Property="Cursor" Value="Hand" />
-        <Setter Property="Foreground" Value="{DynamicResource SecondaryInk}" />
+        <Setter Property="Foreground" Value="{DynamicResource Fg}" />
         <Setter Property="HorizontalContentAlignment" Value="Left" />
     </Style>
     <Style Selector="Button.link:pointerover /template/ ContentPresenter#PART_ContentPresenter, Button.link:pressed /template/ ContentPresenter#PART_ContentPresenter">
         <Setter Property="Background" Value="Transparent" />
-        <Setter Property="Foreground" Value="{DynamicResource WorkspaceInk}" />
+        <Setter Property="Foreground" Value="{DynamicResource Fg}" />
     </Style>
-    <Style Selector="Button.link:pointerover TextBlock">
-        <Setter Property="TextDecorations" Value="Underline" />
+    <Style Selector="Button.link AccessText, Button.link TextBlock:not(.mono)">
+        <Setter Property="TextDecorations" Value="{DynamicResource LinkUnderline}" />
+    </Style>
+    <Style Selector="Button.link:pointerover AccessText, Button.link:pointerover TextBlock">
+        <Setter Property="TextDecorations" Value="{DynamicResource LinkUnderlineHover}" />
     </Style>
 
-    <!-- Tags and filters. Solid means filed; dashed means suggested. -->
+    <!-- Chips: tags as 28 px pills. Solid means filed; dashed means suggested. -->
     <Style Selector="Button.chip">
-        <Setter Property="Background" Value="{DynamicResource ChipSurface}" />
-        <Setter Property="Foreground" Value="{DynamicResource WorkspaceInk}" />
-        <Setter Property="BorderThickness" Value="0" />
-        <Setter Property="CornerRadius" Value="6" />
-        <Setter Property="MinHeight" Value="26" />
-        <Setter Property="Padding" Value="8,2" />
+        <Setter Property="Background" Value="{DynamicResource Sunken}" />
+        <Setter Property="Foreground" Value="{DynamicResource Fg2}" />
+        <Setter Property="BorderBrush" Value="{DynamicResource Line}" />
+        <Setter Property="BorderThickness" Value="1" />
+        <Setter Property="CornerRadius" Value="14" />
+        <Setter Property="MinHeight" Value="28" />
+        <Setter Property="Padding" Value="10,0" />
         <Setter Property="FontSize" Value="13" />
+        <Setter Property="FontWeight" Value="Medium" />
     </Style>
     <Style Selector="Button.chip:pointerover /template/ ContentPresenter#PART_ContentPresenter">
-        <Setter Property="Background" Value="{DynamicResource SelectionSurface}" />
-        <Setter Property="Foreground" Value="{DynamicResource WorkspaceInk}" />
+        <Setter Property="Background" Value="{DynamicResource Sunken}" />
+        <Setter Property="BorderBrush" Value="{DynamicResource LineStrong}" />
+        <Setter Property="Foreground" Value="{DynamicResource Fg}" />
+    </Style>
+    <Style Selector="Button.chip:pressed /template/ ContentPresenter#PART_ContentPresenter">
+        <Setter Property="Background" Value="{DynamicResource Pressed}" />
+        <Setter Property="BorderBrush" Value="{DynamicResource LineStrong}" />
+        <Setter Property="Foreground" Value="{DynamicResource Fg}" />
     </Style>
     <Style Selector="Button.suggested">
-        <Setter Property="Foreground" Value="{DynamicResource SecondaryInk}" />
+        <Setter Property="Foreground" Value="{DynamicResource Fg2}" />
         <Setter Property="FontSize" Value="13" />
-        <Setter Property="MinHeight" Value="26" />
-        <Setter Property="Padding" Value="8,2" />
-        <Setter Property="Cursor" Value="Hand" />
+        <Setter Property="FontWeight" Value="Medium" />
+        <Setter Property="MinHeight" Value="28" />
+        <Setter Property="Padding" Value="10,0" />
+        <Setter Property="CornerRadius" Value="14" />
         <Setter Property="Template">
             <ControlTemplate>
                 <Panel>
-                    <Rectangle x:Name="DashedOutline" RadiusX="6" RadiusY="6" Stroke="{DynamicResource StrongLineBrush}"
+                    <Rectangle x:Name="DashedOutline" RadiusX="14" RadiusY="14" Stroke="{DynamicResource LineStrong}"
                                StrokeThickness="1" StrokeDashArray="3,2" Fill="Transparent" />
                     <ContentPresenter x:Name="PART_ContentPresenter" Content="{TemplateBinding Content}"
                                       ContentTemplate="{TemplateBinding ContentTemplate}" Padding="{TemplateBinding Padding}"
-                                      Foreground="{TemplateBinding Foreground}" CornerRadius="6"
+                                      Foreground="{TemplateBinding Foreground}" CornerRadius="14"
                                       HorizontalContentAlignment="Center" VerticalContentAlignment="Center" />
                 </Panel>
             </ControlTemplate>
         </Setter>
     </Style>
     <Style Selector="Button.suggested:pointerover /template/ Rectangle#DashedOutline">
-        <Setter Property="Stroke" Value="{DynamicResource FaintInk}" />
-        <Setter Property="Fill" Value="{DynamicResource HoverFill}" />
+        <Setter Property="Stroke" Value="{DynamicResource ControlBorderHover}" />
+        <Setter Property="Fill" Value="{DynamicResource Hover}" />
+    </Style>
+    <Style Selector="Button.suggested:pressed /template/ Rectangle#DashedOutline">
+        <Setter Property="Stroke" Value="{DynamicResource ControlBorderHover}" />
+        <Setter Property="Fill" Value="{DynamicResource Pressed}" />
     </Style>
     <Style Selector="Button.suggested:pointerover">
-        <Setter Property="Foreground" Value="{DynamicResource WorkspaceInk}" />
+        <Setter Property="Foreground" Value="{DynamicResource Fg}" />
     </Style>
 
-    <!-- Keycaps show the shortcut on buttons, menus and the shortcuts sheet. -->
+    <!-- Keycaps: every shortcut that is mentioned is drawn as a key with a 2 px bottom edge. -->
     <Style Selector="Border.key">
-        <Setter Property="Background" Value="{DynamicResource KeySurface}" />
-        <Setter Property="BorderBrush" Value="{DynamicResource LineBrush}" />
-        <Setter Property="BorderThickness" Value="1" />
-        <Setter Property="CornerRadius" Value="4" />
-        <Setter Property="MinWidth" Value="20" />
-        <Setter Property="Height" Value="20" />
-        <Setter Property="Padding" Value="5,0" />
+        <Setter Property="Background" Value="{DynamicResource Panel}" />
+        <Setter Property="BorderBrush" Value="{DynamicResource LineStrong}" />
+        <Setter Property="BorderThickness" Value="1,1,1,2" />
+        <Setter Property="CornerRadius" Value="{DynamicResource RadiusSmall}" />
+        <Setter Property="MinWidth" Value="22" />
+        <Setter Property="Height" Value="22" />
+        <Setter Property="Padding" Value="6,0" />
         <Setter Property="VerticalAlignment" Value="Center" />
     </Style>
+    <Style Selector="Border.key.large">
+        <Setter Property="MinWidth" Value="26" />
+        <Setter Property="Height" Value="26" />
+        <Setter Property="Padding" Value="7,0" />
+    </Style>
     <Style Selector="Border.key > TextBlock">
-        <Setter Property="FontSize" Value="12" />
-        <Setter Property="FontWeight" Value="Medium" />
-        <Setter Property="Foreground" Value="{DynamicResource KeyInk}" />
+        <Setter Property="FontSize" Value="13" />
+        <Setter Property="FontWeight" Value="SemiBold" />
+        <Setter Property="Foreground" Value="{DynamicResource Fg}" />
         <Setter Property="HorizontalAlignment" Value="Center" />
         <Setter Property="VerticalAlignment" Value="Center" />
     </Style>
     <Style Selector="Button.primary Border.key">
-        <Setter Property="Background" Value="#26FFFFFF" />
+        <Setter Property="Background" Value="{DynamicResource PrimaryKeySurface}" />
         <Setter Property="BorderThickness" Value="0" />
     </Style>
     <Style Selector="Button.primary Border.key > TextBlock">
-        <Setter Property="Foreground" Value="{DynamicResource PrimaryInk}" />
+        <Setter Property="Foreground" Value="{DynamicResource OnFg}" />
+    </Style>
+    <Style Selector="Button.primary:disabled Border.key">
+        <Setter Property="Background" Value="{DynamicResource Hover}" />
+    </Style>
+    <Style Selector="Button.primary:disabled Border.key > TextBlock">
+        <Setter Property="Foreground" Value="{DynamicResource FgDisabled}" />
     </Style>
 
-    <!-- Surfaces -->
+    <!-- ───────── Surfaces ───────── -->
+    <!-- In-flow surfaces use hairlines; only things that float carry a shadow. -->
     <Style Selector="Border.card">
-        <Setter Property="Background" Value="{DynamicResource CardSurface}" />
-        <Setter Property="BorderBrush" Value="{DynamicResource LineBrush}" />
+        <Setter Property="Background" Value="{DynamicResource Panel}" />
+        <Setter Property="BorderBrush" Value="{DynamicResource Line}" />
         <Setter Property="BorderThickness" Value="1" />
-        <Setter Property="CornerRadius" Value="10" />
+        <Setter Property="CornerRadius" Value="{DynamicResource RadiusCard}" />
     </Style>
     <Style Selector="Border.popover">
-        <Setter Property="Background" Value="{DynamicResource PopupSurface}" />
-        <Setter Property="BorderBrush" Value="{DynamicResource LineBrush}" />
-        <Setter Property="BorderThickness" Value="1" />
-        <Setter Property="CornerRadius" Value="12" />
-        <Setter Property="BoxShadow" Value="0 1 2 0 #14000000, 0 12 32 0 #29000000" />
+        <Setter Property="Background" Value="{DynamicResource Raised}" />
+        <Setter Property="CornerRadius" Value="{DynamicResource RadiusPopover}" />
+        <Setter Property="BoxShadow" Value="{DynamicResource ShadowPop}" />
+    </Style>
+    <!-- The command palette and the shortcuts sheet: a raised sheet that floats over the scrim. -->
+    <Style Selector="Border.palette">
+        <Setter Property="Background" Value="{DynamicResource Raised}" />
+        <Setter Property="CornerRadius" Value="{DynamicResource RadiusCard}" />
+        <Setter Property="BoxShadow" Value="{DynamicResource ShadowPop}" />
     </Style>
     <Style Selector="Border.paper">
-        <Setter Property="Background" Value="{DynamicResource PaperSurface}" />
-        <Setter Property="CornerRadius" Value="1.5" />
-        <Setter Property="BoxShadow" Value="0 1 2 0 #1A000000, 0 8 22 0 #17000000" />
+        <Setter Property="Background" Value="{DynamicResource Paper}" />
+        <Setter Property="CornerRadius" Value="{DynamicResource RadiusPaper}" />
+        <Setter Property="BoxShadow" Value="{DynamicResource ShadowPaper}" />
     </Style>
     <Style Selector="Border.message">
-        <Setter Property="Background" Value="{DynamicResource MessageSurface}" />
-        <Setter Property="CornerRadius" Value="10" />
-        <Setter Property="Padding" Value="14,8" />
-        <Setter Property="BoxShadow" Value="0 1 2 0 #14000000, 0 10 28 0 #2E000000" />
+        <Setter Property="Background" Value="{DynamicResource Fg}" />
+        <Setter Property="CornerRadius" Value="{DynamicResource RadiusToast}" />
+        <Setter Property="Padding" Value="14,10,8,10" />
+        <Setter Property="BoxShadow" Value="{DynamicResource ShadowPop}" />
     </Style>
     <Style Selector="Border.message TextBlock">
-        <Setter Property="Foreground" Value="{DynamicResource MessageInk}" />
+        <Setter Property="Foreground" Value="{DynamicResource OnFg}" />
     </Style>
     <Style Selector="Border.callout">
-        <Setter Property="Background" Value="{DynamicResource RaisedSurface}" />
-        <Setter Property="BorderBrush" Value="{DynamicResource LineBrush}" />
+        <Setter Property="Background" Value="{DynamicResource Sunken}" />
+        <Setter Property="BorderBrush" Value="{DynamicResource Line}" />
         <Setter Property="BorderThickness" Value="1" />
-        <Setter Property="CornerRadius" Value="10" />
-        <Setter Property="Padding" Value="12,10" />
+        <Setter Property="CornerRadius" Value="{DynamicResource RadiusToast}" />
+        <Setter Property="Padding" Value="14" />
     </Style>
 
-    <!-- Text entry -->
-    <Style Selector="TextBox, AutoCompleteBox, ComboBox, CalendarDatePicker">
-        <Setter Property="CornerRadius" Value="7" />
+    <!-- ───────── Text entry ───────── -->
+    <!-- Fields: 32 px (38 in dialogs and settings), a strong hairline on the sheet, an ink border and ring when focused. -->
+    <Style Selector="TextBox, AutoCompleteBox, ComboBox, CalendarDatePicker, NumericUpDown">
+        <Setter Property="CornerRadius" Value="{DynamicResource RadiusControl}" />
         <Setter Property="FontSize" Value="14" />
         <Setter Property="MinHeight" Value="32" />
     </Style>
     <Style Selector="TextBox">
-        <Setter Property="PlaceholderForeground" Value="{DynamicResource MutedInk}" />
+        <Setter Property="PlaceholderForeground" Value="{DynamicResource Fg3}" />
+        <Setter Property="SelectionBrush" Value="{DynamicResource TextSelection}" />
+        <Setter Property="SelectionForegroundBrush" Value="{DynamicResource Fg}" />
+        <Setter Property="CaretBrush" Value="{DynamicResource Fg}" />
         <Setter Property="VerticalContentAlignment" Value="Center" />
+        <Setter Property="Padding" Value="12,0" />
+    </Style>
+    <Style Selector="TextBox[AcceptsReturn=True]">
+        <Setter Property="VerticalContentAlignment" Value="Top" />
+        <Setter Property="Padding" Value="12,8" />
+    </Style>
+    <Style Selector="SelectableTextBlock">
+        <Setter Property="SelectionBrush" Value="{DynamicResource TextSelection}" />
     </Style>
     <Style Selector="AutoCompleteBox">
-        <Setter Property="PlaceholderForeground" Value="{DynamicResource MutedInk}" />
+        <Setter Property="PlaceholderForeground" Value="{DynamicResource Fg3}" />
     </Style>
-    <Style Selector="TextBox.search">
-        <Setter Property="Background" Value="{DynamicResource ChipSurface}" />
+    <Style Selector="ComboBox">
+        <Setter Property="Padding" Value="12,0,0,0" />
+        <Setter Property="VerticalContentAlignment" Value="Center" />
+    </Style>
+    <Style Selector="TextBox:focus /template/ Border#PART_BorderElement">
+        <Setter Property="BorderBrush" Value="{DynamicResource Fg}" />
+        <Setter Property="BoxShadow" Value="{DynamicResource ShadowFieldFocus}" />
+    </Style>
+    <Style Selector="ComboBox:focus-visible /template/ Border#HighlightBackground">
+        <Setter Property="Background" Value="{DynamicResource Panel}" />
+        <Setter Property="BorderBrush" Value="{DynamicResource Fg}" />
+        <Setter Property="BoxShadow" Value="{DynamicResource ShadowFieldFocus}" />
+    </Style>
+    <Style Selector="TextBox:error /template/ Border#PART_BorderElement, ComboBox:error /template/ Border#Background">
+        <Setter Property="BorderBrush" Value="{DynamicResource Err}" />
+    </Style>
+    <!-- A number field focuses as one control: the text part inside the spinner draws no ring of its own. -->
+    <Style Selector="NumericUpDown TextBox:focus /template/ Border#PART_BorderElement">
         <Setter Property="BorderBrush" Value="Transparent" />
-        <Setter Property="MinHeight" Value="34" />
-        <Setter Property="CornerRadius" Value="8" />
+        <Setter Property="BoxShadow" Value="0 0 0 0 Transparent" />
     </Style>
-    <Style Selector="TextBox.search:pointerover /template/ Border#PART_BorderElement">
-        <Setter Property="Background" Value="{DynamicResource SelectionSurface}" />
-        <Setter Property="BorderBrush" Value="Transparent" />
+    <Style Selector="NumericUpDown:focus-within /template/ ButtonSpinner">
+        <Setter Property="BorderBrush" Value="{DynamicResource Fg}" />
     </Style>
-    <Style Selector="TextBox.search:focus /template/ Border#PART_BorderElement">
-        <Setter Property="Background" Value="{DynamicResource WorkspaceSurface}" />
-        <Setter Property="BorderBrush" Value="{DynamicResource StrongLineBrush}" />
+    <Style Selector="Window.dialog TextBox, Window.dialog AutoCompleteBox, Window.dialog ComboBox, Window.dialog NumericUpDown, Window.dialog CalendarDatePicker, Window.settings ComboBox, Window.settings TextBox">
+        <Setter Property="MinHeight" Value="38" />
+        <Setter Property="FontSize" Value="15" />
+    </Style>
+    <Style Selector="NumericUpDown TextBox, AutoCompleteBox TextBox, ComboBox TextBox">
+        <Setter Property="MinHeight" Value="0" />
     </Style>
 
+    <!-- The search field: 40 px on the sheet, a search glyph and the "/" keycap inside. -->
+    <Style Selector="TextBox.search">
+        <Setter Property="Background" Value="{DynamicResource Panel}" />
+        <Setter Property="BorderBrush" Value="{DynamicResource LineStrong}" />
+        <Setter Property="MinHeight" Value="40" />
+        <Setter Property="FontSize" Value="15" />
+        <Setter Property="Padding" Value="4,0" />
+    </Style>
+    <Style Selector="TextBox.search:pointerover /template/ Border#PART_BorderElement">
+        <Setter Property="Background" Value="{DynamicResource Panel}" />
+        <Setter Property="BorderBrush" Value="{DynamicResource ControlBorderHover}" />
+    </Style>
+    <Style Selector="TextBox.search:focus /template/ Border#PART_BorderElement">
+        <Setter Property="Background" Value="{DynamicResource Panel}" />
+        <Setter Property="BorderBrush" Value="{DynamicResource Fg}" />
+    </Style>
+
+    <!-- ───────── Choices ───────── -->
+    <!-- Check boxes and radios are ink when checked; switches are ink when on. Colours are Fluent keys in Tokens. -->
     <Style Selector="CheckBox, RadioButton, ToggleSwitch">
         <Setter Property="FontSize" Value="14" />
     </Style>
-
-    <!-- Menus: 32 px rows, quiet separators, shortcuts on the right. -->
-    <Style Selector="MenuItem">
-        <Setter Property="FontSize" Value="14" />
-        <Setter Property="MinHeight" Value="32" />
+    <Style Selector="CheckBox">
+        <Setter Property="CornerRadius" Value="{DynamicResource RadiusSmall}" />
     </Style>
-    <Style Selector="MenuFlyoutPresenter">
-        <Setter Property="CornerRadius" Value="10" />
+    <Style Selector="Window.dialog CheckBox, Window.dialog RadioButton">
+        <Setter Property="FontSize" Value="15" />
+    </Style>
+
+    <!-- ───────── Menus, flyouts and tooltips ───────── -->
+    <!-- Raised, 12 px corners, 4 px inside; 34 px items with 8 px corners at 14 Medium. -->
+    <Style Selector="MenuFlyoutPresenter, ContextMenu">
+        <Setter Property="Background" Value="{DynamicResource Raised}" />
+        <Setter Property="CornerRadius" Value="{DynamicResource RadiusPopover}" />
         <Setter Property="Padding" Value="4" />
     </Style>
+    <Style Selector="MenuItem">
+        <Setter Property="FontSize" Value="14" />
+        <Setter Property="FontWeight" Value="Medium" />
+        <Setter Property="MinHeight" Value="34" />
+        <Setter Property="Padding" Value="10,0" />
+        <Setter Property="CornerRadius" Value="8" />
+    </Style>
+    <Style Selector="MenuFlyoutPresenter Separator, ContextMenu Separator, MenuItem Separator">
+        <Setter Property="Background" Value="{DynamicResource Line}" />
+        <Setter Property="Margin" Value="6,4" />
+        <Setter Property="Height" Value="1" />
+    </Style>
+    <Style Selector="ToolTip">
+        <Setter Property="FontSize" Value="13" />
+        <Setter Property="CornerRadius" Value="8" />
+        <Setter Property="Padding" Value="10,6" />
+        <Setter Property="Background" Value="{DynamicResource Raised}" />
+        <Setter Property="Foreground" Value="{DynamicResource Fg}" />
+    </Style>
 
-    <!-- Lists: rounded rows with a soft selection, no accent bar. -->
+    <!-- ───────── Lists ───────── -->
+    <!-- Rounded rows: a hover tint, and the selected row in the sunken well with a hairline. No accent bar, no blue. -->
     <Style Selector="ListBox.plain">
         <Setter Property="Background" Value="Transparent" />
         <Setter Property="BorderThickness" Value="0" />
     </Style>
+    <!-- A plain list inside a dialog sits in a hairline box. -->
+    <Style Selector="ListBox.plain.framed">
+        <Setter Property="BorderBrush" Value="{DynamicResource Line}" />
+        <Setter Property="BorderThickness" Value="1" />
+        <Setter Property="CornerRadius" Value="{DynamicResource RadiusPopover}" />
+        <Setter Property="Padding" Value="0,4" />
+    </Style>
     <Style Selector="ListBox.plain ListBoxItem">
-        <Setter Property="CornerRadius" Value="8" />
+        <Setter Property="CornerRadius" Value="12" />
         <Setter Property="Margin" Value="6,1" />
-        <Setter Property="Padding" Value="10,8" />
+        <Setter Property="Padding" Value="9" />
+        <Setter Property="BorderThickness" Value="1" />
+        <Setter Property="BorderBrush" Value="Transparent" />
+        <Setter Property="Foreground" Value="{DynamicResource Fg}" />
         <Setter Property="HorizontalContentAlignment" Value="Stretch" />
     </Style>
     <Style Selector="ListBox.plain ListBoxItem:pointerover /template/ ContentPresenter#PART_ContentPresenter">
-        <Setter Property="Background" Value="{DynamicResource HoverFill}" />
-        <Setter Property="Foreground" Value="{DynamicResource WorkspaceInk}" />
+        <Setter Property="Background" Value="{DynamicResource Hover}" />
+        <Setter Property="Foreground" Value="{DynamicResource Fg}" />
     </Style>
-    <Style Selector="ListBox.plain ListBoxItem:selected /template/ ContentPresenter#PART_ContentPresenter, ListBox.plain ListBoxItem:selected:pointerover /template/ ContentPresenter#PART_ContentPresenter, ListBox.plain ListBoxItem:selected:focus /template/ ContentPresenter#PART_ContentPresenter">
-        <Setter Property="Background" Value="{DynamicResource SelectionSurface}" />
-        <Setter Property="Foreground" Value="{DynamicResource WorkspaceInk}" />
+    <Style Selector="ListBox.plain ListBoxItem:pressed /template/ ContentPresenter#PART_ContentPresenter">
+        <Setter Property="Background" Value="{DynamicResource Pressed}" />
+        <Setter Property="Foreground" Value="{DynamicResource Fg}" />
+    </Style>
+    <Style Selector="ListBox.plain ListBoxItem:selected /template/ ContentPresenter#PART_ContentPresenter, ListBox.plain ListBoxItem:selected:pointerover /template/ ContentPresenter#PART_ContentPresenter, ListBox.plain ListBoxItem:selected:pressed /template/ ContentPresenter#PART_ContentPresenter, ListBox.plain ListBoxItem:selected:focus /template/ ContentPresenter#PART_ContentPresenter">
+        <Setter Property="Background" Value="{DynamicResource Sunken}" />
+        <Setter Property="BorderBrush" Value="{DynamicResource Line}" />
+        <Setter Property="Foreground" Value="{DynamicResource Fg}" />
     </Style>
 
     <Style Selector="Separator.hairline">
-        <Setter Property="Background" Value="{DynamicResource LineBrush}" />
+        <Setter Property="Background" Value="{DynamicResource Line}" />
         <Setter Property="Height" Value="1" />
         <Setter Property="Margin" Value="0" />
     </Style>
 
-    <Style Selector="ToolTip">
-        <Setter Property="FontSize" Value="13" />
-        <Setter Property="CornerRadius" Value="7" />
+    <Style Selector="ProgressBar">
+        <Setter Property="Foreground" Value="{DynamicResource Fg}" />
+        <Setter Property="Background" Value="{DynamicResource Line}" />
+        <Setter Property="CornerRadius" Value="2" />
     </Style>
 </Styles>

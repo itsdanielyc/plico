@@ -25,14 +25,14 @@
             <Setter Property="Foreground" Value="{DynamicResource WorkspaceInk}" />
         </Style>
         <Style Selector="TextBlock.section">
-            <Setter Property="FontSize" Value="12" />
+            <Setter Property="FontSize" Value="13" />
             <Setter Property="FontWeight" Value="SemiBold" />
             <Setter Property="Foreground" Value="{DynamicResource MutedInk}" />
             <Setter Property="Margin" Value="8,0,0,0" />
             <Setter Property="VerticalAlignment" Value="Center" />
         </Style>
         <Style Selector="TextBlock.count">
-            <Setter Property="FontSize" Value="12" />
+            <Setter Property="FontSize" Value="13" />
             <Setter Property="FontWeight" Value="Medium" />
             <Setter Property="Foreground" Value="{DynamicResource MutedInk}" />
             <Setter Property="VerticalAlignment" Value="Center" />
@@ -40,15 +40,15 @@
         </Style>
         <Style Selector="Border.badge">
             <Setter Property="Background" Value="{DynamicResource PrimarySurface}" />
-            <Setter Property="CornerRadius" Value="9" />
-            <Setter Property="MinWidth" Value="22" />
-            <Setter Property="Height" Value="18" />
+            <Setter Property="CornerRadius" Value="10" />
+            <Setter Property="MinWidth" Value="24" />
+            <Setter Property="Height" Value="20" />
             <Setter Property="Padding" Value="6,0" />
             <Setter Property="VerticalAlignment" Value="Center" />
         </Style>
         <Style Selector="Border.badge > TextBlock">
             <Setter Property="Foreground" Value="{DynamicResource PrimaryInk}" />
-            <Setter Property="FontSize" Value="12" />
+            <Setter Property="FontSize" Value="13" />
             <Setter Property="FontWeight" Value="SemiBold" />
             <Setter Property="HorizontalAlignment" Value="Center" />
             <Setter Property="VerticalAlignment" Value="Center" />
@@ -366,7 +366,7 @@
                                         <TextBlock Text="{Binding WatchedFolderName}" MaxWidth="120" TextTrimming="CharacterEllipsis" />
                                         <StackPanel Orientation="Horizontal" Spacing="5">
                                             <Ellipse Width="6" Height="6" Fill="{DynamicResource LiveInk}" VerticalAlignment="Center" />
-                                            <TextBlock Text="{translation:Tr Watching}" FontSize="12" Foreground="{DynamicResource LiveInk}" />
+                                            <TextBlock Text="{translation:Tr Watching}" FontSize="13" Foreground="{DynamicResource LiveInk}" />
                                         </StackPanel>
                                     </StackPanel>
                                 </StackPanel>
@@ -462,13 +462,13 @@
                     <Grid ColumnDefinitions="*,Auto,Auto" ColumnSpacing="8">
                         <Grid ColumnDefinitions="*,Auto" ColumnSpacing="2" MaxWidth="620" HorizontalAlignment="Stretch">
                             <TextBox x:Name="SearchBox" Classes="search" Text="{Binding Query, Mode=TwoWay}" MaxLength="256"
-                                     PlaceholderText="{translation:Tr SearchTextStatusTagDated}" AutomationProperties.Name="{translation:Tr SearchDocuments}"
+                                     PlaceholderText="{translation:Tr SearchYourPaperwork}" AutomationProperties.Name="{translation:Tr SearchDocuments}"
                                      ToolTip.Tip="Try (receipt OR invoice) -tag:archive. Use uppercase AND, OR, NOT, and quotes for phrases.&#10;Use status:inbox or status:reviewed for review status.&#10;Use text:missing or text:present for searchable text.&#10;dated:2024-02 matches the document date. added:2026-11 matches the date added.&#10;Use folder:&quot;Filed/Property&quot; for a folder branch.">
                                 <TextBox.InnerLeftContent>
-                                    <local:Icon Data="{StaticResource Icon.Search}" Margin="10,0,2,0" Foreground="{DynamicResource MutedInk}" />
+                                    <local:Icon Data="{StaticResource Icon.Search}" Margin="12,0,6,0" Foreground="{DynamicResource Fg3}" />
                                 </TextBox.InnerLeftContent>
                                 <TextBox.InnerRightContent>
-                                    <Border Classes="key" Margin="0,0,7,0" IsHitTestVisible="False">
+                                    <Border Classes="key" Margin="0,0,9,0" IsHitTestVisible="False">
                                         <TextBlock Text="/" />
                                     </Border>
                                 </TextBox.InnerRightContent>
@@ -483,10 +483,10 @@
                             <Button x:Name="ScanButton" Classes="secondary with-icon" local:Ui.Icon="{StaticResource Icon.Scan}"
                                     Command="{Binding ScanCommand}" Content="{translation:Tr Scan}" IsEnabled="{Binding CanWork}" ToolTip.Tip="{translation:Tr ScanTip}" />
                             <StackPanel Orientation="Horizontal" Spacing="1">
-                                <Button x:Name="AddFilesButton" Classes="primary with-icon" local:Ui.Icon="{StaticResource Icon.Plus}" CornerRadius="7,0,0,7"
+                                <Button x:Name="AddFilesButton" Classes="primary with-icon" local:Ui.Icon="{StaticResource Icon.Plus}" CornerRadius="10,0,0,10"
                                         IsEnabled="{Binding CanWork}" Command="{Binding AddFilesCommand}" Content="{translation:Tr AddFiles}"
                                         ToolTip.Tip="{translation:Tr AddFilesTip}" />
-                                <Button x:Name="AddFromMenuButton" Classes="primary" CornerRadius="0,7,7,0" Padding="8,5" IsEnabled="{Binding CanWork}"
+                                <Button x:Name="AddFromMenuButton" Classes="primary" CornerRadius="0,10,10,0" Padding="8,0" IsEnabled="{Binding CanWork}"
                                         AutomationProperties.Name="{translation:Tr MoreWaysToAdd}" ToolTip.Tip="{translation:Tr MoreWaysToAdd}">
                                     <local:Icon Data="{StaticResource Icon.ChevronDown}" Width="14" Height="14" />
                                     <Button.Flyout>

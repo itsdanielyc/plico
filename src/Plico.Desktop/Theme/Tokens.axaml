@@ -549,6 +549,7 @@
             <SolidColorBrush x:Key="ScrollBarButtonBorderBrushPointerOver" Color="Transparent" />
             <SolidColorBrush x:Key="ScrollBarButtonBorderBrushPressed" Color="Transparent" />
             <SolidColorBrush x:Key="ScrollBarButtonBorderBrushDisabled" Color="Transparent" />
+            <SolidColorBrush x:Key="ScrollViewerScrollBarsSeparatorBackground" Color="Transparent" />
             <StaticResource x:Key="ScrollBarButtonArrowForeground" ResourceKey="Fg3" />
             <StaticResource x:Key="ScrollBarButtonArrowForegroundPointerOver" ResourceKey="Fg2" />
             <StaticResource x:Key="ScrollBarButtonArrowForegroundPressed" ResourceKey="Fg" />
@@ -1166,6 +1167,7 @@
             <SolidColorBrush x:Key="ScrollBarButtonBorderBrushPointerOver" Color="Transparent" />
             <SolidColorBrush x:Key="ScrollBarButtonBorderBrushPressed" Color="Transparent" />
             <SolidColorBrush x:Key="ScrollBarButtonBorderBrushDisabled" Color="Transparent" />
+            <SolidColorBrush x:Key="ScrollViewerScrollBarsSeparatorBackground" Color="Transparent" />
             <StaticResource x:Key="ScrollBarButtonArrowForeground" ResourceKey="Fg3" />
             <StaticResource x:Key="ScrollBarButtonArrowForegroundPointerOver" ResourceKey="Fg2" />
             <StaticResource x:Key="ScrollBarButtonArrowForegroundPressed" ResourceKey="Fg" />
