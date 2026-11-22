@@ -458,6 +458,66 @@ public sealed partial class InboxWindowTests
     }
 
     [AvaloniaTheory]
+    [InlineData("Settings")]
+    [InlineData("the main window")]
+    public async Task ASwitchThatWaitsForWorkLeavesTheKeyboardToADialogInFront(string dialogOver)
+    {
+        using var temporary = new TemporaryLibrary();
+        using var settingsFolder = new TemporaryLibrary();
+        using (var library = InboxLibrary.Open(temporary.Path)) BatchFixtures.AddTwoDocuments(library, TestContext.Current.CancellationToken);
+        var pending = new TaskCompletionSource<TrashDecision?>();
+        var dialogs = new FixtureDialogs { TrashChoice = _ => pending.Task };
+        using var model = new InboxViewModel(dialogs);
+        model.InitializeLibrary(() => temporary.Path);
+        model.InitializeOcrProcessing(new OcrProcessingPreference(settingsFolder.Path));
+        var window = new MainWindow { DataContext = model, Width = 1280, Height = 800 };
+        window.Show();
+        Task? work = null;
+        Window? dialog = null;
+        try
+        {
+            await WaitForPreviewAsync(model);
+            var settings = OpenSettingsAt(window, "RecognitionGroup");
+            var choice = Assert.IsType<CheckBox>(settings.FindControl<CheckBox>("OrientPagesChoice"));
+            TabTo(settings, choice);
+            bool orienting = model.AutoOrientPages;
+
+            // Work begins (Trash left open holds Plico busy, as a watched folder's import does) and turns the switch off.
+            work = model.OpenTrashCommand.ExecuteAsync(null);
+            Dispatcher.UIThread.RunJobs();
+            Assert.False(choice.IsEffectivelyEnabled);
+
+            // A dialog of Plico's comes in front, over Settings or over the main window (a plain window stands in for it,
+            // as the dialogs are fixtures here), and the desktop takes the keyboard from Settings: nothing has it yet.
+            dialog = new Window { Width = 360, Height = 200, Content = new TextBox() };
+            dialog.Show(dialogOver == "Settings" ? settings : window);
+            Dispatcher.UIThread.RunJobs();
+            RaiseFromThePlatform(settings, "Deactivated");
+            RaiseFromThePlatform(settings, "LostFocus");
+            RaiseFromThePlatform(window, "Deactivated");
+            Assert.True(dialog.IsActive && !settings.IsActive && !window.IsActive, "The dialog is not the only one of Plico's windows in front.");
+
+            // The work ends with the dialog still in front: a key pressed there never reaches Settings' switch.
+            pending.SetResult(null);
+            await work;
+            work = null;
+            Dispatcher.UIThread.RunJobs();
+            Assert.False(choice.IsFocused, $"When the work ended Settings took the keyboard from the dialog over {dialogOver}: it is on {KeyboardOwner(dialog)}.");
+            PressKey(dialog, Key.Space, PhysicalKey.Space, " ");
+            Assert.Equal(orienting, model.AutoOrientPages);
+            dialog.Close();
+            settings.Close();
+        }
+        finally
+        {
+            pending.TrySetResult(null);
+            if (work is not null) await work;
+            dialog?.Close();
+            window.Close();
+        }
+    }
+
+    [AvaloniaTheory]
     [InlineData("Stop watching")]
     [InlineData("Stop watching while a scan waits")]
     [InlineData("Stop phone inbox")]
