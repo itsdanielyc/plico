@@ -71,8 +71,8 @@ internal sealed partial class InboxViewModel
 
     /// <summary>
     /// True while Settings has an action of the person's in hand: from a press or a key in Settings until it settles, or
-    /// until the work or the aside it started ends, unless the person has given the main window input since. An aside
-    /// said meanwhile (see <see cref="SayAside"/>) is Settings' to say on its line. Settings sets it.
+    /// until the work or the aside it started ends, unless the person has given the main window input or closed Settings
+    /// since. An aside said meanwhile (see <see cref="SayAside"/>) is Settings' to say on its line. Settings sets it.
     /// </summary>
     internal bool SettingsHasActionInHand { get; set; }
 
