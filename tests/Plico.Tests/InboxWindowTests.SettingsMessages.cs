@@ -188,6 +188,89 @@ public sealed partial class InboxWindowTests
     }
 
     [AvaloniaFact]
+    public async Task ASwitchThatWaitsForWorkLeavesTheKeyboardWithTheMainWindowOnceThePersonHasGoneBackToIt()
+    {
+        using var temporary = new TemporaryLibrary();
+        using var settingsFolder = new TemporaryLibrary();
+        using (var library = InboxLibrary.Open(temporary.Path)) BatchFixtures.AddTwoDocuments(library, TestContext.Current.CancellationToken);
+        var pending = new TaskCompletionSource<TrashDecision?>();
+        var dialogs = new FixtureDialogs { TrashChoice = _ => pending.Task };
+        using var model = new InboxViewModel(dialogs);
+        model.InitializeLibrary(() => temporary.Path);
+        model.InitializeOcrProcessing(new OcrProcessingPreference(settingsFolder.Path));
+        var window = new MainWindow { DataContext = model, Width = 1280, Height = 800 };
+        window.Show();
+        Task? work = null;
+        try
+        {
+            // X puts the open document in Trash, so Trash has one to restore.
+            await WaitForPreviewAsync(model);
+            long trashed = model.SelectedDocument!.Id;
+            PressKey(window, Key.X, PhysicalKey.X, "x");
+            await WaitForAsync(() => !model.IsBusy);
+            await WaitForPreviewAsync(model);
+            Assert.Equal("Moved to Trash", model.ToastTitle);
+
+            var settings = OpenSettingsAt(window, "RecognitionGroup");
+            var choice = Assert.IsType<CheckBox>(settings.FindControl<CheckBox>("OrientPagesChoice"));
+            TabTo(settings, choice);
+            bool orienting = model.AutoOrientPages;
+
+            // Work begins (Trash left open holds Plico busy, as a watched folder's import does) and turns the switch off.
+            work = model.OpenTrashCommand.ExecuteAsync(null);
+            Dispatcher.UIThread.RunJobs();
+            Assert.False(choice.IsEffectivelyEnabled);
+
+            // The person goes back to the main window and works in the queue.
+            LeaveAsOnADesktop(settings);
+            window.Activate();
+            Dispatcher.UIThread.RunJobs();
+            ClickAt(window, QueueRow(window, model.SelectedDocument!.Id));
+            Assert.True(KeyboardIsOnRow(window, model.SelectedDocument!.Id), $"In the main window the keyboard is on {KeyboardOwner(window)}.");
+
+            // The work ends by reloading the queue under the row with the keyboard, as an import that adds documents does.
+            pending.SetResult(new TrashDecision(trashed, Purge: false));
+            await work;
+            work = null;
+            Dispatcher.UIThread.RunJobs();
+            await WaitForPreviewAsync(model);
+            Assert.False(choice.IsFocused, $"When the work ended Settings took the keyboard from the main window, in front: it is on {KeyboardOwner(window)}.");
+            Assert.True(KeyboardIsOnRow(window, model.SelectedDocument!.Id), $"After the work the keyboard is on {KeyboardOwner(window)}.");
+
+            // Keys typed in the main window act there: Space never flips Settings' switch, and R reviews.
+            PressKey(window, Key.Space, PhysicalKey.Space, " ");
+            PressKey(window, Key.R, PhysicalKey.R, "r");
+            await WaitForPreviewAsync(model);
+            Assert.Equal(orienting, model.AutoOrientPages);
+            Assert.Equal("Marked reviewed", model.ToastTitle);
+            settings.Close();
+        }
+        finally
+        {
+            pending.TrySetResult(null);
+            if (work is not null) await work;
+            window.Close();
+        }
+    }
+
+    /// <summary>
+    /// The window stops being the one in front, as a desktop says when the person clicks another window. Headless keeps
+    /// every shown window active, so the window hears it from its platform here, as it would on a desktop. The platform's
+    /// callback is Avalonia's private API, so it is reached by reflection.
+    /// </summary>
+    private static void LeaveAsOnADesktop(Window window)
+    {
+        var platform = window.PlatformImpl;
+        Assert.NotNull(platform);
+        var callback = typeof(Window).Assembly.GetType("Avalonia.Platform.IWindowBaseImpl")?.GetProperty("Deactivated");
+        Assert.NotNull(callback);
+        var deactivated = Assert.IsType<Action>(callback.GetValue(platform));
+        deactivated();
+        Dispatcher.UIThread.RunJobs();
+        Assert.False(window.IsActive, $"{window.GetType().Name} is still active after its platform said it was not.");
+    }
+
+    [AvaloniaFact]
     public async Task TheRapidOcrSwitchWaitsWhilePlicoWorks()
     {
         using var temporary = new TemporaryLibrary();

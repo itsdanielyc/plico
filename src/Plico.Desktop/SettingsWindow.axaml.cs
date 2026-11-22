@@ -85,13 +85,19 @@ public sealed partial class SettingsWindow : Window
         WaitToReturnKeyboard(control, row, navigation);
     }
 
+    /// <summary>
+    /// Gives the keyboard back to <paramref name="control"/> when it turns on again: from its section's row, or from
+    /// nowhere while Settings is in front. The keyboard is the whole application's, so once the person has gone back to
+    /// the main window, a keyboard that is nowhere there (its queue reloaded as the work ended) is the main window's to
+    /// land; taking it would send what is typed there to Settings' switch.
+    /// </summary>
     private void WaitToReturnKeyboard(Control control, Button row, NavigationMethod navigation)
     {
         void Return(object? sender, AvaloniaPropertyChangedEventArgs change)
         {
             if (change.Property != IsEffectivelyEnabledProperty || !control.IsEffectivelyEnabled) return;
             control.PropertyChanged -= Return;
-            if (IsVisible && (row.IsFocused || FocusManager?.GetFocusedElement() is null)) control.Focus(navigation);
+            if (IsVisible && (row.IsFocused || IsActive && FocusManager?.GetFocusedElement() is null)) control.Focus(navigation);
         }
         control.PropertyChanged += Return;
     }
