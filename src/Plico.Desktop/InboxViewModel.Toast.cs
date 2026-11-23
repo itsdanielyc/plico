@@ -66,7 +66,7 @@ internal sealed partial class InboxViewModel
     private int _asidesInHand;
 
     // Above zero from the start of such an action that says what it has to say only once it has finished (a watch
-    // stopped) until it has said it; see AsideIsUnderWay.
+    // stopped) until it has said it, or found it has nothing left to say; see AsideIsUnderWay.
     private int _asidesUnderWay;
 
     /// <summary>
@@ -78,8 +78,9 @@ internal sealed partial class InboxViewModel
 
     /// <summary>
     /// True from the start of an action the person takes beside the work in hand that says what it has to say only once
-    /// it has finished, until it has said it: a watch stopped says so once it has let go of its folder, which takes a
-    /// moment longer while a scan it found waits for the work. Settings keeps such an action in hand until then.
+    /// it has finished, until it has said it or found it has nothing left to say: a watch stopped says so once it has let
+    /// go of its folder, which takes a moment longer while a scan it found waits for the work, and says nothing when the
+    /// watch was started again meanwhile. Settings keeps such an action in hand until then.
     /// </summary>
     internal bool AsideIsUnderWay => _asidesUnderWay > 0;
 
@@ -261,7 +262,8 @@ internal sealed partial class InboxViewModel
 
     /// <summary>
     /// Counts an aside that says what it has to say only once it has finished, from its start (<paramref name="started"/>
-    /// true) until it has said it (false), so <see cref="AsideIsUnderWay"/> holds meanwhile and is raised as it changes.
+    /// true) until it has said it or found nothing left to say (false), so <see cref="AsideIsUnderWay"/> holds meanwhile
+    /// and is raised as it changes.
     /// </summary>
     private void CountAsideUnderWay(bool started)
     {

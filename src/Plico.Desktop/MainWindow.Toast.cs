@@ -11,8 +11,9 @@ namespace Plico.Desktop;
 
 /// <summary>
 /// The ink toast that replaced the status bar. It rises from the bottom of the page canvas with each message that is
-/// news (<see cref="InboxViewModel.ToastStatus"/>): the person's own edit at once, the work's message when the work
-/// ends. It carries at most one action, leaves after about six seconds and stays while the pointer or the keyboard is
+/// news (<see cref="InboxViewModel.ToastStatus"/>): the person's own edit, or why a file opened from the main window
+/// would not open, at once (<see cref="InboxViewModel.ToastIsForeground"/>), and the work's message when the work ends.
+/// It carries at most one action, leaves after about six seconds and stays while the pointer or the keyboard is
 /// on it, work in the background included. Progress and anything that needs attention go to the sidebar's status card
 /// instead. When the toast lets go of the keyboard (it is closed, or the button holding it goes), the keyboard
 /// lands on the open document's row rather than out of the window.
@@ -101,7 +102,7 @@ public partial class MainWindow
         {
             case nameof(InboxViewModel.ToastStatus):
                 // While work runs its progress is on the status card and its message arrives when it ends; an edit the
-                // person makes meanwhile is news at once.
+                // person makes meanwhile, or a file of theirs that will not open, is news at once.
                 _toastCarriesStartupNews = false;
                 if (!model.IsBusy || model.ToastIsForeground) ShowToast(model);
                 break;

@@ -297,8 +297,9 @@ internal sealed partial class InboxViewModel
 
     /// <summary>
     /// Saves <paramref name="folder"/> as the slot's watch for next time, unless the setting holds it already (compared as
-    /// the platform compares paths): resuming a watch Plico remembers then writes nothing, so it cannot fail to remember
-    /// it.
+    /// the platform compares paths): resuming a watch Plico remembers then writes nothing, so a setting that cannot be
+    /// written does not stop it. A setting that cannot be read at that moment throws as a failed save does, and the
+    /// caller says that the folder could not be remembered.
     /// </summary>
     private static void RememberWatchFolder(WatchFolderPreference preference, string libraryRoot, string folder, WatchSource source)
     {
@@ -391,8 +392,9 @@ internal sealed partial class InboxViewModel
     /// <summary>
     /// Stops the watch in <paramref name="slot"/> and says so once it has let go of its folder. When the person
     /// <paramref name="asked"/> for it (Stop watching, the phone inbox's Stop), what it says is an aside to any work in
-    /// hand (see <see cref="SayAside"/>), under way until it is said (<see cref="AsideIsUnderWay"/>). Otherwise (a library
-    /// switch, closing, a watch that failed) it is said as any message is, so while Plico works it is a line of the work.
+    /// hand (see <see cref="SayAside"/>), under way until it is said, or until the stop finds the watch started again and
+    /// says nothing (<see cref="AsideIsUnderWay"/>). Otherwise (a library switch, closing, a watch that failed) it is
+    /// said as any message is, so while Plico works it is a line of the work.
     /// </summary>
     private async Task StopWatchAsync(WatchSlot slot, bool asked = false)
     {
