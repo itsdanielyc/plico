@@ -156,7 +156,7 @@ internal sealed partial class InboxViewModel
         }
         var selection = _batchSelection;
         var selectedIds = selection.Select(document => document.Id).ToArray();
-        var tag = BatchTagInput;
+        string tag = BatchTagInput.Trim();
         return RunOperationAsync("Tagging the selected documents…", async token =>
         {
             var library = RequireLibrary();
@@ -168,14 +168,13 @@ internal sealed partial class InboxViewModel
             Tags = library.GetTags();
             LoadResults(retainLoadedResults: true);
             BatchTagInput = "";
-            string status = DesktopText.Format($"Tag applied to {DocumentCount(selectedIds.Length)}.");
             if (untagged.Length > 0)
             {
-                OfferUndo(BatchTagUndo(library, untagged, tag.Trim(), selectedIds.Length), status);
+                OfferUndo(BatchTagUndo(library, untagged, tag, selectedIds.Length),
+                    DesktopText.Format($"Tag applied to {DocumentCount(selectedIds.Length)}."));
                 return;
             }
-            RetireUndo();
-            Status = status;
+            AnnounceExistingTag(selection[0].Tags.First(label => InboxLibrary.GetTagKey(label) == key));
         });
     }
 
@@ -195,7 +194,7 @@ internal sealed partial class InboxViewModel
 
             var selectedIds = selectedDocuments.Select(document => document.Id).ToArray();
             int changed = await Task.Run(() => library.RemoveTagFromDocuments(selectedIds, tag, token), token);
-            RetireUndo();
+            if (changed > 0) RetireUndo();
             Tags = library.GetTags();
             LoadResults(retainLoadedResults: true);
             Status = changed == 0 ? DesktopText.Translate("The selected documents no longer have that tag.") : DesktopText.Format($"Tag removed from {DocumentCount(changed)}.");

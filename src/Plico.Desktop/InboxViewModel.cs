@@ -277,7 +277,7 @@ internal sealed partial class InboxViewModel : ObservableObject, IDisposable
         {
             // A tag the document already has changes nothing: the toast says so and the current Undo offer stays.
             TagInput = "";
-            SaveEdit(() => Announce(DesktopText.Format($"Already tagged “{present}”."), DesktopText.Translate("Already tagged"), DesktopText.Quote(present)));
+            SaveEdit(() => AnnounceExistingTag(present));
             return;
         }
         if (UpdateDocument((library, document) =>
@@ -286,6 +286,9 @@ internal sealed partial class InboxViewModel : ObservableObject, IDisposable
             return TagUndo(library, document.Id, label, added: true);
         }, DesktopText.Translate("Tag added."))) TagInput = "";
     }
+
+    private void AnnounceExistingTag(string label) =>
+        Announce(DesktopText.Format($"Already tagged “{label}”."), DesktopText.Translate("Already tagged"), DesktopText.Quote(label));
 
     /// <summary>Whether two labels name the same tag, as the catalog compares them; a label it cannot take names none.</summary>
     private static bool SameTag(string first, string second)
@@ -442,19 +445,27 @@ internal sealed partial class InboxViewModel : ObservableObject, IDisposable
             }
         }
 
+        ReportImportResult(added, alreadyPresent, unreadable, failures, saveWarning);
+    }
+
+    /// <summary>Reports the first failed file and the successful work in the same batch.</summary>
+    private void ReportImportResult(int added, int alreadyPresent, int unreadable, IReadOnlyList<ImportFailure> failures, string? saveWarning)
+    {
         var outcomes = new List<string>();
         if (added > 0) outcomes.Add(Counted(added, "1 document added.", $"{added} documents added."));
         if (alreadyPresent > 0) outcomes.Add(DesktopText.Format($"{DocumentCount(alreadyPresent)} already in the library."));
         if (unreadable > 0) outcomes.Add(DesktopText.Format($"No text recognised in {DocumentCount(unreadable)}."));
-        if (failures.Count > 0) outcomes.Add($"{failures.Count} failed. {failures[0].Filename} — {failures[0].Reason}");
-        if (saveWarning is null)
+        string summary = string.Join(" ", outcomes);
+        if (failures.Count > 0)
         {
-            Status = string.Join(" ", outcomes);
-            return;
+            string title = Counted(failures.Count, "Couldn't add 1 file", $"Couldn't add {failures.Count} files");
+            var first = failures[0];
+            string body = $"{first.Filename} — {first.Reason} {summary}".TrimEnd();
+            if (saveWarning is null) _pendingToast = new ToastText(title, body);
+            summary = $"{title}. {body}";
         }
-        // The import errors were not saved for next time: that leads, so the toast's title names it, with the alert.
-        outcomes.Insert(0, saveWarning);
-        Fail(string.Join(" ", outcomes));
+        if (saveWarning is not null) summary = $"{saveWarning} {summary}".TrimEnd();
+        Say(summary, saveWarning is not null || failures.Count > 0);
     }
 
     private async Task RunOperationAsync(
@@ -535,7 +546,7 @@ internal sealed partial class InboxViewModel : ObservableObject, IDisposable
             var library = RequireLibrary();
             var offer = update(library, document);
             Tags = library.GetTags();
-            LoadResults(document.Id);
+            LoadResults(document.Id, retainLoadedResults: true);
             if (offer is not null)
             {
                 OfferUndo(offer, success);
@@ -571,7 +582,6 @@ internal sealed partial class InboxViewModel : ObservableObject, IDisposable
         }
     }
 
-    /// <summary>An error's message as a person reads it, without the "(Parameter 'folder')" .NET adds to an argument's.</summary>
     /// <summary>
     /// An error's message as the person reads it: without the parameter name .NET adds, and in the interface's language
     /// when the catalog has the sentence (Plico.Core writes in English).

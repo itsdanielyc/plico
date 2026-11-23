@@ -86,7 +86,7 @@ internal static partial class DisplayDates
         if (!numeric.Success) return false;
         int first = Number(numeric.Groups["first"].Value), second = Number(numeric.Groups["second"].Value);
         if (numeric.Groups["isoYear"].Success)
-            return numeric.Groups["separator"].Value == "-" && TryCreateDay(Number(numeric.Groups["isoYear"].Value), first, second, out day);
+            return TryCreateDay(Number(numeric.Groups["isoYear"].Value), first, second, out day);
         // The person's short date: day and month in the order their own short date puts them.
         bool monthFirst = culture.DateTimeFormat.ShortDatePattern.TrimStart().StartsWith('M');
         return TryCreateDay(Number(numeric.Groups["year"].Value), monthFirst ? first : second, monthFirst ? second : first, out day);
@@ -95,11 +95,11 @@ internal static partial class DisplayDates
     private static int Number(string digits) => int.Parse(digits, CultureInfo.InvariantCulture);
 
     // "21 Nov 2026", "21 nov. 2026", "1 février 2024": a day, a month's name and a four-digit year.
-    [GeneratedRegex(@"^(?<day>\d{1,2})\s+(?<month>\p{L}+)\.?,?\s+(?<year>[1-9]\d{3})$", RegexOptions.CultureInvariant)]
+    [GeneratedRegex(@"^(?<day>[0-9]{1,2})\s+(?<month>\p{L}+)\.?,?\s+(?<year>[1-9][0-9]{3})$", RegexOptions.CultureInvariant)]
     private static partial Regex WrittenDay();
 
     // "2026-11-21" as search writes it, or a short date with its year in full: "21/11/2026", "21.11.2026", "11-21-2026".
-    [GeneratedRegex(@"^(?:(?<isoYear>[1-9]\d{3})(?<separator>-)(?<first>\d{1,2})-(?<second>\d{1,2})|(?<first>\d{1,2})(?<separator>[/.-])(?<second>\d{1,2})\k<separator>(?<year>[1-9]\d{3}))$",
+    [GeneratedRegex(@"^(?:(?<isoYear>[1-9][0-9]{3})-(?<first>[0-9]{1,2})-(?<second>[0-9]{1,2})|(?<first>[0-9]{1,2})(?<separator>[/.-])(?<second>[0-9]{1,2})\k<separator>(?<year>[1-9][0-9]{3}))$",
         RegexOptions.CultureInvariant)]
     private static partial Regex NumericDay();
 

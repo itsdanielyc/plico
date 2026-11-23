@@ -103,17 +103,41 @@ public sealed partial class InboxWindowTests
         }
     }
 
-    /// <summary>
-    /// A clock that moves only when told to, in the machine's own time zone, and runs the timers that fall due as it
-    /// moves, as the system's would.
-    /// </summary>
-    private sealed class SteppedClock(DateTimeOffset start) : TimeProvider
+    [AvaloniaTheory]
+    [InlineData(3, 29, 23)]
+    [InlineData(10, 25, 25)]
+    public void TheQueueWakesAtLocalMidnightAcrossAClockChange(int month, int day, int hoursInDay)
+    {
+        var london = TimeZoneInfo.FindSystemTimeZoneById(OperatingSystem.IsWindows() ? "GMT Standard Time" : "Europe/London");
+        var midnight = new DateTime(2026, month, day);
+        var start = new DateTimeOffset(midnight, london.GetUtcOffset(midnight)).ToUniversalTime();
+        var clock = new SteppedClock(start, london);
+        var previous = DisplayDates.Clock;
+        MainWindow? window = null;
+        DisplayDates.Clock = clock;
+        try
+        {
+            window = new MainWindow();
+            window.Show();
+            var nextMidnight = start.AddHours(hoursInDay);
+            Assert.InRange(clock.NextTimerDue, nextMidnight, nextMidnight.AddMinutes(1));
+        }
+        finally
+        {
+            window?.Close();
+            DisplayDates.Clock = previous;
+        }
+    }
+
+    /// <summary>A clock with controllable time, time zone and timer delivery.</summary>
+    private sealed class SteppedClock(DateTimeOffset start, TimeZoneInfo? zone = null) : TimeProvider
     {
         private readonly List<SteppedTimer> _timers = [];
         private DateTimeOffset _now = start;
 
         public override DateTimeOffset GetUtcNow() => _now;
-        public override TimeZoneInfo LocalTimeZone => TimeZoneInfo.Local;
+        public override TimeZoneInfo LocalTimeZone => zone ?? TimeZoneInfo.Local;
+        public DateTimeOffset NextTimerDue => _timers.Single().Due!.Value;
 
         public override ITimer CreateTimer(TimerCallback callback, object? state, TimeSpan dueTime, TimeSpan period)
         {

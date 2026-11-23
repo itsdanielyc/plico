@@ -898,6 +898,8 @@ GoToTheNextMatchingPage	Go to the next page that matches the text terms	Accéder
 GoToTheFirstMatchingPage	Go to the first page that matches the text terms	Accéder à la première page contenant les termes recherchés
 ImportAddedOne	1 document added.	1 document ajouté.
 ImportAddedSeveral	{0} documents added.	{0} documents ajoutés.
+ImportFailedOne	Couldn't add 1 file	Impossible d’ajouter 1 fichier
+ImportFailedSeveral	Couldn't add {0} files	Impossible d’ajouter {0} fichiers
 ExportedOneTo	Exported 1 document to {0}.	1 document exporté vers {0}.
 ExportedSeveralTo	Exported {0} documents to {1}.	{0} documents exportés vers {1}.
 IndexedOne	1 document indexed.	1 document indexé.

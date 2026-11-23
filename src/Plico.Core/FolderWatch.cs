@@ -105,10 +105,14 @@ public sealed class FolderWatch : IAsyncDisposable
         return new FolderWatch(source, canonicalSource, import, baseline, createWatcher(source));
     }
 
-    // O(n) time to scan n directory entries and O(k) space for the k supported paths.
     /// <summary>Queues supported nonempty files already in the watched directory for stability checking.</summary>
+    /// <returns>The number of files newly added to the watch's queue.</returns>
+    public int QueueExistingFiles(CancellationToken cancellationToken = default) => QueueExistingFilePaths(cancellationToken).Count;
+
+    // O(n) time to scan n entries and O(k) space for the k supported paths.
+    /// <summary>Queues existing files and identifies the ones newly queued by this request.</summary>
     /// <returns>The full paths of the files newly added to the watch's queue.</returns>
-    public IReadOnlyList<string> QueueExistingFiles(CancellationToken cancellationToken = default)
+    public IReadOnlyList<string> QueueExistingFilePaths(CancellationToken cancellationToken = default)
     {
         using var cancelWithWatch = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken, _stop.Token);
         var token = cancelWithWatch.Token;
@@ -120,16 +124,17 @@ public sealed class FolderWatch : IAsyncDisposable
 
         // Gather the candidates before changing the live queue so cancellation leaves the request unqueued.
         token.ThrowIfCancellationRequested();
-        var queued = new List<string>();
-        foreach (string file in candidates)
-        {
-            var requested = new Observation(includeKnownVersion: true);
-            var observation = _pending.AddOrUpdate(file, requested, static (_, pending) =>
-                pending.IncludeKnownVersion ? pending : new Observation(pending.Sample, includeKnownVersion: true));
-            if (ReferenceEquals(observation, requested)) queued.Add(file);
-        }
-        if (queued.Count > 0) _wakeups.Writer.TryWrite(true);
-        return queued;
+        candidates.RemoveAll(file => !QueueExistingFile(file));
+        if (candidates.Count > 0) _wakeups.Writer.TryWrite(true);
+        return candidates;
+    }
+
+    private bool QueueExistingFile(string file)
+    {
+        var requested = new Observation(includeKnownVersion: true);
+        var observation = _pending.AddOrUpdate(file, requested, static (_, pending) =>
+            pending.IncludeKnownVersion ? pending : new Observation(pending.Sample, includeKnownVersion: true));
+        return ReferenceEquals(observation, requested);
     }
 
     /// <summary>

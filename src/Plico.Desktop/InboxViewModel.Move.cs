@@ -24,13 +24,15 @@ internal sealed partial class InboxViewModel
 
             Status = DesktopText.Translate("Moving the PDF…");
             var moved = await Task.Run(() => library.MovePdfAsync(document.Id, folder, token), token);
-            RetireUndo();
             LoadResults(moved.Id, reloadPreview: Preview is null);
             if (moved.RelativePath == document.RelativePath)
+            {
                 Status = DesktopText.Translate("This PDF is already in that folder.");
-            else
-                Announce(DesktopText.Format($"Moved to {moved.RelativePath}."), DesktopText.Translate("Moved"),
-                    string.Join(PathSeparator, moved.RelativePath.Split('/', StringSplitOptions.RemoveEmptyEntries)));
+                return;
+            }
+            RetireUndo();
+            Announce(DesktopText.Format($"Moved to {moved.RelativePath}."), DesktopText.Translate("Moved"),
+                string.Join(PathSeparator, moved.RelativePath.Split('/', StringSplitOptions.RemoveEmptyEntries)));
         });
     }
 
@@ -59,9 +61,16 @@ internal sealed partial class InboxViewModel
                 Status = DesktopText.Format($"Filed {processed} of {orderedIds.Length} PDFs…");
             });
             long? displayedDocument = SelectedDocument?.Id;
-            // A cancelled or failed batch may already have moved some PDFs, so the offer goes before the outcome is known.
-            RetireUndo();
-            var result = await Task.Run(() => library.MoveSelectedPdfsAsync(orderedIds, folder, progress, token), token);
+            BatchMoveResult? result = null;
+            try
+            {
+                result = await Task.Run(() => library.MoveSelectedPdfsAsync(orderedIds, folder, progress, token), token);
+            }
+            finally
+            {
+                // Only a completed batch with no moves establishes that every PDF was already there.
+                if (result is not { Moved: 0, Cancelled: false, Failure: null }) RetireUndo();
+            }
             LoadResults(displayedDocument, reloadPreview: Preview is null);
             Status = BatchMoveStatus(result);
         });

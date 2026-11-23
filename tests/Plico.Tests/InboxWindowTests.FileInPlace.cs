@@ -208,6 +208,9 @@ public sealed partial class InboxWindowTests
     [Theory]
     [InlineData(false, "1 Jan 202")]
     [InlineData(false, "1 Jan 0202")]
+    [InlineData(false, "٣ Apr 2026")]
+    [InlineData(false, "2026-０4-03")]
+    [InlineData(true, "3/4/202６")]
     [InlineData(false, "29 Feb 20")]
     [InlineData(false, "5 6")]
     [InlineData(false, "Nov 2026")]
@@ -227,6 +230,33 @@ public sealed partial class InboxWindowTests
         finally
         {
             DesktopText.SetLanguage(InterfaceLanguage.English);
+        }
+    }
+
+    [AvaloniaFact]
+    public async Task TheCalendarOpensOnTheLastStorableDay()
+    {
+        using var temporary = new TemporaryLibrary();
+        using (var library = InboxLibrary.Open(temporary.Path))
+        {
+            BatchFixtures.AddTwoDocuments(library, TestContext.Current.CancellationToken);
+            foreach (var document in library.Find(new DocumentFilter()).Items)
+                library.SetDocumentDate(document.Id, DateOnly.MaxValue);
+        }
+        using var model = new InboxViewModel(new FixtureDialogs());
+        model.InitializeLibrary(() => temporary.Path);
+        var window = new MainWindow { DataContext = model };
+        window.Show();
+        try
+        {
+            await WaitForPreviewAsync(model);
+            ClickAt(window, Named<Button>(window, "DocumentDateCalendarButton"));
+            Assert.True(Named<Popup>(window, "DocumentDatePicker").IsOpen);
+            Assert.Equal(DateOnly.MaxValue.ToDateTime(TimeOnly.MinValue), Named<Calendar>(window, "DocumentDateCalendar").SelectedDate);
+        }
+        finally
+        {
+            window.Close();
         }
     }
 

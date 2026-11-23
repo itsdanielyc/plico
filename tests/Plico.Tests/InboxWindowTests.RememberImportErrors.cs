@@ -8,6 +8,35 @@ namespace Plico.Tests;
 
 public sealed partial class InboxWindowTests
 {
+    [AvaloniaTheory]
+    [InlineData(false, "Couldn't add 1 file", "1 document added.")]
+    [InlineData(true, "Impossible d’ajouter 1 fichier", "1 document ajouté.")]
+    public async Task AMixedImportLeadsWithTheFailureInTheInterfaceLanguage(bool french, string title, string success)
+    {
+        using var library = new TemporaryLibrary();
+        using var inputs = new TemporaryLibrary();
+        string damaged = Path.Combine(inputs.Path, "damaged.pdf");
+        File.WriteAllText(damaged, "Unreadable PDF");
+        DesktopText.SetLanguage(french ? InterfaceLanguage.French : InterfaceLanguage.English);
+        try
+        {
+            using var model = new InboxViewModel(new FixtureDialogs(RedesignFixture("Lease Renewal.pdf"), damaged));
+            model.InitializeLibrary(() => library.Path);
+            await model.AddFilesCommand.ExecuteAsync(null);
+            Assert.Equal(title, model.ToastTitle);
+            Assert.True(model.ToastIsProblem);
+            Assert.Contains("damaged.pdf", model.ToastBody, StringComparison.Ordinal);
+            Assert.Contains(success, model.ToastBody, StringComparison.Ordinal);
+            Assert.Single(model.Documents);
+            Assert.Equal(damaged, Assert.Single(model.ImportFailures).SourcePath);
+            await WaitForPreviewAsync(model);
+        }
+        finally
+        {
+            DesktopText.SetLanguage(InterfaceLanguage.English);
+        }
+    }
+
     [AvaloniaFact]
     public async Task ReopeningRestoresImportErrorsAndRetryAndClearPersist()
     {

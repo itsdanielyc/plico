@@ -178,7 +178,7 @@ public sealed class FolderWatchTests
         }, TestContext.Current.CancellationToken);
 
         Assert.Throws<OperationCanceledException>(() => watch.QueueExistingFiles(new CancellationToken(canceled: true)));
-        Assert.Equal(savedScan, Assert.Single(watch.QueueExistingFiles(TestContext.Current.CancellationToken)));
+        Assert.Equal(1, watch.QueueExistingFiles(TestContext.Current.CancellationToken));
         var batch = await received.Task.WaitAsync(TimeSpan.FromSeconds(15), TestContext.Current.CancellationToken);
 
         Assert.Equal(savedScan, Assert.Single(batch));
@@ -208,7 +208,7 @@ public sealed class FolderWatchTests
             await releaseFirst.Task.WaitAsync(cancellation);
         }, token);
 
-        var queued = watch.QueueExistingFiles(token);
+        var queued = watch.QueueExistingFilePaths(token);
         bool keptBeforeSettling = watch.HasYetToDeliver(kept);
         // One queued file goes before it settles, so the watch drops it.
         File.Delete(taken);
@@ -244,7 +244,7 @@ public sealed class FolderWatchTests
         await using var watch = FolderWatch.Start(incoming.Path, destination.Path,
             (paths, cancellation) => delivered.Writer.WriteAsync(paths, cancellation).AsTask(), token);
 
-        Assert.Empty(watch.QueueExistingFiles(token));
+        Assert.Equal(0, watch.QueueExistingFiles(token));
         File.Copy(fixture, transfer, overwrite: true);
 
         Assert.Equal(transfer, Assert.Single(await NextBatchAsync(delivered.Reader, watch)));

@@ -250,8 +250,9 @@ internal sealed partial class InboxViewModel
                 filter = shown with { Offset = offset };
                 page = ReadResults(library, filter, retainLoadedResults && !append);
                 if (page.QueryIssue is not null) return;
+                HasDeferredWatchResults = false;
             }
-            UpdateResultHeading(filter);
+            else UpdateResultHeading(filter);
             if (reviewPosition is { } position && position.Filter == filter)
             {
                 preferredId = ChooseReviewResult(page.Items, position);
@@ -331,7 +332,7 @@ internal sealed partial class InboxViewModel
 
         ResultCount = HasMore ? DesktopText.Format($"Showing {DocumentCount(Documents.Count)}") : DocumentCount(Documents.Count);
         if (filter.Tag is not null && !string.IsNullOrWhiteSpace(filter.Query)) ResultCount = DesktopText.Format($"{ResultCount} in {filter.Tag}");
-        _shownResults = (ResultCount, EmptyTitle, EmptyMessage);
+        _shownResults = (ResultCount, HasMore, EmptyTitle, EmptyMessage);
     }
 
     /// <summary>
@@ -377,7 +378,7 @@ internal sealed partial class InboxViewModel
 
     // What the queue said about the results it shows, so a search that cannot run leaves the count and the empty state
     // of the last results that could.
-    private (string Count, string EmptyTitle, string EmptyMessage) _shownResults = ("", "", "");
+    private (string Count, bool HasMore, string EmptyTitle, string EmptyMessage) _shownResults = ("", false, "", "");
 
     /// <summary>
     /// A typed search that cannot run keeps the last valid results, the open document and its page: only the line
@@ -386,7 +387,7 @@ internal sealed partial class InboxViewModel
     private void ShowQueryIssue(SearchQueryIssue issue, bool atOnce = true)
     {
         _unrunnableQuery = Query;
-        HasMore = false;
+        HasMore = _shownResults.HasMore;
         ResultCount = _shownResults.Count;
         SetEmptyState(_shownResults.EmptyTitle, _shownResults.EmptyMessage);
         _pendingQueryHint = SearchCorrection(issue);

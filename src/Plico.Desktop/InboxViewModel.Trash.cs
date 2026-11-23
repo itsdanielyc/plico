@@ -35,6 +35,7 @@ internal sealed partial class InboxViewModel
         {
             await Task.Run(() => library.PurgeTrashedPdfAsync(decision.DocumentId, token), token);
             RetireUndo();
+            RefreshInboxCount();
             Status = DesktopText.Translate("PDF permanently deleted.");
             return;
         }

@@ -14,6 +14,41 @@ namespace Plico.Tests;
 
 public sealed partial class InboxWindowTests
 {
+    [AvaloniaTheory]
+    [InlineData(true)]
+    [InlineData(false)]
+    public async Task AnInvalidSearchKeepsTheSavedQueuesPagingAndFilingPosition(bool expandBeforeTyping)
+    {
+        const int count = InboxLibrary.DefaultResultPageSize + 1;
+        using var temporary = new TemporaryLibrary();
+        SeedReviewQueue(temporary.Path, count, TestContext.Current.CancellationToken);
+        using (var library = InboxLibrary.Open(temporary.Path)) library.SaveSearch("Leases", "lease", DocumentSort.Title);
+        using var model = new InboxViewModel(new FixtureDialogs());
+        model.InitializeLibrary(() => temporary.Path);
+        await model.OpenSavedSearchAsync(Assert.Single(model.SavedSearches));
+        if (expandBeforeTyping) model.LoadMoreCommand.Execute(null);
+        model.Query = "status:pending";
+        model.SearchNow();
+        await WaitForAsync(() => model.HasSearchQueryHint);
+        if (!expandBeforeTyping)
+        {
+            Assert.True(model.HasMore, "The correction hid Load more for the displayed results.");
+            model.LoadMoreCommand.Execute(null);
+            Assert.Equal("Leases", model.Heading);
+        }
+
+        var last = model.Documents[^1];
+        model.SelectedDocument = last;
+        model.TagInput = "Filed";
+        model.AddTagCommand.Execute(null);
+        Assert.Equal(count, model.Documents.Count);
+        Assert.Equal(last.Id, model.SelectedDocument?.Id);
+        Assert.Contains("Filed", model.SelectedDocument!.Tags);
+        Assert.Equal("Leases", model.Heading);
+        Assert.True(model.HasSearchQueryHint);
+        await WaitForPreviewAsync(model);
+    }
+
     [AvaloniaFact]
     public async Task AnInvalidSearchSpeaksUnderTheFieldAndKeepsTheResultsAndTheOpenDocument()
     {

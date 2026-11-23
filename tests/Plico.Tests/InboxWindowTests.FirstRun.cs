@@ -76,7 +76,11 @@ public sealed partial class InboxWindowTests
             BatchFixtures.AddTwoDocuments(library, TestContext.Current.CancellationToken);
             library.SaveSearch("Leases", "lease", DocumentSort.Automatic);
         }
-        using var model = new InboxViewModel(new FixtureDialogs());
+        var dialogs = new FixtureDialogs
+        {
+            TrashChoice = documents => Task.FromResult<TrashDecision?>(new(documents[0].DocumentId, Purge: true))
+        };
+        using var model = new InboxViewModel(dialogs);
         model.InitializeLibrary(() => temporary.Path);
         var window = new MainWindow { DataContext = model };
         window.Show();
@@ -94,6 +98,12 @@ public sealed partial class InboxWindowTests
             Assert.True(model.ShowInboxClear);
             Assert.True(Assert.IsType<StackPanel>(window.FindControl<StackPanel>("SavedSearchesSection")).IsEffectivelyVisible);
             Assert.True(Assert.IsType<Button>(window.FindControl<Button>("ScanButton")).IsEffectivelyVisible);
+
+            await model.OpenTrashCommand.ExecuteAsync(null);
+            Assert.True(model.ShowInboxClear);
+            await model.OpenTrashCommand.ExecuteAsync(null);
+            Assert.True(model.ShowWelcome, "The empty library still showed Inbox clear after the last PDF was purged.");
+            Assert.True(Named<Button>(window, "WelcomeAddFilesButton").IsEffectivelyVisible);
         }
         finally
         {

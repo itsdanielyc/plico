@@ -31,8 +31,16 @@ internal sealed partial class InboxViewModel
     private Task RefreshIndexAsync() => RunOperationAsync(DesktopText.Translate("Checking the PDF folder…"), async token =>
     {
         var library = RequireLibrary();
-        var result = await Task.Run(() => library.Refresh(token), token);
-        RetireUndo();
+        RefreshResult? result = null;
+        try
+        {
+            result = await Task.Run(() => library.Refresh(token), token);
+        }
+        finally
+        {
+            // An interrupted refresh can already have committed changes to individual PDFs.
+            if (result is not { Indexed: 0, Relocated: 0, UnavailablePaths.Count: 0 }) RetireUndo();
+        }
         Tags = library.GetTags();
         RefreshInboxCount();
         RefreshUnavailableCount();

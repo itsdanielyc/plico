@@ -203,6 +203,11 @@ public sealed partial class InboxLibrary : IDisposable
     /// <summary>Reads the inbox count and whether the library contains any present PDF in one catalog snapshot.</summary>
     public (long Unreviewed, bool HasDocuments) ReadInboxStatus() => _catalog.ReadInboxStatus();
 
+    /// <summary>Reads the present Inbox count and whether the catalog contains any PDF in the requested scope.</summary>
+    /// <param name="includeMissingAndTrashed">Includes missing and trashed PDFs in the existence check.</param>
+    public (long Unreviewed, bool HasDocuments) ReadInboxStatus(bool includeMissingAndTrashed) =>
+        _catalog.ReadInboxStatus(includeMissingAndTrashed);
+
     /// <summary>Counts catalog records whose PDFs were unavailable at the last refresh.</summary>
     public long CountUnavailableDocuments() => _catalog.CountUnavailableDocuments();
 

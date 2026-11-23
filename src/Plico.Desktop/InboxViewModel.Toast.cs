@@ -43,6 +43,7 @@ internal sealed partial class InboxViewModel
 
     private ToastText _toastText;
     private ToastText? _pendingToast;
+    private ToastOffer _pendingOffer;
     private bool _pendingQuiet;
     private bool _pendingProblem;
     private string _toastStatus = "";
@@ -104,7 +105,12 @@ internal sealed partial class InboxViewModel
             bool aside = _asidesInHand > 0;
             // While Plico works, an edit is news at once, and so is an aside unless Settings says it on its line.
             if (IsBusy && _editsInHand == 0 && !aside) NoteWorkLine(value, toast, quiet, problem);
-            else ShowMessage(value, toast, quiet, foreground: IsBusy && (_editsInHand > 0 || aside && !SettingsHasActionInHand), problem);
+            else
+            {
+                var offer = _pendingOffer;
+                _pendingOffer = ToastOffer.None;
+                ShowMessage(value, toast, quiet, foreground: IsBusy && (_editsInHand > 0 || aside && !SettingsHasActionInHand), problem, offer);
+            }
             OnPropertyChanged();
         }
     }
@@ -138,16 +144,10 @@ internal sealed partial class InboxViewModel
     public string ToastBody => _toastText.Body ?? "";
     public bool HasToastBody => !string.IsNullOrEmpty(_toastText.Body);
 
-    // Counts status messages, so an offer travels with the message that follows it and not with later, unrelated ones
-    // ("Exported" never carries the Undo of an earlier review). Ctrl+Z and the palette reach the current Undo offer.
-    private long _statusSerial;
-    private long _offerSerial = long.MinValue / 2;
-    private bool OfferIsCurrent => _offerSerial >= _statusSerial - 1;
-
-    public bool ToastOffersUndo => ToastOffer == ToastOffer.Undo && HasUndo && OfferIsCurrent;
-    public bool ToastOffersBackup => ToastOffer == ToastOffer.OpenBackup && HasLatestBackup && OfferIsCurrent;
-    public bool ToastOffersExport => ToastOffer == ToastOffer.OpenExport && HasLatestExport && OfferIsCurrent;
-    public bool ToastOffersOcrResults => ToastOffer == ToastOffer.OcrResults && HasOcrCopyBatchResults && OfferIsCurrent;
+    public bool ToastOffersUndo => ToastOffer == ToastOffer.Undo && HasUndo;
+    public bool ToastOffersBackup => ToastOffer == ToastOffer.OpenBackup && HasLatestBackup;
+    public bool ToastOffersExport => ToastOffer == ToastOffer.OpenExport && HasLatestExport;
+    public bool ToastOffersOcrResults => ToastOffer == ToastOffer.OcrResults && HasOcrCopyBatchResults;
 
     /// <summary>
     /// Whether the message reports a failure, so the toast shows an alert glyph instead of a check: one raised by
@@ -169,20 +169,19 @@ internal sealed partial class InboxViewModel
     }
 
     /// <summary>Makes <paramref name="message"/> the toast's: the window shows it, unless it is quiet.</summary>
-    private void ShowMessage(string message, ToastText toast, bool quiet, bool foreground, bool problem)
+    private void ShowMessage(string message, ToastText toast, bool quiet, bool foreground, bool problem, ToastOffer offer)
     {
-        _statusSerial++;
         _toastStatus = message;
         _toastText = toast;
         _toastIsProblem = problem;
         ToastIsQuiet = quiet;
         ToastIsForeground = foreground;
+        ToastOffer = offer;
         RaiseDerived(nameof(ToastTitle));
         RaiseDerived(nameof(ToastBody));
         RaiseDerived(nameof(HasToastBody));
         RaiseDerived(nameof(ToastIsProblem));
         RaiseDerived(nameof(ToastStatus));
-        RaiseToastOffers();
     }
 
     /// <summary>Keeps a line of the work in hand for the status card, and as the toast to show when the work ends.</summary>
@@ -215,8 +214,7 @@ internal sealed partial class InboxViewModel
         _workOffer = ToastOffer.None;
         if (!_workHasMessage) return;
         _workHasMessage = false;
-        ShowMessage(_workStatus, _workToast, _workQuiet, foreground: false, _workProblem);
-        if (offer != ToastOffer.None) UpdateToastOffer(available: true, offer);
+        ShowMessage(_workStatus, _workToast, _workQuiet, foreground: false, _workProblem, offer);
     }
 
     /// <summary>Saves the person's own edit; what it says is news at once, even while Plico works.</summary>
@@ -247,8 +245,11 @@ internal sealed partial class InboxViewModel
     /// raises no toast of its own over the page while the work runs, though a toast already up takes its words. Taken
     /// anywhere else (the main window), it is news at once, as an edit is (<see cref="ToastIsForeground"/>).
     /// </summary>
-    private void SayAside(Action say)
+    private void SayAside(Action say, bool fromSettings = false)
     {
+        // Appearance choices belong to Settings even when a popup or an automation peer delivers the selection.
+        bool previousSettingsAction = SettingsHasActionInHand;
+        if (fromSettings) SettingsHasActionInHand = true;
         _asidesInHand++;
         try
         {
@@ -257,6 +258,7 @@ internal sealed partial class InboxViewModel
         finally
         {
             _asidesInHand--;
+            if (fromSettings) SettingsHasActionInHand = previousSettingsAction;
         }
     }
 
@@ -279,6 +281,13 @@ internal sealed partial class InboxViewModel
     {
         if (ToastIsQuiet || string.IsNullOrWhiteSpace(ToastStatus)) Fail(notice);
         else Fail(ToastIsProblem ? $"{ToastStatus} {notice}" : $"{notice} {ToastStatus}");
+    }
+
+    /// <summary>Sets the message of record and the alert for a reported problem.</summary>
+    private void Say(string message, bool problem)
+    {
+        if (problem) Fail(message);
+        else Status = message;
     }
 
     /// <summary>Sets the message of record and marks it a failure, so its toast shows the alert glyph.</summary>
@@ -345,31 +354,16 @@ internal sealed partial class InboxViewModel
 
     private void UpdateToastOffer(bool available, ToastOffer offer)
     {
-        if (available && IsBusy && _editsInHand == 0)
-        {
-            // An action offered by the work in hand travels with the work's message, when the work ends.
-            _workOffer = offer;
-            return;
-        }
-        if (!available && _workOffer == offer) _workOffer = ToastOffer.None;
         if (available)
         {
-            _offerSerial = _statusSerial;
-            ToastOffer = offer;
+            // The action belongs to the message about to be published by its producer.
+            if (IsBusy && _editsInHand == 0) _workOffer = offer;
+            else _pendingOffer = offer;
+            return;
         }
-        else if (ToastOffer == offer)
-        {
-            ToastOffer = ToastOffer.None;
-        }
-        RaiseToastOffers();
-    }
-
-    private void RaiseToastOffers()
-    {
-        RaiseDerived(nameof(ToastOffersUndo));
-        RaiseDerived(nameof(ToastOffersBackup));
-        RaiseDerived(nameof(ToastOffersExport));
-        RaiseDerived(nameof(ToastOffersOcrResults));
+        if (_pendingOffer == offer) _pendingOffer = ToastOffer.None;
+        if (_workOffer == offer) _workOffer = ToastOffer.None;
+        if (ToastOffer == offer) ToastOffer = ToastOffer.None;
     }
 
     /// <summary>Called from the property hook: a new undo, backup, export or OCR report becomes the toast's action.</summary>

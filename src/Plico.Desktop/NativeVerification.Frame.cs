@@ -7,74 +7,63 @@ using Avalonia.Platform;
 namespace Plico.Desktop;
 
 /// <summary>
-/// Evidence of what only the screen shows: the native caption and frame that <c>RenderTargetBitmap</c> leaves out.
-/// On Windows it copies the window's visible frame from the screen, so the Base-tinted caption, its text and the seam
-/// against the sidebar can be checked in light and dark. Elsewhere, and when the copy fails, it records nothing.
+/// Captures the Windows caption and frame directly from Plico's window for light and dark theme verification.
 /// </summary>
 internal static partial class NativeVerification
 {
     private const int ExtendedFrameBoundsAttribute = 9;
-    private const int SourceCopy = 0x00CC0020;
-    private const int CaptureLayered = 0x40000000;
+    private const uint PrintFullContent = 2;
+    private const int BytesPerPixel = 4;
 
     private static async Task CaptureFrameAsync(Window window, string directory, string filename)
     {
         if (!OperatingSystem.IsWindows() || window.TryGetPlatformHandle() is not { HandleDescriptor: "HWND", Handle: var handle }) return;
-        // Windows does not let a process in the background take the foreground, so Activate alone leaves whatever app is
-        // in front (a terminal, an editor) to be copied instead of the window. A topmost window is drawn above it.
-        bool wasTopmost = window.Topmost;
-        window.Topmost = true;
-        window.Activate();
         try
         {
-            // Let the window come forward and the compositor present the current frame before copying the screen.
-            await Task.Delay(TimeSpan.FromMilliseconds(400));
-            if (CopyFrame(handle) is not { } frame) return;
-            using (frame)
-                frame.Save(Path.Combine(directory, filename), PngBitmapEncoderOptions.Default);
+            // PrintWindow can send drawing messages back to the UI thread.
+            using var frame = await Task.Run(() => CopyFrame(handle));
+            if (frame is null) return;
+            frame.Save(Path.Combine(directory, filename), PngBitmapEncoderOptions.Default);
             File.AppendAllText(Path.Combine(directory, CaptureProgressFilename), filename + Environment.NewLine);
         }
         catch (Exception error) when (error is DllNotFoundException or EntryPointNotFoundException or IOException or ExternalException)
         {
             // The frame capture is supporting evidence; the client-area captures remain the journey's record.
         }
-        finally
-        {
-            window.Topmost = wasTopmost;
-        }
     }
 
-    /// <summary>Copies the window's visible frame (caption included) from the screen into a bitmap. O(w × h).</summary>
+    /// <summary>Renders the window into a private bitmap and crops the invisible resize border. O(w × h) time and space.</summary>
     private static WriteableBitmap? CopyFrame(IntPtr window)
     {
-        if (DwmGetWindowAttribute(window, ExtendedFrameBoundsAttribute, out var bounds, Marshal.SizeOf<ScreenRect>()) != 0) return null;
+        if (!GetWindowRect(window, out var bounds) ||
+            DwmGetWindowAttribute(window, ExtendedFrameBoundsAttribute, out var visible, Marshal.SizeOf<ScreenRect>()) != 0) return null;
         int width = bounds.Right - bounds.Left, height = bounds.Bottom - bounds.Top;
         if (width <= 0 || height <= 0) return null;
-        IntPtr screen = GetDC(IntPtr.Zero);
-        IntPtr memory = CreateCompatibleDC(screen);
-        IntPtr bitmap = CreateCompatibleBitmap(screen, width, height);
-        IntPtr previous = SelectObject(memory, bitmap);
+        var crop = new PixelRect(visible.Left - bounds.Left, visible.Top - bounds.Top, visible.Right - visible.Left, visible.Bottom - visible.Top)
+            .Intersect(new PixelRect(0, 0, width, height));
+        if (crop.Width <= 0 || crop.Height <= 0) return null;
+        var header = new BitmapHeader
+        {
+            Size = Marshal.SizeOf<BitmapHeader>(), Width = width, Height = -height, Planes = 1, BitCount = BytesPerPixel * 8
+        };
+        IntPtr memory = CreateCompatibleDC(IntPtr.Zero);
+        if (memory == IntPtr.Zero) return null;
+        IntPtr bitmap = IntPtr.Zero, previous = IntPtr.Zero;
         try
         {
-            if (!BitBlt(memory, 0, 0, width, height, screen, bounds.Left, bounds.Top, SourceCopy | CaptureLayered)) return null;
-            SelectObject(memory, previous);
-            var header = new BitmapHeader
-            {
-                Size = Marshal.SizeOf<BitmapHeader>(), Width = width, Height = -height, Planes = 1, BitCount = 32, Compression = 0
-            };
-            var pixels = new byte[width * height * 4];
-            if (GetDIBits(memory, bitmap, 0, (uint)height, pixels, ref header, 0) == 0) return null;
-            var frame = new WriteableBitmap(new PixelSize(width, height), new Vector(96, 96), PixelFormat.Bgra8888, AlphaFormat.Opaque);
-            using (var target = frame.Lock())
-                for (int row = 0; row < height; row++)
-                    Marshal.Copy(pixels, row * width * 4, target.Address + row * target.RowBytes, width * 4);
-            return frame;
+            bitmap = CreateDIBSection(memory, ref header, 0, out var pixels, IntPtr.Zero, 0);
+            if (bitmap == IntPtr.Zero) return null;
+            previous = SelectObject(memory, bitmap);
+            if (previous == IntPtr.Zero || !PrintWindow(window, memory, PrintFullContent) || !GdiFlush()) return null;
+            int stride = checked(width * BytesPerPixel);
+            var firstPixel = pixels + checked(crop.Y * stride + crop.X * BytesPerPixel);
+            return new WriteableBitmap(PixelFormat.Bgra8888, AlphaFormat.Opaque, firstPixel, crop.Size, new Vector(96, 96), stride);
         }
         finally
         {
-            DeleteObject(bitmap);
+            if (previous != IntPtr.Zero) SelectObject(memory, previous);
+            if (bitmap != IntPtr.Zero) DeleteObject(bitmap);
             DeleteDC(memory);
-            _ = ReleaseDC(IntPtr.Zero, screen);
         }
     }
 
@@ -97,26 +86,25 @@ internal static partial class NativeVerification
     private static extern int DwmGetWindowAttribute(IntPtr window, int attribute, out ScreenRect value, int size);
 
     [DllImport("user32.dll")]
-    private static extern IntPtr GetDC(IntPtr window);
+    [return: MarshalAs(UnmanagedType.Bool)]
+    private static extern bool GetWindowRect(IntPtr window, out ScreenRect bounds);
 
     [DllImport("user32.dll")]
-    private static extern int ReleaseDC(IntPtr window, IntPtr context);
+    [return: MarshalAs(UnmanagedType.Bool)]
+    private static extern bool PrintWindow(IntPtr window, IntPtr target, uint flags);
 
     [DllImport("gdi32.dll")]
     private static extern IntPtr CreateCompatibleDC(IntPtr context);
 
     [DllImport("gdi32.dll")]
-    private static extern IntPtr CreateCompatibleBitmap(IntPtr context, int width, int height);
+    private static extern IntPtr CreateDIBSection(IntPtr context, ref BitmapHeader header, uint usage, out IntPtr pixels, IntPtr section, uint offset);
 
     [DllImport("gdi32.dll")]
     private static extern IntPtr SelectObject(IntPtr context, IntPtr item);
 
     [DllImport("gdi32.dll")]
     [return: MarshalAs(UnmanagedType.Bool)]
-    private static extern bool BitBlt(IntPtr target, int x, int y, int width, int height, IntPtr source, int sourceX, int sourceY, int operation);
-
-    [DllImport("gdi32.dll")]
-    private static extern int GetDIBits(IntPtr context, IntPtr bitmap, uint start, uint lines, byte[] bits, ref BitmapHeader header, uint usage);
+    private static extern bool GdiFlush();
 
     [DllImport("gdi32.dll")]
     [return: MarshalAs(UnmanagedType.Bool)]

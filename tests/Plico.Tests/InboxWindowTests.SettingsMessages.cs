@@ -1,6 +1,8 @@
 using System.Collections.Concurrent;
 using System.Reflection;
 using Avalonia.Automation;
+using Avalonia.Automation.Peers;
+using Avalonia.Automation.Provider;
 using Avalonia.Controls;
 using Avalonia.Headless;
 using Avalonia.Headless.XUnit;
@@ -436,6 +438,8 @@ public sealed partial class InboxWindowTests
     [AvaloniaTheory]
     [InlineData("theme")]
     [InlineData("language")]
+    [InlineData("language item")]
+    [InlineData("language automation")]
     public async Task AChoiceSettingsSavesWhilePlicoWorksIsSaidInSettingsAndLeavesTheCardToTheWork(string choice)
     {
         using var temporary = new TemporaryLibrary();
@@ -473,8 +477,19 @@ public sealed partial class InboxWindowTests
             else
             {
                 var language = Assert.IsType<ComboBox>(settings.FindControl<ComboBox>("InterfaceLanguageBox"));
-                TabTo(settings, language);
-                PressKey(settings, Key.Down, PhysicalKey.ArrowDown);
+                if (choice == "language")
+                {
+                    TabTo(settings, language);
+                    PressKey(settings, Key.Down, PhysicalKey.ArrowDown);
+                }
+                else
+                {
+                    ClickAt(settings, language);
+                    await WaitForAsync(() => language.IsDropDownOpen);
+                    var item = Assert.IsType<ComboBoxItem>(language.ContainerFromIndex(1));
+                    if (choice == "language item") ClickAt(settings, item);
+                    else Assert.IsAssignableFrom<ISelectionItemProvider>(ControlAutomationPeer.CreatePeerForElement(item)).Select();
+                }
                 Assert.Equal(1, model.InterfaceLanguageIndex);
                 said = "Appearance saved. Reopen Plico to switch the interface language.";
             }

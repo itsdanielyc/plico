@@ -169,7 +169,7 @@ public partial class MainWindow
             DocumentDateCalendar.SelectedDate = document.DocumentDate?.ToDateTime(TimeOnly.MinValue);
             // Moving the calendar away and back, and setting its first day again, makes it name the month and the days
             // again in the culture it now reads.
-            DocumentDateCalendar.DisplayDate = shown.AddMonths(1).ToDateTime(TimeOnly.MinValue);
+            DocumentDateCalendar.DisplayDate = shown.AddMonths(shown.Month == 12 ? -1 : 1).ToDateTime(TimeOnly.MinValue);
             DocumentDateCalendar.DisplayDate = shown.ToDateTime(TimeOnly.MinValue);
             DocumentDateCalendar.FirstDayOfWeek = DayOfWeek.Sunday;
             DocumentDateCalendar.FirstDayOfWeek = DayOfWeek.Monday;

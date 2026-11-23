@@ -49,7 +49,8 @@ internal sealed partial class InboxViewModel
     private Task UndoAsync()
     {
         if (!CanUndo || UndoOffer is not { } offer) return Task.CompletedTask;
-        if (IsBusy && offer.RevertInPlace is { } revert)
+        // A following edit must see the restored value when it records its own Undo.
+        if (offer.RevertInPlace is { } revert)
         {
             SaveEdit(() => UndoInPlace(offer, revert));
             return Task.CompletedTask;
@@ -58,33 +59,32 @@ internal sealed partial class InboxViewModel
         {
             var library = RequireLibrary();
             long? restored = await offer.Revert(token);
-            // A failed revert keeps the offer, so it can be tried again once the cause is fixed.
-            if (ReferenceEquals(UndoOffer, offer)) UndoOffer = null;
-            Tags = library.GetTags();
-            RefreshInboxCount();
-            LoadResults(restored, retainLoadedResults: true);
-            Status = DesktopText.Format($"Undone: {offer.Title}.");
+            FinishUndo(library, offer, restored);
         });
     }
 
-    /// <summary>Takes back an edit made in place while Plico works, as quickly as it was saved.</summary>
+    /// <summary>Reverts and refreshes one quick edit before the next input can read the document.</summary>
     private void UndoInPlace(UndoOffer offer, Func<long?> revert)
     {
         try
         {
             var library = RequireLibrary();
-            long? restored = revert();
-            if (ReferenceEquals(UndoOffer, offer)) UndoOffer = null;
-            Tags = library.GetTags();
-            RefreshInboxCount();
-            LoadResults(restored, retainLoadedResults: true);
-            Status = DesktopText.Format($"Undone: {offer.Title}.");
+            FinishUndo(library, offer, revert());
         }
         catch (Exception error)
         {
             // A failed revert keeps the offer, so it can be tried again once the cause is fixed.
             Fail(error.Message);
         }
+    }
+
+    private void FinishUndo(InboxLibrary library, UndoOffer offer, long? restored)
+    {
+        if (ReferenceEquals(UndoOffer, offer)) UndoOffer = null;
+        Tags = library.GetTags();
+        RefreshInboxCount();
+        LoadResults(restored, retainLoadedResults: true);
+        Status = DesktopText.Format($"Undone: {offer.Title}.");
     }
 
     /// <summary>Makes <paramref name="offer"/> the one Undo reverses and announces it: its toast names it and carries Undo.</summary>

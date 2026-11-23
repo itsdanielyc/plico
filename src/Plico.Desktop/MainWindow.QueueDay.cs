@@ -38,11 +38,19 @@ public partial class MainWindow
     /// <summary>A little past the next local midnight by <see cref="DisplayDates.Clock"/>, so the day has surely turned.</summary>
     private static DateTimeOffset NextDayBegins()
     {
-        var now = DisplayDates.Clock.GetLocalNow();
-        return new DateTimeOffset(now.Date.AddDays(1), now.Offset) + TimeSpan.FromSeconds(1);
+        var clock = DisplayDates.Clock;
+        var midnight = clock.GetLocalNow().Date.AddDays(1);
+        var zone = clock.LocalTimeZone;
+        // When a clock change repeats midnight, the day starts on its first occurrence.
+        var offset = zone.IsAmbiguousTime(midnight) ? zone.GetAmbiguousTimeOffsets(midnight).Max() : zone.GetUtcOffset(midnight);
+        return new DateTimeOffset(midnight, offset) + TimeSpan.FromSeconds(1);
     }
 
-    private TimeSpan UntilNextDay() => _dayEnds - DisplayDates.Clock.GetLocalNow();
+    private TimeSpan UntilNextDay()
+    {
+        var remaining = _dayEnds - DisplayDates.Clock.GetUtcNow();
+        return remaining > TimeSpan.Zero ? remaining : TimeSpan.Zero;
+    }
 
     /// <summary>Writes the days again if midnight has passed without the timer noticing (the machine slept). O(1) otherwise.</summary>
     private void CatchUpWithTheDay()

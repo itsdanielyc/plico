@@ -233,7 +233,7 @@ internal sealed partial class InboxViewModel
         {
             try
             {
-                int queued = (await Task.Run(() => watch.QueueExistingFiles(token), token)).Count;
+                int queued = await Task.Run(() => watch.QueueExistingFiles(token), token);
                 if (ReferenceEquals(slot.Active, watch))
                 {
                     Status = queued > 0 ? DesktopText.Format($"{DocumentCount(queued)} queued for the folder watch.") : DesktopText.Translate("No additional files to check.");
@@ -262,7 +262,7 @@ internal sealed partial class InboxViewModel
             if (queueExistingFiles)
             {
                 Status = DesktopText.Translate("Checking existing files…");
-                queued = await Task.Run(() => watch.QueueExistingFiles(cancellationToken), cancellationToken);
+                queued = await Task.Run(() => watch.QueueExistingFilePaths(cancellationToken), cancellationToken);
             }
             cancellationToken.ThrowIfCancellationRequested();
         }
@@ -305,13 +305,6 @@ internal sealed partial class InboxViewModel
     {
         if (!WatchPathComparer.Equals(preference.Load(libraryRoot, source), Path.GetFullPath(folder)))
             preference.Save(libraryRoot, folder, source);
-    }
-
-    /// <summary>Sets the message of record, as a failure with the alert when <paramref name="problem"/>.</summary>
-    private void Say(string message, bool problem)
-    {
-        if (problem) Fail(message);
-        else Status = message;
     }
 
     /// <summary>

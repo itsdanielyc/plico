@@ -192,7 +192,7 @@ public sealed partial class SettingsWindow : Window
         {
             case nameof(InboxViewModel.ToastStatus):
                 // The person's own edits, and what an action taken in the main window says, are its news, not Settings'.
-                if (_actionInHand && !model.ToastIsQuiet && !model.ToastIsForeground) ShowMessage(model.ToastStatus, model.ToastIsProblem);
+                if (model.SettingsHasActionInHand && !model.ToastIsQuiet && !model.ToastIsForeground) ShowMessage(model.ToastStatus, model.ToastIsProblem);
                 break;
             case nameof(InboxViewModel.IsBusy) or nameof(InboxViewModel.AsideIsUnderWay) when _waitingForWork && !IsStillUnderWay(model):
                 // The work's message follows straight after it stops being busy, and a stop has said so before it is no

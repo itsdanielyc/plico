@@ -43,6 +43,10 @@ public sealed partial class InboxWindowTests
             Assert.Equal("Moved to Trash", model.UndoLabel);
             Assert.True(undo.IsVisible);
 
+            await model.OpenTrashCommand.ExecuteAsync(null);
+            Assert.Equal("Closed Trash", model.ToastTitle);
+            Assert.False(undo.IsVisible, "Closing Trash offered to undo the previous move.");
+
             // Ctrl+Z reverses the latest offer only: the PDF comes back from Trash and the review stays.
             await PressUndoKeyAsync(window, model);
             Assert.False(model.HasUndo);
@@ -62,6 +66,31 @@ public sealed partial class InboxWindowTests
         {
             window.Close();
         }
+    }
+
+    [AvaloniaFact]
+    public async Task ARenameImmediatelyAfterUndoUsesTheRestoredTitle()
+    {
+        using var temporary = new TemporaryLibrary();
+        using (var library = InboxLibrary.Open(temporary.Path)) BatchFixtures.AddTwoDocuments(library, TestContext.Current.CancellationToken);
+        using var model = new InboxViewModel(new FixtureDialogs());
+        model.InitializeLibrary(() => temporary.Path);
+        await WaitForPreviewAsync(model);
+        string original = model.SelectedDocument!.Title;
+        void Rename(string title)
+        {
+            Assert.True(model.BeginTitleEdit());
+            model.TitleDraft = title;
+            model.CommitTitleEdit();
+        }
+
+        Rename("First edit");
+        var undo = model.UndoCommand.ExecuteAsync(null);
+        Rename("Second edit");
+        await undo;
+        Assert.Equal("Second edit", model.SelectedDocument!.Title);
+        await model.UndoCommand.ExecuteAsync(null);
+        Assert.Equal(original, model.SelectedDocument!.Title);
     }
 
     [AvaloniaFact]
@@ -155,6 +184,37 @@ public sealed partial class InboxWindowTests
         }
     }
 
+    [AvaloniaTheory]
+    [InlineData("check", "Index up to date.")]
+    [InlineData("move", "This PDF is already in that folder.")]
+    [InlineData("batch move", "2 documents already in that folder.")]
+    public async Task ACheckOrMoveThatChangesNoPdfKeepsUndo(string operation, string status)
+    {
+        using var temporary = new TemporaryLibrary();
+        var dialogs = new FixtureDialogs();
+        using (var library = InboxLibrary.Open(temporary.Path))
+        {
+            BatchFixtures.AddTwoDocuments(library, TestContext.Current.CancellationToken);
+            dialogs.FolderPath = library.PdfDirectory;
+        }
+        using var model = new InboxViewModel(dialogs);
+        model.InitializeLibrary(() => temporary.Path);
+        model.ShowAllCommand.Execute(null);
+        model.ToggleReviewCommand.Execute(null);
+        if (operation == "check") await model.RefreshIndexCommand.ExecuteAsync(null);
+        else if (operation == "batch move")
+        {
+            model.SetBatchSelection(model.Documents);
+            await model.MoveSelectedPdfsCommand.ExecuteAsync(null);
+        }
+        else await model.MovePdfCommand.ExecuteAsync(null);
+        Assert.Equal(status, model.Status);
+        Assert.Equal("Marked reviewed", model.UndoLabel);
+        await model.UndoCommand.ExecuteAsync(null);
+        Assert.Equal(2, model.InboxCount);
+        await WaitForPreviewAsync(model);
+    }
+
     [AvaloniaFact]
     public async Task DismissingAReminderRetiresTheOffer()
     {
@@ -218,6 +278,15 @@ public sealed partial class InboxWindowTests
             // Like every other Undo, a short title over what it was about, so the number never parts from its noun.
             Assert.Equal((title, body), (model.ToastTitle, model.ToastBody));
             Assert.Equal(title, model.UndoLabel);
+
+            // Both PDFs already carry the label. Repeating the action keeps the original change reversible.
+            var originalOffer = model.UndoOffer;
+            model.BatchTagInput = "verification";
+            await window.UpdateSelectedDocumentsAsync(current => current.ApplySelectedTagAsync());
+            Assert.Same(originalOffer, model.UndoOffer);
+            Assert.False(model.ToastOffersUndo);
+            await PressUndoKeyAsync(window, model);
+            Assert.All(model.Documents, document => Assert.DoesNotContain("Verification", document.Tags));
         }
         finally
         {

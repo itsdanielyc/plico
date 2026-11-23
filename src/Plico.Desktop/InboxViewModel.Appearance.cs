@@ -102,7 +102,7 @@ internal sealed partial class InboxViewModel
         {
             Fail(error.Message);
         }
-    });
+    }, fromSettings: true);
 
     private void NotifyThemeChoice()
     {
