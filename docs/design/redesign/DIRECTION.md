@@ -161,7 +161,8 @@ Each slice keeps the native journey green. `NativeVerification*.cs` drives the w
 
 ## Rulings
 
-- **Ruling: no brand accent.** The UI is monochrome graphite, the primary action is graphite or white, and focus uses the system accent. Why: the brand kit says Plico has no brand colour, and black, white and greys keep it in step with miille. Cost if wrong: one token.
+- **Ruling: no brand accent.** The UI is monochrome graphite, the primary action is graphite or white, and focus uses the system accent. Why: the brand kit says Plico has no brand colour, and black, white and greys keep it in step with miille. Cost if wrong: one token. *Superseded for focus on 2026-11-22, see the next ruling.*
+- **Ruling (2026-11-22): focus is an ink ring, not the system accent.** This reverses the focus clause of the ruling above on purpose. Focus is 2 px of ink (`Fg`) outside a 2 px gap of `Panel`, following the control's corners, and a focused field gets an ink border and a 1 px ink ring. Why: the miille family contract ([miille.md](../miille.md)) makes ink the only accent, and the system blue was the one hue left in every capture. Cost if wrong: the adorner layer's focus template and the field focus style in `Theme/Controls.axaml`.
 - **Ruling: Inter in all chrome** rather than each platform's system font. Why: it is already bundled, it matches the brand guidelines, and it keeps one layout across three platforms. Cost if wrong: macOS feels slightly less native, which can be fixed later with a font token.
 - **Ruling: Mark reviewed doesn't accept pending suggestions.** Accepting stays explicit (A). Why: a wrong suggestion filed silently is worse than one extra key. Cost if wrong: an extra key per document. A setting could change it.
 - **Ruling: the review animation is skipped within 1.2 s of the previous review.** Why: repeated keyboard actions should not animate. Cost if wrong: a timing tweak.

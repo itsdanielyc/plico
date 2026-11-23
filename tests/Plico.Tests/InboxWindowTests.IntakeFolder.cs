@@ -31,7 +31,8 @@ public sealed partial class InboxWindowTests
         window.Show();
         try
         {
-            var choose = Assert.IsType<Button>(window.FindControl<Button>("IntakeFolderButton"));
+            var choose = Assert.IsType<Button>(OpenSettingsAt(window, "IntakeGroup").FindControl<Button>("IntakeFolderButton"));
+            Assert.True(choose.IsEffectivelyVisible);
             await Assert.IsAssignableFrom<IAsyncRelayCommand>(choose.Command).ExecuteAsync(null);
             Assert.Equal(pdfs, dialogs.LastFolderStart);
             Assert.Equal("PDFs/Filed/Receipts", model.IntakeFolderLabel);

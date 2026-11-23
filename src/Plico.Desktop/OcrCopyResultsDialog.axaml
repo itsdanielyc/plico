@@ -1,32 +1,33 @@
 <Window xmlns="https://github.com/avaloniaui"
         xmlns:translation="using:Plico.Desktop" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:local="using:Plico.Desktop" x:Class="Plico.Desktop.OcrCopyResultsDialog"
-        Title="{translation:Tr OCRResults}" Width="640" Height="402" MinWidth="420" MinHeight="290"
-        WindowStartupLocation="CenterOwner" FontFamily="{StaticResource InterFont}" Background="{DynamicResource WorkspaceSurface}">
-    <Grid Margin="23" RowDefinitions="*,Auto" RowSpacing="14">
-        <ListBox x:Name="OcrResultsList" Background="{DynamicResource CardSurface}" BorderBrush="{DynamicResource PanelOutline}" BorderThickness="1"
-                 ScrollViewer.HorizontalScrollBarVisibility="Disabled" AutomationProperties.Name="{translation:Tr OCRResultsForSelectedPDFs}">
-            <ListBox.Styles>
-                <Style Selector="ListBoxItem">
-                    <Setter Property="Padding" Value="12" />
-                    <Setter Property="HorizontalContentAlignment" Value="Stretch" />
-                </Style>
-            </ListBox.Styles>
-            <ListBox.ItemTemplate>
-                <DataTemplate x:DataType="local:OcrCopyBatchItem">
-                    <Grid ColumnDefinitions="2*,3*" ColumnSpacing="16">
-                        <StackPanel Spacing="4">
-                            <TextBlock Text="{Binding SourceTitle}" FontWeight="SemiBold" TextWrapping="Wrap" />
-                            <TextBlock Text="{Binding SourcePath}" Foreground="{DynamicResource MutedInk}" FontSize="12" TextWrapping="Wrap" />
-                        </StackPanel>
-                        <StackPanel Grid.Column="1" Spacing="4">
-                            <TextBlock Text="{Binding OutcomeLabel}" FontWeight="SemiBold" TextWrapping="Wrap" />
-                            <TextBlock Text="{Binding Detail}" IsVisible="{Binding HasDetail}" Foreground="{DynamicResource MutedInk}" FontSize="12" TextWrapping="Wrap" />
-                        </StackPanel>
-                    </Grid>
-                </DataTemplate>
-            </ListBox.ItemTemplate>
-        </ListBox>
-        <Button Grid.Row="1" Content="{translation:Tr Close}" IsCancel="True" Click="Close_Click" Padding="13,7" HorizontalAlignment="Right" />
-    </Grid>
+        Title="{translation:Tr OCRResults}" Width="660" Height="460" MinWidth="440" MinHeight="340"
+        WindowStartupLocation="CenterOwner" Classes="dialog">
+    <DockPanel>
+        <Border DockPanel.Dock="Bottom" Classes="dialog-footer">
+            <StackPanel Classes="dialog-actions">
+                <Button Classes="secondary" Content="{translation:Tr Close}" IsCancel="True" Click="Close_Click" />
+            </StackPanel>
+        </Border>
+        <Grid Classes="dialog-body" RowDefinitions="Auto,*" RowSpacing="14">
+            <TextBlock Classes="heading" Text="{translation:Tr OCRResults}" />
+            <ListBox Grid.Row="1" x:Name="OcrResultsList" Classes="plain framed"
+                     ScrollViewer.HorizontalScrollBarVisibility="Disabled" AutomationProperties.Name="{translation:Tr OCRResultsForSelectedPDFs}">
+                <ListBox.ItemTemplate>
+                    <DataTemplate x:DataType="local:OcrCopyBatchItem">
+                        <Grid ColumnDefinitions="2*,3*" ColumnSpacing="16">
+                            <StackPanel Spacing="2">
+                                <TextBlock Text="{Binding SourceTitle}" FontWeight="SemiBold" TextWrapping="Wrap" />
+                                <TextBlock Classes="caption" Text="{Binding SourcePath}" TextWrapping="Wrap" />
+                            </StackPanel>
+                            <StackPanel Grid.Column="1" Spacing="2">
+                                <TextBlock Text="{Binding OutcomeLabel}" FontWeight="SemiBold" TextWrapping="Wrap" />
+                                <TextBlock Classes="caption" Text="{Binding Detail}" IsVisible="{Binding HasDetail}" TextWrapping="Wrap" />
+                            </StackPanel>
+                        </Grid>
+                    </DataTemplate>
+                </ListBox.ItemTemplate>
+            </ListBox>
+        </Grid>
+    </DockPanel>
 </Window>

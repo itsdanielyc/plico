@@ -71,7 +71,7 @@ internal sealed partial class InboxViewModel
             }
             string? destination = await PickEditedPdfDestinationAsync();
             if (destination is null) return;
-            Status = DesktopText.Translate("Optimizing the PDF…");
+            Status = DesktopText.Translate("Optimising the PDF…");
             var result = await Task.Run(() => library.ExportCompressedPdfAsync(document.Id, mode.Value, destination, token), token);
             if (result.Location is null)
             {
@@ -91,7 +91,7 @@ internal sealed partial class InboxViewModel
 
     private void ReportEditedPdfExport(string path)
     {
-        LatestExportLocation = Path.GetDirectoryName(path)!;
-        Status = DesktopText.Format($"Exported {Path.GetFileName(path)} to {LatestExportLocation}.");
+        NoteExport(Path.GetDirectoryName(path)!);
+        AnnounceExport(DesktopText.Format($"Exported {Path.GetFileName(path)} to {LatestExportLocation}."), Path.GetFileName(path));
     }
 }

@@ -24,6 +24,7 @@ internal sealed partial class InboxViewModel
             if (request is SplitPdfPages split)
             {
                 var parts = await Task.Run(() => library.SplitPdfAsync(document.Id, split.PartStarts, token), token);
+                RetireUndo();
                 RevealNewInboxDocument(parts[0].Id);
                 Status = DesktopText.Format($"Saved {DocumentCount(parts.Count)} from the split PDF.");
                 return;
@@ -63,8 +64,8 @@ internal sealed partial class InboxViewModel
                     return;
                 }
                 string exported = await Task.Run(() => library.ExportPdfVersionAsync(document.Id, choice.Key, destination, token), token);
-                LatestExportLocation = Path.GetDirectoryName(exported)!;
-                Status = DesktopText.Format($"Exported {Path.GetFileName(exported)} to {LatestExportLocation}.");
+                NoteExport(Path.GetDirectoryName(exported)!);
+                AnnounceExport(DesktopText.Format($"Exported {Path.GetFileName(exported)} to {LatestExportLocation}."), Path.GetFileName(exported));
                 return;
             }
             if (choice.Action == PdfVersionAction.Restore)
@@ -104,7 +105,8 @@ internal sealed partial class InboxViewModel
 
     private void ReloadPdfVersion(DocumentSummary changed)
     {
+        RetireUndo();
         LoadResults(preferredId: changed.Id, reloadPreview: true, retainLoadedResults: true);
-        Status = DesktopText.Format($"Saved the current PDF for “{changed.Title}”.");
+        Announce(DesktopText.Format($"Saved the current PDF for “{changed.Title}”."), DesktopText.Translate("PDF updated"), DesktopText.Quote(changed.Title));
     }
 }

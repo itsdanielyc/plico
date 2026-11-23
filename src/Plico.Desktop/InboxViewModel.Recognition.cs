@@ -25,7 +25,10 @@ internal sealed partial class InboxViewModel
             var result = await Task.Run(() => library.CreateSearchableCopyAsync(scan.Id, token, language), token);
             if (result.Added) RefreshInboxCount();
             Navigate(inboxOnly: !result.Document.Reviewed, preferredId: result.Document.Id);
-            Status = result.Added ? DesktopText.Translate("Searchable copy added to inbox.") : DesktopText.Translate("Searchable copy already in the library.");
+            if (result.Added)
+                Announce(DesktopText.Translate("Searchable copy added to the Inbox."), DesktopText.Translate("Searchable copy added"), DesktopText.Translate("In the Inbox"));
+            else
+                Status = DesktopText.Translate("Searchable copy already in the library.");
         });
     }
 
@@ -37,7 +40,7 @@ internal sealed partial class InboxViewModel
         }
         catch (Exception error) when (error is IOException or UnauthorizedAccessException)
         {
-            Status = error.Message;
+            AddStartupNotice(DesktopText.Format($"Couldn't load the recognition language. {error.Message}"));
         }
         _rememberRecognitionLanguage = save;
     }
@@ -51,7 +54,7 @@ internal sealed partial class InboxViewModel
         }
         catch (Exception error) when (error is IOException or UnauthorizedAccessException)
         {
-            Status = DesktopText.Format($"Using {value} OCR for this session. {error.Message}");
+            Fail(DesktopText.Format($"Using {value} OCR for this session. {error.Message}"));
         }
     }
 }

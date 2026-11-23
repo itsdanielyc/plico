@@ -39,7 +39,7 @@ public sealed partial class InboxWindowTests
         {
             await WaitForPreviewAsync(model);
             Assert.False(model.IsWatchingFolder);
-            var action = Assert.IsType<Button>(window.FindControl<Button>("ImportWatchFolderFilesButton"));
+            var action = Assert.IsType<Button>(OpenSettingsAt(window, "IntakeGroup").FindControl<Button>("ImportWatchFolderFilesButton"));
             Assert.True(action.IsEffectivelyVisible);
             Assert.Equal("Resume and catch up", action.Content);
             await Assert.IsAssignableFrom<IAsyncRelayCommand>(action.Command).ExecuteAsync(null);

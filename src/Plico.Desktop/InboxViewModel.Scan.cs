@@ -35,8 +35,16 @@ internal sealed partial class InboxViewModel
         }
 
         RevealNewInboxDocument(document.Id);
-        string scanName = scan.Interruption is null ? DesktopText.Translate("Scan") : "Partial scan";
-        Status = document.HasText ? DesktopText.Format($"{scanName} added to inbox.") : DesktopText.Format($"{scanName} added. No searchable text was recognized.");
+        // Each message is a whole sentence with its own catalog row: French names the scan with a noun of its own
+        // ("Numérisation … ajoutée"), never the Scan button's verb.
+        bool partial = scan.Interruption is not null;
+        Status = DesktopText.Translate((partial, document.HasText) switch
+        {
+            (false, true) => "Scan added to the Inbox.",
+            (true, true) => "Partial scan added to the Inbox.",
+            (false, false) => "Scan added. No searchable text was recognised.",
+            (true, false) => "Partial scan added. No searchable text was recognised."
+        });
     });
 
     private async Task ScanBatchAsync(InboxLibrary library, ScanRequest request, OcrLanguage language,
@@ -65,7 +73,7 @@ internal sealed partial class InboxViewModel
     {
         cancellationToken.ThrowIfCancellationRequested();
         bool save = await _dialogs.ConfirmPartialScanAsync(interruption, cancellationToken);
-        if (save) Status = DesktopText.Translate("Recognizing captured pages…");
+        if (save) Status = DesktopText.Translate("Recognising captured pages…");
         return save;
     }
 }

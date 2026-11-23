@@ -10,7 +10,12 @@ public sealed partial class App : Application
 {
     internal const string VerifySwitch = "--verify";
 
-    public override void Initialize() => AvaloniaXamlLoader.Load(this);
+    public override void Initialize()
+    {
+        AvaloniaXamlLoader.Load(this);
+        WindowChrome.Register();
+        FieldPlaceholder.Register();
+    }
 
     public override void OnFrameworkInitializationCompleted()
     {
@@ -29,8 +34,7 @@ public sealed partial class App : Application
                 var incoming = Directory.CreateDirectory(Path.Combine(testLibrary.FullName, "Incoming"));
                 var dialogs = new FixtureDialogs(fixture)
                 {
-                    FolderPath = incoming.FullName,
-                    EditedTitle = NativeVerification.EditedDocumentTitle
+                    FolderPath = incoming.FullName
                 };
                 string settingsDirectory = Path.Combine(testLibrary.FullName, "Settings");
                 var model = new InboxViewModel(dialogs, watchPreference: new WatchFolderPreference(settingsDirectory),

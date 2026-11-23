@@ -21,7 +21,6 @@ internal sealed partial class InboxViewModel
     private Task InspectImportErrorsAsync()
     {
         if (!HasImportFailures) return Task.CompletedTask;
-        string previousStatus = Status;
         return RunOperationAsync(DesktopText.Translate("Reviewing import errors…"), async token =>
         {
             var failures = ImportFailures;
@@ -40,7 +39,7 @@ internal sealed partial class InboxViewModel
                     Status = DesktopText.Translate("Import errors cleared.");
                     break;
                 default:
-                    Status = previousStatus;
+                    // Closed: nothing changed, so nothing is announced.
                     break;
             }
         });
@@ -67,7 +66,7 @@ internal sealed partial class InboxViewModel
         }
         catch (Exception error) when (error is IOException or UnauthorizedAccessException or JsonException)
         {
-            return $"Could not load saved import errors. {error.Message}";
+            return DesktopText.Format($"Couldn't load the saved import errors. {Unreadable(error)}");
         }
     }
 
@@ -80,7 +79,7 @@ internal sealed partial class InboxViewModel
         }
         catch (Exception error) when (error is IOException or UnauthorizedAccessException)
         {
-            return $"Could not save import errors. {error.Message}";
+            return DesktopText.Format($"Couldn't save the import errors. {error.Message}");
         }
     }
 }

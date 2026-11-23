@@ -1,31 +1,36 @@
 <Window xmlns="https://github.com/avaloniaui"
         xmlns:translation="using:Plico.Desktop" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:local="using:Plico.Desktop" x:Class="Plico.Desktop.PdfVersionHistoryDialog" Title="{translation:Tr PDFVersions}"
-        Width="590" Height="390" MinWidth="540" MinHeight="290" WindowStartupLocation="CenterOwner"
-        FontFamily="{StaticResource InterFont}" Background="{DynamicResource WorkspaceSurface}">
-    <Grid RowDefinitions="Auto,*,Auto" RowSpacing="12" Margin="24">
-        <TextBlock x:Name="DocumentTitle" FontWeight="SemiBold" FontSize="18" TextTrimming="CharacterEllipsis" />
-        <Panel Grid.Row="1">
-            <ListBox x:Name="Versions" AutomationProperties.Name="{translation:Tr PreviousPDFVersions}"
-                     Background="{DynamicResource CardSurface}" BorderBrush="{DynamicResource PanelOutline}" BorderThickness="1" CornerRadius="8">
-                <ListBox.ItemTemplate>
-                    <DataTemplate x:DataType="local:PdfVersionRow">
-                        <StackPanel Spacing="2" Margin="4">
-                            <TextBlock Text="{Binding Label}" FontWeight="SemiBold" />
-                            <TextBlock Text="{Binding Detail}" Foreground="{DynamicResource MutedInk}" FontSize="12" />
-                        </StackPanel>
-                    </DataTemplate>
-                </ListBox.ItemTemplate>
-            </ListBox>
-            <TextBlock x:Name="EmptyHistory" Text="{translation:Tr NoPreviousVersions}" IsHitTestVisible="False"
-                       VerticalAlignment="Center" HorizontalAlignment="Center" />
-        </Panel>
-        <WrapPanel Grid.Row="2" Orientation="Horizontal" HorizontalAlignment="Right" ItemSpacing="8" LineSpacing="6">
-            <Button Content="{translation:Tr Close}" IsCancel="True" Click="Close_Click" />
-            <Button Content="{translation:Tr AddRevisedPDF}" Click="Replace_Click" />
-            <Button x:Name="ExportVersion" Content="{translation:Tr ExportCopy}" Click="Export_Click" />
-            <Button x:Name="RestoreVersion" Content="{translation:Tr MakeCurrent}" Click="Restore_Click"
-                    Background="{DynamicResource PrimarySurface}" Foreground="White" />
-        </WrapPanel>
-    </Grid>
+        Width="620" SizeToContent="Height" MaxHeight="560" MinWidth="560" WindowStartupLocation="CenterOwner" Classes="dialog">
+    <DockPanel>
+        <Border DockPanel.Dock="Bottom" Classes="dialog-footer">
+            <WrapPanel Orientation="Horizontal" HorizontalAlignment="Right" ItemSpacing="8" LineSpacing="8">
+                <Button Classes="secondary" Content="{translation:Tr Close}" IsCancel="True" Click="Close_Click" />
+                <Button Classes="secondary" Content="{translation:Tr AddRevisedPDF}" Click="Replace_Click" />
+                <Button x:Name="ExportVersion" Classes="secondary" Content="{translation:Tr ExportCopy}" Click="Export_Click" />
+                <Button x:Name="RestoreVersion" Classes="primary" Content="{translation:Tr MakeCurrent}" Click="Restore_Click" />
+            </WrapPanel>
+        </Border>
+        <Grid Classes="dialog-body" RowDefinitions="Auto,*" RowSpacing="14">
+            <StackPanel Spacing="4">
+                <TextBlock Classes="heading" Text="{translation:Tr VersionHistoryHeading}" />
+                <TextBlock x:Name="DocumentTitle" Classes="description" TextWrapping="NoWrap" TextTrimming="CharacterEllipsis" />
+            </StackPanel>
+            <Panel Grid.Row="1">
+                <ListBox x:Name="Versions" Classes="plain framed" AutomationProperties.Name="{translation:Tr PreviousPDFVersions}"
+                         ScrollViewer.HorizontalScrollBarVisibility="Disabled">
+                    <ListBox.ItemTemplate>
+                        <DataTemplate x:DataType="local:PdfVersionRow">
+                            <StackPanel Spacing="2">
+                                <TextBlock Text="{Binding Label}" FontWeight="SemiBold" />
+                                <TextBlock Classes="caption" Text="{Binding Detail}" />
+                            </StackPanel>
+                        </DataTemplate>
+                    </ListBox.ItemTemplate>
+                </ListBox>
+                <TextBlock x:Name="EmptyHistory" Classes="description" Text="{translation:Tr NoPreviousVersions}" IsHitTestVisible="False"
+                           VerticalAlignment="Center" HorizontalAlignment="Center" />
+            </Panel>
+        </Grid>
+    </DockPanel>
 </Window>

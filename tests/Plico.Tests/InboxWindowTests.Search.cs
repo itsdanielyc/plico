@@ -57,7 +57,7 @@ public sealed partial class InboxWindowTests
             await WaitForAsync(() => goToMatch.IsVisible && goToMatch.IsEnabled);
             await Assert.IsAssignableFrom<IAsyncRelayCommand>(goToMatch.Command).ExecuteAsync(goToMatch.CommandParameter);
 
-            Assert.Equal("0 matching pages.", model.Status);
+            Assert.Equal("No matching pages.", model.Status);
             Assert.Equal("2 / 2", model.PageLabel);
         }
         finally
@@ -118,13 +118,13 @@ public sealed partial class InboxWindowTests
             var other = Assert.Single(model.Documents, document => document.Id != model.SelectedDocument?.Id);
             documents.SetCurrentValue(ListBox.SelectedItemProperty, other);
             await WaitForPreviewAsync(model);
-            Assert.False(previous.IsVisible);
+            Assert.False(previous.IsEnabled);
             Assert.Equal("Go to match", next.Content);
             await ExecuteMatchButtonAsync(model, next);
             Assert.Equal("2 / 5", model.PageLabel);
 
             search.SetCurrentValue(TextBox.TextProperty, "Appendix");
-            Assert.False(previous.IsVisible);
+            Assert.False(previous.IsEnabled);
             await WaitForAsync(() => next.IsVisible && next.IsEnabled);
             Assert.Equal("Go to match", next.Content);
             await ExecuteMatchButtonAsync(model, next);

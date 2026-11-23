@@ -2,252 +2,607 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:translation="using:Plico.Desktop"
         xmlns:local="using:Plico.Desktop"
+        xmlns:core="using:Plico.Core"
         x:Class="Plico.Desktop.SettingsWindow" x:DataType="local:InboxViewModel"
-        Title="{translation:Tr SettingsTitle}" Width="760" Height="640" MinWidth="560" MinHeight="420"
-        WindowStartupLocation="CenterOwner">
+        Title="{translation:Tr SettingsTitle}" Width="900" Height="700" MinWidth="720" MinHeight="480"
+        WindowStartupLocation="CenterOwner" Classes="settings" Background="{DynamicResource Base}">
+    <!--
+        Onda's settings, in their own window: the section list on the desk, the sections on a sheet. Each section is
+        a heading, a one-line lede and a group of rows with an icon tile, a title, a description and the control.
+    -->
     <Window.Styles>
-        <Style Selector="Border.group">
-            <Setter Property="Background" Value="{DynamicResource RaisedSurface}" />
-            <Setter Property="BorderBrush" Value="{DynamicResource LineBrush}" />
-            <Setter Property="BorderThickness" Value="1" />
-            <Setter Property="CornerRadius" Value="10" />
+        <Style Selector="Window.settings Button.secondary">
+            <Setter Property="MinHeight" Value="38" />
+            <Setter Property="Padding" Value="14,0" />
         </Style>
-        <Style Selector="Border.group > StackPanel > Grid">
-            <Setter Property="MinHeight" Value="52" />
-            <Setter Property="Margin" Value="16,0" />
+        <!-- Theme cards: a small window drawing over the name; the chosen card is ringed in 2 px of ink. -->
+        <Style Selector="RadioButton.theme-card">
+            <Setter Property="HorizontalAlignment" Value="Stretch" />
+            <Setter Property="HorizontalContentAlignment" Value="Stretch" />
+            <Setter Property="CornerRadius" Value="{DynamicResource RadiusCard}" />
+            <Setter Property="Template">
+                <ControlTemplate>
+                    <Panel>
+                        <Border Name="Frame" Background="{DynamicResource Panel}" BorderBrush="{DynamicResource Line}" BorderThickness="1"
+                                CornerRadius="{TemplateBinding CornerRadius}" />
+                        <ContentPresenter Name="PART_ContentPresenter" Content="{TemplateBinding Content}" ContentTemplate="{TemplateBinding ContentTemplate}"
+                                          Padding="10,10,10,12" Foreground="{DynamicResource Fg}" />
+                    </Panel>
+                </ControlTemplate>
+            </Setter>
         </Style>
-        <Style Selector="Border.group > StackPanel > Separator">
-            <Setter Property="Background" Value="{DynamicResource LineBrush}" />
-            <Setter Property="Height" Value="1" />
-            <Setter Property="Margin" Value="16,0" />
+        <Style Selector="RadioButton.theme-card:pointerover /template/ Border#Frame">
+            <Setter Property="BorderBrush" Value="{DynamicResource LineStrong}" />
         </Style>
-        <Style Selector="TextBlock.row-title">
-            <Setter Property="FontSize" Value="14" />
-            <Setter Property="VerticalAlignment" Value="Center" />
+        <Style Selector="RadioButton.theme-card:checked /template/ Border#Frame">
+            <Setter Property="BorderBrush" Value="{DynamicResource Fg}" />
+            <Setter Property="BorderThickness" Value="2" />
         </Style>
-        <Style Selector="TextBlock.row-help">
-            <Setter Property="FontSize" Value="13" />
-            <Setter Property="Foreground" Value="{DynamicResource MutedInk}" />
-            <Setter Property="TextWrapping" Value="Wrap" />
-        </Style>
-        <Style Selector="TextBlock.group-title">
-            <Setter Property="FontSize" Value="15" />
+        <Style Selector="RadioButton.theme-card:checked TextBlock">
             <Setter Property="FontWeight" Value="SemiBold" />
-            <Setter Property="Margin" Value="4,0,0,8" />
         </Style>
-        <Style Selector="Grid > Button, Grid > ComboBox, Grid > ToggleSwitch">
+        <!-- Each preview is a small window: the desk with its sidebar, and the sheet with a corner and a hairline. -->
+        <Style Selector="Border.preview">
+            <Setter Property="Height" Value="70" />
+            <Setter Property="CornerRadius" Value="9" />
+            <Setter Property="ClipToBounds" Value="True" />
+            <Setter Property="BorderBrush" Value="{DynamicResource Line}" />
+            <Setter Property="BorderThickness" Value="1" />
+            <Setter Property="Margin" Value="0,0,0,10" />
+        </Style>
+        <Style Selector="Border.preview-bar">
+            <Setter Property="Height" Value="6" />
+            <Setter Property="CornerRadius" Value="3" />
+            <Setter Property="HorizontalAlignment" Value="Left" />
+        </Style>
+        <Style Selector="TextBlock.settings-title">
+            <Setter Property="FontSize" Value="18" />
+            <Setter Property="FontWeight" Value="Bold" />
+            <Setter Property="LetterSpacing" Value="-0.2" />
             <Setter Property="VerticalAlignment" Value="Center" />
+        </Style>
+        <Style Selector="StackPanel.section > TextBlock.heading">
+            <Setter Property="Margin" Value="0" />
+        </Style>
+        <Style Selector="TextBlock.live-label">
+            <Setter Property="FontSize" Value="14" />
+            <Setter Property="Foreground" Value="{DynamicResource LiveInk}" />
         </Style>
     </Window.Styles>
 
-    <Grid ColumnDefinitions="190,*">
-        <Border Background="{DynamicResource SidebarSurface}" BorderBrush="{DynamicResource LineBrush}" BorderThickness="0,0,1,0">
-            <StackPanel Margin="10,16" Spacing="1">
-                <TextBlock Classes="heading" Text="{translation:Tr SettingsTitle}" Margin="8,0,0,12" />
-                <Button Classes="nav" Content="{translation:Tr SettingsGeneral}" Click="Jump_Click" Tag="GeneralGroup" />
-                <Button Classes="nav" Content="{translation:Tr SettingsRecognition}" Click="Jump_Click" Tag="RecognitionGroup" />
-                <Button Classes="nav" Content="{translation:Tr IntakeSection}" Click="Jump_Click" Tag="IntakeGroup" />
-                <Button Classes="nav" Content="{translation:Tr Library}" Click="Jump_Click" Tag="LibraryGroup" />
-                <Button Classes="nav" Content="{translation:Tr SettingsFiling}" Click="Jump_Click" Tag="FilingGroup" />
-                <Button Classes="nav" Content="{translation:Tr LocalModelsWindow}" Click="Jump_Click" Tag="ModelsGroup" />
+    <Grid ColumnDefinitions="232,*">
+        <!-- Section list on the desk. -->
+        <Grid RowDefinitions="Auto,*">
+            <StackPanel Orientation="Horizontal" Spacing="10" Margin="18,10,12,14" MinHeight="44">
+                <Border Classes="tile" VerticalAlignment="Center">
+                    <Path Data="{StaticResource Mark.Full}" Fill="{DynamicResource TileFg}" Stretch="Uniform" Height="14"
+                          HorizontalAlignment="Center" VerticalAlignment="Center" />
+                </Border>
+                <TextBlock Classes="settings-title" Text="{translation:Tr SettingsTip}" />
             </StackPanel>
+            <ScrollViewer Grid.Row="1" HorizontalScrollBarVisibility="Disabled">
+                <StackPanel x:Name="SectionList" Spacing="2" Margin="12,0,12,14">
+                    <Button Classes="nav" Click="Jump_Click" Tag="GeneralGroup" AutomationProperties.Name="{translation:Tr SettingsGeneral}">
+                        <StackPanel Orientation="Horizontal" Spacing="12">
+                            <local:Icon Data="{StaticResource Icon.Sliders}" Width="18" Height="18" VerticalAlignment="Center" />
+                            <TextBlock Text="{translation:Tr SettingsGeneral}" VerticalAlignment="Center" />
+                        </StackPanel>
+                    </Button>
+                    <Button Classes="nav" Click="Jump_Click" Tag="RecognitionGroup" AutomationProperties.Name="{translation:Tr SettingsRecognition}" ToolTip.Tip="{translation:Tr SettingsRecognition}">
+                        <StackPanel Orientation="Horizontal" Spacing="12">
+                            <local:Icon Data="{StaticResource Icon.Recognize}" Width="18" Height="18" VerticalAlignment="Center" />
+                            <TextBlock Text="{translation:Tr SettingsRecognition}" VerticalAlignment="Center" TextTrimming="CharacterEllipsis" />
+                        </StackPanel>
+                    </Button>
+                    <Button Classes="nav" Click="Jump_Click" Tag="IntakeGroup" AutomationProperties.Name="{translation:Tr IntakeSection}">
+                        <StackPanel Orientation="Horizontal" Spacing="12">
+                            <local:Icon Data="{StaticResource Icon.Inbox}" Width="18" Height="18" VerticalAlignment="Center" />
+                            <TextBlock Text="{translation:Tr IntakeSection}" VerticalAlignment="Center" />
+                        </StackPanel>
+                    </Button>
+                    <Button Classes="nav" Click="Jump_Click" Tag="LibraryGroup" AutomationProperties.Name="{translation:Tr Library}">
+                        <StackPanel Orientation="Horizontal" Spacing="12">
+                            <local:Icon Data="{StaticResource Icon.Folder}" Width="18" Height="18" VerticalAlignment="Center" />
+                            <TextBlock Text="{translation:Tr Library}" VerticalAlignment="Center" />
+                        </StackPanel>
+                    </Button>
+                    <Button Classes="nav" Click="Jump_Click" Tag="FilingGroup" AutomationProperties.Name="{translation:Tr SettingsFiling}">
+                        <StackPanel Orientation="Horizontal" Spacing="12">
+                            <local:Icon Data="{StaticResource Icon.Tag}" Width="18" Height="18" VerticalAlignment="Center" />
+                            <TextBlock Text="{translation:Tr SettingsFiling}" VerticalAlignment="Center" />
+                        </StackPanel>
+                    </Button>
+                    <Button Classes="nav" Click="Jump_Click" Tag="ModelsGroup" AutomationProperties.Name="{translation:Tr LocalModelsWindow}">
+                        <StackPanel Orientation="Horizontal" Spacing="12">
+                            <local:Icon Data="{StaticResource Icon.Cpu}" Width="18" Height="18" VerticalAlignment="Center" />
+                            <TextBlock Text="{translation:Tr LocalModelsWindow}" VerticalAlignment="Center" />
+                        </StackPanel>
+                    </Button>
+                </StackPanel>
+            </ScrollViewer>
+        </Grid>
+
+        <!-- The sheet. -->
+        <Border Grid.Column="1" Margin="0,6,0,0" CornerRadius="12,0,0,0" BorderThickness="1,1,0,0" BorderBrush="{DynamicResource Line}"
+                Background="{DynamicResource Panel}" ClipToBounds="True">
+          <Grid RowDefinitions="*,Auto">
+            <ScrollViewer x:Name="SettingsScroll" HorizontalScrollBarVisibility="Disabled">
+                <StackPanel x:Name="SettingsPage" Margin="44,34,44,0" Spacing="34" MaxWidth="832" HorizontalAlignment="Left">
+                    <!-- General -->
+                    <StackPanel x:Name="GeneralGroup" Classes="section">
+                        <TextBlock Classes="heading" Text="{translation:Tr SettingsGeneral}" />
+                        <TextBlock Classes="lede" Text="{translation:Tr SettingsGeneralLede}" />
+                        <UniformGrid Columns="3" ColumnSpacing="12" Margin="0,0,0,14">
+                            <RadioButton Classes="theme-card" GroupName="Theme" IsChecked="{Binding UsesSystemTheme, Mode=TwoWay}"
+                                         AutomationProperties.Name="{x:Static local:PlatformText.MatchSystemTheme}">
+                                <StackPanel>
+                                    <Border Classes="preview">
+                                        <Grid ColumnDefinitions="*,*">
+                                            <Grid Grid.Column="0" ColumnDefinitions="22,*" Background="#F3F3F4">
+                                                <StackPanel Margin="6,9,4,0" Spacing="5">
+                                                    <Border Classes="preview-bar" Width="10" Height="4" Background="#0F0F10" />
+                                                    <Border Classes="preview-bar" Width="8" Height="4" Background="#CDCDD2" />
+                                                    <Border Classes="preview-bar" Width="9" Height="4" Background="#CDCDD2" />
+                                                </StackPanel>
+                                                <Border Grid.Column="1" Margin="0,7,0,0" CornerRadius="6,0,0,0" Background="#FFFFFF" BorderBrush="#E2E2E5" BorderThickness="1,1,0,0">
+                                                    <StackPanel Margin="9,9,4,0" Spacing="5">
+                                                        <Border Classes="preview-bar" Width="30" Background="#0F0F10" />
+                                                        <Border Classes="preview-bar" Width="52" Background="#CDCDD2" />
+                                                        <Border Classes="preview-bar" Width="40" Background="#CDCDD2" />
+                                                    </StackPanel>
+                                                </Border>
+                                            </Grid>
+                                            <Grid Grid.Column="1" ColumnDefinitions="22,*" Background="#0B0B0C">
+                                                <StackPanel Margin="6,9,4,0" Spacing="5">
+                                                    <Border Classes="preview-bar" Width="10" Height="4" Background="#F4F4F5" />
+                                                    <Border Classes="preview-bar" Width="8" Height="4" Background="#3B3B41" />
+                                                    <Border Classes="preview-bar" Width="9" Height="4" Background="#3B3B41" />
+                                                </StackPanel>
+                                                <Border Grid.Column="1" Margin="0,7,0,0" CornerRadius="6,0,0,0" Background="#161618" BorderBrush="#2A2A2E" BorderThickness="1,1,0,0">
+                                                    <StackPanel Margin="9,9,4,0" Spacing="5">
+                                                        <Border Classes="preview-bar" Width="30" Background="#F4F4F5" />
+                                                        <Border Classes="preview-bar" Width="52" Background="#3B3B41" />
+                                                        <Border Classes="preview-bar" Width="40" Background="#3B3B41" />
+                                                    </StackPanel>
+                                                </Border>
+                                            </Grid>
+                                        </Grid>
+                                    </Border>
+                                    <StackPanel Orientation="Horizontal" Spacing="8">
+                                        <local:Icon Data="{StaticResource Icon.Monitor}" VerticalAlignment="Center" />
+                                        <TextBlock Text="{x:Static local:PlatformText.MatchSystemTheme}" FontSize="14" VerticalAlignment="Center"
+                                                   TextTrimming="CharacterEllipsis" />
+                                    </StackPanel>
+                                </StackPanel>
+                            </RadioButton>
+                            <RadioButton Classes="theme-card" GroupName="Theme" IsChecked="{Binding UsesLightTheme, Mode=TwoWay}"
+                                         AutomationProperties.Name="{translation:Tr Light}">
+                                <StackPanel>
+                                    <Border Classes="preview">
+                                        <Grid ColumnDefinitions="22,*" Background="#F3F3F4">
+                                            <StackPanel Margin="6,9,4,0" Spacing="5">
+                                                <Border Classes="preview-bar" Width="10" Height="4" Background="#0F0F10" />
+                                                <Border Classes="preview-bar" Width="8" Height="4" Background="#CDCDD2" />
+                                                <Border Classes="preview-bar" Width="9" Height="4" Background="#CDCDD2" />
+                                            </StackPanel>
+                                            <Border Grid.Column="1" Margin="0,7,0,0" CornerRadius="6,0,0,0" Background="#FFFFFF" BorderBrush="#E2E2E5" BorderThickness="1,1,0,0">
+                                                <StackPanel Margin="9,9,4,0" Spacing="5">
+                                                    <Border Classes="preview-bar" Width="30" Background="#0F0F10" />
+                                                    <Border Classes="preview-bar" Width="52" Background="#CDCDD2" />
+                                                    <Border Classes="preview-bar" Width="40" Background="#CDCDD2" />
+                                                </StackPanel>
+                                            </Border>
+                                        </Grid>
+                                    </Border>
+                                    <StackPanel Orientation="Horizontal" Spacing="8">
+                                        <local:Icon Data="{StaticResource Icon.Sun}" VerticalAlignment="Center" />
+                                        <TextBlock Text="{translation:Tr Light}" FontSize="14" VerticalAlignment="Center" />
+                                    </StackPanel>
+                                </StackPanel>
+                            </RadioButton>
+                            <RadioButton Classes="theme-card" GroupName="Theme" IsChecked="{Binding UsesDarkTheme, Mode=TwoWay}"
+                                         AutomationProperties.Name="{translation:Tr Dark}">
+                                <StackPanel>
+                                    <Border Classes="preview">
+                                        <Grid ColumnDefinitions="22,*" Background="#0B0B0C">
+                                            <StackPanel Margin="6,9,4,0" Spacing="5">
+                                                <Border Classes="preview-bar" Width="10" Height="4" Background="#F4F4F5" />
+                                                <Border Classes="preview-bar" Width="8" Height="4" Background="#3B3B41" />
+                                                <Border Classes="preview-bar" Width="9" Height="4" Background="#3B3B41" />
+                                            </StackPanel>
+                                            <Border Grid.Column="1" Margin="0,7,0,0" CornerRadius="6,0,0,0" Background="#161618" BorderBrush="#2A2A2E" BorderThickness="1,1,0,0">
+                                                <StackPanel Margin="9,9,4,0" Spacing="5">
+                                                    <Border Classes="preview-bar" Width="30" Background="#F4F4F5" />
+                                                    <Border Classes="preview-bar" Width="52" Background="#3B3B41" />
+                                                    <Border Classes="preview-bar" Width="40" Background="#3B3B41" />
+                                                </StackPanel>
+                                            </Border>
+                                        </Grid>
+                                    </Border>
+                                    <StackPanel Orientation="Horizontal" Spacing="8">
+                                        <local:Icon Data="{StaticResource Icon.Moon}" VerticalAlignment="Center" />
+                                        <TextBlock Text="{translation:Tr Dark}" FontSize="14" VerticalAlignment="Center" />
+                                    </StackPanel>
+                                </StackPanel>
+                            </RadioButton>
+                        </UniformGrid>
+                        <Border Classes="group">
+                            <StackPanel>
+                                <Grid Classes="row" ColumnDefinitions="Auto,*,Auto">
+                                    <Border Classes="row-tile"><local:Icon Data="{StaticResource Icon.Languages}" /></Border>
+                                    <StackPanel Grid.Column="1" VerticalAlignment="Center">
+                                        <TextBlock Classes="row-title" Text="{translation:Tr InterfaceLanguage}" />
+                                        <TextBlock Classes="row-help" Text="{translation:Tr LanguageChangesTakeEffectWhenYouReopenPlico}" />
+                                    </StackPanel>
+                                    <!-- Each language is written in its own words, as the system's language list does. -->
+                                    <ComboBox Grid.Column="2" x:Name="InterfaceLanguageBox" MinWidth="190" SelectedIndex="{Binding InterfaceLanguageIndex, Mode=TwoWay}"
+                                              AutomationProperties.Name="{translation:Tr InterfaceLanguage}">
+                                        <ComboBoxItem Content="{translation:Tr FollowSystem}" />
+                                        <ComboBoxItem Content="English" />
+                                        <ComboBoxItem Content="Français" />
+                                    </ComboBox>
+                                </Grid>
+                                <Separator />
+                                <Grid Classes="row" ColumnDefinitions="Auto,*,Auto">
+                                    <Border Classes="row-tile"><local:Icon Data="{StaticResource Icon.Keyboard}" /></Border>
+                                    <StackPanel Grid.Column="1" VerticalAlignment="Center">
+                                        <TextBlock Classes="row-title" Text="{translation:Tr KeyboardShortcuts}" />
+                                        <TextBlock Classes="row-help" Text="{translation:Tr KeyboardShortcutsHelp}" />
+                                    </StackPanel>
+                                    <StackPanel Grid.Column="2" Orientation="Horizontal" Spacing="10">
+                                        <Border Classes="key large"><TextBlock Text="?" /></Border>
+                                        <Button Classes="secondary" Content="{translation:Tr ShowAction}" Click="ShowShortcuts_Click"
+                                                AutomationProperties.Name="{translation:Tr KeyboardShortcuts}" />
+                                    </StackPanel>
+                                </Grid>
+                            </StackPanel>
+                        </Border>
+                    </StackPanel>
+
+                    <!-- Text recognition -->
+                    <StackPanel x:Name="RecognitionGroup" Classes="section">
+                        <TextBlock Classes="heading" Text="{translation:Tr SettingsRecognition}" />
+                        <TextBlock Classes="lede" Text="{translation:Tr SettingsRecognitionLede}" />
+                        <Border Classes="group">
+                            <StackPanel>
+                                <Grid Classes="row" ColumnDefinitions="Auto,*,Auto">
+                                    <Border Classes="row-tile"><local:Icon Data="{StaticResource Icon.Text}" /></Border>
+                                    <StackPanel Grid.Column="1" VerticalAlignment="Center">
+                                        <TextBlock Classes="row-title" Text="{translation:Tr OCRLanguage}" />
+                                        <TextBlock Classes="row-help" Text="{translation:Tr TextLanguageHelp}" />
+                                    </StackPanel>
+                                    <ComboBox Grid.Column="2" x:Name="OcrLanguageBox" ItemsSource="{Binding RecognitionLanguages}" MinWidth="190"
+                                              SelectedItem="{Binding RecognitionLanguage, Mode=TwoWay}" IsEnabled="{Binding IsIdle}"
+                                              AutomationProperties.Name="{translation:Tr OCRLanguage}" ToolTip.Tip="{translation:Tr TextLanguageHelp}">
+                                        <!-- Each language in the interface's language, as the status card names it. -->
+                                        <ComboBox.ItemTemplate>
+                                            <DataTemplate x:DataType="core:OcrLanguage">
+                                                <TextBlock Text="{Binding Converter={x:Static local:LanguageNameConverter.Instance}}" />
+                                            </DataTemplate>
+                                        </ComboBox.ItemTemplate>
+                                    </ComboBox>
+                                </Grid>
+                                <Separator />
+                                <Grid Classes="row" ColumnDefinitions="Auto,*,Auto">
+                                    <Border Classes="row-tile"><local:Icon Data="{StaticResource Icon.Recognize}" /></Border>
+                                    <StackPanel Grid.Column="1" VerticalAlignment="Center">
+                                        <TextBlock Classes="row-title" Text="{translation:Tr UseRapidOcr}" />
+                                        <TextBlock Classes="row-help" Text="{translation:Tr RapidOcrHelp}" />
+                                    </StackPanel>
+                                    <CheckBox Grid.Column="2" x:Name="RapidOcrChoice" Classes="switch" IsChecked="{Binding UseRapidOcr, Mode=TwoWay}" IsEnabled="{Binding CanChangeRapidOcr}"
+                                              AutomationProperties.Name="{translation:Tr UseRapidOcr}" />
+                                </Grid>
+                                <Separator />
+                                <Grid Classes="row" ColumnDefinitions="Auto,*,Auto">
+                                    <Border Classes="row-tile"><local:Icon Data="{StaticResource Icon.RotateRight}" /></Border>
+                                    <StackPanel Grid.Column="1" VerticalAlignment="Center">
+                                        <TextBlock Classes="row-title" Text="{translation:Tr AutoOrientPages}" />
+                                        <TextBlock Classes="row-help" Text="{translation:Tr AutoOrientHelp}" />
+                                    </StackPanel>
+                                    <CheckBox Grid.Column="2" x:Name="OrientPagesChoice" Classes="switch" IsChecked="{Binding AutoOrientPages, Mode=TwoWay}" IsEnabled="{Binding IsIdle}"
+                                              AutomationProperties.Name="{translation:Tr AutoOrientPages}" />
+                                </Grid>
+                            </StackPanel>
+                        </Border>
+                    </StackPanel>
+
+                    <!-- Intake -->
+                    <StackPanel x:Name="IntakeGroup" Classes="section">
+                        <TextBlock Classes="heading" Text="{translation:Tr IntakeSection}" />
+                        <TextBlock Classes="lede" Text="{translation:Tr SettingsIntakeLede}" />
+                        <Border Classes="group">
+                            <StackPanel>
+                                <Grid Classes="row" ColumnDefinitions="Auto,*,Auto">
+                                    <Border Classes="row-tile"><local:Icon Data="{StaticResource Icon.Folder}" /></Border>
+                                    <StackPanel Grid.Column="1" VerticalAlignment="Center">
+                                        <TextBlock Classes="row-title" Text="{translation:Tr IntakeFolderTitle}" />
+                                        <TextBlock Classes="row-help" Text="{Binding IntakeDestinationLabel}" />
+                                    </StackPanel>
+                                    <Button Grid.Column="2" x:Name="IntakeFolderButton" Classes="secondary" Content="{translation:Tr ChangeEllipsis}"
+                                            Command="{Binding ChooseIntakeFolderCommand}" IsEnabled="{Binding CanWork}" ToolTip.Tip="{Binding IntakeFolderLabel}"
+                                            AutomationProperties.Name="{translation:Tr ChooseIntakeFolder}" />
+                                </Grid>
+                                <Separator IsVisible="{Binding HasCustomIntakeFolder}" />
+                                <Grid Classes="row" ColumnDefinitions="Auto,*,Auto" IsVisible="{Binding HasCustomIntakeFolder}">
+                                    <Border Classes="row-tile"><local:Icon Data="{StaticResource Icon.ScanFrame}" /></Border>
+                                    <StackPanel Grid.Column="1" VerticalAlignment="Center">
+                                        <TextBlock Classes="row-title" Text="{translation:Tr IncludeWatchedScans}" />
+                                        <TextBlock Classes="row-help" Text="{translation:Tr FileScansFromTheWatchedFolderInThisIntakeFolder}" />
+                                    </StackPanel>
+                                    <CheckBox Grid.Column="2" x:Name="IncludeWatchedScansCheckBox" Classes="switch" IsChecked="{Binding IncludeWatchedScans, Mode=TwoWay}" IsEnabled="{Binding CanWork}"
+                                              AutomationProperties.Name="{translation:Tr IncludeWatchedScans}" />
+                                </Grid>
+                                <Separator />
+                                <Grid Classes="row" ColumnDefinitions="Auto,*,Auto">
+                                    <Border Classes="row-tile"><local:Icon Data="{StaticResource Icon.Watch}" /></Border>
+                                    <StackPanel Grid.Column="1" VerticalAlignment="Center">
+                                        <TextBlock Classes="row-title" Text="{translation:Tr WatchedFolderTitle}" />
+                                        <TextBlock Classes="row-help" Text="{translation:Tr WatchedFolderHelp}" IsVisible="{Binding !IsWatchingFolder}" />
+                                        <StackPanel Orientation="Horizontal" Spacing="6" Margin="0,2,0,0" IsVisible="{Binding IsWatchingFolder}"
+                                                    ToolTip.Tip="{Binding WatchedFolderPath}">
+                                            <Ellipse Width="7" Height="7" Fill="{DynamicResource LiveInk}" VerticalAlignment="Center" />
+                                            <TextBlock Classes="live-label" Text="{Binding WatchedFolderSummary}" TextTrimming="CharacterEllipsis" />
+                                        </StackPanel>
+                                    </StackPanel>
+                                    <StackPanel Grid.Column="2" Orientation="Horizontal" Spacing="8">
+                                        <Button x:Name="StartFolderWatchButton" Classes="secondary" Content="{translation:Tr WatchAFolder}" Command="{Binding StartFolderWatchCommand}"
+                                                IsVisible="{Binding !IsWatchingFolder}" IsEnabled="{Binding CanStartFolderWatch}" />
+                                        <Button x:Name="StopFolderWatchButton" Classes="secondary" Content="{translation:Tr StopWatching}" Command="{Binding StopFolderWatchCommand}"
+                                                IsVisible="{Binding IsWatchingFolder}" ToolTip.Tip="{Binding WatchedFolderPath}" />
+                                    </StackPanel>
+                                </Grid>
+                                <Separator IsVisible="{Binding CanOfferImportWatchFiles}" />
+                                <Grid Classes="row" ColumnDefinitions="Auto,*,Auto" IsVisible="{Binding CanOfferImportWatchFiles}">
+                                    <Border Classes="row-tile"><local:Icon Data="{StaticResource Icon.History}" /></Border>
+                                    <StackPanel Grid.Column="1" VerticalAlignment="Center">
+                                        <TextBlock Classes="row-title" Text="{translation:Tr CatchUpTitle}" />
+                                        <TextBlock Classes="row-help" Text="{translation:Tr CatchUpHelp}" />
+                                    </StackPanel>
+                                    <StackPanel Grid.Column="2" Orientation="Horizontal" Spacing="4" ToolTip.Tip="{Binding RememberedWatchFolder}">
+                                        <!-- One action leads; resuming without the catch-up is the quiet alternative beside it. -->
+                                        <Button x:Name="ResumeFolderWatchButton" Classes="ghost" MinHeight="38"
+                                                Content="{translation:Tr ResumeWatchOnly}" Command="{Binding ResumeFolderWatchCommand}"
+                                                IsVisible="{Binding CanOfferResumeFolderWatch}" IsEnabled="{Binding CanWork}"
+                                                AutomationProperties.Name="{translation:Tr ResumeFolderWatch}" />
+                                        <Button x:Name="ImportWatchFolderFilesButton" Classes="secondary"
+                                                Content="{Binding ImportWatchFilesLabel}" Command="{Binding ImportWatchFolderFilesCommand}"
+                                                IsVisible="{Binding CanOfferImportWatchFiles}" IsEnabled="{Binding CanWork}" />
+                                    </StackPanel>
+                                </Grid>
+                                <Separator IsVisible="{Binding CanOfferCatchUpOnOpen}" />
+                                <Grid Classes="row" ColumnDefinitions="Auto,*,Auto" IsVisible="{Binding CanOfferCatchUpOnOpen}">
+                                    <Border Classes="row-tile"><local:Icon Data="{StaticResource Icon.Upcoming}" /></Border>
+                                    <StackPanel Grid.Column="1" VerticalAlignment="Center">
+                                        <TextBlock Classes="row-title" Text="{translation:Tr CatchUpOnOpen}" />
+                                        <TextBlock Classes="row-help" Text="{translation:Tr ResumeTheSavedWatchAndCheckScansWhenThisLibraryOpens}" />
+                                    </StackPanel>
+                                    <CheckBox Grid.Column="2" x:Name="CatchUpOnOpenCheckBox" Classes="switch" IsChecked="{Binding CatchUpOnOpen, Mode=TwoWay}" IsEnabled="{Binding CanWork}"
+                                              AutomationProperties.Name="{translation:Tr CatchUpOnOpen}" />
+                                </Grid>
+                                <Separator />
+                                <Grid Classes="row" ColumnDefinitions="Auto,*,Auto">
+                                    <Border Classes="row-tile"><local:Icon Data="{StaticResource Icon.Phone}" /></Border>
+                                    <StackPanel Grid.Column="1" VerticalAlignment="Center">
+                                        <TextBlock Classes="row-title" Text="{translation:Tr PhoneInboxTitle}" />
+                                        <TextBlock Classes="row-help" Text="{translation:Tr PhoneInboxHelp}" IsVisible="{Binding !IsWatchingPhoneInbox}" />
+                                        <StackPanel Orientation="Horizontal" Spacing="6" Margin="0,2,0,0" IsVisible="{Binding IsWatchingPhoneInbox}"
+                                                    ToolTip.Tip="{Binding PhoneInboxFolder}">
+                                            <Ellipse Width="7" Height="7" Fill="{DynamicResource LiveInk}" VerticalAlignment="Center" />
+                                            <TextBlock Classes="live-label" Text="{Binding PhoneInboxSummary}" TextTrimming="CharacterEllipsis" />
+                                        </StackPanel>
+                                    </StackPanel>
+                                    <!-- The phone inbox's folder, catch-up and stop actions, with its own catch-up on open. -->
+                                    <Button Grid.Column="2" x:Name="PhoneInboxButton" Classes="secondary" IsEnabled="{Binding HasLibrary}"
+                                            ToolTip.Tip="{Binding PhoneInboxFolder}" AutomationProperties.Name="{Binding PhoneInboxLabel}">
+                                        <StackPanel Orientation="Horizontal" Spacing="8">
+                                            <TextBlock Text="{translation:Tr PhoneInboxOptions}" VerticalAlignment="Center" />
+                                            <local:Icon Data="{StaticResource Icon.ChevronDown}" Width="16" Height="16" VerticalAlignment="Center" />
+                                        </StackPanel>
+                                        <Button.Flyout>
+                                            <MenuFlyout Placement="BottomEdgeAlignedRight">
+                                                <MenuItem x:Name="ChoosePhoneInboxFolder" Header="{translation:Tr ChoosePhoneFolder}" Command="{Binding ChoosePhoneInboxFolderCommand}"
+                                                          IsVisible="{Binding !IsWatchingPhoneInbox}" IsEnabled="{Binding CanWork}" />
+                                                <MenuItem Header="{translation:Tr ResumePhoneInbox}" Command="{Binding ResumePhoneInboxCommand}"
+                                                          IsVisible="{Binding CanResumePhoneInbox}" IsEnabled="{Binding CanWork}" />
+                                                <MenuItem x:Name="CatchUpPhoneInbox" Header="{Binding PhoneCatchUpLabel}" Command="{Binding CatchUpPhoneInboxCommand}"
+                                                          IsVisible="{Binding CanCatchUpPhoneInbox}" IsEnabled="{Binding CanWork}" />
+                                                <MenuItem x:Name="StopPhoneInbox" Header="{translation:Tr StopPhoneInbox}" Command="{Binding StopPhoneInboxCommand}"
+                                                          IsVisible="{Binding IsWatchingPhoneInbox}" />
+                                                <MenuItem x:Name="PhoneCatchUpOnOpen" Header="{translation:Tr CatchUpOnOpen}" ToggleType="CheckBox"
+                                                          IsChecked="{Binding PhoneCatchUpOnOpen, Mode=TwoWay}" IsVisible="{Binding CanSetPhoneCatchUpOnOpen}"
+                                                          IsEnabled="{Binding CanWork}" />
+                                            </MenuFlyout>
+                                        </Button.Flyout>
+                                    </Button>
+                                </Grid>
+                            </StackPanel>
+                        </Border>
+                    </StackPanel>
+
+                    <!-- Library -->
+                    <StackPanel x:Name="LibraryGroup" Classes="section">
+                        <TextBlock Classes="heading" Text="{translation:Tr Library}" />
+                        <TextBlock Classes="lede" Text="{translation:Tr SettingsLibraryLede}" />
+                        <Border Classes="group">
+                            <StackPanel>
+                                <Grid Classes="row" ColumnDefinitions="Auto,*,Auto">
+                                    <Border Classes="row-tile"><local:Icon Data="{StaticResource Icon.Folder}" /></Border>
+                                    <StackPanel Grid.Column="1" VerticalAlignment="Center">
+                                        <TextBlock Classes="row-title" Text="{Binding LibraryName}" TextTrimming="CharacterEllipsis" />
+                                        <TextBlock Classes="row-help" Text="{Binding FriendlyLibraryPath}" TextTrimming="CharacterEllipsis" TextWrapping="NoWrap"
+                                                   ToolTip.Tip="{Binding LibraryPath}" />
+                                    </StackPanel>
+                                    <StackPanel Grid.Column="2" Orientation="Horizontal" Spacing="8">
+                                        <Button Classes="secondary" Content="{translation:Tr ShowPDFFolder}" Command="{Binding OpenPdfFolderCommand}" IsEnabled="{Binding HasLibrary}" />
+                                        <Button Classes="secondary" Content="{translation:Tr ChangeEllipsis}" Command="{Binding ChooseLibraryCommand}" IsEnabled="{Binding IsIdle}"
+                                                AutomationProperties.Name="{translation:Tr ChooseLibraryFolder}" />
+                                    </StackPanel>
+                                </Grid>
+                                <Separator />
+                                <Grid Classes="row" ColumnDefinitions="Auto,*,Auto">
+                                    <Border Classes="row-tile"><local:Icon Data="{StaticResource Icon.Binder}" /></Border>
+                                    <StackPanel Grid.Column="1" VerticalAlignment="Center">
+                                        <TextBlock Classes="row-title" Text="{translation:Tr BackupsTitle}" />
+                                        <TextBlock Classes="row-help" Text="{translation:Tr BackupTitle}" />
+                                    </StackPanel>
+                                    <Button Grid.Column="2" x:Name="BackUpLibraryButton" Classes="secondary" Content="{translation:Tr BackUpLibrary}" Command="{Binding BackUpLibraryCommand}" IsEnabled="{Binding CanWork}" />
+                                </Grid>
+                                <Separator />
+                                <Grid Classes="row" ColumnDefinitions="Auto,*,Auto">
+                                    <Border Classes="row-tile"><local:Icon Data="{StaticResource Icon.Check}" /></Border>
+                                    <StackPanel Grid.Column="1" VerticalAlignment="Center">
+                                        <TextBlock Classes="row-title" Text="{translation:Tr LibraryIntegrity}" />
+                                        <TextBlock Classes="row-help" Text="{translation:Tr IntegrityHelp}" />
+                                    </StackPanel>
+                                    <Button Grid.Column="2" Classes="secondary" Content="{translation:Tr CheckAction}" Command="{Binding CheckIntegrityCommand}" IsEnabled="{Binding CanWork}"
+                                            AutomationProperties.Name="{translation:Tr CheckLibraryIntegrity}" />
+                                </Grid>
+                                <Separator />
+                                <Grid Classes="row" ColumnDefinitions="Auto,*,Auto">
+                                    <Border Classes="row-tile"><local:Icon Data="{StaticResource Icon.Refresh}" /></Border>
+                                    <StackPanel Grid.Column="1" VerticalAlignment="Center">
+                                        <TextBlock Classes="row-title" Text="{translation:Tr RefreshIndex}" />
+                                        <TextBlock Classes="row-help" Text="{translation:Tr MaintenanceHelp}" />
+                                    </StackPanel>
+                                    <Button Grid.Column="2" Classes="secondary" Content="{translation:Tr Refresh}" Command="{Binding RefreshIndexCommand}" IsEnabled="{Binding CanWork}"
+                                            AutomationProperties.Name="{translation:Tr RefreshIndex}" />
+                                </Grid>
+                                <Separator />
+                                <Grid Classes="row" ColumnDefinitions="Auto,*,Auto">
+                                    <Border Classes="row-tile"><local:Icon Data="{StaticResource Icon.Share}" /></Border>
+                                    <StackPanel Grid.Column="1" VerticalAlignment="Center">
+                                        <TextBlock Classes="row-title" Text="{translation:Tr ExportsTitle}" />
+                                        <TextBlock Classes="row-help" Text="{translation:Tr ExportsHelp}" />
+                                    </StackPanel>
+                                    <StackPanel Grid.Column="2" Orientation="Horizontal" Spacing="8">
+                                        <Button Classes="secondary" Content="{translation:Tr ExportJsonShort}" Command="{Binding ExportMetadataCommand}" IsEnabled="{Binding CanWork}"
+                                                ToolTip.Tip="{translation:Tr ExportLibraryMetadataJSON}" AutomationProperties.Name="{translation:Tr ExportLibraryMetadataJSON}" />
+                                        <Button Classes="secondary" Content="{translation:Tr ExportCsvShort}" Command="{Binding ExportSearchCsvCommand}" IsEnabled="{Binding CanWork}"
+                                                ToolTip.Tip="{translation:Tr ExportSearchResultsCSV}" AutomationProperties.Name="{translation:Tr ExportSearchResultsCSV}" />
+                                    </StackPanel>
+                                </Grid>
+                            </StackPanel>
+                        </Border>
+                    </StackPanel>
+
+                    <!-- Filing -->
+                    <StackPanel x:Name="FilingGroup" Classes="section">
+                        <TextBlock Classes="heading" Text="{translation:Tr SettingsFiling}" />
+                        <TextBlock Classes="lede" Text="{translation:Tr SettingsFilingLede}" />
+                        <Border Classes="group">
+                            <StackPanel>
+                                <Grid Classes="row" ColumnDefinitions="Auto,*,Auto">
+                                    <Border Classes="row-tile"><local:Icon Data="{StaticResource Icon.Tag}" /></Border>
+                                    <StackPanel Grid.Column="1" VerticalAlignment="Center">
+                                        <TextBlock Classes="row-title" Text="{translation:Tr TagRules}" />
+                                        <TextBlock Classes="row-help" Text="{translation:Tr TagRulesHelp}" />
+                                    </StackPanel>
+                                    <Button Grid.Column="2" Classes="secondary" Content="{translation:Tr EditAction}" Command="{Binding ManageFilingRulesCommand}" IsEnabled="{Binding CanWork}"
+                                            AutomationProperties.Name="{translation:Tr TagRules2}" />
+                                </Grid>
+                                <Separator />
+                                <Grid Classes="row" ColumnDefinitions="Auto,*,Auto">
+                                    <Border Classes="row-tile"><local:Icon Data="{StaticResource Icon.Note}" /></Border>
+                                    <StackPanel Grid.Column="1" VerticalAlignment="Center">
+                                        <TextBlock Classes="row-title" Text="{translation:Tr MetadataTitle}" />
+                                        <TextBlock Classes="row-help" Text="{translation:Tr MetadataHelp}" />
+                                    </StackPanel>
+                                    <Button Grid.Column="2" Classes="secondary" Content="{translation:Tr EditAction}" Command="{Binding ManageMetadataCommand}" IsEnabled="{Binding CanWork}"
+                                            AutomationProperties.Name="{translation:Tr MetadataDefinitions}" />
+                                </Grid>
+                                <Separator />
+                                <Grid Classes="row" ColumnDefinitions="Auto,*,Auto">
+                                    <Border Classes="row-tile"><local:Icon Data="{StaticResource Icon.Bell}" /></Border>
+                                    <StackPanel Grid.Column="1" VerticalAlignment="Center">
+                                        <TextBlock Classes="row-title" Text="{translation:Tr RemindersWindow}" />
+                                        <TextBlock Classes="row-help" Text="{translation:Tr RemindersHelp}" />
+                                    </StackPanel>
+                                    <Button Grid.Column="2" Classes="secondary" Content="{translation:Tr ShowAction}" Command="{Binding RemindersCommand}" IsEnabled="{Binding CanWork}"
+                                            AutomationProperties.Name="{Binding ReminderMenuTitle}" />
+                                </Grid>
+                                <Separator />
+                                <Grid Classes="row" ColumnDefinitions="Auto,*,Auto">
+                                    <Border Classes="row-tile"><local:Icon Data="{StaticResource Icon.Stamp}" /></Border>
+                                    <StackPanel Grid.Column="1" VerticalAlignment="Center">
+                                        <TextBlock Classes="row-title" Text="{translation:Tr LabelSheetsTitle}" />
+                                        <TextBlock Classes="row-help" Text="{translation:Tr ArchiveSerialHelp}" />
+                                    </StackPanel>
+                                    <Button Grid.Column="2" Classes="secondary" Content="{translation:Tr SaveEllipsis}" Command="{Binding PrintArchiveLabelsCommand}" IsEnabled="{Binding CanWork}"
+                                            AutomationProperties.Name="{translation:Tr ArchiveLabelSheets}" />
+                                </Grid>
+                                <Separator />
+                                <Grid Classes="row" ColumnDefinitions="Auto,*,Auto">
+                                    <Border Classes="row-tile"><local:Icon Data="{StaticResource Icon.Split}" /></Border>
+                                    <StackPanel Grid.Column="1" VerticalAlignment="Center">
+                                        <TextBlock Classes="row-title" Text="{translation:Tr SeparatorSheetTitle}" />
+                                        <TextBlock Classes="row-help" Text="{translation:Tr SeparatorSheetHelp}" />
+                                    </StackPanel>
+                                    <Button Grid.Column="2" Classes="secondary" Content="{translation:Tr SaveEllipsis}" Command="{Binding PrintSeparatorSheetCommand}" IsEnabled="{Binding CanWork}"
+                                            AutomationProperties.Name="{translation:Tr ArchiveSeparator}" />
+                                </Grid>
+                            </StackPanel>
+                        </Border>
+                    </StackPanel>
+
+                    <!-- Local models -->
+                    <StackPanel x:Name="ModelsGroup" Classes="section">
+                        <TextBlock Classes="heading" Text="{translation:Tr LocalModelsWindow}" />
+                        <TextBlock Classes="lede" Text="{translation:Tr SettingsModelsLede}" />
+                        <Border Classes="group">
+                            <StackPanel>
+                                <Grid Classes="row" ColumnDefinitions="Auto,*,Auto">
+                                    <Border Classes="row-tile"><local:Icon Data="{StaticResource Icon.Cpu}" /></Border>
+                                    <StackPanel Grid.Column="1" VerticalAlignment="Center">
+                                        <TextBlock Classes="row-title" Text="{translation:Tr ModelServerTitle}" />
+                                        <TextBlock Classes="row-help" Text="{x:Static local:PlatformText.LocalModelsHelp}" />
+                                    </StackPanel>
+                                    <Button Grid.Column="2" Classes="secondary" Content="{translation:Tr EditAction}" Command="{Binding ConfigureLocalModelsCommand}" IsEnabled="{Binding CanWork}"
+                                            AutomationProperties.Name="{translation:Tr LocalModels}" />
+                                </Grid>
+                                <Separator />
+                                <Grid Classes="row" ColumnDefinitions="Auto,*,Auto">
+                                    <Border Classes="row-tile"><local:Icon Data="{StaticResource Icon.Trash}" /></Border>
+                                    <StackPanel Grid.Column="1" VerticalAlignment="Center">
+                                        <TextBlock Classes="row-title" Text="{translation:Tr ClearSemanticIndex}" />
+                                        <TextBlock Classes="row-help" Text="{translation:Tr SemanticIndexHelp}" />
+                                    </StackPanel>
+                                    <Button Grid.Column="2" Classes="secondary" Content="{translation:Tr ClearAction}" Command="{Binding RebuildSemanticIndexCommand}"
+                                            AutomationProperties.Name="{translation:Tr ClearSemanticIndex}">
+                                        <!-- Clearing the index is work of its own, so like Settings' other work it waits until Plico is free. -->
+                                        <Button.IsEnabled>
+                                            <MultiBinding Converter="{x:Static BoolConverters.And}">
+                                                <Binding Path="CanWork" />
+                                                <Binding Path="HasSemanticSearch" />
+                                            </MultiBinding>
+                                        </Button.IsEnabled>
+                                    </Button>
+                                </Grid>
+                            </StackPanel>
+                        </Border>
+                    </StackPanel>
+
+                    <!-- Room for the last section to scroll to the top, so the section list can follow the page. -->
+                    <Border x:Name="ScrollTail" Height="56" />
+                </StackPanel>
+            </ScrollViewer>
+
+            <!--
+                What Settings' own actions have to say ("Choose a folder outside the library…", "Watching Scans") sits at
+                the foot of the sheet, since the main window's toast is under Settings. It stays until the next one.
+            -->
+            <Border Grid.Row="1" x:Name="SettingsMessageBar" IsVisible="False" BorderBrush="{DynamicResource Line}" BorderThickness="0,1,0,0"
+                    Background="{DynamicResource Panel}" Padding="44,12,44,14">
+                <Grid ColumnDefinitions="Auto,*" ColumnSpacing="10" MaxWidth="744" HorizontalAlignment="Left">
+                    <Panel Width="16" Height="16" VerticalAlignment="Top" Margin="0,2,0,0">
+                        <local:Icon x:Name="SettingsMessageDone" Data="{StaticResource Icon.Check}" Width="16" Height="16" Foreground="{DynamicResource Fg2}" />
+                        <local:Icon x:Name="SettingsMessageProblem" Data="{StaticResource Icon.AlertCircle}" Width="16" Height="16"
+                                    Foreground="{DynamicResource Err}" IsVisible="False" />
+                    </Panel>
+                    <TextBlock Grid.Column="1" x:Name="SettingsMessage" FontSize="14" LineHeight="20" TextWrapping="Wrap"
+                               Foreground="{DynamicResource Fg}" AutomationProperties.LiveSetting="Polite" />
+                </Grid>
+            </Border>
+          </Grid>
         </Border>
-
-        <ScrollViewer Grid.Column="1" x:Name="SettingsScroll" HorizontalScrollBarVisibility="Disabled">
-            <StackPanel Margin="28,24,28,32" Spacing="26" MaxWidth="560">
-                <StackPanel x:Name="GeneralGroup">
-                    <TextBlock Classes="group-title" Text="{translation:Tr SettingsGeneral}" />
-                    <Border Classes="group">
-                        <StackPanel>
-                            <Grid ColumnDefinitions="*,Auto">
-                                <StackPanel VerticalAlignment="Center" Margin="0,8">
-                                    <TextBlock Classes="row-title" Text="{translation:Tr AppearanceTitle}" />
-                                    <TextBlock Classes="row-help" Text="{translation:Tr AppearanceHelp}" />
-                                </StackPanel>
-                                <Button Grid.Column="1" Classes="secondary" Content="{translation:Tr Appearance2}" Command="{Binding ShowAppearanceCommand}" />
-                            </Grid>
-                            <Separator />
-                            <Grid ColumnDefinitions="*,Auto">
-                                <TextBlock Classes="row-title" Text="{translation:Tr KeyboardShortcuts}" />
-                                <Button Grid.Column="1" Classes="secondary" Content="{translation:Tr ShowAction}" Click="ShowShortcuts_Click" AutomationProperties.Name="{translation:Tr KeyboardShortcuts}" />
-                            </Grid>
-                        </StackPanel>
-                    </Border>
-                </StackPanel>
-
-                <StackPanel x:Name="RecognitionGroup">
-                    <TextBlock Classes="group-title" Text="{translation:Tr SettingsRecognition}" />
-                    <Border Classes="group">
-                        <StackPanel>
-                            <Grid ColumnDefinitions="*,Auto" ColumnSpacing="16">
-                                <StackPanel VerticalAlignment="Center" Margin="0,8">
-                                    <TextBlock Classes="row-title" Text="{translation:Tr OCRLanguage}" />
-                                    <TextBlock Classes="row-help" Text="{translation:Tr TextLanguageHelp}" />
-                                </StackPanel>
-                                <ComboBox Grid.Column="1" x:Name="SettingsLanguageBox" ItemsSource="{Binding RecognitionLanguages}" MinWidth="160"
-                                          SelectedItem="{Binding RecognitionLanguage, Mode=TwoWay}" IsEnabled="{Binding IsIdle}"
-                                          AutomationProperties.Name="{translation:Tr OCRLanguage}" />
-                            </Grid>
-                            <Separator />
-                            <Grid ColumnDefinitions="*,Auto" ColumnSpacing="16">
-                                <TextBlock Classes="row-title" Text="{translation:Tr UseRapidOcr}" TextWrapping="Wrap" />
-                                <ToggleSwitch Grid.Column="1" IsChecked="{Binding UseRapidOcr, Mode=TwoWay}" IsEnabled="{Binding CanUseRapidOcr}"
-                                              OnContent="" OffContent="" AutomationProperties.Name="{translation:Tr UseRapidOcr}" />
-                            </Grid>
-                            <Separator />
-                            <Grid ColumnDefinitions="*,Auto" ColumnSpacing="16">
-                                <TextBlock Classes="row-title" Text="{translation:Tr AutoOrientPages}" TextWrapping="Wrap" />
-                                <ToggleSwitch Grid.Column="1" IsChecked="{Binding AutoOrientPages, Mode=TwoWay}" IsEnabled="{Binding IsIdle}"
-                                              OnContent="" OffContent="" AutomationProperties.Name="{translation:Tr AutoOrientPages}" />
-                            </Grid>
-                        </StackPanel>
-                    </Border>
-                </StackPanel>
-
-                <StackPanel x:Name="IntakeGroup">
-                    <TextBlock Classes="group-title" Text="{translation:Tr IntakeSection}" />
-                    <Border Classes="group">
-                        <StackPanel>
-                            <Grid ColumnDefinitions="*,Auto" ColumnSpacing="16">
-                                <StackPanel VerticalAlignment="Center" Margin="0,8">
-                                    <TextBlock Classes="row-title" Text="{translation:Tr IntakeFolderTitle}" />
-                                    <TextBlock Classes="row-help" Text="{Binding IntakeFolderLabel}" />
-                                </StackPanel>
-                                <Button Grid.Column="1" Classes="secondary" Content="{translation:Tr ChangeEllipsis}" Command="{Binding ChooseIntakeFolderCommand}" IsEnabled="{Binding CanWork}" AutomationProperties.Name="{translation:Tr ChooseIntakeFolder}" />
-                            </Grid>
-                            <Separator IsVisible="{Binding HasCustomIntakeFolder}" />
-                            <Grid ColumnDefinitions="*,Auto" ColumnSpacing="16" IsVisible="{Binding HasCustomIntakeFolder}">
-                                <TextBlock Classes="row-title" Text="{translation:Tr IncludeWatchedScans}" />
-                                <ToggleSwitch Grid.Column="1" IsChecked="{Binding IncludeWatchedScans, Mode=TwoWay}" IsEnabled="{Binding CanWork}" OnContent="" OffContent="" AutomationProperties.Name="{translation:Tr IncludeWatchedScans}" />
-                            </Grid>
-                            <Separator />
-                            <Grid ColumnDefinitions="*,Auto" ColumnSpacing="16">
-                                <StackPanel VerticalAlignment="Center" Margin="0,8">
-                                    <TextBlock Classes="row-title" Text="{translation:Tr WatchedFolderTitle}" />
-                                    <TextBlock Classes="row-help" Text="{translation:Tr WatchedFolderHelp}" />
-                                </StackPanel>
-                                <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="6">
-                                    <Button Classes="secondary" Content="{translation:Tr WatchAFolder}" Command="{Binding StartFolderWatchCommand}"
-                                            IsVisible="{Binding !IsWatchingFolder}" IsEnabled="{Binding CanStartFolderWatch}" />
-                                    <Button Classes="secondary" Content="{translation:Tr StopWatching}" Command="{Binding StopFolderWatchCommand}" IsVisible="{Binding IsWatchingFolder}" />
-                                </StackPanel>
-                            </Grid>
-                            <Separator IsVisible="{Binding CanOfferCatchUpOnOpen}" />
-                            <Grid ColumnDefinitions="*,Auto" ColumnSpacing="16" IsVisible="{Binding CanOfferCatchUpOnOpen}">
-                                <TextBlock Classes="row-title" Text="{translation:Tr CatchUpOnOpen}" />
-                                <ToggleSwitch Grid.Column="1" IsChecked="{Binding CatchUpOnOpen, Mode=TwoWay}" IsEnabled="{Binding CanWork}" OnContent="" OffContent="" AutomationProperties.Name="{translation:Tr CatchUpOnOpen}" />
-                            </Grid>
-                            <Separator />
-                            <Grid ColumnDefinitions="*,Auto" ColumnSpacing="16">
-                                <StackPanel VerticalAlignment="Center" Margin="0,8">
-                                    <TextBlock Classes="row-title" Text="{Binding PhoneInboxLabel}" />
-                                    <TextBlock Classes="row-help" Text="{translation:Tr PhoneInboxHelp}" />
-                                </StackPanel>
-                                <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="6">
-                                    <Button Classes="secondary" Content="{translation:Tr ChoosePhoneFolder}" Command="{Binding ChoosePhoneInboxFolderCommand}"
-                                            IsVisible="{Binding !IsWatchingPhoneInbox}" IsEnabled="{Binding CanWork}" />
-                                    <Button Classes="secondary" Content="{translation:Tr StopPhoneInbox}" Command="{Binding StopPhoneInboxCommand}" IsVisible="{Binding IsWatchingPhoneInbox}" />
-                                </StackPanel>
-                            </Grid>
-                        </StackPanel>
-                    </Border>
-                </StackPanel>
-
-                <StackPanel x:Name="LibraryGroup">
-                    <TextBlock Classes="group-title" Text="{translation:Tr Library}" />
-                    <Border Classes="group">
-                        <StackPanel>
-                            <Grid ColumnDefinitions="*,Auto" ColumnSpacing="16">
-                                <StackPanel VerticalAlignment="Center" Margin="0,8">
-                                    <TextBlock Classes="row-title" Text="{Binding LibraryName}" />
-                                    <TextBlock Classes="row-help" Text="{Binding LibraryPath}" />
-                                </StackPanel>
-                                <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="6">
-                                    <Button Classes="secondary" Content="{translation:Tr ShowPDFFolder}" Command="{Binding OpenPdfFolderCommand}" IsEnabled="{Binding HasLibrary}" />
-                                    <Button Classes="secondary" Content="{translation:Tr ChangeEllipsis}" Command="{Binding ChooseLibraryCommand}" IsEnabled="{Binding IsIdle}" AutomationProperties.Name="{translation:Tr ChooseLibraryFolder}" />
-                                </StackPanel>
-                            </Grid>
-                            <Separator />
-                            <Grid ColumnDefinitions="*,Auto" ColumnSpacing="16">
-                                <TextBlock Classes="row-title" Text="{translation:Tr BackupTitle}" />
-                                <Button Grid.Column="1" Classes="secondary" Content="{translation:Tr BackUpLibrary}" Command="{Binding BackUpLibraryCommand}" IsEnabled="{Binding CanWork}" />
-                            </Grid>
-                            <Separator />
-                            <Grid ColumnDefinitions="*,Auto" ColumnSpacing="16">
-                                <TextBlock Classes="row-title" Text="{translation:Tr MaintenanceTitle}" />
-                                <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="6">
-                                    <Button Classes="secondary" Content="{translation:Tr CheckLibraryIntegrity}" Command="{Binding CheckIntegrityCommand}" IsEnabled="{Binding CanWork}" />
-                                    <Button Classes="secondary" Content="{translation:Tr RefreshIndex}" Command="{Binding RefreshIndexCommand}" IsEnabled="{Binding CanWork}" />
-                                </StackPanel>
-                            </Grid>
-                            <Separator />
-                            <Grid ColumnDefinitions="*,Auto" ColumnSpacing="16">
-                                <TextBlock Classes="row-title" Text="{translation:Tr ExportsTitle}" />
-                                <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="6">
-                                    <Button Classes="secondary" Content="JSON…" Command="{Binding ExportMetadataCommand}" IsEnabled="{Binding CanWork}"
-                                            ToolTip.Tip="{translation:Tr ExportLibraryMetadataJSON}" AutomationProperties.Name="{translation:Tr ExportLibraryMetadataJSON}" />
-                                    <Button Classes="secondary" Content="CSV…" Command="{Binding ExportSearchCsvCommand}" IsEnabled="{Binding CanWork}"
-                                            ToolTip.Tip="{translation:Tr ExportSearchResultsCSV}" AutomationProperties.Name="{translation:Tr ExportSearchResultsCSV}" />
-                                </StackPanel>
-                            </Grid>
-                        </StackPanel>
-                    </Border>
-                </StackPanel>
-
-                <StackPanel x:Name="FilingGroup">
-                    <TextBlock Classes="group-title" Text="{translation:Tr SettingsFiling}" />
-                    <Border Classes="group">
-                        <StackPanel>
-                            <Grid ColumnDefinitions="*,Auto" ColumnSpacing="16">
-                                <StackPanel VerticalAlignment="Center" Margin="0,8">
-                                    <TextBlock Classes="row-title" Text="{translation:Tr TagRules2}" />
-                                    <TextBlock Classes="row-help" Text="{translation:Tr TagRulesHelp}" />
-                                </StackPanel>
-                                <Button Grid.Column="1" Classes="secondary" Content="{translation:Tr EditAction}" Command="{Binding ManageFilingRulesCommand}" IsEnabled="{Binding CanWork}" AutomationProperties.Name="{translation:Tr TagRules2}" />
-                            </Grid>
-                            <Separator />
-                            <Grid ColumnDefinitions="*,Auto" ColumnSpacing="16">
-                                <TextBlock Classes="row-title" Text="{translation:Tr MetadataDefinitions}" />
-                                <Button Grid.Column="1" Classes="secondary" Content="{translation:Tr EditAction}" Command="{Binding ManageMetadataCommand}" IsEnabled="{Binding CanWork}" AutomationProperties.Name="{translation:Tr MetadataDefinitions}" />
-                            </Grid>
-                            <Separator />
-                            <Grid ColumnDefinitions="*,Auto" ColumnSpacing="16">
-                                <TextBlock Classes="row-title" Text="{Binding ReminderMenuTitle}" />
-                                <Button Grid.Column="1" Classes="secondary" Content="{translation:Tr ShowAction}" Command="{Binding RemindersCommand}" IsEnabled="{Binding CanWork}" AutomationProperties.Name="{Binding ReminderMenuTitle}" />
-                            </Grid>
-                            <Separator />
-                            <Grid ColumnDefinitions="*,Auto" ColumnSpacing="16">
-                                <TextBlock Classes="row-title" Text="{translation:Tr ArchiveSerialMenu}" />
-                                <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="6">
-                                    <Button Classes="secondary" Content="{translation:Tr ArchiveLabelSheets}" Command="{Binding PrintArchiveLabelsCommand}" IsEnabled="{Binding CanWork}" />
-                                    <Button Classes="secondary" Content="{translation:Tr ArchiveSeparator}" Command="{Binding PrintSeparatorSheetCommand}" IsEnabled="{Binding CanWork}" />
-                                </StackPanel>
-                            </Grid>
-                        </StackPanel>
-                    </Border>
-                </StackPanel>
-
-                <StackPanel x:Name="ModelsGroup">
-                    <TextBlock Classes="group-title" Text="{translation:Tr LocalModelsWindow}" />
-                    <Border Classes="group">
-                        <StackPanel>
-                            <Grid ColumnDefinitions="*,Auto" ColumnSpacing="16">
-                                <StackPanel VerticalAlignment="Center" Margin="0,8">
-                                    <TextBlock Classes="row-title" Text="{translation:Tr LocalModels}" />
-                                    <TextBlock Classes="row-help" Text="{translation:Tr LocalModelsHelp}" />
-                                </StackPanel>
-                                <Button Grid.Column="1" Classes="secondary" Content="{translation:Tr EditAction}" Command="{Binding ConfigureLocalModelsCommand}" IsEnabled="{Binding CanWork}" AutomationProperties.Name="{translation:Tr LocalModels}" />
-                            </Grid>
-                            <Separator />
-                            <Grid ColumnDefinitions="*,Auto" ColumnSpacing="16">
-                                <TextBlock Classes="row-title" Text="{translation:Tr ClearSemanticIndex}" TextWrapping="Wrap" />
-                                <Button Grid.Column="1" Classes="secondary" Content="{translation:Tr ClearAction}" Command="{Binding RebuildSemanticIndexCommand}"
-                                        IsEnabled="{Binding HasSemanticSearch}" AutomationProperties.Name="{translation:Tr ClearSemanticIndex}" />
-                            </Grid>
-                        </StackPanel>
-                    </Border>
-                </StackPanel>
-            </StackPanel>
-        </ScrollViewer>
     </Grid>
 </Window>

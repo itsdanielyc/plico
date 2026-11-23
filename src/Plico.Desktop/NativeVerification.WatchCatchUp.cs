@@ -12,10 +12,11 @@ internal static partial class NativeVerification
         const string missedName = "Saved before reopen.pdf";
         string library = model.LibraryPath;
         string source = model.RememberedWatchFolder ?? throw new InvalidOperationException("The watch fixture has no saved folder.");
-        var check = Control<CheckBox>(window, "CatchUpOnOpenCheckBox");
+        var check = SettingsControl<CheckBox>(window, "IntakeGroup", "CatchUpOnOpenCheckBox");
+        var settings = (Window)TopLevel.GetTopLevel(check)!;
         Require(check.IsEffectivelyVisible && check.IsEnabled && check.IsChecked == false && !model.IsWatchingFolder,
             "The paused watch did not offer the opt-in startup choice.");
-        var include = Control<CheckBox>(window, "IncludeWatchedScansCheckBox");
+        var include = Control<CheckBox>(settings, "IncludeWatchedScansCheckBox");
         Require(include.IsEffectivelyVisible && include.IsEnabled && include.IsChecked == false,
             "The intake folder did not offer the watched-scan choice.");
         include.SetCurrentValue(ToggleButton.IsCheckedProperty, true);
@@ -56,6 +57,7 @@ internal static partial class NativeVerification
         {
             dialogs.FolderPath = originalFolder;
             await model.StopFolderWatchCommand.ExecuteAsync(null);
+            CloseSettings(window);
         }
     }
 
@@ -69,7 +71,7 @@ internal static partial class NativeVerification
         // The same ledger is imported earlier in the journey. Trailing whitespace gives this fixture distinct source bytes.
         File.AppendAllText(source, "\n \n \n");
 
-        var action = Control<Button>(window, "ImportWatchFolderFilesButton");
+        var action = SettingsControl<Button>(window, "IntakeGroup", "ImportWatchFolderFilesButton");
         Require(action.IsEffectivelyVisible && action.IsEnabled && Equals(action.Content, "Resume and catch up") &&
                 action.Command is IAsyncRelayCommand, "The paused watch did not offer catch-up.");
         long inboxCount = model.InboxCount;
@@ -89,6 +91,7 @@ internal static partial class NativeVerification
         finally
         {
             await model.StopFolderWatchCommand.ExecuteAsync(null);
+            CloseSettings(window);
         }
     }
 }

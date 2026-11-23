@@ -5,6 +5,7 @@ using Avalonia.Controls;
 using Avalonia.Controls.ApplicationLifetimes;
 using Avalonia.Input;
 using Avalonia.Interactivity;
+using Avalonia.Layout;
 using Avalonia.Media.Imaging;
 using Avalonia.Threading;
 using Avalonia.VisualTree;
@@ -36,11 +37,16 @@ internal static partial class NativeVerification
             Require(string.IsNullOrEmpty(expectedRuntime) || runtime == expectedRuntime,
                 $"Expected runtime {expectedRuntime}. Running on {runtime}.");
             Require(window.IsVisible && Control<TextBlock>(window, "InboxHeading").Text == "Inbox", "The native inbox did not open.");
-            var import = Control<Button>(window, "AddFilesButton");
-            Require(import.IsEnabled && import.Command is IAsyncRelayCommand, "The import control was not available.");
+            // A first run shows the welcome hero's two ways in; the toolbar's Scan and Add files wait for a document.
+            var import = Control<Button>(window, "WelcomeAddFilesButton");
+            Require(model.ShowWelcome && import.IsEffectivelyVisible && import.IsEnabled && import.Command is IAsyncRelayCommand &&
+                    !Control<Button>(window, "AddFilesButton").IsEffectivelyVisible && !Control<Button>(window, "ScanButton").IsEffectivelyVisible,
+                "The first run did not offer the welcome hero's Add files alone.");
             await ((IAsyncRelayCommand)import.Command!).ExecuteAsync(null);
             Require(model.Documents.Count == 1 && model.SelectedDocument is { HasText: true },
                 $"The receipt did not import with embedded text. {model.Status}");
+            Require(Control<Button>(window, "AddFilesButton").IsEffectivelyVisible && Control<Button>(window, "ScanButton").IsEffectivelyVisible,
+                "The toolbar's Scan and Add files did not appear with the first document.");
             await UntilAsync(() => model.Preview is not null, () => model.PreviewMessage);
             await VerifySingleExportAsync(window, model, dialogs, evidenceDirectory);
             await VerifyArchivalExportAsync(window, model, dialogs, evidenceDirectory);
@@ -49,6 +55,7 @@ internal static partial class NativeVerification
             Control<Button>(window, "AddTagButton").Command!.Execute(null);
             Require(model.SelectedDocument?.Tags.Contains(TestTag) == true, "The tag did not attach to the imported PDF.");
             await CaptureAsync(window, evidenceDirectory, "inbox.png");
+            await CaptureFrameAsync(window, evidenceDirectory, "window-frame-light.png");
             Control<Button>(window, "ReviewButton").Command!.Execute(null);
             Require(model.Documents.Count == 0, "The reviewed PDF remained in the inbox.");
 
@@ -94,7 +101,7 @@ internal static partial class NativeVerification
             await VerifyManualDuplexDialogAsync(window, evidenceDirectory);
             await VerifyArchiveSerialDialogAsync(window, evidenceDirectory);
             await VerifySavedSearchAsync(window, model, dialogs, evidenceDirectory);
-            await VerifyDocumentDateAsync(window, model, dialogs, evidenceDirectory);
+            await VerifyDocumentDateAsync(window, model, evidenceDirectory);
             await VerifyBatchOcrAsync(window, model, fixture, evidenceDirectory, priorOcrSource);
             await VerifyExternalSwapAsync(window, model, dialogs, fixture, evidenceDirectory);
             await VerifyFolderSearchPickerAsync(window, model, dialogs, evidenceDirectory);
@@ -132,11 +139,28 @@ internal static partial class NativeVerification
 
     private static async Task VerifyPreviewFitAsync(MainWindow window, InboxViewModel model, string directory)
     {
+        // With Onda's 252 px sidebar the page column at 1280 x 800 is about as tall as a letter page fitted to its
+        // width, so fit width would not scroll. A 700 px tall window keeps the page taller than the desk.
+        double height = window.Height;
+        window.Height = 700;
+        try
+        {
+            await VerifyPreviewFitAtCurrentSizeAsync(window, model, directory);
+        }
+        finally
+        {
+            window.Height = height;
+        }
+    }
+
+    private static async Task VerifyPreviewFitAtCurrentSizeAsync(MainWindow window, InboxViewModel model, string directory)
+    {
         var fit = Control<Button>(window, "PreviewFitButton");
         var scroll = Control<ScrollViewer>(window, "PreviewScroll");
         var firstPage = model.Preview;
         Require(firstPage is not null && model.CanGoForward && fit.IsEnabled,
             "Fit width requires the first page of a multipage preview.");
+        await UntilAsync(() => scroll.Viewport.Height > 0 && scroll.Viewport.Height < 560, () => $"The window did not shrink. {scroll.Viewport}");
         Require(scroll.Extent.Height <= scroll.Viewport.Height, "The initial preview did not fit the whole page.");
 
         fit.Command!.Execute(null);
@@ -228,7 +252,7 @@ internal static partial class NativeVerification
     private static async Task<long> VerifySearchableCopyAsync(MainWindow window, InboxViewModel model, string fixture, string directory)
     {
         const string scanName = "Pending OCR.pdf";
-        Control<ComboBox>(window, "OcrLanguageBox").SetCurrentValue(ComboBox.SelectedItemProperty, OcrLanguage.English);
+        ChooseRecognitionLanguage(window, OcrLanguage.English);
         string scanPath = Path.Combine(model.LibraryPath, "PDFs", scanName);
         string scannedFixture = Path.Combine(Path.GetDirectoryName(fixture)!, "Scanned Receipt.pdf");
         byte[] sourceBytes = File.ReadAllBytes(scannedFixture);
@@ -504,16 +528,7 @@ internal static partial class NativeVerification
         var original = model.SelectedDocument ?? throw new InvalidOperationException("Open the excerpt before rotating it.");
         Require(original.PageCount == 3 && model.PageLabel == "3 / 3" && model.Preview!.PixelSize.Width < model.Preview.PixelSize.Height,
             "The receipt page was unavailable for rotation.");
-        var dateAction = Control<Button>(window, "EditDocumentDateButton");
-        dialogs.DocumentDateChoice = current => ConfirmDocumentDateAsync(window, current, documentDateInput, directory: null);
-        try
-        {
-            await ((IAsyncRelayCommand)dateAction.Command!).ExecuteAsync(dateAction.CommandParameter);
-        }
-        finally
-        {
-            dialogs.DocumentDateChoice = null;
-        }
+        TypeDocumentDate(window, "29 Feb 2024");
         Require(model.SelectedDocument?.DocumentDate == documentDate && model.PageLabel == "3 / 3", model.Status);
 
         var action = Control<Button>(window, "RotatePdfPagesButton");
@@ -578,11 +593,8 @@ internal static partial class NativeVerification
 
         PressTagKey(input, Key.Down);
         PressTagKey(input, Key.Enter);
-        Require(model.TagInput == TestTag && model.SelectedDocument?.Tags.Contains(TestTag) == false,
-            "Choosing a suggestion did not fill the field without applying it.");
-        PressTagKey(input, Key.Enter);
-        Require(model.SelectedDocument?.Tags.Contains(TestTag) == true && string.IsNullOrEmpty(model.TagInput),
-            "Pressing Enter did not apply the chosen tag and clear the field.");
+        Require(model.SelectedDocument?.Tags.Contains(TestTag) == true && string.IsNullOrEmpty(model.TagInput) && !tagBox.IsDropDownOpen,
+            "One Enter on the chosen suggestion did not add it and clear the field.");
     }
 
     private static void PressTagKey(TextBox input, Key key) => input.RaiseEvent(new KeyEventArgs
@@ -631,7 +643,7 @@ internal static partial class NativeVerification
             }
 
             File.Copy(Path.Combine(Path.GetDirectoryName(fixture)!, "Mixed Pages.pdf"), damaged, overwrite: true);
-            Control<ComboBox>(window, "OcrLanguageBox").SetCurrentValue(ComboBox.SelectedItemProperty, OcrLanguage.English);
+            ChooseRecognitionLanguage(window, OcrLanguage.English);
             dialogs.ImportErrorsChoice = ImportErrorsAction.Retry;
             await ((IAsyncRelayCommand)errors.Command!).ExecuteAsync(null);
             await UntilAsync(() => model.SelectedDocument?.Title == "Check import" && model.Preview is not null, () => model.Status);
@@ -651,9 +663,11 @@ internal static partial class NativeVerification
         try
         {
             dialogs.FolderPath = destination.FullName;
-            var button = Control<Button>(window, "BackUpLibraryButton");
-            Require(button.IsEnabled && button.Command is IAsyncRelayCommand, "The library backup action was unavailable.");
+            var button = SettingsControl<Button>(window, "LibraryGroup", "BackUpLibraryButton");
+            Require(button.IsEffectivelyVisible && button.IsEnabled && button.Command is IAsyncRelayCommand,
+                "The library backup action was unavailable in Settings.");
             await ((IAsyncRelayCommand)button.Command!).ExecuteAsync(null);
+            CloseSettings(window);
             var backupFolder = Directory.EnumerateDirectories(destination.FullName).Single();
             using var backup = InboxLibrary.Open(backupFolder);
             var receipt = backup.Find(new DocumentFilter(Query: ReceiptKeyword, Tag: TestTag)).Items.Single();
@@ -683,7 +697,7 @@ internal static partial class NativeVerification
         const string repairTag = "Repairs";
         Control<AutoCompleteBox>(window, "TagBox").SetCurrentValue(AutoCompleteBox.TextProperty, repairTag);
         Control<Button>(window, "AddTagButton").Command!.Execute(null);
-        Control<ComboBox>(window, "OcrLanguageBox").SetCurrentValue(ComboBox.SelectedItemProperty, OcrLanguage.Spanish);
+        ChooseRecognitionLanguage(window, OcrLanguage.Spanish);
         var copy = Control<Button>(window, "CreateSearchableCopyButton");
         Require(model.RecognitionLanguage == OcrLanguage.Spanish && copy.IsEffectivelyVisible && copy.IsEnabled &&
             Equals(copy.Content, "Create OCR copy"), "The searchable receipt did not offer a fresh OCR copy in Spanish.");
@@ -700,7 +714,7 @@ internal static partial class NativeVerification
     private static async Task<DocumentSummary> ImportOcrFixtureAsync(MainWindow window, InboxViewModel model, FixtureDialogs dialogs,
         string path, OcrLanguage language)
     {
-        Control<ComboBox>(window, "OcrLanguageBox").SetCurrentValue(ComboBox.SelectedItemProperty, language);
+        ChooseRecognitionLanguage(window, language);
         Require(model.RecognitionLanguage == language, $"The OCR language control did not select {language}.");
         dialogs.SelectedFiles = [path];
         await ((IAsyncRelayCommand)Control<Button>(window, "AddFilesButton").Command!).ExecuteAsync(null);
@@ -878,24 +892,17 @@ internal static partial class NativeVerification
     private static async Task VerifyTitleEditorAsync(MainWindow window, InboxViewModel model, string directory)
     {
         var selected = model.SelectedDocument ?? throw new InvalidOperationException("Select a document before testing title edits.");
-        var dialog = new DocumentTitleDialog(selected.Title);
-        var result = dialog.ShowDialog<string?>(window);
-        try
-        {
-            Require(Control<TextBox>(dialog, "TitleBox").Text == selected.Title,
-                "The title editor did not show the selected document's title.");
-            await CaptureAsync(dialog, directory, "edit-title.png");
-        }
-        finally
-        {
-            dialog.Close();
-            await result;
-        }
-
         var edit = Control<Button>(window, "EditTitleButton");
-        Require(edit.IsEnabled && edit.Command is IAsyncRelayCommand, "The title edit control was unavailable.");
-        await ((IAsyncRelayCommand)edit.Command!).ExecuteAsync(null);
-        Require(model.SelectedDocument?.Title == EditedDocumentTitle, "The updated title did not appear in the results.");
+        Require(edit.IsEffectivelyVisible && edit.IsEnabled, "The title could not be edited in place.");
+        edit.RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
+        var editor = Control<TextBox>(window, "TitleEditBox");
+        Require(editor.IsEffectivelyVisible && editor.Text == selected.Title && editor.SelectedText == selected.Title,
+            "The heading did not open as a field with the document's title selected.");
+        await CaptureAsync(window, directory, "edit-title.png");
+        editor.SetCurrentValue(TextBox.TextProperty, EditedDocumentTitle);
+        editor.RaiseEvent(new KeyEventArgs { RoutedEvent = InputElement.KeyDownEvent, Key = Key.Enter });
+        Require(!editor.IsVisible && model.SelectedDocument?.Title == EditedDocumentTitle && model.UndoLabel == "Renamed",
+            $"The updated title did not appear in the results with its Undo. {model.Status}");
         var search = Control<TextBox>(window, "SearchBox");
         search.SetCurrentValue(TextBox.TextProperty, "fixture-not-found");
         await UntilAsync(() => model.Documents.Count == 0, () => model.Status);
@@ -982,10 +989,12 @@ internal static partial class NativeVerification
 
     private static async Task VerifyWatchedFolderAsync(MainWindow window, InboxViewModel model, string fixture, string directory)
     {
-        var start = Control<Button>(window, "StartFolderWatchButton");
-        var stop = Control<Button>(window, "StopFolderWatchButton");
-        var existing = Control<Button>(window, "ImportWatchFolderFilesButton");
-        Require(start.IsEnabled && start.Command is IAsyncRelayCommand, "The folder watch control was not available.");
+        // The watch controls live in Settings › Intake; the sidebar's status card reports the watch.
+        var start = SettingsControl<Button>(window, "IntakeGroup", "StartFolderWatchButton");
+        var settings = (Window)TopLevel.GetTopLevel(start)!;
+        var stop = Control<Button>(settings, "StopFolderWatchButton");
+        var existing = Control<Button>(settings, "ImportWatchFolderFilesButton");
+        Require(start.IsEffectivelyVisible && start.IsEnabled && start.Command is IAsyncRelayCommand, "The folder watch control was not available.");
         await ((IAsyncRelayCommand)start.Command!).ExecuteAsync(null);
         Require(model.IsWatchingFolder && stop.IsVisible, $"The folder watch did not start. {model.Status}");
 
@@ -1011,9 +1020,9 @@ internal static partial class NativeVerification
         await ((IAsyncRelayCommand)stop.Command!).ExecuteAsync(null);
         Require(!model.IsWatchingFolder && existing.IsVisible && Equals(existing.Content, "Resume and catch up"),
             "The stopped watch did not offer catch-up for its remembered folder.");
-        var resume = Control<Button>(window, "ResumeFolderWatchButton");
-        Require(resume.IsVisible && resume.Command is IAsyncRelayCommand, "The native window did not offer the remembered folder.");
-        await CaptureAsync(window, directory, "resume-watch.png");
+        var resume = Control<Button>(settings, "ResumeFolderWatchButton");
+        Require(resume.IsEffectivelyVisible && resume.Command is IAsyncRelayCommand, "Settings did not offer the remembered folder.");
+        await CaptureAsync(settings, directory, "resume-watch.png");
         await ((IAsyncRelayCommand)resume.Command!).ExecuteAsync(null);
         Require(model.IsWatchingFolder && model.WatchedFolderPath == originalFolder, "The watch did not resume its previous folder.");
         Require(existing.IsVisible && existing.IsEnabled && Equals(existing.Content, "Import existing files") &&
@@ -1025,6 +1034,7 @@ internal static partial class NativeVerification
             "Importing the existing file changed the current search or consumed its source.");
         await CaptureAsync(window, directory, "watch-existing-files.png");
         await ((IAsyncRelayCommand)stop.Command!).ExecuteAsync(null);
+        CloseSettings(window);
     }
 
     private static async Task VerifyDropAsync(MainWindow window, InboxViewModel model, string fixture, string directory)
@@ -1057,6 +1067,27 @@ internal static partial class NativeVerification
     private static T Control<T>(Window window, string name) where T : Control =>
         window.FindControl<T>(name) ?? throw new InvalidOperationException($"Missing control {name}.");
 
+    /// <summary>
+    /// Opens Settings at a section and finds a control there. The intake folder, the watches, the phone inbox, the
+    /// recognition choices and backups moved from the sidebar into Settings under the same names.
+    /// </summary>
+    private static T SettingsControl<T>(Window window, string section, string name) where T : Control
+    {
+        var settings = ((MainWindow)window).ShowSettings(section) ?? throw new InvalidOperationException("Settings did not open.");
+        return Control<T>(settings, name);
+    }
+
+    private static void CloseSettings(Window window)
+    {
+        foreach (var settings in window.OwnedWindows.OfType<SettingsWindow>().ToArray()) settings.Close();
+    }
+
+    private static void ChooseRecognitionLanguage(Window window, OcrLanguage language)
+    {
+        SettingsControl<ComboBox>(window, "RecognitionGroup", "OcrLanguageBox").SetCurrentValue(ComboBox.SelectedItemProperty, language);
+        CloseSettings(window);
+    }
+
     private static void Require(bool condition, string message)
     {
         if (!condition) throw new InvalidOperationException(message);
@@ -1075,13 +1106,49 @@ internal static partial class NativeVerification
         }
     }
 
+    private static readonly TimeSpan DialogSettleTime = TimeSpan.FromMilliseconds(300);
+
     private static async Task CaptureAsync(Window window, string directory, string filename)
+    {
+        // A toast that has just appeared is still rising; let its 260 ms entrance finish so the capture shows it.
+        for (int wait = 0; wait < 30 && window is MainWindow { IsToastEntering: true }; wait++) await Task.Delay(20);
+        // A dialog may still be settling (an expander's chevron turns over 260 ms at most); capture it at rest.
+        if (window is not MainWindow) await Task.Delay(DialogSettleTime);
+        await UntilAsync(() => IsLaidOutAtItsFrame(window), () =>
+            $"Before {filename} the window was laid out at {LayoutRoot(window)?.Bounds.Size} in a frame of {window.ClientSize} " +
+            $"({window.Width} x {window.Height} asked).");
+        await CaptureVisualAsync(window, directory, filename);
+    }
+
+    /// <summary>
+    /// True once the platform has given the window the size last asked of it, or the size the screen allows, and the
+    /// layout fills that frame. X11 resizes a window after the request returns, and the layout follows the request at
+    /// once, so a capture taken in between crops the new layout to the old frame. When the platform reports the new
+    /// size, Avalonia sets Width and Height to it, so a window a small screen clamps settles too.
+    /// </summary>
+    private static bool IsLaidOutAtItsFrame(Window window) =>
+        window.IsArrangeValid && LayoutRoot(window) is { } root && Matches(root.Bounds.Width, window.ClientSize.Width) &&
+        Matches(root.Bounds.Height, window.ClientSize.Height) && (double.IsNaN(window.Width) || Matches(window.Width, window.ClientSize.Width)) &&
+        (double.IsNaN(window.Height) || Matches(window.Height, window.ClientSize.Height));
+
+    private static Layoutable? LayoutRoot(Window window) => window.GetVisualChildren().FirstOrDefault() as Layoutable;
+
+    private static bool Matches(double laidOut, double frame) => Math.Abs(laidOut - frame) < 1;
+
+    /// <summary>
+    /// Renders a window or a popup's surface to a PNG and records it in the progress file. A capture taken with the
+    /// pointer over the surface is noted in pointer.txt, because hover states, such as a scroll bar drawn under the
+    /// pointer, show in it.
+    /// </summary>
+    private static async Task CaptureVisualAsync(Visual surface, string directory, string filename)
     {
         await Dispatcher.UIThread.InvokeAsync(() =>
         {
-            using var bitmap = new RenderTargetBitmap(PixelSize.FromSize(window.Bounds.Size, 1), new Vector(96, 96));
-            bitmap.Render(window);
+            using var bitmap = new RenderTargetBitmap(PixelSize.FromSize(surface.Bounds.Size, 1), new Vector(96, 96));
+            bitmap.Render(surface);
             bitmap.Save(Path.Combine(directory, filename), PngBitmapEncoderOptions.Default);
+            if (surface is InputElement { IsPointerOver: true })
+                File.AppendAllText(Path.Combine(directory, "pointer.txt"), filename + Environment.NewLine);
             File.AppendAllText(Path.Combine(directory, CaptureProgressFilename), filename + Environment.NewLine);
         }, DispatcherPriority.Background);
     }
@@ -1096,9 +1163,7 @@ internal sealed partial class FixtureDialogs(params string[] documents) : IWorks
     internal Action<string>? MigrationReportWriter { get; private set; }
     internal string? LastFolderStart { get; private set; }
     internal int FolderPickerCalls { get; private set; }
-    internal string? EditedTitle { get; init; }
     internal ArchiveSerialInput? ArchiveSerialChoice { get; set; }
-    internal Func<DateOnly?, Task<DocumentDateEdit?>>? DocumentDateChoice { get; set; }
     internal Func<DateOnly?, int, Task<DocumentDateEdit?>>? BatchDocumentDateChoice { get; set; }
     internal Func<SavedSearchDraft, string?, bool, Task<SavedSearchDecision?>>? SavedSearchChoice { get; set; }
     internal TagRenameRequest? TagRenameChoice { get; set; }
@@ -1144,9 +1209,6 @@ internal sealed partial class FixtureDialogs(params string[] documents) : IWorks
     public Task<ArchiveSerialInput?> PickArchiveSerialAsync(ArchiveSerialAction action, long? current = null) =>
         Task.FromResult(ArchiveSerialChoice);
     public Task<string?> PickArchiveSheetPathAsync(string filename) => Task.FromResult<string?>(null);
-    public Task<string?> EditTitleAsync(string currentTitle) => Task.FromResult(EditedTitle);
-    public Task<DocumentDateEdit?> EditDocumentDateAsync(DateOnly? currentDate) =>
-        DocumentDateChoice?.Invoke(currentDate) ?? Task.FromResult<DocumentDateEdit?>(null);
     public Task<DocumentDateEdit?> EditBatchDocumentDatesAsync(DateOnly? commonDate, int documentCount) =>
         BatchDocumentDateChoice?.Invoke(commonDate, documentCount) ?? Task.FromResult<DocumentDateEdit?>(null);
     public Task<SavedSearchDecision?> EditSavedSearchAsync(SavedSearchDraft draft, string? scopeTag, bool editing) =>
@@ -1185,7 +1247,14 @@ internal sealed partial class FixtureDialogs(params string[] documents) : IWorks
     public Task ShowFilingRulesAsync(IReadOnlyList<FilingRule> rules, Func<FilingRule, FilingRule> save, Action<long> remove) =>
         RuleChoice?.Invoke(rules, save, remove) ?? Task.CompletedTask;
     public Task ShowIntegrityReportAsync(IntegrityReport report) => IntegrityChoice?.Invoke(report) ?? Task.CompletedTask;
-    public void OpenPath(string path) => LastOpenedPath = path;
+    /// <summary>When true, opening a file or folder fails as the system's opener does for one that is unavailable.</summary>
+    internal bool OpenPathFails { get; set; }
+
+    public void OpenPath(string path)
+    {
+        if (OpenPathFails) throw new FileNotFoundException("This file or folder is unavailable. Refresh the library.");
+        LastOpenedPath = path;
+    }
 
     public Task CopyTextAsync(string text)
     {

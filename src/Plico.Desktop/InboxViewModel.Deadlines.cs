@@ -14,7 +14,7 @@ internal sealed partial class InboxViewModel
     [NotifyPropertyChangedFor(nameof(ReminderMenuTitle))]
     private long _dueReminderCount;
 
-    public string ReminderMenuTitle => DueReminderCount == 0 ? DesktopText.Translate("Reminders…") : DesktopText.Format($"Reminders ({DueReminderCount})…");
+    public string ReminderMenuTitle => DueReminderCount == 0 ? DesktopText.Translate("Upcoming") : DesktopText.Format($"Upcoming ({DueReminderCount})");
 
     private void PrepareReminderPolling()
     {
@@ -32,7 +32,7 @@ internal sealed partial class InboxViewModel
             }
             catch (Exception error) when (error is IOException or Microsoft.Data.Sqlite.SqliteException)
             {
-                Status = error.Message;
+                Fail(error.Message);
             }
         };
         _reminderTimer.Start();
@@ -57,8 +57,9 @@ internal sealed partial class InboxViewModel
             return;
         }
         await Task.Run(() => library.SaveDeadlines(document.Id, edited, token), token);
+        RetireUndo();
         RefreshDueReminderCount();
-        Status = DesktopText.Translate("Document deadlines saved.");
+        Status = DesktopText.Translate("Reminder saved.");
     });
 
     [RelayCommand]
@@ -71,6 +72,8 @@ internal sealed partial class InboxViewModel
         {
             case { Action: ReminderAction.Dismiss, Reminder: { } dismissed }:
                 library.DismissReminder(dismissed.DocumentId, dismissed.Deadline.Kind);
+                // A reminder is part of a document, so Undo can no longer reach past this change, as after saving one.
+                RetireUndo();
                 RefreshDueReminderCount();
                 Status = DesktopText.Translate("Reminder dismissed.");
                 break;
@@ -82,7 +85,7 @@ internal sealed partial class InboxViewModel
                 var destination = await _dialogs.PickFolderAsync(DesktopText.Translate("Choose where to save the calendar"));
                 if (destination is null) { Status = DesktopText.Translate("Calendar destination not chosen."); break; }
                 string path = await Task.Run(() => library.ExportDeadlinesAsync(destination, cancellationToken: token), token);
-                LatestExportLocation = Path.GetDirectoryName(path);
+                NoteExport(Path.GetDirectoryName(path));
                 Status = DesktopText.Format($"Exported {Path.GetFileName(path)}.");
                 break;
             default:

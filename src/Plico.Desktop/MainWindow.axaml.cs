@@ -19,6 +19,9 @@ public sealed partial class MainWindow : Window
         ApplyWorkspaceLayout(Width);
         WirePalette();
         WireShortcutKeys();
+        WireToast();
+        WireFieldEditing();
+        WatchTheDay();
         PreviewPage.PropertyChanged += (_, change) =>
         {
             if (change.Property == Image.SourceProperty) UpdatePreviewScrollPosition();
@@ -96,7 +99,8 @@ public sealed partial class MainWindow : Window
 
     private void RemoveTag_Click(object? sender, RoutedEventArgs e)
     {
-        if (sender is Button { DataContext: string tag }) ViewModel?.RemoveTag(tag);
+        if (sender is Button { DataContext: TagChip chip }) ViewModel?.RemoveTag(chip.Label);
+        else if (sender is Button { DataContext: string tag }) ViewModel?.RemoveTag(tag);
     }
 
     private void TagBox_Populating(object? sender, PopulatingEventArgs e)
@@ -107,9 +111,14 @@ public sealed partial class MainWindow : Window
         }
     }
 
+    /// <summary>
+    /// One Enter adds the tag. The field handles the key first: with a suggestion chosen it fills in the catalog's
+    /// spelling and closes the list, otherwise it only closes it, and then the tag in the field is added.
+    /// </summary>
     private void TagBox_KeyDown(object? sender, KeyEventArgs e)
     {
         if (e.Key != Key.Enter) return;
+        TagBox.IsDropDownOpen = false;
         ViewModel?.AddTagCommand.Execute(null);
         e.Handled = true;
     }

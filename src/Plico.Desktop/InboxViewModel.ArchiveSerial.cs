@@ -15,6 +15,7 @@ internal sealed partial class InboxViewModel
         if (input is null) return;
         token.ThrowIfCancellationRequested();
         await Task.Run(() => library.SetArchiveSerialNumber(selected.Id, input.Number), token);
+        RetireUndo();
         LoadResults(preferredId: selected.Id, retainLoadedResults: true);
         Status = input.Number is long number ? $"Assigned archive serial {number}." : "Archive serial removed.";
     });

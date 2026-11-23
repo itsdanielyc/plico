@@ -19,7 +19,7 @@ internal sealed partial class InboxViewModel
     public bool HasTaggedBatchSelection => HasBatchSelection && _batchSelection.Any(document => document.Tags.Count > 0);
     public string BatchCountLabel => DesktopText.Format($"{_batchSelection.Count} selected");
     public string SelectShownAction => HasBatchSelection ? DesktopText.Translate("Clear selection") : DesktopText.Translate("Select shown");
-    public string BatchReviewAction => AllSelectedAreReviewed ? DesktopText.Translate("Return selected to inbox") : DesktopText.Translate("Mark selected reviewed");
+    public string BatchReviewAction => AllSelectedAreReviewed ? DesktopText.Translate("Move selected back to Inbox") : DesktopText.Translate("Mark selected reviewed");
     private bool AllSelectedAreReviewed => _batchSelection.All(document => document.Reviewed);
 
     internal void SetBatchSelection(IReadOnlyList<DocumentSummary> selectedDocuments)
@@ -30,7 +30,9 @@ internal sealed partial class InboxViewModel
         OnPropertyChanged(nameof(BatchCountLabel));
         OnPropertyChanged(nameof(SelectShownAction));
         OnPropertyChanged(nameof(BatchReviewAction));
-        OnPropertyChanged(nameof(ShowFilingCard));
+        // While results are replaced the list is empty for a moment. Hiding the card then would drop the keyboard focus
+        // of whatever field or button in it has it; the selection that follows raises the card's state anyway.
+        if (!_replacingResults) OnPropertyChanged(nameof(ShowFilingCard));
         if (HasDeferredWatchResults && !HasBatchSelection && !HasExpandedResults)
         {
             Dispatcher.UIThread.Post(() =>
@@ -68,15 +70,17 @@ internal sealed partial class InboxViewModel
         bool reviewed = !document.Reviewed;
         try
         {
-            RequireLibrary().SetReviewed(document.Id, reviewed);
-            OfferReviewUndo([document.Id], reviewed);
+            var library = RequireLibrary();
+            library.SetReviewed(document.Id, reviewed);
             RefreshInboxCount();
             LoadResults(document.Id, retainLoadedResults: true, reviewPosition: position);
-            Status = reviewed ? DesktopText.Translate("Marked as reviewed.") : DesktopText.Translate("Returned to inbox.");
+            string title = reviewed ? DesktopText.Translate("Marked reviewed") : DesktopText.Translate("Back in the Inbox");
+            OfferUndo(ReviewUndo(library, [document.Id], reviewed, title, document.Title),
+                reviewed ? DesktopText.Translate("Marked reviewed.") : DesktopText.Translate("Back in the Inbox."));
         }
         catch (Exception error)
         {
-            Status = error.Message;
+            Fail(error.Message);
         }
     }
 
@@ -92,22 +96,28 @@ internal sealed partial class InboxViewModel
         {
             var library = RequireLibrary();
             await Task.Run(() => library.SetReviewedDocuments(selectedIds, reviewed), token);
-            OfferReviewUndo(changedIds, reviewed);
             RefreshInboxCount();
             LoadResults(retainLoadedResults: true, reviewPosition: position);
             var count = DocumentCount(selectedIds.Length);
-            Status = reviewed ? DesktopText.Format($"{count} marked reviewed.") : DesktopText.Format($"{count} returned to inbox.");
+            string status = reviewed ? DesktopText.Format($"{count} marked reviewed.") : DesktopText.Format($"{count} back in the Inbox.");
+            // The offer puts back only the documents that changed, so already reviewed members stay reviewed.
+            OfferUndo(ReviewUndo(library, changedIds, reviewed, WithoutFullStop(status), null), status);
         });
     }
 
     private sealed record ReviewPosition(DocumentFilter Filter, IReadOnlyList<DocumentSummary> PreviousResults, int Index);
 
+    /// <summary>
+    /// Where a document sits in the results on screen. While the typed search cannot run, those are the results of the
+    /// last search that could, so J, K and the next document after a review still follow them.
+    /// </summary>
     private ReviewPosition? CaptureReviewPosition(long documentId)
     {
-        if (_appliedQuery != Query) return null;
+        if (_appliedQuery != Query && !QueryCannotRun) return null;
+        var filter = QueryCannotRun && _shownFilter is { } shown ? shown : CurrentFilter();
         for (int index = 0; index < Documents.Count; index++)
         {
-            if (Documents[index].Id == documentId) return new ReviewPosition(CurrentFilter(), Documents, index);
+            if (Documents[index].Id == documentId) return new ReviewPosition(filter, Documents, index);
         }
         return null;
     }
@@ -144,16 +154,27 @@ internal sealed partial class InboxViewModel
             Status = DesktopText.Translate("Enter a tag for the selection.");
             return Task.CompletedTask;
         }
-        var selectedIds = _batchSelection.Select(document => document.Id).ToArray();
-        var tag = BatchTagInput;
+        var selection = _batchSelection;
+        var selectedIds = selection.Select(document => document.Id).ToArray();
+        string tag = BatchTagInput.Trim();
         return RunOperationAsync("Tagging the selected documents…", async token =>
         {
             var library = RequireLibrary();
+            // O(t) over the selection's tags: Undo takes the tag back off only the documents that did not have it.
+            string key = InboxLibrary.GetTagKey(tag);
+            long[] untagged = selection.Where(document => !document.Tags.Any(label => InboxLibrary.GetTagKey(label) == key))
+                .Select(document => document.Id).ToArray();
             await Task.Run(() => library.AddTagToDocuments(selectedIds, tag), token);
             Tags = library.GetTags();
             LoadResults(retainLoadedResults: true);
             BatchTagInput = "";
-            Status = DesktopText.Format($"Tag applied to {DocumentCount(selectedIds.Length)}.");
+            if (untagged.Length > 0)
+            {
+                OfferUndo(BatchTagUndo(library, untagged, tag, selectedIds.Length),
+                    DesktopText.Format($"Tag applied to {DocumentCount(selectedIds.Length)}."));
+                return;
+            }
+            AnnounceExistingTag(selection[0].Tags.First(label => InboxLibrary.GetTagKey(label) == key));
         });
     }
 
@@ -173,6 +194,7 @@ internal sealed partial class InboxViewModel
 
             var selectedIds = selectedDocuments.Select(document => document.Id).ToArray();
             int changed = await Task.Run(() => library.RemoveTagFromDocuments(selectedIds, tag, token), token);
+            if (changed > 0) RetireUndo();
             Tags = library.GetTags();
             LoadResults(retainLoadedResults: true);
             Status = changed == 0 ? DesktopText.Translate("The selected documents no longer have that tag.") : DesktopText.Format($"Tag removed from {DocumentCount(changed)}.");

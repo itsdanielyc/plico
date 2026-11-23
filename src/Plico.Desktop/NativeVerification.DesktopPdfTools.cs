@@ -82,9 +82,13 @@ internal static partial class NativeVerification
         try
         {
             await model.ShowAppearanceCommand.ExecuteAsync(null);
+            // The window is the desk, so dark mode shows the family's dark Base, #0B0B0C (it was the old
+            // workspace grey, #1C1C1F, before the miille tokens).
             await UntilAsync(() => model.Preview is not null && window.ActualThemeVariant == ThemeVariant.Dark &&
-                window.Background is ISolidColorBrush { Color: { R: 28, G: 28, B: 31 } }, () => model.Status);
+                window.Background is ISolidColorBrush { Color: { R: 11, G: 11, B: 12 } }, () => model.Status);
             await CaptureAsync(window, evidence, "desktop-dark.png");
+            await CaptureFrameAsync(window, evidence, "window-frame-dark.png");
+            if (window is MainWindow dark) await CaptureInPlaceEditorsAsync(dark, model, evidence, "dark");
 
             DesktopText.SetLanguage(InterfaceLanguage.French);
             var localizedLibrary = Directory.CreateTempSubdirectory("plico-verify-french-");
@@ -103,6 +107,8 @@ internal static partial class NativeVerification
                 Require(Control<ScrollViewer>(localized, "PreviewScroll").Viewport.Height >= MinimumPreviewViewport,
                     "The French interface crowded the PDF viewport at the minimum window size.");
                 await CaptureAsync(localized, evidence, "desktop-french.png");
+                await CaptureInPlaceEditorsAsync(localized, localizedModel, evidence, "french");
+                await VerifyCompactSearchCorrectionAsync(localized, localizedModel, evidence);
             }
             finally
             {

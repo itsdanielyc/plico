@@ -1,7 +1,7 @@
 using Avalonia.Controls;
 using Avalonia.Headless.XUnit;
+using Avalonia.Input;
 using Avalonia.Interactivity;
-using CommunityToolkit.Mvvm.Input;
 using Plico.Core;
 using Plico.Desktop;
 using Xunit;
@@ -19,37 +19,29 @@ public sealed partial class InboxWindowTests
             string fixture = Path.Combine(AppContext.BaseDirectory, "fixtures", "Lease Renewal.pdf");
             await library.ImportAsync(fixture, TestContext.Current.CancellationToken);
         }
-        var dialogs = new FixtureDialogs();
-        using var model = new InboxViewModel(dialogs);
+        using var model = new InboxViewModel(new FixtureDialogs());
         model.InitializeLibrary(() => temporary.Path);
         var window = new MainWindow { DataContext = model };
         window.Show();
         try
         {
-            var edit = Assert.IsType<Button>(window.FindControl<Button>("EditDocumentDateButton"));
-            Assert.True(edit.IsEffectivelyVisible);
-            Assert.True(edit.IsEnabled);
-            Assert.Equal("Set document date…", model.DocumentDateAction);
-            var command = Assert.IsAssignableFrom<IAsyncRelayCommand>(edit.Command);
+            var field = Assert.IsType<TextBox>(window.FindControl<TextBox>("DocumentDateField"));
+            Assert.True(field.IsEffectivelyVisible);
+            Assert.True(field.IsEnabled);
+            Assert.True(string.IsNullOrEmpty(field.Text));
+            Assert.Equal("Add a date", field.PlaceholderText);
+            field.SetCurrentValue(TextBox.TextProperty, "29 Feb 2024");
+            field.RaiseEvent(new KeyEventArgs { RoutedEvent = InputElement.KeyDownEvent, Key = Key.Enter });
             var leapDay = new DateOnly(2024, 2, 29);
-            dialogs.DocumentDateChoice = date =>
-            {
-                Assert.Null(date);
-                return Task.FromResult<DocumentDateEdit?>(new(leapDay));
-            };
-            await command.ExecuteAsync(null);
             Assert.Equal(leapDay, model.SelectedDocument?.DocumentDate);
-            Assert.Equal("Document date saved.", model.Status);
+            Assert.Equal("Date set.", model.Status);
             model.Query = "dated:2024-02";
             await WaitForAsync(() => model.Heading == "Search results" && model.Documents.Count == 1);
-            dialogs.DocumentDateChoice = date =>
-            {
-                Assert.Equal(leapDay, date);
-                return Task.FromResult<DocumentDateEdit?>(new(null));
-            };
-            await command.ExecuteAsync(null);
+            Assert.Equal("29 Feb 2024", field.Text);
+            field.SetCurrentValue(TextBox.TextProperty, "");
+            field.RaiseEvent(new KeyEventArgs { RoutedEvent = InputElement.KeyDownEvent, Key = Key.Enter });
             Assert.Empty(model.Documents);
-            Assert.Equal("Document date cleared.", model.Status);
+            Assert.Equal("Date cleared.", model.Status);
             model.ShowAllCommand.Execute(null);
             Assert.Null(Assert.Single(model.Documents).DocumentDate);
         }
@@ -70,7 +62,7 @@ public sealed partial class InboxWindowTests
         try
         {
             var box = Assert.IsType<TextBox>(dialog.FindControl<TextBox>("DocumentDateBox"));
-            Assert.Equal("2024-02-01", box.Text);
+            Assert.Equal("1 Feb 2024", box.Text);
             var save = Assert.IsType<Button>(dialog.FindControl<Button>("ConfirmDocumentDateButton"));
             box.Text = "2023-02-29";
             save.RaiseEvent(new RoutedEventArgs(Button.ClickEvent));

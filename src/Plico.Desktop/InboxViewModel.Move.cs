@@ -25,9 +25,14 @@ internal sealed partial class InboxViewModel
             Status = DesktopText.Translate("Moving the PDF…");
             var moved = await Task.Run(() => library.MovePdfAsync(document.Id, folder, token), token);
             LoadResults(moved.Id, reloadPreview: Preview is null);
-            Status = moved.RelativePath == document.RelativePath
-                ? "This PDF is already in that folder."
-                : $"Moved to {moved.RelativePath}.";
+            if (moved.RelativePath == document.RelativePath)
+            {
+                Status = DesktopText.Translate("This PDF is already in that folder.");
+                return;
+            }
+            RetireUndo();
+            Announce(DesktopText.Format($"Moved to {moved.RelativePath}."), DesktopText.Translate("Moved"),
+                string.Join(PathSeparator, moved.RelativePath.Split('/', StringSplitOptions.RemoveEmptyEntries)));
         });
     }
 
@@ -51,10 +56,21 @@ internal sealed partial class InboxViewModel
             Status = DesktopText.Translate("Moving selected PDFs…");
             var progress = new Progress<int>(processed =>
             {
-                if (IsBusy && !token.IsCancellationRequested) Status = DesktopText.Format($"Filed {processed} of {orderedIds.Length} PDFs…");
+                if (!IsBusy || token.IsCancellationRequested) return;
+                ReportProgress(processed, orderedIds.Length);
+                Status = DesktopText.Format($"Filed {processed} of {orderedIds.Length} PDFs…");
             });
             long? displayedDocument = SelectedDocument?.Id;
-            var result = await Task.Run(() => library.MoveSelectedPdfsAsync(orderedIds, folder, progress, token), token);
+            BatchMoveResult? result = null;
+            try
+            {
+                result = await Task.Run(() => library.MoveSelectedPdfsAsync(orderedIds, folder, progress, token), token);
+            }
+            finally
+            {
+                // Only a completed batch with no moves establishes that every PDF was already there.
+                if (result is not { Moved: 0, Cancelled: false, Failure: null }) RetireUndo();
+            }
             LoadResults(displayedDocument, reloadPreview: Preview is null);
             Status = BatchMoveStatus(result);
         });
@@ -63,8 +79,8 @@ internal sealed partial class InboxViewModel
     private static string BatchMoveStatus(BatchMoveResult result)
     {
         var messages = new List<string>(3);
-        if (result.Moved > 0) messages.Add($"Moved {DocumentCount(result.Moved)}.");
-        if (result.AlreadyInFolder > 0) messages.Add($"{DocumentCount(result.AlreadyInFolder)} already in that folder.");
+        if (result.Moved > 0) messages.Add(Counted(result.Moved, "Moved 1 document.", $"Moved {result.Moved} documents."));
+        if (result.AlreadyInFolder > 0) messages.Add(DesktopText.Format($"{DocumentCount(result.AlreadyInFolder)} already in that folder."));
         if (result.Cancelled) messages.Add($"Cancelled with {DocumentCount(result.Remaining)} left to file.");
         if (result.Failure is { } failure)
         {

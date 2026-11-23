@@ -32,10 +32,13 @@ internal sealed partial class InboxViewModel
         Status = DesktopText.Translate("Backing up the library…");
         var progress = new Progress<BackupProgress>(update =>
         {
-            if (IsBusy && !token.IsCancellationRequested) Status = DesktopText.Format($"Copied {update.Copied} of {update.Total} PDFs…");
+            if (!IsBusy || token.IsCancellationRequested) return;
+            ReportProgress(update.Copied, update.Total);
+            Status = DesktopText.Format($"Copied {update.Copied} of {update.Total} PDFs…");
         });
         var backup = await Task.Run(() => library.BackupAsync(destination, progress, token), token);
         LatestBackupLocation = backup.Location;
-        Status = DesktopText.Format($"Saved a backup of {DocumentCount(backup.PdfCount)} to {backup.Location}.");
+        Announce(DesktopText.Format($"Saved a backup of {DocumentCount(backup.PdfCount)} to {backup.Location}."), DesktopText.Translate("Backup saved"),
+            $"{DocumentCount(backup.PdfCount)} · {FriendlyPath(Path.GetDirectoryName(backup.Location) ?? backup.Location)}");
     });
 }

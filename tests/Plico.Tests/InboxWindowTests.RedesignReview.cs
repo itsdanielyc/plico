@@ -202,7 +202,8 @@ public sealed partial class InboxWindowTests
             string[] english = ShortcutLabels(model, InterfaceLanguage.English);
             string[] french = ShortcutLabels(model, InterfaceLanguage.French);
             Assert.Equal(english.Length, french.Length);
-            Assert.True(english.Length >= 19, $"Only {english.Length} shortcut rows.");
+            // Every action once: Search's two keys (/ and Ctrl F) share one row.
+            Assert.True(english.Length >= 18, $"Only {english.Length} shortcut rows.");
             Assert.Empty(english.Intersect(french));
         }
         finally

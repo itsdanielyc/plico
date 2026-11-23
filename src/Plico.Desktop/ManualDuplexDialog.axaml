@@ -1,15 +1,22 @@
 <Window xmlns="https://github.com/avaloniaui" xmlns:translation="using:Plico.Desktop" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-        x:Class="Plico.Desktop.ManualDuplexDialog" Title="{translation:Tr ManualDuplexWindow}" Width="520"
-        SizeToContent="Height" CanResize="False" WindowStartupLocation="CenterOwner"
-        FontFamily="{StaticResource InterFont}" Background="{DynamicResource WorkspaceSurface}">
-    <StackPanel Margin="24" Spacing="13">
-        <TextBlock x:Name="FrontSidesMessage" FontSize="18" FontWeight="SemiBold" TextWrapping="Wrap" />
-        <TextBlock Text="{translation:Tr ManualDuplexInstructions}" TextWrapping="Wrap" />
-        <StackPanel Orientation="Horizontal" Spacing="8" HorizontalAlignment="Right">
-            <Button x:Name="DiscardFrontsButton" Content="{translation:Tr DiscardFronts}" Click="Discard_Click" Padding="14,7" />
-            <Button x:Name="LaterButton" Content="{translation:Tr FinishLater}" IsCancel="True" Click="Later_Click" Padding="14,7" />
-            <Button x:Name="ScanBacksButton" Content="{translation:Tr ScanBackSides}" IsDefault="True" Click="ScanBacks_Click" Padding="14,7"
-                    Background="{DynamicResource PrimarySurface}" Foreground="White" />
+        x:Class="Plico.Desktop.ManualDuplexDialog" Title="{translation:Tr ManualDuplexWindow}" Width="540"
+        SizeToContent="Height" CanResize="False" WindowStartupLocation="CenterOwner" Classes="dialog">
+    <DockPanel>
+        <Border DockPanel.Dock="Bottom" Classes="dialog-footer">
+            <Grid ColumnDefinitions="Auto,*,Auto" ColumnSpacing="8">
+                <Button x:Name="DiscardFrontsButton" Classes="secondary" Content="{translation:Tr DiscardFronts}" Click="Discard_Click" />
+                <StackPanel Grid.Column="2" Classes="dialog-actions">
+                    <Button x:Name="LaterButton" Classes="secondary" Content="{translation:Tr FinishLater}" IsCancel="True" Click="Later_Click" />
+                    <Button x:Name="ScanBacksButton" Classes="primary" Content="{translation:Tr ScanBackSides}" IsDefault="True" Click="ScanBacks_Click" />
+                </StackPanel>
+            </Grid>
+        </Border>
+        <StackPanel Classes="dialog-body">
+            <StackPanel Spacing="4">
+                <TextBlock Classes="heading" Text="{translation:Tr ScanBackSidesHeading}" TextWrapping="Wrap" />
+                <TextBlock x:Name="FrontSidesMessage" Classes="description" />
+            </StackPanel>
+            <TextBlock Text="{translation:Tr ManualDuplexInstructions}" TextWrapping="Wrap" />
         </StackPanel>
-    </StackPanel>
+    </DockPanel>
 </Window>

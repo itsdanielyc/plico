@@ -1,5 +1,6 @@
 using Avalonia.Controls;
 using Avalonia.Headless.XUnit;
+using Plico.Core;
 using Plico.Desktop;
 using Xunit;
 
@@ -7,6 +8,35 @@ namespace Plico.Tests;
 
 public sealed partial class InboxWindowTests
 {
+    [AvaloniaTheory]
+    [InlineData(false, "Couldn't add 1 file", "1 document added.")]
+    [InlineData(true, "Impossible d’ajouter 1 fichier", "1 document ajouté.")]
+    public async Task AMixedImportLeadsWithTheFailureInTheInterfaceLanguage(bool french, string title, string success)
+    {
+        using var library = new TemporaryLibrary();
+        using var inputs = new TemporaryLibrary();
+        string damaged = Path.Combine(inputs.Path, "damaged.pdf");
+        File.WriteAllText(damaged, "Unreadable PDF");
+        DesktopText.SetLanguage(french ? InterfaceLanguage.French : InterfaceLanguage.English);
+        try
+        {
+            using var model = new InboxViewModel(new FixtureDialogs(RedesignFixture("Lease Renewal.pdf"), damaged));
+            model.InitializeLibrary(() => library.Path);
+            await model.AddFilesCommand.ExecuteAsync(null);
+            Assert.Equal(title, model.ToastTitle);
+            Assert.True(model.ToastIsProblem);
+            Assert.Contains("damaged.pdf", model.ToastBody, StringComparison.Ordinal);
+            Assert.Contains(success, model.ToastBody, StringComparison.Ordinal);
+            Assert.Single(model.Documents);
+            Assert.Equal(damaged, Assert.Single(model.ImportFailures).SourcePath);
+            await WaitForPreviewAsync(model);
+        }
+        finally
+        {
+            DesktopText.SetLanguage(InterfaceLanguage.English);
+        }
+    }
+
     [AvaloniaFact]
     public async Task ReopeningRestoresImportErrorsAndRetryAndClearPersist()
     {
@@ -117,7 +147,7 @@ public sealed partial class InboxWindowTests
 
         Assert.True(model.HasLibrary);
         Assert.Empty(model.ImportFailures);
-        Assert.Contains("Could not load saved import errors", model.Status, StringComparison.Ordinal);
+        Assert.Contains("Couldn't load the saved import errors", model.Status, StringComparison.Ordinal);
         Assert.Equal(invalid, File.ReadAllText(saved));
     }
 
@@ -141,8 +171,50 @@ public sealed partial class InboxWindowTests
         await model.InspectImportErrorsCommand.ExecuteAsync(null);
 
         Assert.Equal(failure, Assert.Single(model.ImportFailures));
-        Assert.Contains("Could not save import errors", model.Status, StringComparison.Ordinal);
+        Assert.Contains("Couldn't save the import errors", model.Status, StringComparison.Ordinal);
         Assert.Equal(failure, Assert.Single(new ImportFailureStore(retainedDirectory).Load(library.Path)));
+    }
+
+    [AvaloniaFact]
+    public async Task AnImportWhoseErrorsCannotBeSavedLeadsWithTheProblem()
+    {
+        using var library = new TemporaryLibrary();
+        using var settings = new TemporaryLibrary();
+        using var inputs = new TemporaryLibrary();
+        using (var opened = InboxLibrary.Open(library.Path)) BatchFixtures.AddTwoDocuments(opened, TestContext.Current.CancellationToken);
+        // A file that failed to import before is saved as an import error.
+        string repaired = Path.Combine(inputs.Path, "Damaged.pdf");
+        var store = new ImportFailureStore(settings.Path);
+        store.Save(library.Path, [new ImportFailure(repaired, "Unreadable")]);
+        using var model = new InboxViewModel(new FixtureDialogs(repaired), importFailureStore: store);
+        model.InitializeLibrary(() => library.Path);
+        var window = new MainWindow { DataContext = model, Width = 1280, Height = 800 };
+        window.Show();
+        try
+        {
+            await WaitForPreviewAsync(model);
+            Assert.Equal(repaired, Assert.Single(model.ImportFailures).SourcePath);
+            // The file is whole now, but the saved import errors can no longer be written: a folder stands in their place.
+            File.Copy(Path.Combine(AppContext.BaseDirectory, "fixtures", "Match Ledger.pdf"), repaired);
+            string saved = Assert.Single(Directory.GetFiles(settings.Path, "import-errors-*.json"));
+            File.Delete(saved);
+            Directory.CreateDirectory(saved);
+
+            ClickAt(window, Named<Button>(window, "AddFilesButton"));
+            await WaitForAsync(() => !model.IsBusy && model.InboxCount == 3);
+            await WaitForPreviewAsync(model);
+
+            // The document was added, but the list of import errors was not saved: the toast leads with that, with the
+            // alert, and the document's arrival follows.
+            var toast = Assert.IsType<Border>(window.FindControl<Border>("Toast"));
+            Assert.Equal(("Couldn't save the import errors", true),
+                (model.ToastTitle, ToastWearsTheAlert(toast)));
+            Assert.EndsWith("1 document added.", model.ToastStatus, StringComparison.Ordinal);
+        }
+        finally
+        {
+            window.Close();
+        }
     }
 
     [AvaloniaFact]

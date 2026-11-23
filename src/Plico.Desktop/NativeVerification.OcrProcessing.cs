@@ -1,28 +1,29 @@
 using Avalonia.Controls;
+using Avalonia.Controls.Primitives;
 
 namespace Plico.Desktop;
 
 internal static partial class NativeVerification
 {
+    /// <summary>The engine and orientation choices are switches in Settings › Text recognition.</summary>
     private static async Task VerifyOcrProcessingChoicesAsync(Window window, InboxViewModel model, string evidenceDirectory)
     {
-        var button = Control<Button>(window, "OcrProcessingButton");
-        Require(button.IsEnabled && button.Flyout is MenuFlyout, "The OCR settings menu is unavailable.");
-        var menu = (MenuFlyout)button.Flyout!;
-        menu.ShowAt(button);
+        var engine = SettingsControl<CheckBox>(window, "RecognitionGroup", "RapidOcrChoice");
+        var settings = (Window)TopLevel.GetTopLevel(engine)!;
+        var rotation = Control<CheckBox>(settings, "OrientPagesChoice");
         try
         {
-            var rotation = menu.Items.OfType<MenuItem>().Single(item => item.Name == "OrientPagesChoice");
-            var engine = menu.Items.OfType<MenuItem>().Single(item => item.Name == "RapidOcrChoice");
-            Require(engine.IsEnabled == model.CanUseRapidOcr && rotation.IsEnabled, "OCR availability did not match this platform.");
-            rotation.SetCurrentValue(MenuItem.IsCheckedProperty, true);
-            Require(model.AutoOrientPages, "The OCR menu did not enable page orientation.");
-            rotation.SetCurrentValue(MenuItem.IsCheckedProperty, false);
-            await CaptureAsync(window, evidenceDirectory, "ocr-processing.png");
+            Require(engine.IsEnabled == model.CanUseRapidOcr && rotation.IsEnabled && rotation.IsEffectivelyVisible,
+                "OCR availability did not match this platform.");
+            rotation.SetCurrentValue(ToggleButton.IsCheckedProperty, true);
+            Require(model.AutoOrientPages, "The orientation switch did not enable page orientation.");
+            await CaptureAsync(settings, evidenceDirectory, "ocr-processing.png");
+            rotation.SetCurrentValue(ToggleButton.IsCheckedProperty, false);
+            Require(!model.AutoOrientPages, "The orientation switch did not turn page orientation off again.");
         }
         finally
         {
-            menu.Hide();
+            CloseSettings(window);
         }
     }
 }

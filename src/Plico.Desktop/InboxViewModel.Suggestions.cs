@@ -33,7 +33,7 @@ internal sealed partial class InboxViewModel
 
     /// <summary>The document date read from the page, offered only while the document has no date.</summary>
     public bool HasSuggestedDate => SuggestedDate is not null && SelectedDocument is { DocumentDate: null };
-    public string SuggestedDateLabel => SuggestedDate is { } date ? date.ToString("d MMM yyyy", CultureInfo.CurrentCulture) : "";
+    public string SuggestedDateLabel => SuggestedDate is { } date ? DisplayDates.Day(date) : "";
     public bool HasSuggestions => SuggestionCount > 0;
     public int SuggestionCount => SuggestedTags.Count + (HasSuggestedDate ? 1 : 0);
     public string SuggestionSummary => SuggestionCount == 1
@@ -68,26 +68,41 @@ internal sealed partial class InboxViewModel
         if (tag is not null) ApplySuggestions([tag.Label], includeDate: false);
     }
 
+    /// <summary>
+    /// Files the date the page suggests. It belongs to the date field, so like a typed date it is one quick catalog
+    /// write that is saved while Plico works in the background.
+    /// </summary>
     [RelayCommand]
-    private void AcceptSuggestedDate() => ApplySuggestions([], HasSuggestedDate);
+    private void AcceptSuggestedDate()
+    {
+        if (HasLibrary && HasSuggestedDate) SaveEdit(() => ApplySuggestionsNow([], includeDate: true));
+    }
 
     private void ApplySuggestions(IReadOnlyList<string> tags, bool includeDate)
     {
-        if (!CanWork || SelectedDocument is not { } document || (tags.Count == 0 && !includeDate)) return;
+        if (CanWork) ApplySuggestionsNow(tags, includeDate);
+    }
+
+    private void ApplySuggestionsNow(IReadOnlyList<string> tags, bool includeDate)
+    {
+        if (SelectedDocument is not { } document || (tags.Count == 0 && !includeDate)) return;
         try
         {
             var library = RequireLibrary();
-            // Filing selections add tags and leave existing assignments in place.
+            // Filing selections add tags and leave existing assignments in place, so Undo takes back only new ones.
+            var present = document.Tags.Select(InboxLibrary.GetTagKey).ToHashSet(StringComparer.Ordinal);
+            string[] added = tags.Where(tag => present.Add(InboxLibrary.GetTagKey(tag))).ToArray();
             var selection = new FilingSelection(document.Id, includeDate ? SuggestedDate : null, tags);
             library.ApplyFilingSuggestions([selection]);
             int accepted = tags.Count + (includeDate ? 1 : 0);
             Tags = library.GetTags();
             LoadResults(document.Id, retainLoadedResults: true);
-            Status = accepted == 1 ? DesktopText.Translate("Suggestion accepted.") : DesktopText.Format($"{accepted} suggestions accepted.");
+            string status = accepted == 1 ? DesktopText.Translate("Suggestion accepted.") : DesktopText.Format($"{accepted} suggestions accepted.");
+            OfferUndo(FilingUndo(library, document.Id, WithoutFullStop(status), document.Title, added, includeDate, document.DocumentDate), status);
         }
         catch (Exception error)
         {
-            Status = error.Message;
+            Fail(error.Message);
         }
     }
 

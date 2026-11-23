@@ -1,5 +1,6 @@
 using Avalonia.Controls;
 using Avalonia.Input;
+using Avalonia.VisualTree;
 
 namespace Plico.Desktop;
 
@@ -18,6 +19,19 @@ internal static partial class NativeVerification
         // The journey ends in an empty second library, which opens on the welcome page.
         Require(model.ShowWelcome, $"An empty library did not open on the welcome page. {model.Status}");
         await CaptureAsync(window, evidence, "welcome.png");
+
+        // The welcome page fits the minimum window without scrolling, and its decorative mark gives way first.
+        window.Width = window.MinWidth;
+        window.Height = window.MinHeight;
+        var welcomeScroll = Control<StackPanel>(window, "WelcomePage").FindAncestorOfType<ScrollViewer>()
+            ?? throw new InvalidOperationException("The welcome page is not in its scroll viewer.");
+        await UntilAsync(() => welcomeScroll.Viewport.Width is > 0 and < 700,
+            () => $"The window did not reach its minimum size. {welcomeScroll.Viewport}");
+        Require(welcomeScroll.Extent.Height <= welcomeScroll.Viewport.Height + 1 && welcomeScroll.Extent.Width <= welcomeScroll.Viewport.Width + 1,
+            $"The welcome page did not fit {window.MinWidth} x {window.MinHeight}: {welcomeScroll.Extent} in {welcomeScroll.Viewport}.");
+        await CaptureAsync(window, evidence, "welcome-compact.png");
+        window.Width = 1280;
+        window.Height = 800;
 
         window.RaiseEvent(new KeyEventArgs { RoutedEvent = InputElement.KeyDownEvent, Key = Key.K, KeyModifiers = KeyModifiers.Control });
         var palette = Control<Border>(window, "PaletteOverlay");
@@ -38,7 +52,7 @@ internal static partial class NativeVerification
 
         window.OpenSettings();
         var settings = await WaitForOwnedAsync<SettingsWindow>(window);
-        Require(Equals(Control<ComboBox>(settings, "SettingsLanguageBox").SelectedItem, model.RecognitionLanguage),
+        Require(Equals(Control<ComboBox>(settings, "OcrLanguageBox").SelectedItem, model.RecognitionLanguage),
             "Settings did not show the recognition language.");
         await CaptureAsync(settings, evidence, "settings.png");
         settings.Close();
@@ -57,6 +71,9 @@ internal static partial class NativeVerification
         review.RaiseEvent(new KeyEventArgs { RoutedEvent = InputElement.KeyDownEvent, Key = Key.R, KeySymbol = "r" });
         review.RaiseEvent(new KeyEventArgs { RoutedEvent = InputElement.KeyUpEvent, Key = Key.R, KeySymbol = "r" });
         Require(model.InboxCount == before - 1 && model.HasUndo, $"R did not mark the document reviewed with an undo. {model.Status}");
+        // The page slips into the tray in 380 ms; capture what is left once it has landed.
+        var motion = Control<Canvas>(window, "MotionLayer");
+        await UntilAsync(() => motion.Children.Count == 0 && !model.IsReadingInBackground, () => "The review motion did not finish.");
         await CaptureAsync(window, evidence, "review-undo.png");
         await model.UndoCommand.ExecuteAsync(null);
         await UntilAsync(() => model.InboxCount == before && model.SelectedDocument is { Reviewed: false } restored && restored.Id == document.Id,

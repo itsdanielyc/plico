@@ -38,6 +38,7 @@ internal sealed partial class InboxViewModel
                 return;
             }
             await Task.Run(() => library.ApplyFilingSuggestions(selections, token), token);
+            RetireUndo();
             Tags = library.GetTags();
             LoadResults(retainLoadedResults: true);
             Status = DesktopText.Format($"Applied filing suggestions to {DocumentCount(selections.Count)}.");

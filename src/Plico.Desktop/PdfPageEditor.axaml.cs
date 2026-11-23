@@ -48,7 +48,7 @@ internal sealed partial class PdfPageEditor : Window
         RangeHint.Text = Action == EditAction.Split
             ? DesktopText.Translate("Enter the first page of each new part after page 1. For example, 3, 6.")
             : DesktopText.Translate("Enter page numbers or ranges. For example, 1, 3–5.");
-        ResultHint.Text = Action == EditAction.Split ? DesktopText.Translate("Plico keeps the original PDF and adds the parts to your inbox.")
+        ResultHint.Text = Action == EditAction.Split ? DesktopText.Translate("Plico keeps the original PDF and adds the parts to your Inbox.")
             : DesktopText.Translate("Plico saves the previous PDF in version history.");
         ValidationMessage.IsVisible = false;
     }

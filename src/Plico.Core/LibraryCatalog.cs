@@ -297,12 +297,13 @@ internal sealed partial class LibraryCatalog
     }
 
     // O(log n + p) for p pending documents among n catalog rows, with constant application space.
-    internal (long Unreviewed, bool HasDocuments) ReadInboxStatus()
+    internal (long Unreviewed, bool HasDocuments) ReadInboxStatus(bool includeMissingAndTrashed = false)
     {
         using var connection = Connect();
         using var command = connection.CreateCommand();
-        command.CommandText = """
-            SELECT count(*), EXISTS(SELECT 1 FROM documents WHERE is_present = 1)
+        string presenceFilter = includeMissingAndTrashed ? "" : " WHERE is_present = 1";
+        command.CommandText = $"""
+            SELECT count(*), EXISTS(SELECT 1 FROM documents{presenceFilter})
             FROM documents WHERE is_present = 1 AND reviewed = 0;
             """;
         using var row = command.ExecuteReader();

@@ -11,6 +11,48 @@ internal sealed partial class InboxViewModel
     {
         _appearance = options;
         _saveAppearance = save;
+        NotifyThemeChoice();
+    }
+
+    /// <summary>Settings' three theme cards. Choosing one saves it at once and repaints every window.</summary>
+    public bool UsesSystemTheme
+    {
+        get => _appearance.Theme == AppearanceTheme.System;
+        set { if (value) ChooseTheme(AppearanceTheme.System); }
+    }
+
+    public bool UsesLightTheme
+    {
+        get => _appearance.Theme == AppearanceTheme.Light;
+        set { if (value) ChooseTheme(AppearanceTheme.Light); }
+    }
+
+    public bool UsesDarkTheme
+    {
+        get => _appearance.Theme == AppearanceTheme.Dark;
+        set { if (value) ChooseTheme(AppearanceTheme.Dark); }
+    }
+
+    /// <summary>
+    /// Settings' interface language: 0 follows the system, 1 is English, 2 is French. Choosing one saves it at once; the
+    /// words change when Plico next opens.
+    /// </summary>
+    public int InterfaceLanguageIndex
+    {
+        get => (int)_appearance.Language;
+        set
+        {
+            if (value < 0 || !Enum.IsDefined((InterfaceLanguage)value) || (InterfaceLanguage)value == _appearance.Language) return;
+            try
+            {
+                SaveChoice(_appearance with { Language = (InterfaceLanguage)value },
+                    DesktopText.Translate("Appearance saved. Reopen Plico to switch the interface language."));
+            }
+            finally
+            {
+                OnPropertyChanged(nameof(InterfaceLanguageIndex));
+            }
+        }
     }
 
     [RelayCommand]
@@ -26,5 +68,47 @@ internal sealed partial class InboxViewModel
         _saveAppearance?.Invoke(chosen);
         Status = chosen.Language == _appearance.Language ? DesktopText.Translate("Appearance saved.") : DesktopText.Translate("Appearance saved. Reopen Plico to switch the interface language.");
         _appearance = chosen;
+        NotifyThemeChoice();
     });
+
+    private void ChooseTheme(AppearanceTheme theme)
+    {
+        if (_appearance.Theme == theme) return;
+        try
+        {
+            SaveChoice(_appearance with { Theme = theme }, DesktopText.Translate("Appearance saved."));
+        }
+        finally
+        {
+            NotifyThemeChoice();
+        }
+    }
+
+    /// <summary>
+    /// Saves an appearance chosen in Settings on the spot and says <paramref name="saved"/>, or why it could not be
+    /// saved, as an aside to any work in hand (see <see cref="SayAside"/>): the choice is made in Settings, so Settings'
+    /// line says it, and the status card keeps the work's line. While the work runs the choice raises no toast of its own,
+    /// though a toast already over the page takes its words, as it does when Plico is idle.
+    /// </summary>
+    private void SaveChoice(AppearanceOptions chosen, string saved) => SayAside(() =>
+    {
+        try
+        {
+            _saveAppearance?.Invoke(chosen);
+            _appearance = chosen;
+            Status = saved;
+        }
+        catch (Exception error) when (error is IOException or UnauthorizedAccessException or ArgumentException)
+        {
+            Fail(error.Message);
+        }
+    }, fromSettings: true);
+
+    private void NotifyThemeChoice()
+    {
+        OnPropertyChanged(nameof(UsesSystemTheme));
+        OnPropertyChanged(nameof(UsesLightTheme));
+        OnPropertyChanged(nameof(UsesDarkTheme));
+        OnPropertyChanged(nameof(InterfaceLanguageIndex));
+    }
 }

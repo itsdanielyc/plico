@@ -144,8 +144,9 @@ public sealed partial class InboxWindowTests
             await WaitForAsync(() => model.HasSuggestedTags);
             window.UpdateLayout();
             var list = window.FindControl<ListBox>("DocumentList")!;
+            // The row's meta line writes the document's own date in the interface's language, then its pages.
             Assert.Contains(list.GetVisualDescendants().OfType<TextBlock>(), block =>
-                block.IsEffectivelyVisible && block.Text?.StartsWith("Daté du ", StringComparison.Ordinal) == true);
+                block.IsEffectivelyVisible && block.Text?.StartsWith("12 janv. 2026 · ", StringComparison.Ordinal) == true);
             var names = VisibleButtons(window).Select(button => ControlAutomationPeer.CreatePeerForElement(button).GetName()).ToArray();
             Assert.Contains("Retirer l’étiquette Maison", names);
             Assert.Contains("Ajouter l’étiquette suggérée Bail", names);

@@ -30,7 +30,7 @@ public sealed partial class InboxWindowTests
                 Assert.True(Dispatcher.UIThread.CheckAccess());
                 var dialog = new ScanInterruptedDialog(interruption);
                 var confirm = dialog.ShowDecisionAsync(window, cancellation);
-                Assert.Equal("The scanner captured 2 pages.", dialog.FindControl<TextBlock>("CapturedPageMessage")?.Text);
+                Assert.Equal("2 pages captured", dialog.FindControl<TextBlock>("CapturedPageMessage")?.Text);
                 var save = Assert.IsType<Button>(dialog.FindControl<Button>("SavePagesButton"));
                 Assert.True(save.IsEffectivelyVisible);
                 save.RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
@@ -40,7 +40,7 @@ public sealed partial class InboxWindowTests
             var command = Assert.IsAssignableFrom<IAsyncRelayCommand>(scan.Command);
             await command.ExecuteAsync(scan.CommandParameter);
 
-            Assert.Equal("Partial scan added to inbox.", model.Status);
+            Assert.Equal("Partial scan added to the Inbox.", model.Status);
             await WaitForPreviewAsync(model);
             Assert.NotNull(model.Preview);
             var saved = Assert.IsType<DocumentSummary>(model.SelectedDocument);

@@ -49,7 +49,8 @@ public sealed partial class InboxWindowTests
         window.Show();
         try
         {
-            var phoneButton = Assert.IsType<Button>(window.FindControl<Button>("PhoneInboxButton"));
+            var phoneButton = Assert.IsType<Button>(OpenSettingsAt(window, "IntakeGroup").FindControl<Button>("PhoneInboxButton"));
+            Assert.True(phoneButton.IsEffectivelyVisible);
             var menu = Assert.IsType<MenuFlyout>(phoneButton.Flyout);
             menu.ShowAt(phoneButton);
             var choose = Assert.Single(menu.Items.OfType<MenuItem>(), item => item.Name == "ChoosePhoneInboxFolder");

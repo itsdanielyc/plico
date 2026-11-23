@@ -10,6 +10,9 @@ internal sealed partial class InboxViewModel
 
     public bool CanUseRapidOcr => OcrProcessingOptions.RapidOcrAvailable;
 
+    /// <summary>The engine is chosen while Plico is free, as the language and orientation are: work under way keeps its engine.</summary>
+    public bool CanChangeRapidOcr => CanUseRapidOcr && !IsBusy;
+
     public bool UseRapidOcr
     {
         get => _ocrProcessing.Engine == OcrEngineKind.RapidOcr;
@@ -34,14 +37,21 @@ internal sealed partial class InboxViewModel
         }
         catch (Exception error) when (error is IOException or UnauthorizedAccessException or JsonException)
         {
-            Status = error.Message;
+            AddStartupNotice(DesktopText.Format($"Couldn't load the recognition settings. {Unreadable(error)}"));
         }
         _saveOcrProcessing = preference.Save;
     }
 
     private void ChangeOcrProcessing(OcrProcessingOptions options)
     {
-        if (options == _ocrProcessing || IsBusy) return;
+        if (options == _ocrProcessing) return;
+        if (IsBusy)
+        {
+            // Refused while work runs: a switch that was flipped anyway goes back to what Plico uses.
+            OnPropertyChanged(nameof(UseRapidOcr));
+            OnPropertyChanged(nameof(AutoOrientPages));
+            return;
+        }
         _library?.ConfigureOcr(options);
         _ocrProcessing = options;
         OnPropertyChanged(nameof(UseRapidOcr));
@@ -52,7 +62,7 @@ internal sealed partial class InboxViewModel
         }
         catch (Exception error) when (error is IOException or UnauthorizedAccessException)
         {
-            Status = $"Using the OCR settings for this session. {error.Message}";
+            Fail($"Using the OCR settings for this session. {error.Message}");
         }
     }
 }

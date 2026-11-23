@@ -12,15 +12,22 @@ internal sealed record DeadlineEditInput(DocumentSummary Document, IReadOnlyList
 
 internal sealed class DeadlineEditor : Window
 {
-    private const string DateFormat = "yyyy-MM-dd";
+    /// <summary>
+    /// The date fields show and take dates as the interface writes them ("1 Dec 2026"), 2026-12-01 too. An empty one says
+    /// so in words, like the card's date, so it can never pass for a set date; the dialog's description says once how to
+    /// write one, with today as the example.
+    /// </summary>
+    private static string DatePlaceholder => DesktopText.Translate("Add a date");
+    private static string DateExample => DisplayDates.Day(DateOnly.FromDateTime(DateTime.Today));
     private readonly List<(DeadlineKind Kind, TextBox Date, TextBox Lead)> _editors = [];
-    private readonly TextBlock _status = new() { TextWrapping = TextWrapping.Wrap };
+    private readonly TextBlock _status = DialogLayout.Message();
 
     internal DeadlineEditor(DeadlineEditInput input)
     {
-        Title = DesktopText.Translate("Document deadlines");
-        Width = 530;
-        Height = 460;
+        Title = DesktopText.Translate("Reminder");
+        Width = 560;
+        SizeToContent = SizeToContent.Height;
+        MaxHeight = 640;
         WindowStartupLocation = WindowStartupLocation.CenterOwner;
         var fields = new StackPanel { Spacing = 12 };
         var dates = input.Dates.ToDictionary(item => item.Kind);
@@ -28,11 +35,12 @@ internal sealed class DeadlineEditor : Window
         {
             var previous = dates.GetValueOrDefault(kind);
             string label = Label(kind);
-            var date = CreateTextBox(label, previous?.Date.ToString(DateFormat, CultureInfo.InvariantCulture), DateFormat);
+            var date = CreateTextBox(label, previous is { } saved ? DisplayDates.Day(saved.Date) : null, DatePlaceholder);
             date.Name = $"DeadlineDate{kind}";
             var lead = CreateTextBox(DesktopText.Format($"{label} reminder"), previous?.LeadDays?.ToString(CultureInfo.CurrentCulture),
                 DesktopText.Translate("Days before"));
-            var row = new Grid { ColumnDefinitions = new("*,130,130"), ColumnSpacing = 10 };
+            // Labels sit beside their fields: a label column as wide as the longest label, then the date and the lead time.
+            var row = new Grid { ColumnDefinitions = new("150,*,120"), ColumnSpacing = 10 };
             row.Children.Add(new TextBlock { Text = label, VerticalAlignment = VerticalAlignment.Center });
             Grid.SetColumn(date, 1);
             Grid.SetColumn(lead, 2);
@@ -44,25 +52,19 @@ internal sealed class DeadlineEditor : Window
         if (input.SuggestedDueDates.Count > 0 && !dates.ContainsKey(DeadlineKind.Due))
         {
             var suggested = input.SuggestedDueDates[0];
-            var button = new Button { Content = DesktopText.Format($"Use suggested due date {suggested:d}") };
+            var button = DialogLayout.Secondary(DesktopText.Format($"Use suggested due date {DisplayDates.Day(suggested)}"));
             button.Click += (_, _) => _editors.First(item => item.Kind == DeadlineKind.Due).Date.Text =
-                suggested.ToString(DateFormat, CultureInfo.InvariantCulture);
+                DisplayDates.Day(suggested);
             fields.Children.Add(button);
         }
-        var save = new Button { Name = "SaveDeadlinesButton", Content = DesktopText.Translate("Save"), IsDefault = true };
+        var save = DialogLayout.Primary(DesktopText.Translate("Save"), isDefault: true);
+        save.Name = "SaveDeadlinesButton";
         save.Click += (_, _) => Save();
-        var cancel = new Button { Content = DesktopText.Translate("Cancel"), IsCancel = true };
+        var cancel = DialogLayout.Secondary(DesktopText.Translate("Cancel"), isCancel: true);
         cancel.Click += (_, _) => Close();
-        var panel = new Grid { RowDefinitions = new("Auto,*,Auto,Auto"), Margin = new Thickness(20), RowSpacing = 12 };
-        AddRow(panel, 0, new TextBlock { Text = input.Document.Title, FontWeight = FontWeight.SemiBold, FontSize = 17, TextWrapping = TextWrapping.Wrap });
-        AddRow(panel, 1, new ScrollViewer { Content = fields });
-        AddRow(panel, 2, _status);
-        AddRow(panel, 3, new StackPanel
-        {
-            HorizontalAlignment = HorizontalAlignment.Right, Orientation = Orientation.Horizontal,
-            Spacing = 10, Children = { cancel, save }
-        });
-        Content = panel;
+        DialogLayout.Compose(this, DesktopText.Format($"Reminder for “{input.Document.Title}”"),
+            DesktopText.Format($"Plico reminds you the chosen number of days before each date. Write dates like {DateExample}."),
+            new ScrollViewer { Content = fields }, _status, cancel, save);
     }
 
     private void Save()
@@ -71,9 +73,9 @@ internal sealed class DeadlineEditor : Window
         foreach (var (kind, date, lead) in _editors)
         {
             if (string.IsNullOrWhiteSpace(date.Text) && string.IsNullOrWhiteSpace(lead.Text)) continue;
-            if (!DateOnly.TryParseExact(date.Text?.Trim(), DateFormat, CultureInfo.InvariantCulture, DateTimeStyles.None, out var day))
+            if (!DisplayDates.TryParseDay(date.Text, out var day))
             {
-                _status.Text = DesktopText.Format($"Enter {Label(kind).ToLowerInvariant()} as YYYY-MM-DD.");
+                _status.Text = DesktopText.Format($"Use a date like {DateExample}.");
                 date.Focus();
                 return;
             }
@@ -111,32 +113,31 @@ internal sealed class RemindersDialog : Window
     internal RemindersDialog(IReadOnlyList<DueReminder> reminders)
     {
         Title = DesktopText.Translate("Reminders");
-        Width = 600;
-        Height = 430;
+        Width = 620;
+        Height = 470;
         WindowStartupLocation = WindowStartupLocation.CenterOwner;
         var list = new ListBox
         {
+            Classes = { "plain", "framed" },
             ItemsSource = reminders.Select(reminder => new MetadataOption<DueReminder>(
-                $"{reminder.Deadline.Date:d} · {DeadlineEditor.Label(reminder.Deadline.Kind)} · {reminder.Title}", reminder)).ToArray(),
+                $"{DisplayDates.Day(reminder.Deadline.Date)} · {DeadlineEditor.Label(reminder.Deadline.Kind)} · {reminder.Title}", reminder)).ToArray(),
             SelectedIndex = reminders.Count > 0 ? 0 : -1
         };
-        var close = new Button { Content = DesktopText.Translate("Close"), IsCancel = true };
+        var close = DialogLayout.Secondary(DesktopText.Translate("Close"), isCancel: true);
         close.Click += (_, _) => Close();
-        var open = new Button { Content = DesktopText.Translate("Open PDF"), IsEnabled = reminders.Count > 0 };
-        var dismiss = new Button { Content = DesktopText.Translate("Dismiss"), IsEnabled = reminders.Count > 0 };
-        var calendar = new Button { Content = DesktopText.Translate("Export calendar…") };
+        var open = DialogLayout.Secondary(DesktopText.Translate("Open PDF"));
+        open.IsEnabled = reminders.Count > 0;
+        var dismiss = DialogLayout.Secondary(DesktopText.Translate("Dismiss"));
+        dismiss.IsEnabled = reminders.Count > 0;
+        var calendar = DialogLayout.Secondary(DesktopText.Translate("Export calendar…"));
         open.Click += (_, _) => Choose(ReminderAction.Open);
         dismiss.Click += (_, _) => Choose(ReminderAction.Dismiss);
         calendar.Click += (_, _) => Close(new ReminderChoice(ReminderAction.Export, null));
         list.SelectionChanged += (_, _) => open.IsEnabled = dismiss.IsEnabled = list.SelectedIndex >= 0;
-        var grid = new Grid { RowDefinitions = new("*,Auto"), RowSpacing = 12, Margin = new Thickness(20) };
-        AddRow(grid, 0, reminders.Count == 0 ? new TextBlock { Text = DesktopText.Translate("No reminders are due.") } : list);
-        AddRow(grid, 1, new StackPanel
-        {
-            Orientation = Orientation.Horizontal, Spacing = 8, HorizontalAlignment = HorizontalAlignment.Right,
-            Children = { open, dismiss, calendar, close }
-        });
-        Content = grid;
+        Control body = reminders.Count == 0
+            ? DialogLayout.EmptyState("Icon.Upcoming", DesktopText.Translate("Nothing upcoming"), DesktopText.Translate("No reminders are due."))
+            : list;
+        DialogLayout.Compose(this, Title, body, null, open, dismiss, calendar, close);
         void Choose(ReminderAction action)
         {
             if (list.SelectedItem is MetadataOption<DueReminder> item) Close(new ReminderChoice(action, item.Value));

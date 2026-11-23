@@ -19,7 +19,7 @@ internal sealed record PdfVersionRow(PdfVersion Version)
         PdfRevisionKind.Unlock => DesktopText.Translate("Password-protected original"),
         _ => DesktopText.Translate("Earlier PDF")
     };
-    public string Detail => $"{Version.ArchivedAt.ToLocalTime():g} · {Version.PageCount} {(Version.PageCount == 1 ? "page" : "pages")}";
+    public string Detail => $"{DisplayDates.DayAndTime(Version.ArchivedAt)} · {DisplayDates.Pages(Version.PageCount)}";
 }
 
 internal sealed partial class PdfVersionHistoryDialog : Window

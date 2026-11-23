@@ -33,7 +33,7 @@ internal sealed partial class InboxViewModel
         _localModelPreference = settings;
         if (open is not null) _openLocalModel = open;
         try { LocalModels = settings.Load(); }
-        catch (Exception error) when (error is IOException or UnauthorizedAccessException) { Status = error.Message; }
+        catch (Exception error) when (error is IOException or UnauthorizedAccessException) { AddStartupNotice(DesktopText.Format($"Couldn't load the local model settings. {error.Message}")); }
     }
 
     [RelayCommand]
@@ -83,7 +83,8 @@ internal sealed partial class InboxViewModel
     {
         var selected = await _dialogs.ShowSimilarityMatchesAsync(title, matches);
         if (selected is not null) _dialogs.OpenPath(library.ResolveReminderPdf(selected.Document.Id));
-        Status = matches.Count == 0 ? DesktopText.Translate("No matching documents.") : DesktopText.Format($"Found {DocumentCount(matches.Count)}.");
+        Status = matches.Count == 0 ? DesktopText.Translate("No matching documents.")
+            : Counted(matches.Count, "Found 1 document.", $"Found {matches.Count} documents.");
     }
 
     [RelayCommand]
@@ -97,6 +98,7 @@ internal sealed partial class InboxViewModel
         var edit = await _dialogs.ReviewLocalFilingAsync(proposal, library.GetMetadataDefinitions());
         if (edit is null) { Status = DesktopText.Translate("Local filing suggestions closed."); return; }
         await Task.Run(() => library.ApplyLocalFiling(edit, token), token);
+        RetireUndo();
         Tags = library.GetTags();
         LoadResults(document.Id, retainLoadedResults: true);
         Status = DesktopText.Translate("Local filing saved.");
@@ -112,6 +114,7 @@ internal sealed partial class InboxViewModel
             Status = DesktopText.Translate("There is no local filing change to undo for this PDF.");
             return;
         }
+        RetireUndo();
         Tags = library.GetTags();
         LoadResults(document.Id, retainLoadedResults: true);
         Status = DesktopText.Translate("Local filing undone.");

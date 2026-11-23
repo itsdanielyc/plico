@@ -23,22 +23,38 @@ internal sealed partial class InboxViewModel
 
     private void RefreshUnavailableCount() => UnavailableCount = _library?.CountUnavailableDocuments() ?? 0;
 
+    /// <summary>"1 document unavailable.", worded for one or several so French agrees with the number.</summary>
+    private string UnavailableSentence() =>
+        Counted(UnavailableCount, "1 document unavailable.", $"{UnavailableCount} documents unavailable.");
+
     [RelayCommand]
     private Task RefreshIndexAsync() => RunOperationAsync(DesktopText.Translate("Checking the PDF folder…"), async token =>
     {
         var library = RequireLibrary();
-        var result = await Task.Run(() => library.Refresh(token), token);
+        RefreshResult? result = null;
+        try
+        {
+            result = await Task.Run(() => library.Refresh(token), token);
+        }
+        finally
+        {
+            // An interrupted refresh can already have committed changes to individual PDFs.
+            if (result is not { Indexed: 0, Relocated: 0, UnavailablePaths.Count: 0 }) RetireUndo();
+        }
         Tags = library.GetTags();
         RefreshInboxCount();
         RefreshUnavailableCount();
         LoadResults(reloadPreview: result.Indexed > 0 || result.Relocated > 0);
         LatestIndexRefresh = result;
         FolderRestoreNotices = [];
-        Status = DesktopText.Format($"{DocumentCount(result.Indexed)} indexed.");
-        if (result.Relocated > 0) Status += $" {DocumentCount(result.Relocated)} moved.";
-        if (UnavailableCount > 0) Status += $" {DocumentCount(UnavailableCount)} unavailable.";
         int notices = result.Warnings.Count;
-        if (notices > 0) Status += notices == 1 ? " 1 index notice." : $" {notices} index notices.";
+        var summary = new List<string>();
+        if (result.Indexed > 0) summary.Add(Counted(result.Indexed, "1 document indexed.", $"{result.Indexed} documents indexed."));
+        if (result.Relocated > 0) summary.Add(Counted(result.Relocated, "1 document moved.", $"{result.Relocated} documents moved."));
+        if (UnavailableCount > 0) summary.Add(UnavailableSentence());
+        if (notices > 0) summary.Add(Counted(notices, "1 index notice.", $"{notices} index notices."));
+        // The summary opens on what happened, never on "0 documents indexed"; with nothing to report the index is current.
+        Status = summary.Count > 0 ? string.Join(" ", summary) : DesktopText.Translate("Index up to date.");
     });
 
     [RelayCommand]
@@ -47,15 +63,14 @@ internal sealed partial class InboxViewModel
         if (!ShowIndexReport || _library is not { } library) return;
         var notices = LatestIndexRefresh?.Warnings ?? [];
         if (FolderRestoreNotices.Count > 0) notices = [.. notices, .. FolderRestoreNotices];
-        string previous = Status;
         IndexReport? report = null;
         await RunOperationAsync(DesktopText.Translate("Reading index report…"), async token =>
         {
             var unavailable = await Task.Run(() => library.ReadUnavailablePaths(token), token);
             token.ThrowIfCancellationRequested();
             UnavailableCount = unavailable.Count;
+            // Reading the report has nothing to announce, so no toast rises.
             report = new(unavailable, notices);
-            Status = previous;
         });
 
         if (report is not null && ShowIndexReport && ReferenceEquals(_library, library))
@@ -86,6 +101,7 @@ internal sealed partial class InboxViewModel
 
             Status = DesktopText.Translate("Restoring PDF…");
             var restored = await Task.Run(() => library.RestoreUnavailablePdfAsync(relativePath, copyPath, token), token);
+            RetireUndo();
             Tags = library.GetTags();
             RefreshInboxCount();
             RefreshUnavailableCount();
@@ -104,6 +120,7 @@ internal sealed partial class InboxViewModel
             }
 
             Status = DesktopText.Translate("Matching backup PDFs…");
+            RetireUndo();
             var result = await Task.Run(() => library.RestoreUnavailablePdfsFromFolderAsync(folder, cancellationToken: token), token);
             FolderRestoreNotices = result.Issues.Select(issue => $"{issue.Path} — {issue.Reason}").ToArray();
             RefreshUnavailableCount();
@@ -114,10 +131,12 @@ internal sealed partial class InboxViewModel
                 LoadResults();
             }
 
-            string prefix = result.Cancelled ? "Folder restore cancelled. " : "";
-            Status = $"{prefix}{DocumentCount(result.Restored)} restored.";
-            if (result.Unmatched > 0) Status += $" No matching copy for {DocumentCount(result.Unmatched)}.";
-            if (UnavailableCount > 0) Status += $" {DocumentCount(UnavailableCount)} unavailable.";
-            if (result.Issues.Count > 0) Status += result.Issues.Count == 1 ? " 1 restore notice." : $" {result.Issues.Count} restore notices.";
+            string prefix = result.Cancelled ? DesktopText.Translate("Folder restore cancelled.") + " " : "";
+            Status = prefix + Counted(result.Restored, "1 document restored.", $"{result.Restored} documents restored.");
+            if (result.Unmatched > 0)
+                Status += " " + Counted(result.Unmatched, "No matching copy for 1 document.", $"No matching copy for {result.Unmatched} documents.");
+            if (UnavailableCount > 0) Status += " " + UnavailableSentence();
+            if (result.Issues.Count > 0)
+                Status += " " + Counted(result.Issues.Count, "1 restore notice.", $"{result.Issues.Count} restore notices.");
         });
 }

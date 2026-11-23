@@ -49,9 +49,9 @@ internal sealed partial class FilingSuggestionsDialog : Window
             var fields = item.Fields;
             SuggestionTitle.Text = item.Title;
             SuggestionTitle.IsVisible = _drafts.Length <= 1;
-            var sameDate = new DateChoice(null, item.CurrentDate is { } current ? $"Keep {current:d}" : "Leave document date empty");
+            var sameDate = new DateChoice(null, item.CurrentDate is { } current ? $"Keep {DisplayDates.Day(current)}" : "Leave document date empty");
             var alternatives = fields.DocumentDates.Where(date => date != item.CurrentDate)
-                .Select(date => new DateChoice(date, date.ToString("D", CultureInfo.CurrentCulture))).ToArray();
+                .Select(date => new DateChoice(date, DisplayDates.Day(date))).ToArray();
             SuggestedDateBox.ItemsSource = new[] { sameDate }.Concat(alternatives).ToArray();
             SuggestedDateBox.SelectedItem = SuggestedDateBox.Items.OfType<DateChoice>().First(choice => choice.Value == draft.Date);
             SuggestedDates.IsVisible = alternatives.Length > 0;
@@ -59,7 +59,7 @@ internal sealed partial class FilingSuggestionsDialog : Window
             SuggestedTags.IsVisible = draft.Tags.Length > 0;
             var details = new List<string>();
             if (fields.DueDates.Count > 0)
-                details.Add($"Possible due dates  {string.Join(" · ", fields.DueDates.Select(date => date.ToString("d", CultureInfo.CurrentCulture)))}");
+                details.Add($"Possible due dates  {string.Join(" · ", fields.DueDates.Select(date => DisplayDates.Day(date)))}");
             if (fields.Amount is { } amount) details.Add($"Possible amount  {amount.Value:N2} {amount.Currency}".TrimEnd());
             if (fields.Iban is { } iban) details.Add($"IBAN  {iban}");
             RecognizedFields.Text = string.Join(Environment.NewLine, details);

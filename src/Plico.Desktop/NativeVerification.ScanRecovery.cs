@@ -45,7 +45,7 @@ internal static partial class NativeVerification
         }
 
         var saved = model.SelectedDocument;
-        Require(model.Status == "Partial scan added to inbox." && saved is { PageCount: InterruptedScannerPages, HasText: true } &&
+        Require(model.Status == "Partial scan added to the Inbox." && saved is { PageCount: InterruptedScannerPages, HasText: true } &&
                 saved.RelativePath.StartsWith($"{folderName}/", StringComparison.Ordinal) &&
                 saved.Title.EndsWith("(partial)", StringComparison.Ordinal), model.Status);
         await UntilAsync(() => model.Preview is not null, () => model.PreviewMessage);
@@ -66,7 +66,7 @@ internal static partial class NativeVerification
         try
         {
             Require(interruption.CapturedPages == InterruptedScannerPages &&
-                    Control<TextBlock>(dialog, "CapturedPageMessage").Text == "The scanner captured 2 pages.",
+                    Control<TextBlock>(dialog, "CapturedPageMessage").Text == "2 pages captured",
                 "The recovery dialog did not report the delivered pages.");
             var saveButton = Control<Button>(dialog, "SavePagesButton");
             var discardButton = Control<Button>(dialog, "DiscardPagesButton");

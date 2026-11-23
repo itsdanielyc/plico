@@ -35,13 +35,14 @@ internal sealed partial class InboxViewModel
             Status = DesktopText.Translate("Creating the household binder…");
             var progress = new Progress<int>(copied =>
             {
-                if (IsBusy && !token.IsCancellationRequested)
-                    Status = DesktopText.Format($"Added {copied} of {request.DocumentIds.Count} PDFs to the binder…");
+                if (!IsBusy || token.IsCancellationRequested) return;
+                ReportProgress(copied, request.DocumentIds.Count);
+                Status = DesktopText.Format($"Added {copied} of {request.DocumentIds.Count} PDFs to the binder…");
             });
             string exported = await Task.Run(() =>
                 library.ExportHouseholdBinderAsync(request.DocumentIds, request.Title, destination, progress, token), token);
-            LatestExportLocation = Path.GetDirectoryName(exported)!;
-            Status = DesktopText.Format($"Exported {Path.GetFileName(exported)} to {LatestExportLocation}.");
+            NoteExport(Path.GetDirectoryName(exported)!);
+            AnnounceExport(DesktopText.Format($"Exported {Path.GetFileName(exported)} to {LatestExportLocation}."), Path.GetFileName(exported));
         });
     }
 }

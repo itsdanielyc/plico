@@ -52,8 +52,11 @@ public sealed partial class InboxWindowTests
             Assert.DoesNotContain("current", shortcut.Classes);
 
             search.SetCurrentValue(TextBox.TextProperty, "text:unknown");
-            await WaitForAsync(() => model.ResultCount == "Check search");
-            Assert.Equal("Use one text filter. Try text:missing or text:present.", model.EmptyMessage);
+            await WaitForAsync(() => model.HasSearchQueryHint);
+            Assert.Equal(3, model.Documents.Count);
+            var hint = Assert.IsType<TextBlock>(window.FindControl<TextBlock>("SearchQueryHint"));
+            Assert.True(hint.IsEffectivelyVisible);
+            Assert.Equal("Use one text filter: text:missing or text:present.", hint.Text);
         }
         finally
         {

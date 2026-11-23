@@ -29,15 +29,13 @@ internal sealed partial class InboxViewModel : ObservableObject, IDisposable
     [ObservableProperty] private string _tagInput = "";
     [ObservableProperty] private string _heading = DesktopText.Translate("Inbox");
     [ObservableProperty] private string _resultCount = DesktopText.Translate("0 documents");
-    [ObservableProperty] private string _emptyMessage = DesktopText.Translate("Add a file to start your inbox.");
-    [ObservableProperty] private string _status = DesktopText.Translate("Choose a library folder to get started.");
+    [ObservableProperty] private string _emptyMessage = DesktopText.Translate("Add a file to start your Inbox.");
+    private string _status = DesktopText.Translate("Choose a library folder to get started.");
     [ObservableProperty] private string _libraryPath = "";
     [ObservableProperty] private string _previewMessage = "";
     [ObservableProperty] private IReadOnlyList<DocumentSummary> _documents = [];
     [ObservableProperty] private IReadOnlyList<string> _tags = [];
-    [ObservableProperty]
-    [NotifyPropertyChangedFor(nameof(DocumentDateAction))]
-    private DocumentSummary? _selectedDocument;
+    [ObservableProperty] private DocumentSummary? _selectedDocument;
     [ObservableProperty]
     [NotifyPropertyChangedFor(nameof(HasPreview))]
     private Bitmap? _preview;
@@ -66,7 +64,8 @@ internal sealed partial class InboxViewModel : ObservableObject, IDisposable
         _importFailureStore = importFailureStore;
         _intakeFolderPreference = intakeFolderPreference;
         _searchDocuments = searchDocuments ?? (static (library, filter, token) => library.Find(filter, token));
-        _searchTimer.Tick += (_, _) => _ = LoadTypedSearchAsync();
+        _searchTimer.Tick += (_, _) => _ = LoadTypedSearchAsync(whileTyping: true);
+        _queryHintTimer.Tick += (_, _) => ShowPendingQueryHint();
         _suggestionTimer.Tick += (_, _) => StartSuggestionRequest();
     }
 
@@ -90,7 +89,7 @@ internal sealed partial class InboxViewModel : ObservableObject, IDisposable
             return name.Length == 0 ? LibraryPath : name;
         }
     }
-    public string ReviewAction => SelectedDocument?.Reviewed == true ? DesktopText.Translate("Return to inbox") : DesktopText.Translate("Mark reviewed");
+    public string ReviewAction => SelectedDocument?.Reviewed == true ? DesktopText.Translate("Back to Inbox") : DesktopText.Translate("Mark reviewed");
     public string PageLabel => SelectedDocument is { } document ? $"{_pageNumber} / {document.PageCount}" : "";
     public bool CanGoBack => _pageNumber > 1;
     public bool CanGoForward => _pageNumber < SelectedDocument?.PageCount;
@@ -110,8 +109,27 @@ internal sealed partial class InboxViewModel : ObservableObject, IDisposable
         }
         catch (Exception error)
         {
-            Status = error.Message;
+            NoteLibraryProblem(Plainly(error));
+            Fail(Plainly(error));
         }
+    }
+
+    /// <summary>
+    /// Keeps why a library did not open while no library is open: the status card names the problem and the empty queue
+    /// says why, with the way forward, long after the toast has gone.
+    /// </summary>
+    private void NoteLibraryProblem(string reason)
+    {
+        if (HasLibrary) return;
+        LibraryProblem = reason;
+        ShowLibraryProblem();
+    }
+
+    /// <summary>The empty queue says why the library did not open, whichever view is chosen, and counts nothing.</summary>
+    private void ShowLibraryProblem()
+    {
+        ResultCount = "";
+        SetEmptyState(DesktopText.Translate("Library didn't open"), LibraryProblem!);
     }
 
     internal async Task PrepareCloseAsync()
@@ -160,7 +178,16 @@ internal sealed partial class InboxViewModel : ObservableObject, IDisposable
         string target = Path.GetFullPath(selected);
         if (!AlreadyOpen(target))
         {
-            var replacement = await Task.Run(() => InboxLibrary.Open(target), token);
+            InboxLibrary replacement;
+            try
+            {
+                replacement = await Task.Run(() => InboxLibrary.Open(target), token);
+            }
+            catch (Exception error) when (error is not OperationCanceledException)
+            {
+                NoteLibraryProblem(Plainly(error));
+                throw;
+            }
             try
             {
                 token.ThrowIfCancellationRequested();
@@ -242,26 +269,38 @@ internal sealed partial class InboxViewModel : ObservableObject, IDisposable
     }
 
     [RelayCommand]
-    private Task EditDocumentTitleAsync() => RunOperationAsync(DesktopText.Translate("Edit the document title…"), async token =>
-    {
-        if (SelectedDocument is not { } document) return;
-        var title = await _dialogs.EditTitleAsync(document.Title);
-        if (title is null)
-        {
-            Status = DesktopText.Translate("Title editor closed.");
-            return;
-        }
-        var library = RequireLibrary();
-        await Task.Run(() => library.SetTitle(document.Id, title), token);
-        LoadResults(document.Id);
-        Status = DesktopText.Translate("Title saved.");
-    });
-
-    [RelayCommand]
     private void AddTag()
     {
         if (string.IsNullOrWhiteSpace(TagInput)) return;
-        if (UpdateDocument((library, document) => library.AddTag(document.Id, TagInput), DesktopText.Translate("Tag added."))) TagInput = "";
+        string label = TagInput.Trim();
+        if (HasLibrary && SelectedDocument?.Tags.FirstOrDefault(tag => SameTag(tag, label)) is { } present)
+        {
+            // A tag the document already has changes nothing: the toast says so and the current Undo offer stays.
+            TagInput = "";
+            SaveEdit(() => AnnounceExistingTag(present));
+            return;
+        }
+        if (UpdateDocument((library, document) =>
+        {
+            library.AddTag(document.Id, TagInput);
+            return TagUndo(library, document.Id, label, added: true);
+        }, DesktopText.Translate("Tag added."))) TagInput = "";
+    }
+
+    private void AnnounceExistingTag(string label) =>
+        Announce(DesktopText.Format($"Already tagged “{label}”."), DesktopText.Translate("Already tagged"), DesktopText.Quote(label));
+
+    /// <summary>Whether two labels name the same tag, as the catalog compares them; a label it cannot take names none.</summary>
+    private static bool SameTag(string first, string second)
+    {
+        try
+        {
+            return InboxLibrary.GetTagKey(first) == InboxLibrary.GetTagKey(second);
+        }
+        catch (ArgumentException)
+        {
+            return false;
+        }
     }
 
     [RelayCommand] private void PreviousPage() => NavigatePage(-1);
@@ -269,8 +308,11 @@ internal sealed partial class InboxViewModel : ObservableObject, IDisposable
 
     internal void FilterByTag(string tag) => Navigate(inboxOnly: false, tag);
 
-    internal void RemoveTag(string tag) =>
-        UpdateDocument((library, document) => library.RemoveTag(document.Id, tag), DesktopText.Translate("Tag removed."));
+    internal void RemoveTag(string tag) => UpdateDocument((library, document) =>
+    {
+        library.RemoveTag(document.Id, tag);
+        return TagUndo(library, document.Id, tag, added: false);
+    }, DesktopText.Translate("Tag removed."));
 
     private bool AlreadyOpen(string target)
     {
@@ -289,8 +331,9 @@ internal sealed partial class InboxViewModel : ObservableObject, IDisposable
             _backgroundLifetime = new CancellationTokenSource();
         }
         _library = replacement;
+        LibraryProblem = null;
         replacement.ConfigureOcr(_ocrProcessing);
-        PendingUndo = null;
+        UndoOffer = null;
         ForgetAllThumbnails();
         var importNotice = RestoreImportFailures(replacement.RootPath);
         var intakeNotice = RestoreIntakeFolder(replacement.RootPath);
@@ -314,10 +357,13 @@ internal sealed partial class InboxViewModel : ObservableObject, IDisposable
         RefreshUnavailableCount();
         PrepareReminderPolling();
         Navigate(inboxOnly: true);
-        Status = watchNotice is null ? DesktopText.Translate("Library ready.") : DesktopText.Format($"Library ready. {watchNotice}");
-        if (importNotice is not null) Status += $" {importNotice}";
-        if (intakeNotice is not null) Status += $" {intakeNotice}";
-        if (replacement.MoveRecoveryNotice is { } moveNotice) Status += $" {moveNotice}";
+        // A library that opens as expected is news the window already shows. Anything else opening it had to say is the
+        // message, problems first so the toast's title names one, without "Library ready." in front of it.
+        string[] problems = new[] { watchNotice, importNotice, intakeNotice }.OfType<string>().ToArray();
+        string[] notices = [.. problems, .. new[] { replacement.MoveRecoveryNotice }.OfType<string>()];
+        if (notices.Length == 0) Note(DesktopText.Translate("Library ready."));
+        else if (problems.Length > 0) Fail(string.Join(" ", notices));
+        else Status = string.Join(" ", notices);
         return released;
     }
 
@@ -399,13 +445,27 @@ internal sealed partial class InboxViewModel : ObservableObject, IDisposable
             }
         }
 
+        ReportImportResult(added, alreadyPresent, unreadable, failures, saveWarning);
+    }
+
+    /// <summary>Reports the first failed file and the successful work in the same batch.</summary>
+    private void ReportImportResult(int added, int alreadyPresent, int unreadable, IReadOnlyList<ImportFailure> failures, string? saveWarning)
+    {
         var outcomes = new List<string>();
-        if (added > 0) outcomes.Add(DesktopText.Format($"{DocumentCount(added)} added."));
+        if (added > 0) outcomes.Add(Counted(added, "1 document added.", $"{added} documents added."));
         if (alreadyPresent > 0) outcomes.Add(DesktopText.Format($"{DocumentCount(alreadyPresent)} already in the library."));
-        if (unreadable > 0) outcomes.Add(DesktopText.Format($"No text recognized in {DocumentCount(unreadable)}."));
-        if (failures.Count > 0) outcomes.Add($"{failures.Count} failed. {failures[0].Filename} — {failures[0].Reason}");
-        if (saveWarning is not null) outcomes.Add(saveWarning);
-        Status = string.Join(" ", outcomes);
+        if (unreadable > 0) outcomes.Add(DesktopText.Format($"No text recognised in {DocumentCount(unreadable)}."));
+        string summary = string.Join(" ", outcomes);
+        if (failures.Count > 0)
+        {
+            string title = Counted(failures.Count, "Couldn't add 1 file", $"Couldn't add {failures.Count} files");
+            var first = failures[0];
+            string body = $"{first.Filename} — {first.Reason} {summary}".TrimEnd();
+            if (saveWarning is null) _pendingToast = new ToastText(title, body);
+            summary = $"{title}. {body}";
+        }
+        if (saveWarning is not null) summary = $"{saveWarning} {summary}".TrimEnd();
+        Say(summary, saveWarning is not null || failures.Count > 0);
     }
 
     private async Task RunOperationAsync(
@@ -419,7 +479,7 @@ internal sealed partial class InboxViewModel : ObservableObject, IDisposable
         _operationCancellation = cancellation;
         _operationCompletion = completion;
         IsBusy = true;
-        Status = workingStatus;
+        BeginWorkMessages(workingStatus);
         try
         {
             await operation(cancellation.Token);
@@ -430,13 +490,14 @@ internal sealed partial class InboxViewModel : ObservableObject, IDisposable
         }
         catch (Exception error)
         {
-            Status = error.Message;
+            Fail(Plainly(error));
         }
         finally
         {
             _operationCancellation = null;
             _operationCompletion = null;
             IsBusy = false;
+            FinishWorkMessages();
             completion.SetResult();
         }
     }
@@ -469,25 +530,46 @@ internal sealed partial class InboxViewModel : ObservableObject, IDisposable
         UpdateSelection(previous, SelectedDocument, reloadPreview);
     }
 
-    private bool UpdateDocument(Action<InboxLibrary, DocumentSummary> update, string success)
+    /// <summary>
+    /// Applies one change to the open document, reloads it and announces it. The change returns its Undo offer, which
+    /// replaces the current one, or null when there is nothing to undo, which retires the current one.
+    /// </summary>
+    private bool UpdateDocument(Func<InboxLibrary, DocumentSummary, UndoOffer?> update, string success, ToastText? toast = null) =>
+        SaveEdit(() => UpdateDocumentNow(update, success, toast));
+
+    private bool UpdateDocumentNow(Func<InboxLibrary, DocumentSummary, UndoOffer?> update, string success, ToastText? toast)
     {
-        if (!CanWork || SelectedDocument is not { } document) return false;
+        // Like the title and the date, a tag is one quick catalog write, so it is saved while Plico works in the background.
+        if (!HasLibrary || SelectedDocument is not { } document) return false;
         try
         {
             var library = RequireLibrary();
-            update(library, document);
+            var offer = update(library, document);
             Tags = library.GetTags();
-            LoadResults(document.Id);
+            LoadResults(document.Id, retainLoadedResults: true);
+            if (offer is not null)
+            {
+                OfferUndo(offer, success);
+                return true;
+            }
+            RetireUndo();
+            _pendingToast = toast;
             Status = success;
             return true;
         }
         catch (Exception error)
         {
-            Status = error.Message;
+            Fail(error.Message);
             return false;
         }
     }
 
+    /// <summary>
+    /// Opens a file or folder (the PDF folder, a document or its folder, a backup, an export) in the system's own app. Why
+    /// it could not be opened is an aside to any work in hand (see <see cref="SayAside"/>), never a line of the work: while
+    /// Plico works, Settings' line says it when it was opened from Settings, and it rises over the page at once when it
+    /// was opened anywhere else.
+    /// </summary>
     private void OpenPath(Func<string> resolve)
     {
         try
@@ -496,14 +578,32 @@ internal sealed partial class InboxViewModel : ObservableObject, IDisposable
         }
         catch (Exception error)
         {
-            Status = error.Message;
+            SayAside(() => Fail(error.Message));
         }
     }
+
+    /// <summary>
+    /// An error's message as the person reads it: without the parameter name .NET adds, and in the interface's language
+    /// when the catalog has the sentence (Plico.Core writes in English).
+    /// </summary>
+    private static string Plainly(Exception error) => DesktopText.Translate(error is ArgumentException { ParamName: { } name } argument
+        ? argument.Message.Replace($" (Parameter '{name}')", "", StringComparison.Ordinal) : error.Message);
+
+    /// <summary>Why a saved file could not be read: a damaged file is named as one, never with the parser's account of it.</summary>
+    private static string Unreadable(Exception error) => error is System.Text.Json.JsonException
+        ? DesktopText.Translate("The file is damaged, so Plico carries on without it.") : Plainly(error);
 
     private InboxLibrary RequireLibrary() =>
         _library ?? throw new InvalidOperationException("Choose a library folder first.");
 
     private static string DocumentCount(long count) => count == 1 ? "1 document" : DesktopText.Format($"{count} documents");
+
+    /// <summary>
+    /// A message about a number of documents, worded for one or for several, so a language whose words agree with the
+    /// number reads naturally: "1 document ajouté", "2 documents ajoutés". Each wording has its own catalog row.
+    /// </summary>
+    private static string Counted(long count, string one, FormattableString several) =>
+        count == 1 ? DesktopText.Translate(one) : DesktopText.Format(several);
 
     partial void OnDocumentsChanged(IReadOnlyList<DocumentSummary> value)
     {
@@ -516,8 +616,12 @@ internal sealed partial class InboxViewModel : ObservableObject, IDisposable
 
     partial void OnIsBusyChanged(bool value)
     {
+        WorkProgress = -1;
         OnPropertyChanged(nameof(CanWork));
+        OnPropertyChanged(nameof(CanGoToPreviousMatch));
         OnPropertyChanged(nameof(IsIdle));
+        OnPropertyChanged(nameof(CanUndo));
+        OnPropertyChanged(nameof(CanChangeRapidOcr));
         OnPropertyChanged(nameof(CanStartFolderWatch));
         OnPropertyChanged(nameof(ShowIndexReport));
     }
@@ -530,6 +634,7 @@ internal sealed partial class InboxViewModel : ObservableObject, IDisposable
     private void UpdateSelection(DocumentSummary? oldValue, DocumentSummary? newValue, bool reloadPreview = false)
     {
         bool changedDocument = oldValue?.Id != newValue?.Id;
+        if (changedDocument) CloseTitleEditFor(newValue);
         if (IsPageTextView && (changedDocument || newValue is not { HasText: true }))
         {
             IsPageTextView = false;
@@ -555,6 +660,7 @@ internal sealed partial class InboxViewModel : ObservableObject, IDisposable
         OnPropertyChanged(nameof(HasPageMatchAction));
         NotifyPageChanged();
         NotifyWorkspaceSelection();
+        SyncDocumentDateField();
     }
 
     private void NavigatePage(int direction) => ShowPreviewPage(_pageNumber + direction);

@@ -216,12 +216,19 @@ public sealed partial class InboxWindowTests
             model.InitializeLibrary(() => temporary.Path);
             window.Show();
             await WaitForPreviewAsync(model);
+            // Places keep one line in their 36 px rows: Inbox and All documents use their sidebar labels in French, whole.
+            foreach (var (name, text) in new[] { ("InboxButton", "Réception"), ("AllDocumentsButton", "Documents") })
+            {
+                var place = window.FindControl<Button>(name)!;
+                var label = place.GetVisualDescendants().OfType<TextBlock>().Single(block => block.Text == text);
+                var fullLabel = new TextBlock { Text = label.Text, FontFamily = label.FontFamily, FontSize = label.FontSize, FontWeight = label.FontWeight };
+                fullLabel.Measure(Size.Infinity);
+                Assert.True(label.Bounds.Width >= fullLabel.DesiredSize.Width - 1,
+                    $"{name} label has {label.Bounds.Width} pixels for {fullLabel.DesiredSize.Width} pixels of text.");
+                Assert.True(place.Bounds.Height <= 36.5, $"{name} grew to {place.Bounds.Height} pixels.");
+            }
             var inbox = window.FindControl<Button>("InboxButton")!;
-            var label = inbox.GetVisualDescendants().OfType<TextBlock>().Single(text => text.Text == "Boîte de réception");
-            var fullLabel = new TextBlock { Text = label.Text, FontFamily = label.FontFamily, FontSize = label.FontSize, FontWeight = label.FontWeight };
-            fullLabel.Measure(Size.Infinity);
-            Assert.True(label.Bounds.Width >= fullLabel.DesiredSize.Width - 1 || label.Bounds.Height >= 2 * fullLabel.DesiredSize.Height - 1,
-                $"Inbox label has {label.Bounds.Width} pixels for {fullLabel.DesiredSize.Width} pixels of text.");
+            Assert.Equal("Boîte de réception", ToolTip.GetTip(inbox));
             var rail = inbox.FindAncestorOfType<ScrollViewer>()!;
             var tags = rail.GetVisualDescendants().OfType<Button>().Where(button => button.Classes.Contains("rail")).Take(2).ToArray();
             Assert.Equal(2, tags.Length);
@@ -230,11 +237,35 @@ public sealed partial class InboxWindowTests
                 var bottom = tag.TranslatePoint(new Point(0, tag.Bounds.Height), rail)!.Value.Y;
                 Assert.InRange(bottom, 0, rail.Viewport.Height + 1);
             }
+            // The routine detail (the recognition language and where it runs) waits for a wider sidebar. Its words follow
+            // the platform, "ce PC" or "cet ordinateur", and on macOS and Linux the longer one took a second line that
+            // pushed the second tag out of view (CI run 45027446333). Without it the card is the same height everywhere.
+            var detail = window.FindControl<TextBlock>("StatusCardDetailText")!;
+            Assert.False(detail.IsEffectivelyVisible, $"The compact status card still shows “{detail.Text}”.");
         }
         finally
         {
             window.Close();
             DesktopText.SetLanguage(InterfaceLanguage.English);
         }
+    }
+
+    [AvaloniaFact]
+    public async Task TheStatusCardNamesTheRecognitionLanguageWhenTheSidebarHasRoom()
+    {
+        using var temporary = new TemporaryLibrary();
+        using (var library = InboxLibrary.Open(temporary.Path)) BatchFixtures.AddTwoDocuments(library, TestContext.Current.CancellationToken);
+        using var model = new InboxViewModel(new FixtureDialogs());
+        model.InitializeLibrary(() => temporary.Path);
+        var window = new MainWindow { DataContext = model, Width = 1280, Height = 800 };
+        window.Show();
+        try
+        {
+            await WaitForPreviewAsync(model);
+            var detail = window.FindControl<TextBlock>("StatusCardDetailText")!;
+            Assert.True(detail.IsEffectivelyVisible, "The status card hides its detail in a wide window.");
+            Assert.Equal(PlatformText.RecognitionPlace(model.RecognitionLanguage), detail.Text);
+        }
+        finally { window.Close(); }
     }
 }

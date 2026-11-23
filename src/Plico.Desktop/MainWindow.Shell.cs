@@ -16,7 +16,8 @@ public partial class MainWindow
 {
     private const double CompactWidth = 1100;
     private const double MediumWidth = 1240;
-    private const double MaximumIntakeHeightFraction = 0.4;
+    /// <summary>Below this width decorative art goes first: the welcome hero drops the large mark.</summary>
+    private const double ArtWidth = 1040;
     private static readonly TimeSpan ReviewMotionDuration = TimeSpan.FromMilliseconds(380);
     private static readonly TimeSpan RepeatedReviewWindow = TimeSpan.FromMilliseconds(1200);
     private DateTime _lastReview = DateTime.MinValue;
@@ -27,19 +28,28 @@ public partial class MainWindow
     private readonly Dictionary<Key, string> _armedKeys = [];
     private Control? _overlayReturnFocus;
 
-    /// <summary>Collapse order: the filing card narrows, then the queue becomes a thumbnail strip.</summary>
+    /// <summary>
+    /// Collapse order: the welcome art goes, the sidebar narrows from Onda's 252 px, the filing card narrows, then the
+    /// queue becomes a thumbnail strip. The sheet's 1 px edge comes out of the page column: at 900 px it keeps 335 px
+    /// (900 - 200 - 1 - 84 - 280) and at 1280 px 459 px (1280 - 252 - 1 - 272 - 296).
+    /// </summary>
     private void ApplyWorkspaceLayout(double width)
     {
         // Window size changes arrive while the XAML is still loading, before the named grids exist.
-        if (ShellGrid is null || WorkspaceGrid is null || QueueHeader is null || PageColumn is null || double.IsNaN(width)) return;
+        if (ShellGrid is null || WorkspaceGrid is null || QueueHeader is null || QueueEmptyState is null || PageColumn is null || double.IsNaN(width)) return;
         bool compact = width < CompactWidth;
         bool medium = width < MediumWidth;
-        ShellGrid.ColumnDefinitions[0].Width = new GridLength(compact ? 200 : medium ? 208 : 216);
+        ShellGrid.ColumnDefinitions[0].Width = new GridLength(compact ? 200 : medium ? 208 : 252);
         WorkspaceGrid.ColumnDefinitions[0].Width = new GridLength(compact ? 84 : medium ? 252 : 272);
         WorkspaceGrid.ColumnDefinitions[2].Width = new GridLength(compact ? 280 : medium ? 288 : 296);
         WorkspaceGrid.Classes.Set("compact", compact);
+        WorkspaceGrid.Classes.Set("narrow", width < ArtWidth);
+        // Places tighten to 36 px rows with the strip.
+        ShellGrid.Classes.Set("compact", compact);
         // Compact: the header spans the thumbnail strip and the page, and the page starts below it.
         Grid.SetColumnSpan(QueueHeader, compact ? 2 : 1);
+        // An empty queue explains itself across the strip and the page, so its sentence is never one word a line.
+        Grid.SetColumnSpan(QueueEmptyState, compact ? 2 : 1);
         Grid.SetRow(PageColumn, compact ? 1 : 0);
         Grid.SetRowSpan(PageColumn, compact ? 1 : 2);
     }
@@ -48,14 +58,17 @@ public partial class MainWindow
     {
         // Choose the column widths for this pass before the grids measure.
         ApplyWorkspaceLayout(double.IsFinite(availableSize.Width) ? availableSize.Width : Width);
-        if (SidebarIntake is not null && double.IsFinite(availableSize.Height))
-            SidebarIntake.MaxHeight = availableSize.Height * MaximumIntakeHeightFraction;
         return base.MeasureOverride(availableSize);
     }
 
     // ───────── Keyboard ─────────
 
-    private bool IsTyping => FocusManager?.GetFocusedElement() is TextBox or AutoCompleteBox or ComboBox { IsDropDownOpen: true }
+    /// <summary>
+    /// True while keys belong to a field: a text or tag field has the keyboard, a list is open, or the date's calendar is
+    /// open (its days take the keyboard while one is chosen), so letters are text and never single-key shortcuts.
+    /// </summary>
+    private bool IsTyping => DocumentDatePicker.IsOpen
+        || FocusManager?.GetFocusedElement() is TextBox or AutoCompleteBox or ComboBox { IsDropDownOpen: true }
         || FocusManager?.GetFocusedElement() is Visual visual && visual.FindAncestorOfType<AutoCompleteBox>() is not null;
 
     private bool IsOverlayOpen => PaletteOverlay.IsVisible || ShortcutsOverlay.IsVisible;
@@ -95,9 +108,10 @@ public partial class MainWindow
                 break;
             case "r" when (e.KeyModifiers & KeyModifiers.Shift) == 0: Review(); break;
             case "a": Run(model.AcceptSuggestionsCommand); break;
-            case "t" when model is { CanWork: true, ShowFilingCard: true }: TagBox.Focus(); break;
-            case "d": Run(model.EditDocumentDateCommand); break;
-            case "e": Run(model.EditDocumentTitleCommand); break;
+            // The in-place fields stay open while Plico works in the background, as their edits are quick catalog writes.
+            case "t" when model is { HasLibrary: true, ShowFilingCard: true }: TagBox.Focus(); break;
+            case "d" when model is { HasLibrary: true, ShowFilingCard: true }: FocusDocumentDate(); break;
+            case "e" when model is { HasLibrary: true, ShowFilingCard: true }: BeginTitleEdit(); break;
             case "x": Run(model.TrashDocumentCommand); break;
             case "o": Run(model.OpenPdfCommand); break;
             case "[": Run(model.PreviousPageCommand); break;
@@ -119,6 +133,14 @@ public partial class MainWindow
             case Key.A when !IsTyping && !shift && !IsOverlayOpen: SelectAllShown(); return true;
             default: return false;
         }
+    }
+
+    /// <summary>Enter in the search field asks for the search now, so a query that cannot run says why at once.</summary>
+    private void SearchBox_KeyDown(object? sender, KeyEventArgs e)
+    {
+        if (e.Key != Key.Enter || ViewModel is not { } model) return;
+        model.SearchNow();
+        e.Handled = true;
     }
 
     private void FocusSearch()
@@ -178,15 +200,22 @@ public partial class MainWindow
             new PixelSize(Math.Max(1, (int)Math.Ceiling(size.Width * scaling)), Math.Max(1, (int)Math.Ceiling(size.Height * scaling))),
             new Vector(96 * scaling, 96 * scaling));
         snapshot.Render(PreviewPaper);
+        // The ghost is the page itself: the visible part of the rendered page, without the paper around a fitted page.
+        var page = VisiblePage(size);
+        var pixels = new PixelRect((int)Math.Floor(page.X * scaling), (int)Math.Floor(page.Y * scaling),
+            Math.Max(1, (int)Math.Floor(page.Width * scaling)), Math.Max(1, (int)Math.Floor(page.Height * scaling)));
+        pixels = pixels.Intersect(new PixelRect(snapshot.PixelSize));
         var ghost = new Border
         {
-            Width = size.Width,
-            Height = size.Height,
+            Width = page.Width,
+            Height = page.Height,
             Classes = { "paper" },
-            Child = new Image { Source = snapshot, Stretch = Stretch.Fill },
+            Child = new Image { Source = new CroppedBitmap(snapshot, pixels), Stretch = Stretch.Fill },
             RenderTransformOrigin = RelativePoint.Center,
             RenderTransform = TransformOperations.Parse("translate(0px, 0px) scale(1)")
         };
+        origin += page.Position;
+        size = page.Size;
         Canvas.SetLeft(ghost, origin.X);
         Canvas.SetTop(ghost, origin.Y);
         MotionLayer.Children.Add(ghost);
@@ -211,11 +240,21 @@ public partial class MainWindow
         }, ReviewMotionDuration + TimeSpan.FromMilliseconds(80));
     }
 
+    /// <summary>Where the rendered page shows inside the paper, so a fitted page leaves out the paper around it.</summary>
+    private Rect VisiblePage(Size paper)
+    {
+        var whole = new Rect(paper);
+        if (PreviewPage.TranslatePoint(default, PreviewPaper) is not { } at) return whole;
+        var visible = new Rect(at, PreviewPage.Bounds.Size).Intersect(whole);
+        return visible.Width >= 8 && visible.Height >= 8 ? visible : whole;
+    }
+
     // ───────── Overlays: palette, shortcuts, settings ─────────
 
     private void OpenPalette_Click(object? sender, RoutedEventArgs e) => ShowPalette();
     private void OpenShortcuts_Click(object? sender, RoutedEventArgs e) => ShowShortcuts();
     private void OpenSettings_Click(object? sender, RoutedEventArgs e) => OpenSettings();
+    private void StatusCard_Click(object? sender, RoutedEventArgs e) => ShowSettings("IntakeGroup");
     private void CloseOverlays_Click(object? sender, RoutedEventArgs e) => CloseOverlays();
 
     private void Overlay_PointerPressed(object? sender, PointerPressedEventArgs e) => CloseOverlays();
@@ -228,14 +267,26 @@ public partial class MainWindow
         ShortcutsOverlay.IsVisible = false;
         if (!wasOpen) return;
         ShellGrid.IsEnabled = true;
-        if (_overlayReturnFocus?.Focus() != true && !DocumentList.Focus()) SearchBox.Focus();
+        // The control that had the keyboard may have gone with the overlay open (the toast's Undo hides under it).
+        if (_overlayReturnFocus?.Focus() != true) FocusOpenDocument();
         _overlayReturnFocus = null;
+    }
+
+    /// <summary>
+    /// Puts the keyboard on the open document's row in the queue, where J, K and Tab carry on; on Mark reviewed when that
+    /// row is not drawn; and in search when no document is open. The queue itself never takes the keyboard, only its rows.
+    /// </summary>
+    private void FocusOpenDocument()
+    {
+        if (DocumentList.SelectedItem is { } open && DocumentList.ContainerFromItem(open) is { } row && row.Focus()) return;
+        if (!ReviewButton.Focus()) SearchBox.Focus();
     }
 
     private void EnterOverlay()
     {
         if (!IsOverlayOpen) _overlayReturnFocus = FocusManager?.GetFocusedElement() as Control;
         _armedKeys.Clear();
+        HideToast();
         ShellGrid.IsEnabled = false;
     }
 
@@ -315,18 +366,30 @@ public partial class MainWindow
         CloseShortcutsButton.Focus();
     }
 
-    internal void OpenSettings()
+    internal void OpenSettings() => ShowSettings();
+
+    /// <summary>Opens Settings, or brings it forward, at one of its sections (for example "IntakeGroup").</summary>
+    internal SettingsWindow? ShowSettings(string? section = null)
     {
-        if (ViewModel is not { } model) return;
+        if (ViewModel is not { } model) return null;
         CloseOverlays();
-        if (_settings is { IsVisible: true })
+        if (_settings is not { IsVisible: true })
+        {
+            _settings = new SettingsWindow { DataContext = model };
+            var opened = _settings;
+            opened.Closed += (_, _) =>
+            {
+                if (ReferenceEquals(_settings, opened)) _settings = null;
+                ReturnKeyboardFromAnotherWindow();
+            };
+            opened.Show(this);
+        }
+        else
         {
             _settings.Activate();
-            return;
         }
-        _settings = new SettingsWindow { DataContext = model };
-        _settings.Closed += (_, _) => _settings = null;
-        _settings.Show(this);
+        if (section is not null) _settings.ShowSection(section);
+        return _settings;
     }
 
     internal void FocusTagEntry() => TagBox.Focus();

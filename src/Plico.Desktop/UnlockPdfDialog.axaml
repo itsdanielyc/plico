@@ -1,16 +1,21 @@
 <Window xmlns="https://github.com/avaloniaui"
         xmlns:translation="using:Plico.Desktop" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         x:Class="Plico.Desktop.UnlockPdfDialog" Title="{translation:Tr ImportPasswordProtectedPDF}"
-        Width="465" SizeToContent="Height" CanResize="False" WindowStartupLocation="CenterOwner"
-        FontFamily="{StaticResource InterFont}" Background="{DynamicResource WorkspaceSurface}">
-    <StackPanel Margin="24" Spacing="12">
-        <TextBlock x:Name="FileLabel" TextTrimming="CharacterEllipsis" FontWeight="SemiBold" />
-        <TextBox x:Name="PasswordBox" PasswordChar="●" PlaceholderText="{translation:Tr PDFPassword}" AutomationProperties.Name="{translation:Tr PDFPassword}" />
-        <TextBlock Text="{translation:Tr PlicoImportsAnUnlockedPDFAndKeepsTheEncryptedOriginalInVersion}" TextWrapping="Wrap" />
-        <StackPanel Orientation="Horizontal" Spacing="8" HorizontalAlignment="Right">
-            <Button Content="{translation:Tr Cancel}" IsCancel="True" Click="Cancel_Click" />
-            <Button Content="{translation:Tr UnlockAndImport}" IsDefault="True" Click="Unlock_Click"
-                    Background="{DynamicResource PrimarySurface}" Foreground="White" />
+        Width="480" SizeToContent="Height" CanResize="False" WindowStartupLocation="CenterOwner" Classes="dialog">
+    <DockPanel>
+        <Border DockPanel.Dock="Bottom" Classes="dialog-footer">
+            <StackPanel Classes="dialog-actions">
+                <Button Classes="secondary" Content="{translation:Tr Cancel}" IsCancel="True" Click="Cancel_Click" />
+                <Button Classes="primary" Content="{translation:Tr UnlockAndImport}" IsDefault="True" Click="Unlock_Click" />
+            </StackPanel>
+        </Border>
+        <StackPanel Classes="dialog-body">
+            <StackPanel Spacing="4">
+                <TextBlock Classes="heading" Text="{translation:Tr ImportPasswordProtectedPDF}" TextWrapping="Wrap" />
+                <TextBlock x:Name="FileLabel" Classes="description" TextTrimming="CharacterEllipsis" />
+            </StackPanel>
+            <TextBox x:Name="PasswordBox" PasswordChar="●" PlaceholderText="{translation:Tr PDFPassword}" AutomationProperties.Name="{translation:Tr PDFPassword}" />
+            <TextBlock Classes="hint" Text="{translation:Tr PlicoImportsAnUnlockedPDFAndKeepsTheEncryptedOriginalInVersion}" />
         </StackPanel>
-    </StackPanel>
+    </DockPanel>
 </Window>

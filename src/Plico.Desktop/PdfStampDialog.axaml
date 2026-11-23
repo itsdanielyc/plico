@@ -1,26 +1,36 @@
 <Window xmlns="https://github.com/avaloniaui"
         xmlns:translation="using:Plico.Desktop" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         x:Class="Plico.Desktop.PdfStampDialog" Title="{translation:Tr StampPDF}"
-        Width="470" SizeToContent="Height" WindowStartupLocation="CenterOwner" CanResize="False"
-        FontFamily="{StaticResource InterFont}" Background="{DynamicResource WorkspaceSurface}">
-    <StackPanel Margin="24" Spacing="10">
-        <TextBlock Text="{translation:Tr StampText}" FontWeight="SemiBold" />
-        <TextBox x:Name="StampText" Text="{translation:Tr PAID}" AutomationProperties.Name="{translation:Tr StampText}" />
-        <TextBlock Text="{translation:Tr Pages}" FontWeight="SemiBold" />
-        <TextBox x:Name="StampPages" AutomationProperties.Name="{translation:Tr PagesToStamp}" />
-        <TextBlock Text="{translation:Tr EnterPageNumbersOrRangesSuchAs135}" Foreground="{DynamicResource MutedInk}" TextWrapping="Wrap" />
-        <TextBlock Text="{translation:Tr Position}" FontWeight="SemiBold" />
-        <ComboBox x:Name="StampPosition" SelectedIndex="0" HorizontalAlignment="Stretch" AutomationProperties.Name="{translation:Tr StampPosition}">
-            <ComboBoxItem Content="{translation:Tr TopRight}" />
-            <ComboBoxItem Content="{translation:Tr BottomRight}" />
-            <ComboBoxItem Content="{translation:Tr TopLeft}" />
-            <ComboBoxItem Content="{translation:Tr BottomLeft}" />
-        </ComboBox>
-        <TextBlock x:Name="ValidationNotice" Foreground="{DynamicResource ValidationInk}" TextWrapping="Wrap" AutomationProperties.LiveSetting="Polite" />
-        <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" Spacing="8">
-            <Button Content="{translation:Tr Cancel}" IsCancel="True" Click="Cancel_Click" />
-            <Button x:Name="ConfirmStamp" Content="{translation:Tr ChooseDestination}" IsDefault="True" Click="Confirm_Click"
-                    Background="{DynamicResource PrimarySurface}" Foreground="White" />
+        Width="480" SizeToContent="Height" WindowStartupLocation="CenterOwner" CanResize="False" Classes="dialog">
+    <DockPanel>
+        <Border DockPanel.Dock="Bottom" Classes="dialog-footer">
+            <StackPanel Classes="dialog-actions">
+                <Button Classes="secondary" Content="{translation:Tr Cancel}" IsCancel="True" Click="Cancel_Click" />
+                <Button x:Name="ConfirmStamp" Classes="primary" Content="{translation:Tr ChooseDestination}" IsDefault="True" Click="Confirm_Click" />
+            </StackPanel>
+        </Border>
+        <StackPanel Classes="dialog-body">
+            <TextBlock Classes="heading" Text="{translation:Tr StampPDF}" />
+            <StackPanel Classes="field">
+                <TextBlock Classes="form-label" Text="{translation:Tr StampText}" />
+                <TextBox x:Name="StampText" Text="{translation:Tr PAID}" AutomationProperties.Name="{translation:Tr StampText}" />
+            </StackPanel>
+            <StackPanel Classes="field">
+                <TextBlock Classes="form-label" Text="{translation:Tr Pages}" />
+                <TextBox x:Name="StampPages" AutomationProperties.Name="{translation:Tr PagesToStamp}" />
+                <TextBlock Classes="hint" Text="{translation:Tr EnterPageNumbersOrRangesSuchAs135}" />
+            </StackPanel>
+            <StackPanel Classes="field">
+                <TextBlock Classes="form-label" Text="{translation:Tr Position}" />
+                <ComboBox x:Name="StampPosition" SelectedIndex="0" HorizontalAlignment="Stretch" AutomationProperties.Name="{translation:Tr StampPosition}">
+                    <ComboBoxItem Content="{translation:Tr TopRight}" />
+                    <ComboBoxItem Content="{translation:Tr BottomRight}" />
+                    <ComboBoxItem Content="{translation:Tr TopLeft}" />
+                    <ComboBoxItem Content="{translation:Tr BottomLeft}" />
+                </ComboBox>
+            </StackPanel>
+            <TextBlock x:Name="ValidationNotice" Classes="validation" AutomationProperties.LiveSetting="Polite"
+                       IsVisible="{Binding $self.Text, Converter={x:Static StringConverters.IsNotNullOrEmpty}}" />
         </StackPanel>
-    </StackPanel>
+    </DockPanel>
 </Window>

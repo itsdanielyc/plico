@@ -37,7 +37,7 @@ internal sealed partial class InboxViewModel
             }
             catch (Exception error) when (error is IOException or UnauthorizedAccessException)
             {
-                Status = $"Could not save the watched-scan choice. {error.Message}";
+                Status = DesktopText.Format($"Couldn't save the watched-scan choice. {error.Message}");
                 OnPropertyChanged(nameof(IncludeWatchedScans));
             }
         }
@@ -78,7 +78,7 @@ internal sealed partial class InboxViewModel
         }
         catch (Exception error) when (error is IOException or UnauthorizedAccessException or InvalidDataException)
         {
-            return $"Could not load the intake settings. {error.Message}";
+            return DesktopText.Format($"Couldn't load the intake settings. {error.Message}");
         }
     }
 }

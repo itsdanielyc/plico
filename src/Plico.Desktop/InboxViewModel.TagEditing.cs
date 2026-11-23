@@ -22,6 +22,7 @@ internal sealed partial class InboxViewModel
             }
 
             string label = await Task.Run(() => library.RenameTag(tag, request.Name, request.MergeIntoExisting, token), token);
+            RetireUndo();
             Tags = library.GetTags();
             SavedSearches = library.GetSavedSearches();
             if (_activeTag == tag) Navigate(inboxOnly: false, tag: label, preferredId: SelectedDocument?.Id);
