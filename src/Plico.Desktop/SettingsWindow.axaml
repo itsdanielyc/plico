@@ -567,7 +567,15 @@
                                         <TextBlock Classes="row-help" Text="{translation:Tr SemanticIndexHelp}" />
                                     </StackPanel>
                                     <Button Grid.Column="2" Classes="secondary" Content="{translation:Tr ClearAction}" Command="{Binding RebuildSemanticIndexCommand}"
-                                            IsEnabled="{Binding HasSemanticSearch}" AutomationProperties.Name="{translation:Tr ClearSemanticIndex}" />
+                                            AutomationProperties.Name="{translation:Tr ClearSemanticIndex}">
+                                        <!-- Clearing the index is work of its own, so like Settings' other work it waits until Plico is free. -->
+                                        <Button.IsEnabled>
+                                            <MultiBinding Converter="{x:Static BoolConverters.And}">
+                                                <Binding Path="CanWork" />
+                                                <Binding Path="HasSemanticSearch" />
+                                            </MultiBinding>
+                                        </Button.IsEnabled>
+                                    </Button>
                                 </Grid>
                             </StackPanel>
                         </Border>

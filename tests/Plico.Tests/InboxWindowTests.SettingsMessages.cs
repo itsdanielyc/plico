@@ -387,6 +387,52 @@ public sealed partial class InboxWindowTests
         Dispatcher.UIThread.RunJobs();
     }
 
+    [AvaloniaFact]
+    public async Task SettingsOffersToClearTheSemanticIndexOnlyWhilePlicoIsNotWorking()
+    {
+        using var temporary = new TemporaryLibrary();
+        using (var library = InboxLibrary.Open(temporary.Path)) BatchFixtures.AddTwoDocuments(library, TestContext.Current.CancellationToken);
+        var pending = new TaskCompletionSource<TrashDecision?>();
+        using var model = new InboxViewModel(new FixtureDialogs { TrashChoice = _ => pending.Task });
+        model.InitializeLibrary(() => temporary.Path);
+        model.LocalModels = LocalModelSettings.Default with { Enabled = true, EmbeddingModel = "nomic-embed-text" };
+        var window = new MainWindow { DataContext = model, Width = 1280, Height = 800 };
+        window.Show();
+        Task? work = null;
+        try
+        {
+            await WaitForPreviewAsync(model);
+            var settings = OpenSettingsAt(window, "ModelsGroup");
+            var clear = settings.GetVisualDescendants().OfType<Button>()
+                .Single(button => AutomationProperties.GetName(button) == "Clear semantic index");
+            Assert.True(clear.IsEffectivelyEnabled, "Clear semantic index is off while Plico is idle.");
+
+            // Work begins (Trash left open holds Plico busy, as a watched folder's import does). Clearing the index is work
+            // of its own, which would wait for nothing and say nothing, so Settings does not offer it until the work ends,
+            // as with its other actions that start work.
+            work = model.OpenTrashCommand.ExecuteAsync(null);
+            Dispatcher.UIThread.RunJobs();
+            Assert.True(model.IsBusy);
+            string working = model.StatusCardTitle;
+            Assert.False(clear.IsEffectivelyEnabled, "Clear semantic index is offered while Plico works, where clicking it does nothing.");
+            ClickAt(settings, clear);
+            Assert.Equal(working, model.StatusCardTitle);
+
+            pending.SetResult(null);
+            await work;
+            work = null;
+            Dispatcher.UIThread.RunJobs();
+            Assert.True(clear.IsEffectivelyEnabled, "Clear semantic index stayed off after the work ended.");
+            settings.Close();
+        }
+        finally
+        {
+            pending.TrySetResult(null);
+            if (work is not null) await work;
+            window.Close();
+        }
+    }
+
     [AvaloniaTheory]
     [InlineData("theme")]
     [InlineData("language")]
