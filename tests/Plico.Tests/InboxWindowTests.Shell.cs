@@ -77,7 +77,7 @@ public sealed partial class InboxWindowTests
             Assert.True(model.ShowWelcome);
             window.UpdateLayout();
             var page = Assert.IsType<StackPanel>(window.FindControl<StackPanel>("WelcomePage"));
-            var scroll = Assert.IsType<ScrollViewer>(page.Parent);
+            var scroll = Assert.IsType<ScrollViewer>(page.FindAncestorOfType<ScrollViewer>());
             Assert.True(scroll.Extent.Height <= scroll.Viewport.Height + 1, $"The welcome page needs {scroll.Extent} in {scroll.Viewport}.");
             Assert.True(scroll.Extent.Width <= scroll.Viewport.Width + 1);
             var art = page.GetVisualDescendants().OfType<Panel>().Single(panel => panel.Classes.Contains("hero-art"));
@@ -92,6 +92,38 @@ public sealed partial class InboxWindowTests
         {
             window.Close();
         }
+    }
+
+    [AvaloniaFact]
+    public void TheWelcomePageKeepsOneMeasureWhateverTheLibrarysPath()
+    {
+        // A library a few folders deep, whose friendly path the welcome row shortens with an ellipsis, and one at the top
+        // of the temporary folder, whose path fits.
+        using var temporary = new TemporaryLibrary();
+        string deep = Path.Combine(temporary.Path, "Household paperwork", "Scanned letters and receipts", "Kept since 2019", "Library");
+        string shallow = Path.Combine(temporary.Path, "L");
+        double WelcomeWidth(string root)
+        {
+            Directory.CreateDirectory(root);
+            using var model = new InboxViewModel(new FixtureDialogs());
+            model.InitializeLibrary(() => root);
+            var window = new MainWindow { DataContext = model, Width = 1280, Height = 800 };
+            window.Show();
+            try
+            {
+                Assert.True(model.ShowWelcome);
+                window.UpdateLayout();
+                return Assert.IsType<StackPanel>(window.FindControl<StackPanel>("WelcomePage")).Bounds.Width;
+            }
+            finally
+            {
+                window.Close();
+            }
+        }
+
+        // The page has one measure, 832 px at this size, so its hero and rows end at the same place for every library;
+        // the path's ellipsis or a short path must not move the page's right edge.
+        Assert.Equal((832.0, 832.0), (Math.Round(WelcomeWidth(deep), 1), Math.Round(WelcomeWidth(shallow), 1)));
     }
 
     [AvaloniaFact]

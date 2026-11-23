@@ -1558,7 +1558,12 @@
                                 </Panel>
 
                                 <ScrollViewer IsVisible="{Binding ShowWelcome}" HorizontalScrollBarVisibility="Disabled">
-                                    <StackPanel x:Name="WelcomePage" Margin="44,34,44,20" MaxWidth="832" HorizontalAlignment="Left" Spacing="16">
+                                  <!--
+                                      The page keeps one measure, 832 px from the left, whatever its words (a library path the row shortens,
+                                      a short one), and narrows with a narrow window.
+                                  -->
+                                  <local:MeasureColumn Margin="44,34,44,20" MaxWidth="832" HorizontalAlignment="Left">
+                                    <StackPanel x:Name="WelcomePage" Spacing="16">
                                         <!-- The hero: the graphite tile, a soft light at 78 % 40 %, the welcome and the two ways in. -->
                                         <Border CornerRadius="{DynamicResource RadiusHero}" Background="{DynamicResource Tile}" BoxShadow="inset 0 1 0 0 #24FFFFFF" ClipToBounds="True">
                                             <Panel>
@@ -1657,6 +1662,7 @@
                                             </TextBlock>
                                         </Grid>
                                     </StackPanel>
+                                  </local:MeasureColumn>
                                 </ScrollViewer>
                             </Panel>
                         </Border>

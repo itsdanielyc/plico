@@ -163,7 +163,7 @@ public sealed partial class InboxWindowTests
             Assert.True(model.ShowWelcome);
             window.UpdateLayout();
             var page = Assert.IsType<StackPanel>(window.FindControl<StackPanel>("WelcomePage"));
-            var scroll = Assert.IsType<ScrollViewer>(page.Parent);
+            var scroll = Assert.IsType<ScrollViewer>(page.FindAncestorOfType<ScrollViewer>());
             Assert.True(scroll.Extent.Height <= scroll.Viewport.Height + 1, $"The French welcome page needs {scroll.Extent} in {scroll.Viewport}.");
             Assert.True(scroll.Extent.Width <= scroll.Viewport.Width + 1);
 

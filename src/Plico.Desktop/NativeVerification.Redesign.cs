@@ -1,5 +1,6 @@
 using Avalonia.Controls;
 using Avalonia.Input;
+using Avalonia.VisualTree;
 
 namespace Plico.Desktop;
 
@@ -22,7 +23,8 @@ internal static partial class NativeVerification
         // The welcome page fits the minimum window without scrolling, and its decorative mark gives way first.
         window.Width = window.MinWidth;
         window.Height = window.MinHeight;
-        var welcomeScroll = (ScrollViewer)Control<StackPanel>(window, "WelcomePage").Parent!;
+        var welcomeScroll = Control<StackPanel>(window, "WelcomePage").FindAncestorOfType<ScrollViewer>()
+            ?? throw new InvalidOperationException("The welcome page is not in its scroll viewer.");
         await UntilAsync(() => welcomeScroll.Viewport.Width is > 0 and < 700,
             () => $"The window did not reach its minimum size. {welcomeScroll.Viewport}");
         Require(welcomeScroll.Extent.Height <= welcomeScroll.Viewport.Height + 1 && welcomeScroll.Extent.Width <= welcomeScroll.Viewport.Width + 1,
