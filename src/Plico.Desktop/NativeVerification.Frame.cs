@@ -20,11 +20,15 @@ internal static partial class NativeVerification
     private static async Task CaptureFrameAsync(Window window, string directory, string filename)
     {
         if (!OperatingSystem.IsWindows() || window.TryGetPlatformHandle() is not { HandleDescriptor: "HWND", Handle: var handle }) return;
+        // Windows does not let a process in the background take the foreground, so Activate alone leaves whatever app is
+        // in front (a terminal, an editor) to be copied instead of the window. A topmost window is drawn above it.
+        bool wasTopmost = window.Topmost;
+        window.Topmost = true;
         window.Activate();
-        // Let the window come forward and the compositor present the current frame before copying the screen.
-        await Task.Delay(TimeSpan.FromMilliseconds(400));
         try
         {
+            // Let the window come forward and the compositor present the current frame before copying the screen.
+            await Task.Delay(TimeSpan.FromMilliseconds(400));
             if (CopyFrame(handle) is not { } frame) return;
             using (frame)
                 frame.Save(Path.Combine(directory, filename), PngBitmapEncoderOptions.Default);
@@ -33,6 +37,10 @@ internal static partial class NativeVerification
         catch (Exception error) when (error is DllNotFoundException or EntryPointNotFoundException or IOException or ExternalException)
         {
             // The frame capture is supporting evidence; the client-area captures remain the journey's record.
+        }
+        finally
+        {
+            window.Topmost = wasTopmost;
         }
     }
 
